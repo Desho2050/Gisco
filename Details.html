@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Details – Request Materials</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root { --border: #dde5ef; --row-alt: #f8fafc; --brand: #1e4672; --text: #172b4d; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: var(--text); background: #f4f6f9; }
+    header { background: var(--brand); color: #fff; padding: 12px 16px; }
+    header #title { color: #000 !important; }
+    .container { max-width: 1000px; margin: 16px auto; padding: 0 16px; }
+    .back-link { display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px; border:1px solid #1d4ed8; border-radius:8px; background:#2563eb; color:#fff; text-decoration:none; }
+    .table-wrap { background: #fff; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: var(--brand); color: #fff; padding: 10px; text-align: left; font-size: 13px; }
+    tbody td { border-top: 1px solid var(--border); padding: 9px; font-size: 13px; }
+    tbody tr:nth-child(even) { background: var(--row-alt); }
+    .summary { display: flex; gap: 12px; align-items: center; margin: 10px 0; }
+    .sum-box { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 18px; font-weight: 700; color: #000; }
+    .label { color: #6b778c; font-size: 12px; }
+    .counter { font-size: 14px; color: #6b778c; }
+    .search-box { display: flex; gap: 10px; margin-bottom: 10px; }
+    .search-box input { height: 36px; padding: 0 12px; width: 280px; border: 1px solid var(--border); border-radius: 8px; outline: none; color: #000; }
+    .search-box input::placeholder { color: #000; opacity: 1; }
+    .search-box input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(30,70,114,0.12); }
+    /* language switcher */
+    .lang-switch { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+    .lang-btn { height:32px; padding:0 10px; border:1px solid #cbd5e1; border-radius:8px; background:#fff; color:#0f172a; cursor:pointer; }
+    .lang-btn.active { background:#1e4672; color:#fff; border-color:#1e4672; }
+    /* Responsive layout tweaks */
+    .search-box input { flex: 1 1 260px; min-width: 160px; }
+    @media (max-width: 900px){
+      header { padding: 10px 12px; }
+    }
+    @media (max-width: 640px){
+      .summary { flex-wrap: wrap; }
+      .search-box { flex-wrap: wrap; gap: 8px; }
+      .search-box input { flex: 1 1 100%; min-width: 100%; }
+      .back-link { width: 100%; justify-content: center; }
+    }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 800px; }
+  </style>
+  <script>
+    // i18n and language persistence
+    const I18N = {
+      en: {
+        details_title: 'Request Details',
+        back_main: 'Back to Main Page',
+        sum_qty: 'Total Quantity',
+        sum_total: 'Total Cost',
+        results_label: 'results',
+        search_placeholder: 'Search materials (code, description, category, job, status, order)'
+      },
+      ar: {
+        details_title: 'تفاصيل الطلب',
+        back_main: 'العودة إلى الصفحة الرئيسية',
+        sum_qty: 'إجمالي الكمية',
+        sum_total: 'إجمالي التكلفة',
+        results_label: 'نتائج',
+        search_placeholder: 'بحث عن المواد (كود، وصف، فئة، مشروع، حالة، أمر)'
+      }
+    };
+    const getLang = () => localStorage.getItem('lang') || 'ar';
+    const applyLang = (lang) => {
+      document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      const dict = I18N[lang] || I18N.ar;
+      const titleEl = document.getElementById('title');
+      if (titleEl) titleEl.textContent = `${dict.details_title}${REQUEST_ID ? ': ' + REQUEST_ID : ''}`;
+      const backEl = document.getElementById('backMain');
+      if (backEl) backEl.textContent = dict.back_main;
+      document.querySelectorAll('[data-i18n-label]').forEach(el => {
+        const k = el.getAttribute('data-i18n-label');
+        if (dict[k]) el.textContent = dict[k];
+      });
+      const inputQ = document.getElementById('q');
+      if (inputQ) inputQ.setAttribute('placeholder', dict.search_placeholder);
+      // activate current lang button
+      document.querySelectorAll('.lang-btn').forEach(b => {
+        const val = b.getAttribute('data-lang');
+        b.classList.toggle('active', val === lang);
+      });
+    };
+    const setLang = (lang) => { localStorage.setItem('lang', lang); applyLang(lang); };
+    const excelPath = 'Materials.xlsx';
+    let REQUEST_ID = '';
+    let ALL_ROWS = [];
+    function formatAED(n){ return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(Number(n || 0)); }
+    const FIELD_ALIASES = {
+      request: ['request','req','reqno','req_no','req id','reqid','رقمالطلب','رقم الطلب','Requisition'],
+      code: ['oracle code','code','item code','item_code','oracle_code','id','itemid'],
+      description: ['item description','description','desc','item name','name'],
+      category: ['item category','category','cat','type','class'],
+      qty: ['qty','quantity','onhand','on hand','stock','balance'],
+      price: ['price','unit price','unitprice','rate','cost'],
+      job: ['job no','job','jobno','job number','job_number'],
+      status: ['status','statue','state','approval'],
+      order: ['order','po','po no','po_no','order no','order_no']
+    };
+    function normalizeKey(k){ return String(k || '').toLowerCase().replace(/\s+|_/g,'').trim(); }
+    function pickField(obj, aliases){ const keys = Object.keys(obj); const normToKey = new Map(keys.map(k => [normalizeKey(k), k])); for (const alias of aliases){ const nk = normalizeKey(alias); if (normToKey.has(nk)) return obj[normToKey.get(nk)]; } return ''; }
+    function buildRow(item){
+      const request = String(pickField(item, FIELD_ALIASES.request) || '').trim();
+      const code = String(pickField(item, FIELD_ALIASES.code) || '').trim();
+      const description = String(pickField(item, FIELD_ALIASES.description) || '').trim();
+      const category = String(pickField(item, FIELD_ALIASES.category) || '').trim();
+      const qty = Number(pickField(item, FIELD_ALIASES.qty) || 0);
+      const price = Number(pickField(item, FIELD_ALIASES.price) || 0);
+      const job = String(pickField(item, FIELD_ALIASES.job) || '').trim();
+      const status = String(pickField(item, FIELD_ALIASES.status) || '').trim();
+      const order = String(pickField(item, FIELD_ALIASES.order) || '').trim();
+      const total = qty * price;
+      return { request, code, description, category, qty, price, job, status, order, total };
+    }
+    function formatDateDMY(val){
+      if (val === null || val === undefined || val === '') return '';
+      const pad2 = (n) => String(n).padStart(2,'0');
+      const toDMY = (d) => `${pad2(d.getUTCDate())}/${pad2(d.getUTCMonth()+1)}/${d.getUTCFullYear()}`;
+      if (typeof val === 'number' && isFinite(val)){
+        const base = Date.UTC(1899, 11, 30);
+        const d = new Date(base + Math.round(val) * 86400000);
+        return !Number.isNaN(d.getTime()) ? toDMY(d) : String(val);
+      }
+      if (Object.prototype.toString.call(val) === '[object Date]'){
+        return toDMY(val);
+      }
+      const s = String(val).trim();
+      const d1 = new Date(s);
+      if (!Number.isNaN(d1.getTime())) return toDMY(d1);
+      const parts = s.match(/\d+/g);
+      if (parts && parts.length >= 3){
+        const [a,b,c] = parts.map(Number);
+        const candDMY = new Date(Date.UTC(c, (b-1), a));
+        const candMDY = new Date(Date.UTC(c, (a-1), b));
+        const use = (a > 12 && !Number.isNaN(candDMY.getTime())) ? candDMY
+                  : (!Number.isNaN(candDMY.getTime())) ? candDMY
+                  : (!Number.isNaN(candDMY.getTime())) ? candDMY
+                  : null;
+        if (use) return toDMY(use);
+      }
+      return s;
+    }
+    function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+    function getQuery(name){ const u = new URL(location.href); return u.searchParams.get(name) || ''; }
+    async function load(){
+      REQUEST_ID = getQuery('req');
+      applyLang(getLang());
+      try {
+        const res = await fetch(excelPath + '?ts=' + Date.now());
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        const buf = await res.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        ALL_ROWS = json.map(buildRow).filter(r => String(r.request) === REQUEST_ID);
+        render(ALL_ROWS);
+      } catch (e) {
+        console.error(e);
+        document.getElementById('status').textContent = 'Failed to load Materials.xlsx';
+      }
+    }
+    function formatNumber(n){ return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 6 }); }
+    function formatMoney(n){ return Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function render(rows){
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = '';
+      let totalSum = 0;
+      let totalQty = 0;
+      for (const r of rows){
+        totalSum += Number(r.total) || 0;
+        totalQty += Number(r.qty) || 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(r.request)}</td>
+          <td class="code">${escapeHtml(r.code)}</td>
+          <td>${escapeHtml(r.description)}</td>
+          <td>${escapeHtml(r.category)}</td>
+          <td class="qty">${formatNumber(r.qty)}</td>
+          <td class="price">${formatNumber(r.price)}</td>
+          <td class="job">${escapeHtml(r.job)}</td>
+          <td class="total">${formatMoney(r.total)}</td>
+          <td>${escapeHtml(r.status)}</td>
+          <td class="order">${escapeHtml(r.order)}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+      const sumEl = document.getElementById('sumTotal');
+      if (sumEl) sumEl.textContent = formatMoney(totalSum);
+      const qtyEl = document.getElementById('sumQty');
+      if (qtyEl) qtyEl.textContent = formatNumber(totalQty);
+      const cntEl = document.getElementById('resultCount');
+      if (cntEl) cntEl.textContent = String(rows.length);
+    }
+    function filterNow(){
+      const q = (document.getElementById('q') || { value:'' }).value.trim().toLowerCase();
+      if (!q){ render(ALL_ROWS); return; }
+      const tokens = q.split(/\s+/).filter(Boolean);
+      const filtered = ALL_ROWS.filter(r => {
+        const idx = [r.request, r.code, r.description, r.category, r.job, r.status, r.order, r.qty, r.price, r.total]
+          .map(s => String(s).toLowerCase())
+          .join(' | ');
+        return tokens.every(tok => idx.includes(tok));
+      });
+      render(filtered);
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      applyLang(getLang());
+      load();
+      document.addEventListener('input', (e) => { if (e.target && e.target.id === 'q') filterNow(); });
+      document.addEventListener('click', (e) => {
+        const t = e.target;
+        if (t && t.classList.contains('lang-btn')) { const v = t.getAttribute('data-lang'); setLang(v); }
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <div id="title">تفاصيل الطلب</div>
+  </header>
+  <div class="container" style="margin-top: 10px;">
+    <div class="lang-switch">
+      <button class="lang-btn" data-lang="ar">العربية</button>
+      <button class="lang-btn" data-lang="en">English</button>
+    </div>
+    <a id="backMain" class="back-link" href="index.html" data-i18n="back_main" title="Back to Main Page">Back to Main Page</a>
+  </div>
+  <main class="container">
+    <div class="summary">
+      <span class="label" data-i18n-label="sum_qty">إجمالي الكمية</span>
+      <div class="sum-box" id="sumQty">0</div>
+      <span class="label" data-i18n-label="sum_total">إجمالي التكلفة</span>
+      <div class="sum-box" id="sumTotal">0.00</div>
+      <div class="counter"><span id="resultCount">0</span> <span data-i18n-label="results_label">نتائج</span></div>
+    </div>
+    <div class="search-box">
+      <input type="text" id="q" placeholder="بحث عن المواد (كود، وصف، فئة، مشروع، حالة، أمر)" />
+    </div>
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>رقم الطلب</th>
+            <th>Oracle Code</th>
+            <th>الوصف</th>
+            <th>الفئة</th>
+            <th>الكمية</th>
+            <th>سعر الوحدة</th>
+            <th>رقم المشروع</th>
+            <th>الإجمالي</th>
+            <th>الحالة</th>
+            <th>رقم الأمر</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </section>
+    <div id="status" style="margin-top:10px;color:#6b778c"></div>
+  </main>
+</body>
+</html>

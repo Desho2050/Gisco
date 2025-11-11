@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Received Materials – Enhanced Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --brand-bg: #1e4672;
+      --accent: #b42c30;
+      --border: #dde5ef;
+      --text: #172b4d;
+      --muted: #6b778c;
+      --table-header: #5a2a7a;
+      --table-header-text: #ffffff;
+      --row-alt: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: var(--text); background: #f4f6f9; }
+    .topbar { background: #2f4d6f; color: #fff; padding: 10px 16px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; }
+    .brand { display: grid; grid-template-columns: 48px auto; gap: 12px; align-items: center; }
+    .brand-mark { width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), #f56c6f); }
+    .brand-titles { line-height: 1.2; }
+    .title { font-weight: 700; color: #000 !important; }
+    .subtitle { font-size: 13px; opacity: 0.9; }
+    .lang-switch { display: inline-flex; gap: 8px; align-items: center; }
+    .btn.small { height: 28px; padding: 0 10px; font-size: 12px; min-width: auto; }
+    .controls { background: #fff; margin: 14px 16px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; }
+    .inputs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .field { display: grid; gap: 6px; }
+    .label { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+    .text-input { height: 36px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; outline: none; color: #000; }
+    .text-input::placeholder { color: #000; opacity: 1; }
+    .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .btn { height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+    .btn { text-decoration: none; }
+    .back-link { background: #2563eb; color: #fff; border-color: #1d4ed8; }
+    .btn.primary { background: var(--brand-bg); color: #fff; border-color: #173a5a; }
+    .btn.success { background: #28a745; border-color: #1e7e34; color: #fff; }
+    .counter { font-size: 18px; color: #000; font-weight: 700; }
+    .status { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    .table-wrap { background: #fff; margin: 12px 16px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: var(--table-header); color: var(--table-header-text); text-align: left; font-weight: 600; padding: 10px; font-size: 12px; position: sticky; top: 0; z-index: 2; }
+    tbody td { border-top: 1px solid var(--border); padding: 9px; font-size: 13px; vertical-align: top; }
+    tbody tr:nth-child(even) { background: var(--row-alt); }
+    .code { font-variant-numeric: tabular-nums; }
+    .qty, .price, .total, .job, .order { white-space: nowrap; }
+
+    /* Responsive layout tweaks */
+    @media (max-width: 980px){
+      .topbar { grid-template-columns: 1fr auto; }
+      .inputs { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px){
+      .topbar { grid-template-columns: 1fr; row-gap: 8px; }
+      .inputs { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; align-items: stretch; gap: 8px; }
+      .btn { width: 100%; min-width: 0; }
+    }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 900px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div class="brand-titles">
+        <div class="title" data-i18n="page_title_en">Received Materials</div>
+        <div class="subtitle" data-i18n="page_sub_en">Enhanced Search</div>
+      </div>
+    </div>
+    <div class="brand-titles" style="text-align:right">
+      <div class="title" data-i18n="brand_title">شركة الخليج للخدمات الصناعية</div>
+      <div class="subtitle">GISCO</div>
+    </div>
+    <div class="lang-switch" aria-label="Language Switch">
+      <button class="btn small" data-lang="ar">عربي</button>
+      <button class="btn small" data-lang="en">English</button>
+    </div>
+  </header>
+  <div style="margin: 10px 16px;">
+    <a class="btn back-link" href="index.html" data-i18n="back_main" title="Back to Main Page">Back to Main Page</a>
+  </div>
+
+  <section class="controls">
+    <div class="inputs">
+      <label class="field">
+        <div class="label"><span>First Text</span><span>النص الأول</span></div>
+        <input id="q1" class="text-input" type="text" placeholder="Type to search…" />
+      </label>
+      <label class="field">
+        <div class="label"><span>Second Text</span><span>النص الثاني</span></div>
+        <input id="q2" class="text-input" type="text" placeholder="Type to search…" />
+      </label>
+      <label class="field">
+        <div class="label"><span>3rd Text</span><span>النص الثالث</span></div>
+        <input id="q3" class="text-input" type="text" placeholder="Type to search…" />
+      </label>
+      <label class="field">
+        <div class="label"><span>4th Text</span><span>النص الرابع</span></div>
+        <input id="q4" class="text-input" type="text" placeholder="Type to search…" />
+      </label>
+    </div>
+    <div class="actions">
+      <div>
+        <button id="btnPreview" class="btn primary"><span>🔎</span>Preview</button>
+        <button id="btnPrint" class="btn"><span>🖨️</span>Print</button>
+        <input type="file" id="localFile" accept=".xlsx,.xls" style="display:none" />
+        <button id="btnLocal" class="btn success" style="display:none" onclick="document.getElementById('localFile').click()">Load Excel</button>
+        <input type="text" id="pathSelector" placeholder="Selected file path" readonly style="height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;min-width:220px;display:none" />
+      </div>
+      <div class="counter"><span id="resultCount">0</span> <span data-i18n="results_label">results</span></div>
+      <div class="counter">Total Amount: <span id="sumAmount">AED 0.00</span></div>
+    </div>
+    <div id="statusBar" class="status"></div>
+  </section>
+
+  <section class="table-wrap">
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>REQUEST</th>
+          <th>ORACLE CODE</th>
+          <th>ITEM DESCRIPTION</th>
+          <th>ITEM CATEGORY</th>
+          <th>QTY</th>
+          <th>PRICE</th>
+          <th>JOB NO</th>
+          <th>TOTAL AMOUNT</th>
+          <th>STATUS</th>
+          <th>ORDER</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </section>
+
+  <script>
+    // i18n setup
+    const I18N = {
+      en: {
+        brand_title: 'Gulf Industrial Service Company',
+        back_main: 'Back to Main Page',
+        results_label: 'results',
+        page_title_en: 'Received Materials',
+        page_sub_en: 'Enhanced Search'
+      },
+      ar: {
+        brand_title: 'شركة الخليج للخدمات الصناعية',
+        back_main: 'العودة إلى الصفحة الرئيسية',
+        results_label: 'نتائج',
+        page_title_en: 'المواد المستلمة',
+        page_sub_en: 'بحث محسّن'
+      }
+    };
+    const getLang = () => localStorage.getItem('lang') || 'ar';
+    const applyLang = (lang) => {
+      document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      const dict = I18N[lang] || I18N.ar;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+    };
+    const setLang = (lang) => { localStorage.setItem('lang', lang); applyLang(lang); };
+    const excelPath = 'Materials.xlsx';
+
+    const FIELD_ALIASES = {
+      request: ['request','req','reqno','req_no','req id','reqid'],
+      code: ['oracle code','code','item code','item_code','oracle_code','id','itemid'],
+      description: ['item description','description','desc','item name','name'],
+      category: ['item category','category','cat','type','class'],
+      qty: ['qty','quantity','onhand','on hand','stock','balance'],
+      price: ['price','unit price','unitprice','rate','cost'],
+      job: ['job no','job','jobno','job number','job_number'],
+      status: ['status','statue','state','approval'],
+      order: ['order','po','po no','po_no','order no','order_no']
+    };
+
+    function normalizeKey(k){ return String(k || '').toLowerCase().replace(/\s+|_/g,'').trim(); }
+    function pickField(obj, aliases){
+      const keys = Object.keys(obj);
+      const normToKey = new Map(keys.map(k => [normalizeKey(k), k]));
+      for (const alias of aliases){
+        const nk = normalizeKey(alias);
+        if (normToKey.has(nk)) return obj[normToKey.get(nk)];
+      }
+      for (const k of keys){
+        const v = obj[k];
+        if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+      }
+      return '';
+    }
+
+    function buildRow(item){
+      const request = String(pickField(item, FIELD_ALIASES.request) || '').trim();
+      const code = String(pickField(item, FIELD_ALIASES.code) || '').trim();
+      const description = String(pickField(item, FIELD_ALIASES.description) || '').trim();
+      const category = String(pickField(item, FIELD_ALIASES.category) || '').trim();
+      const qty = Number(pickField(item, FIELD_ALIASES.qty) || 0);
+      const price = Number(pickField(item, FIELD_ALIASES.price) || 0);
+      const job = String(pickField(item, FIELD_ALIASES.job) || '').trim();
+      const status = String(pickField(item, FIELD_ALIASES.status) || '').trim();
+      const order = String(pickField(item, FIELD_ALIASES.order) || '').trim();
+      const total = qty * price;
+      const searchIndex = [request, code, description, category, qty, price, job, total, status, order]
+        .map(s => String(s).toLowerCase())
+        .join(' | ');
+      return { request, code, description, category, qty, price, job, total, status, order, searchIndex };
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#39;');
+    }
+
+    function formatNumber(n){ return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 6 }); }
+    function formatMoney(n){ return Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function formatAED(n){ return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(Number(n || 0)); }
+
+    function renderTable(rows){
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      for (const r of rows){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(r.request)}</td>
+          <td class="code">${escapeHtml(r.code)}</td>
+          <td>${escapeHtml(r.description)}</td>
+          <td>${escapeHtml(r.category)}</td>
+          <td class="qty">${formatNumber(r.qty)}</td>
+          <td class="price">${formatNumber(r.price)}</td>
+          <td class="job">${escapeHtml(r.job)}</td>
+          <td class="total">${formatMoney(r.total)}</td>
+          <td>${escapeHtml(r.status)}</td>
+          <td class="order">${escapeHtml(r.order)}</td>
+        `;
+        tr.dataset.index = r.searchIndex;
+        tr.dataset.total = String(r.total || 0);
+        tbody.appendChild(tr);
+      }
+      updateCounter(rows.length);
+      updateTotals();
+    }
+
+    function updateCounter(n){ document.getElementById('resultCount').textContent = String(n); }
+    function updateTotals(){
+      const tbody = document.getElementById('tableBody');
+      let sum = 0;
+      for (const tr of Array.from(tbody.children)){
+        if (tr.style.display === 'none') continue;
+        const t = Number(tr.dataset.total || 0);
+        if (!Number.isNaN(t)) sum += t;
+      }
+      const el = document.getElementById('sumAmount');
+      if (el) el.textContent = formatAED(sum);
+    }
+    function setStatus(msg, isError=false){ const el = document.getElementById('statusBar'); el.textContent = msg || ''; el.style.color = isError ? '#b00020' : 'var(--muted)'; }
+
+    function filterNow(){
+      const queries = [q1.value, q2.value, q3.value, q4.value].map(s => s.trim().toLowerCase()).filter(Boolean);
+      const tbody = document.getElementById('tableBody');
+      let visible = 0;
+      for (const tr of Array.from(tbody.children)){
+        const idx = tr.dataset.index || '';
+        const ok = queries.every(q => q.split(/\s+/).every(tok => idx.includes(tok)));
+        tr.style.display = ok ? '' : 'none';
+        if (ok) visible++;
+      }
+      updateCounter(visible);
+      updateTotals();
+    }
+
+    async function loadExcel(){
+      try {
+        setStatus('Loading Materials.xlsx…');
+        const res = await fetch(excelPath + '?ts=' + Date.now());
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        const buf = await res.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const rows = json.map(buildRow);
+        renderTable(rows);
+        setStatus(`Loaded ${rows.length} rows from Materials.xlsx`);
+        if (rows.length === 0) setStatus('No rows found. Check sheet headers.', true);
+      } catch (err) {
+        console.error('Excel load error', err);
+        setStatus('Auto-load failed. If opened without a server, use "Load Local Excel"', true);
+        const btn = document.getElementById('btnLocal'); if (btn) btn.style.display = 'inline-flex';
+        updateCounter(0);
+      }
+    }
+
+    async function loadLocalFile(file){
+      try {
+        if (!file) return;
+        const ps = document.getElementById('pathSelector');
+        const input = document.getElementById('localFile');
+        const fname = String(file.name || '').toLowerCase();
+        if (fname !== 'materials.xlsx'){
+          setStatus('Please select the file named "Materials.xlsx" only.', true);
+          if (ps) { ps.value = ''; ps.style.display = 'none'; }
+          if (input) { input.value = ''; }
+          return;
+        }
+        if (ps) { ps.style.display = 'inline-flex'; ps.value = file.name; }
+        setStatus('Loading local Excel…');
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const rows = json.map(buildRow);
+        renderTable(rows);
+        setStatus(`Loaded ${rows.length} rows from local file`);
+        if (rows.length === 0) setStatus('No rows found. Check sheet headers.', true);
+      } catch(e){
+        console.error('Local load failed', e);
+        setStatus('Local load failed. Ensure the file is a valid .xlsx', true);
+      }
+    }
+
+    const q1 = document.getElementById('q1');
+    const q2 = document.getElementById('q2');
+    const q3 = document.getElementById('q3');
+    const q4 = document.getElementById('q4');
+    document.addEventListener('input', (e) => {
+      if ([q1,q2,q3,q4].includes(e.target)) filterNow();
+    });
+    document.getElementById('btnPreview').addEventListener('click', filterNow);
+    document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+      window.addEventListener('DOMContentLoaded', () => {
+        applyLang(getLang());
+        document.querySelectorAll('[data-lang]').forEach(btn => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
+        const input = document.getElementById('localFile');
+        if (input) input.addEventListener('change', (e) => loadLocalFile(e.target.files[0]));
+        if (location.protocol === 'file:') {
+          const btn = document.getElementById('btnLocal'); if (btn) btn.style.display = 'inline-flex';
+          const ps = document.getElementById('pathSelector'); if (ps) ps.style.display = 'inline-flex';
+          setStatus('Opened without server. Use "Load Local Excel" to select Materials.xlsx');
+        } else {
+          loadExcel().catch(err => setStatus(`Error loading Materials.xlsx: ${err.message}`, true));
+        }
+      });
+  </script>
+</body>
+</html>

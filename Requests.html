@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Requests – Search and Filters</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --brand: #1e4672;
+      --accent: #7f3fbf;
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --text: #172b4d;
+      --muted: #6b778c;
+      --border: #dde5ef;
+      --row-alt: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .topbar { background: linear-gradient(135deg, var(--brand), var(--accent)); color: #fff; padding: 12px 16px; display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+    .topbar .title { color: #000 !important; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo { height: 40px; width: auto; object-fit: contain; }
+    .title { font-weight: 700; letter-spacing: 0.3px; }
+    .container { max-width: 1200px; margin: 18px auto; padding: 0 16px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .search-box { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+    .search-box input { height: 36px; padding: 0 12px; width: 180px; border: 1px solid var(--border); border-radius: 8px; outline: none; color: #000; }
+    .search-box input::placeholder { color: #000; opacity: 1; }
+    .search-box input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(30,70,114,0.12); }
+    .btn { height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none; white-space: nowrap; min-width: 160px; justify-content: center; }
+    .btn.primary { background: var(--brand); color: #fff; border-color: #183a5e; }
+    .btn.blue { background: #4f46e5; color: #fff; border-color: #3730a3; }
+    .btn.purple { background: #7c3aed; color: #fff; border-color: #5b21b6; }
+    .btn.green { background: #22c55e; color: #fff; border-color: #16a34a; }
+    .btn.orange { background: #f59e0b; color: #fff; border-color: #d97706; }
+    .btn.pink { background: #ec4899; color: #fff; border-color: #db2777; }
+    .summary { display: flex; gap: 12px; align-items: center; }
+    .sum-box { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 20px; font-weight: 700; color: #000; }
+    .label { color: var(--muted); font-size: 12px; }
+    .summary .label { color: #000; font-size: 16px; font-weight: 700; }
+    .counter { font-size: 16px; color: var(--muted); }
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-top: 12px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: var(--brand); color: #fff; position: sticky; top: 0; z-index: 1; padding: 10px; font-size: 13px; text-align: left; }
+    tbody td { border-top: 1px solid var(--border); padding: 9px; font-size: 13px; vertical-align: top; }
+    tbody tr:nth-child(even) { background: var(--row-alt); }
+    .right { text-align: right; }
+    .loader { display:none; position: fixed; inset: 0; background: rgba(255,255,255,0.6); align-items: center; justify-content: center; z-index: 999; }
+    .spinner { width: 24px; height: 24px; border: 3px solid #d1d5db; border-top-color: var(--brand); border-radius: 50%; animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Responsive layout tweaks */
+    .search-box input { flex: 1 1 220px; min-width: 160px; }
+    @media (max-width: 900px){
+      .topbar { grid-template-columns: 1fr auto; }
+    }
+    @media (max-width: 640px){
+      .topbar { grid-template-columns: 1fr; row-gap: 8px; }
+      .summary { flex-wrap: wrap; }
+      .search-box { gap: 8px; }
+      .search-box input { flex: 1 1 100%; min-width: 100%; }
+      .actions { flex-direction: column; align-items: stretch; gap: 8px; }
+      .btn { width: 100%; min-width: 0; }
+    }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 900px; }
+  </style>
+  <script>
+    // i18n dictionary and helpers
+    const I18N = {
+      en: {
+        brand_title: 'Gulf Industrial Service Company',
+        back_main: 'Back to Main Page',
+        results_label: 'results'
+      },
+      ar: {
+        brand_title: 'شركة الخليج للخدمات الصناعية',
+        back_main: 'العودة إلى الصفحة الرئيسية',
+        results_label: 'نتائج'
+      }
+    };
+    const getLang = () => localStorage.getItem('lang') || 'ar';
+    const applyLang = (lang) => {
+      document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      const dict = I18N[lang] || I18N.ar;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+    };
+    const setLang = (lang) => { localStorage.setItem('lang', lang); applyLang(lang); };
+    const excelPath = 'Requests.xlsx';
+    let ALL_ROWS = [];
+
+    function formatAED(n){ return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(Number(n || 0)); }
+    function formatNumber(n){ return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 6 }); }
+    function showLoader(v){ const el = document.getElementById('loader'); if (el) el.style.display = v ? 'flex' : 'none'; }
+    function setStatus(msg, isError=false){ const el = document.getElementById('statusBar'); el.textContent = msg || ''; el.style.color = isError ? '#b00020' : 'var(--muted)'; }
+
+    const FIELD_ALIASES = {
+      request: ['Requisition','req','reqno','req_no','req id','reqid','رقمالطلب','رقم الطلب'],
+      requestDate: ['creation_date'],
+      order: ['order','orderno','order_no','po','po no','po_no','store order','storeorder','رقمالامر','رقم الامر'],
+      amount: ['amount','total','cost','المبلغ','value'],
+      receiptDate: ['RECEIPT DATE','rec date','receiptdate','تاريخ الاستلام','تاريخالاستلام'],
+      receiptOrder: ['Receipt','receiptno','receipt no','رقم امر الاستلام','رقمامرالاستلام'],
+      remark: ['remark','type','classification','ملاحظة','ملاحظه','rmk']
+    };
+    function normalizeKey(k){ return String(k || '').toLowerCase().replace(/\s+|_/g,'').trim(); }
+    function pickField(obj, aliases){
+      const keys = Object.keys(obj);
+      const normToKey = new Map(keys.map(k => [normalizeKey(k), k]));
+      for (const alias of aliases){
+        const nk = normalizeKey(alias);
+        if (normToKey.has(nk)) return obj[normToKey.get(nk)];
+      }
+      return '';
+    }
+    // Pick only if an exact alias header exists; otherwise return empty string.
+    function pickExactField(obj, aliases){
+      const keys = Object.keys(obj);
+      const normToKey = new Map(keys.map(k => [normalizeKey(k), k]));
+      for (const alias of aliases){
+        const nk = normalizeKey(alias);
+        if (normToKey.has(nk)) return obj[normToKey.get(nk)];
+      }
+      return '';
+    }
+    // Convert various date inputs to an Excel serial number string (e.g., 4/19/2025 -> "45766").
+    function dateToExcelSerial(val){
+      if (val === null || val === undefined || val === '') return '';
+      if (typeof val === 'number' && isFinite(val)) return String(Math.floor(val));
+      if (Object.prototype.toString.call(val) === '[object Date]'){
+        const y = val.getUTCFullYear();
+        const m = val.getUTCMonth();
+        const d = val.getUTCDate();
+        const base = Date.UTC(1899, 11, 30); // Excel epoch baseline
+        const utc = Date.UTC(y, m, d);
+        return String(Math.floor((utc - base) / 86400000));
+      }
+      const s = String(val).trim();
+      const n = Number(s);
+      if (!Number.isNaN(n) && isFinite(n)) return String(Math.floor(n));
+      // Try native Date parse first
+      const d1 = new Date(s);
+      if (!Number.isNaN(d1.getTime())){
+        const base = Date.UTC(1899, 11, 30);
+        const utc = Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth(), d1.getUTCDate());
+        return String(Math.floor((utc - base) / 86400000));
+      }
+      // Try flexible numeric tokens (D/M/Y or M/D/Y)
+      const parts = s.match(/\d+/g);
+      if (parts && parts.length >= 3){
+        const [a,b,c] = parts.map(Number);
+        const candDMY = new Date(Date.UTC(c, (a-1), b));
+        const candMDY = new Date(Date.UTC(c, (b-1), a));
+        const use = (a > 12 && !Number.isNaN(candDMY.getTime())) ? candDMY
+                  : (!Number.isNaN(candMDY.getTime())) ? candMDY
+                  : (!Number.isNaN(candDMY.getTime())) ? candDMY
+                  : null;
+        if (use){
+          const base = Date.UTC(1899, 11, 30);
+          const utc = Date.UTC(use.getUTCFullYear(), use.getUTCMonth(), use.getUTCDate());
+          return String(Math.floor((utc - base) / 86400000));
+        }
+      }
+      // Fallback: return digits only if present, else original string
+      const digits = s.replace(/\D/g,'');
+      return digits || s;
+    }
+    // Minimal formatter used in search index and UI for receipt date; returns ISO date if parsable, else original.
+    function formatDate(val){
+      if (val === null || val === undefined || val === '') return '';
+      if (typeof val === 'number' && isFinite(val)){
+        const base = Date.UTC(1899, 11, 30);
+        const ms = Math.round(val) * 86400000;
+        const d = new Date(base + ms);
+        return !Number.isNaN(d.getTime()) ? d.toISOString().slice(0,10) : String(val);
+      }
+      if (Object.prototype.toString.call(val) === '[object Date]'){
+        return val.toISOString().slice(0,10);
+      }
+      const s = String(val).trim();
+      const d1 = new Date(s);
+      return !Number.isNaN(d1.getTime()) ? d1.toISOString().slice(0,10) : s;
+    }
+    // Render date as DD/MM/YYYY for UI; supports Excel serials, Date objects, and common strings.
+    function formatDateDMY(val){
+      if (val === null || val === undefined || val === '') return '';
+      const pad2 = (n) => String(n).padStart(2,'0');
+      const toDMY = (d) => `${pad2(d.getUTCDate())}/${pad2(d.getUTCMonth()+1)}/${d.getUTCFullYear()}`;
+      if (typeof val === 'number' && isFinite(val)){
+        const base = Date.UTC(1899, 11, 30);
+        const d = new Date(base + Math.round(val) * 86400000);
+        return !Number.isNaN(d.getTime()) ? toDMY(d) : String(val);
+      }
+      if (Object.prototype.toString.call(val) === '[object Date]'){
+        return toDMY(val);
+      }
+      const s = String(val).trim();
+      const d1 = new Date(s);
+      if (!Number.isNaN(d1.getTime())) return toDMY(d1);
+      const parts = s.match(/\d+/g);
+      if (parts && parts.length >= 3){
+        const [a,b,c] = parts.map(Number);
+        const candDMY = new Date(Date.UTC(c, (b-1), a));
+        const candMDY = new Date(Date.UTC(c, (a-1), b));
+        const use = (a > 12 && !Number.isNaN(candDMY.getTime())) ? candDMY
+                  : (!Number.isNaN(candMDY.getTime())) ? candMDY
+                  : (!Number.isNaN(candDMY.getTime())) ? candDMY
+                  : null;
+        if (use) return toDMY(use);
+      }
+      return s;
+    }
+    function buildRow(item){
+      const request = String(pickField(item, FIELD_ALIASES.request) || '').trim();
+      const requestDate = pickField(item, FIELD_ALIASES.requestDate);
+      const order = String(pickField(item, FIELD_ALIASES.order) || '').trim();
+      const amountRaw = pickField(item, FIELD_ALIASES.amount);
+      const amount = Number(amountRaw || 0);
+      const receiptDate = pickField(item, FIELD_ALIASES.receiptDate);
+      const receiptOrder = String(pickField(item, FIELD_ALIASES.receiptOrder) || '').trim();
+      const remark = String(pickField(item, FIELD_ALIASES.remark) || '').trim();
+      const searchIndex = [
+        request,
+        dateToExcelSerial(requestDate),
+        formatDateDMY(requestDate),
+        order,
+        amount,
+        formatDate(receiptDate),
+        receiptOrder,
+        remark
+      ].map(s => String(s).toLowerCase()).join(' | ');
+      return { request, requestDate, order, amount, receiptDate, receiptOrder, remark, searchIndex };
+    }
+    function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+
+    function renderTable(rows){
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      let sum = 0;
+      for (const r of rows){
+        sum += Number(r.amount) || 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="right">${escapeHtml(r.request)}</td>
+          <td>${escapeHtml(formatDateDMY(r.requestDate))}</td>
+          <td class="right">${escapeHtml(r.order)}</td>
+          <td class="right">${formatAED(r.amount)}</td>
+          <td>${escapeHtml(formatDate(r.receiptDate))}</td>
+          <td class="right">${escapeHtml(r.receiptOrder)}</td>
+          <td><button class="btn blue" onclick="openDetails('${encodeURIComponent(r.request)}')">تفاصيل</button></td>
+        `;
+        tr.dataset.index = r.searchIndex;
+        tbody.appendChild(tr);
+      }
+      document.getElementById('resultCount').textContent = String(rows.length);
+      document.getElementById('sumAmount').textContent = formatAED(sum);
+    }
+
+    function filterNow(){
+      const queries = [
+        (document.getElementById('q1') || { value:'' }).value.trim().toLowerCase(),
+        (document.getElementById('q2') || { value:'' }).value.trim().toLowerCase(),
+        (document.getElementById('q3') || { value:'' }).value.trim().toLowerCase(),
+        (document.getElementById('q4') || { value:'' }).value.trim().toLowerCase()
+      ].filter(Boolean);
+      const filtered = ALL_ROWS.filter(r => {
+        const idx = r.searchIndex || '';
+        return queries.every(q => q.split(/\s+/).every(tok => idx.includes(tok)));
+      });
+      renderTable(filtered);
+    }
+
+    // Encode once even if the input is already percent-encoded
+    function openDetails(req){ const url = 'Details.html?req=' + encodeURIComponent(decodeURIComponent(req || '')); window.open(url, '_blank'); }
+
+    async function loadExcel(){
+      try {
+        showLoader(true);
+        setStatus('Loading Requests.xlsx…');
+        const res = await fetch(excelPath + '?ts=' + Date.now());
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        const buf = await res.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        ALL_ROWS = json.map(buildRow);
+        renderTable(ALL_ROWS);
+        setStatus(`Loaded ${ALL_ROWS.length} rows from Requests.xlsx`);
+      } catch (e) {
+        console.error(e);
+        setStatus('Auto-load failed. Make sure Requests.xlsx is available.', true);
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    // Filters
+    function showAll(){ renderTable(ALL_ROWS); }
+    function isReceived(val){ const s = String(val || '').trim().toLowerCase(); return s !== '' && s !== 'not received'; }
+    function receivedOnly(){ return ALL_ROWS.filter(r => isReceived(r.receiptDate)); }
+    function filterStore(){ const base = receivedOnly(); renderTable(base.filter(r => String(r.order || '').length === 6)); }
+    function filterPO(){ const base = receivedOnly(); renderTable(base.filter(r => String(r.order || '').length === 12)); }
+    function filterReceived(){ renderTable(receivedOnly()); }
+    function filterWO(){ const base = receivedOnly(); renderTable(base.filter(r => String(r.remark || '').trim().toLowerCase() === 'wo')); }
+    function filterM(){ const base = receivedOnly(); renderTable(base.filter(r => String(r.remark || '').trim().toLowerCase() === 'm')); }
+
+    async function loadLocalFile(evt){
+      const input = evt.target;
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const name = String(file.name || '').toLowerCase();
+      const ps = document.getElementById('pathSelector');
+      if (ps) { ps.style.display = 'inline-flex'; ps.value = file.name; }
+      if (name !== 'requests.xlsx'){
+        setStatus('Please select the file named "Requests.xlsx" only.', true);
+        input.value = '';
+        return;
+      }
+      try {
+        showLoader(true);
+        setStatus('Loading local Requests.xlsx…');
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        ALL_ROWS = json.map(buildRow);
+        renderTable(ALL_ROWS);
+        setStatus(`Loaded ${ALL_ROWS.length} rows from local file`);
+      } catch (e) {
+        console.error(e);
+        setStatus('Local load failed. Ensure the file is a valid .xlsx', true);
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      applyLang(getLang());
+      document.querySelectorAll('[data-lang]').forEach(btn => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
+      loadExcel();
+      const lf = document.getElementById('localFile');
+      if (lf) lf.addEventListener('change', loadLocalFile);
+      for (const id of ['q1','q2','q3','q4']){
+        document.addEventListener('input', (e) => {
+          if (e.target && e.target.id === id) filterNow();
+        });
+      }
+      if (location.protocol === 'file:'){
+        const btn = document.getElementById('btnLocal');
+        const ps = document.getElementById('pathSelector');
+        if (btn) btn.style.display = 'inline-flex';
+        if (ps) ps.style.display = 'inline-flex';
+        setStatus('Opened without server. Use "Load Excel" to select Requests.xlsx');
+      }
+    });
+  </script>
+</head>
+<body>
+  <div id="loader" class="loader"><div class="spinner"></div></div>
+  <header class="topbar">
+    <div class="brand">
+      <img src="Logo.bmp" alt="GISCO" class="logo" />
+      <div>
+        <div class="title">Gulf Industrial Service Company</div>
+        <div class="label">Requests Dashboard</div>
+      </div>
+    </div>
+    <div class="summary">
+      <span class="label">اجمالي التكلفة</span>
+      <div class="sum-box" id="sumAmount">AED 0.00</div>
+    </div>
+    <div class="counter"><span id="resultCount">0</span> results</div>
+  </header>
+  <div class="container" style="margin-top: 10px;">
+    <a class="btn back-link" href="index.html" title="Back to Main Page">⬅ Back to Main Page</a>
+  </div>
+
+  <main class="container">
+    <div class="search-box">
+      <input type="text" id="q1" placeholder="بحث 1" />
+      <input type="text" id="q2" placeholder="بحث 2" />
+      <input type="text" id="q3" placeholder="بحث 3" />
+      <input type="text" id="q4" placeholder="بحث 4" />
+    </div>
+    <div class="actions" style="margin-bottom: 10px;">
+      <button class="btn primary" onclick="showAll()">عرض الكل</button>
+      <button class="btn blue" onclick="filterStore()">مواد المخزن فقط</button>
+      <button class="btn purple" onclick="filterPO()">اوامر الشراء فقط</button>
+      <button class="btn green" onclick="filterReceived()">اظهار المواد المستلمة فقط</button>
+      <button class="btn orange" onclick="filterWO()">تكلفة اوامر العمل</button>
+      <button class="btn pink" onclick="filterM()">تكلفة المواد بدون اوامر العمل</button>
+      <input type="file" id="localFile" accept=".xlsx,.xls" style="display:none" />
+      <button id="btnLocal" class="btn green" style="display:none" onclick="document.getElementById('localFile').click()">Load Excel</button>
+      <input type="text" id="pathSelector" placeholder="Selected file path" readonly style="height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;min-width:220px;display:none" />
+    </div>
+
+    <section class="table-wrap">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th class="right">رقم الطلب</th>
+            <th>تاريخ الطلب</th>
+            <th class="right">رقم الأمر</th>
+            <th class="right">المبلغ</th>
+            <th>تاريخ الاستلام</th>
+            <th class="right">رقم امر الاستلام</th>
+            <th>تفاصيل</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </section>
+
+    <div id="statusBar" class="label" style="margin-top:10px"></div>
+  </main>
+</body>
+</html>
+    .back-link { background: #2563eb; color: #fff; border-color: #1d4ed8; }

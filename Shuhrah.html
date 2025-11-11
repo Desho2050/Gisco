@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GISCO Purchase Summary</title>
+  <style>
+    :root {
+      --primary: #6c3483;
+      --primary-dark: #512e5f;
+      --accent: #2e86de;
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --success: #117a65;
+      --danger: #b00020;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    header { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 28px 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+    header h2 { margin: 0; text-align: center; letter-spacing: 0.4px; color: #000 !important; }
+    .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); padding: 18px; }
+    .search-box { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+    .search-box input { padding: 10px 12px; width: 180px; border: 1px solid var(--border); border-radius: 10px; outline: none; transition: box-shadow 0.2s, border-color 0.2s; color: #000; }
+    .search-box input::placeholder { color: #000; opacity: 1; }
+    .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(108,52,131,0.12); }
+    .actions { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .btn { padding: 10px 16px; border-radius: 10px; border: 1px solid transparent; cursor: pointer; font-weight: 600; transition: transform 0.05s ease, box-shadow 0.2s ease, background 0.2s; }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 6px 16px rgba(108,52,131,0.25); }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: #fff; color: var(--text); border-color: var(--border); }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-success { background: var(--success); color: #fff; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 12px; overflow: hidden; }
+    thead th { background: var(--primary); color: white; position: sticky; top: 0; z-index: 1; }
+    th, td { border: 1px solid var(--border); padding: 10px; text-align: center; }
+    tbody tr:nth-child(odd) { background: #fafafa; }
+    tbody tr:hover { background: #f0f7ff; }
+    td[contenteditable="true"] { background-color: #fcfcff; }
+    .summary { margin-top: 18px; font-size: 16px; font-weight: 600; color: var(--text); display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+    .error { color: var(--danger); margin-top: 10px; padding: 10px 12px; background: #fde7ea; border: 1px solid #f6c3cb; border-radius: 10px; display:none; }
+    .loader { display: none; align-items: center; gap: 10px; color: var(--muted); font-weight: 600; }
+    .spinner { width: 18px; height: 18px; border: 3px solid #d1d5db; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Responsive layout tweaks */
+    .search-box input { flex: 1 1 220px; min-width: 160px; }
+    @media (max-width: 900px){
+      header { padding: 20px 14px; }
+    }
+    @media (max-width: 640px){
+      .search-box { gap: 8px; }
+      .search-box input { flex: 1 1 100%; min-width: 100%; }
+      .actions { flex-direction: column; align-items: stretch; gap: 8px; }
+      .btn { width: 100%; min-width: 0; }
+    }
+    .card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 900px; }
+  </style>
+
+  <!-- External Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <h2 id="title" data-i18n="brand_title">GISCO - Gulf Industrial Services Co.</h2>
+  </header>
+  <div class="container">
+  <style>
+    .back-link { display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px; border:1px solid #1d4ed8; border-radius:10px; background:#2563eb; color:#fff; text-decoration:none; }
+    .btn { text-decoration: none; }
+  </style>
+    <a class="btn back-link" href="index.html" data-i18n="back_main" title="Back to Main Page">Back to Main Page</a>
+  <div class="card">
+  <div class="search-box">
+    <input type="text" id="search1" placeholder="النص الأول / First Text" onkeyup="filterTable()">
+    <input type="text" id="search2" placeholder="النص الثاني / Second Text" onkeyup="filterTable()">
+    <input type="text" id="search3" placeholder="النص الثالث / Third Text" onkeyup="filterTable()">
+    <input type="text" id="search4" placeholder="النص الرابع / Fourth Text" onkeyup="filterTable()">
+  </div>
+
+  <div class="actions">
+    <input type="file" id="localFile" accept=".xlsx,.xls" style="display:none" />
+    <button id="btnLocal" class="btn btn-success" style="display:none" onclick="document.getElementById('localFile').click()">Load Excel</button>
+    <input type="text" id="pathSelector" placeholder="Selected file path" readonly style="height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;min-width:220px;display:none" />
+    <button class="btn btn-outline" onclick="refreshData()">Refresh Data</button>
+    <button class="btn btn-primary" onclick="window.print()">Print</button>
+    <button class="btn btn-success" onclick="exportExcel()">Save Excel</button>
+    <button class="btn btn-outline" onclick="exportPDF()">Export PDF</button>
+    <button class="btn btn-outline" onclick="toggleLanguage()">Toggle Arabic/English</button>
+  </div>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <span>Loading data...</span>
+  </div>
+
+  <table id="data-table">
+    <thead>
+      <tr>
+        <th>REQUEST</th>
+        <th>Item Code</th>
+        <th>Description</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Job No</th>
+        <th>Total Amount</th>
+        <th>Status</th>
+        <th>Order</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="summary">
+    التكلفة بدون ضريبة: <span id="totalWithoutVAT">0</span> درهم إماراتي<br>
+    التكلفة مع ضريبة: <span id="totalWithVAT">0</span> درهم إماراتي<br>
+    العدد: <span id="totalQty">0</span> كمبريسور
+  </div>
+
+  <div id="error" class="error"></div>
+
+  </div>
+  </div>
+
+  <script>
+    // i18n and language persistence
+    const I18N = {
+      en: {
+        brand_title: 'GISCO - Gulf Industrial Services Co.',
+        back_main: 'Back to Main Page'
+      },
+      ar: {
+        brand_title: 'GISCO - شركة خدمات الخليج الصناعية',
+        back_main: 'العودة إلى الصفحة الرئيسية'
+      }
+    };
+    const getLang = () => localStorage.getItem('lang') || 'ar';
+    const applyLang = (lang) => {
+      document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      const dict = I18N[lang] || I18N.ar;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+    };
+    const setLang = (lang) => { localStorage.setItem('lang', lang); applyLang(lang); };
+    let data = [];
+    let isArabic = true;
+
+    // Utility UI helpers
+    function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
+    function showError(msg) { const el = document.getElementById('error'); el.textContent = msg || ''; el.style.display = msg ? 'block' : 'none'; }
+
+    // Search helpers: build a hidden index combining all fields
+    function normalizeValue(v) { return String(v ?? '').toLowerCase().trim(); }
+    function buildSearchIndex(item) {
+      const fields = ['REQUEST','Item Code','Description','Qty','Price','Job No','Status','Order'];
+      return fields.map(f => normalizeValue(item[f])).join(' ');
+    }
+
+    // Auto-load sh.xlsx from the same folder when the page opens
+    async function autoLoadExcel() {
+      try {
+        showLoader(true); showError('');
+        const res = await fetch('sh.xlsx?ts=' + Date.now());
+        if (!res.ok) throw new Error('Failed to fetch sh.xlsx');
+        const arrayBuffer = await res.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        // add hidden search index for each row
+        data = data.map((item) => ({ ...item, searchIndex: buildSearchIndex(item) }));
+        if (data.length === 0) {
+          showError('No data found in sh.xlsx. Check headers and format.');
+        }
+        renderTable();
+      } catch (err) {
+        console.error('Auto-load failed:', err);
+        showError('Auto-load failed. If running without a server, use "Load Local Excel".');
+        // reveal local file button as fallback when fetch fails
+        const btn = document.getElementById('btnLocal'); if (btn) btn.style.display = 'inline-block';
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    // Local file fallback (no server required)
+    async function loadLocalFile(file){
+      try {
+        if (!file) return;
+        const ps = document.getElementById('pathSelector');
+        const input = document.getElementById('localFile');
+        const fname = String(file.name || '').toLowerCase();
+        if (fname !== 'sh.xlsx') {
+          showError('Please select the file named "sh.xlsx" only.');
+          if (ps) { ps.value = ''; }
+          if (input) { input.value = ''; }
+          return;
+        }
+        if (ps) { ps.style.display = 'inline-block'; ps.value = file.name; }
+        showLoader(true); showError('');
+        const buf = await file.arrayBuffer();
+        const workbook = XLSX.read(buf, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        data = data.map((item) => ({ ...item, searchIndex: buildSearchIndex(item) }));
+        renderTable();
+      } catch (e) {
+        console.error('Local load failed:', e);
+        showError('Local load failed. Ensure the file is a valid .xlsx');
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function refreshData() { autoLoadExcel(); }
+
+    function renderTable() {
+      const tbody = document.querySelector("#data-table tbody");
+      tbody.innerHTML = "";
+      let totalQty = 0, totalAmount = 0;
+      data.forEach((item, index) => {
+        const row = `<tr>
+          <td contenteditable="true" onblur="updateData(${index}, 'REQUEST', this.textContent)">${item['REQUEST'] || ''}</td>
+          <td contenteditable="true" onblur="updateData(${index}, 'Item Code', this.textContent)">${item['Item Code'] || ''}</td>
+          <td contenteditable="true" onblur="updateData(${index}, 'Description', this.textContent)">${item['Description'] || ''}</td>
+          <td contenteditable="true" onblur="updateData(${index}, 'Qty', this.textContent)">${item['Qty'] || 0}</td>
+          <td contenteditable="true" onblur="updateData(${index}, 'Price', this.textContent)">${item['Price'] || 0}</td>
+          <td contenteditable="true" onblur="updateData(${index}, 'Job No', this.textContent)">${item['Job No'] || ''}</td>
+          <td>${formatCurrency((Number(item['Qty']) || 0) * (Number(item['Price']) || 0))}</td>
+          <td contenteditable="true" onblur="updateData(${index}, 'Status', this.textContent)"><span class="badge">${item['Status'] || ''}</span></td>
+          <td contenteditable="true" onblur="updateData(${index}, 'Order', this.textContent)">${item['Order'] || ''}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+        totalQty += Number(item['Qty']) || 0;
+        totalAmount += (Number(item['Qty']) || 0) * (Number(item['Price']) || 0);
+      });
+      document.getElementById("totalQty").textContent = totalQty;
+      document.getElementById("totalWithoutVAT").textContent = formatCurrency(totalAmount);
+      document.getElementById("totalWithVAT").textContent = formatCurrency(totalAmount * 1.05);
+    }
+
+    function updateData(index, field, value) {
+      data[index][field] = (field === 'Qty' || field === 'Price') ? Number(value) : value;
+      // rebuild search index for the updated row
+      data[index].searchIndex = buildSearchIndex(data[index]);
+      renderTable();
+    }
+
+    function filterTable() {
+      const s1 = document.getElementById("search1").value.toLowerCase();
+      const s2 = document.getElementById("search2").value.toLowerCase();
+      const s3 = document.getElementById("search3").value.toLowerCase();
+      const s4 = document.getElementById("search4").value.toLowerCase();
+      // Combine all input texts into tokens and ensure each token appears in any part of the row
+      const tokens = [s1, s2, s3, s4]
+        .flatMap(t => t.split(/\s+/))
+        .map(t => t.trim())
+        .filter(Boolean);
+      const tbody = document.querySelector("#data-table tbody");
+      tbody.innerHTML = "";
+      let totalQty = 0, totalAmount = 0;
+      data.filter(item => tokens.every(tok => item.searchIndex.includes(tok))).forEach(item => {
+        const row = `<tr>
+          <td>${item['REQUEST'] || ''}</td>
+          <td>${item['Item Code'] || ''}</td>
+          <td>${item['Description'] || ''}</td>
+          <td>${item['Qty'] || 0}</td>
+          <td>${item['Price'] || 0}</td>
+          <td>${item['Job No'] || ''}</td>
+          <td>${formatCurrency((Number(item['Qty']) || 0) * (Number(item['Price']) || 0))}</td>
+          <td>${item['Status'] || ''}</td>
+          <td>${item['Order'] || ''}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+        totalQty += Number(item['Qty']) || 0;
+        totalAmount += (Number(item['Qty']) || 0) * (Number(item['Price']) || 0);
+      });
+      document.getElementById("totalQty").textContent = totalQty;
+      document.getElementById("totalWithoutVAT").textContent = formatCurrency(totalAmount);
+      document.getElementById("totalWithVAT").textContent = formatCurrency(totalAmount * 1.05);
+    }
+
+    function formatCurrency(value) { return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    function exportExcel() {
+      // exclude the hidden searchIndex from export
+      const cleaned = data.map(({ searchIndex, ...rest }) => rest);
+      const ws = XLSX.utils.json_to_sheet(cleaned);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Updated Data");
+      XLSX.writeFile(wb, 'updated_sh.xlsx');
+    }
+
+    function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'pt');
+      doc.text('GISCO Purchase Summary', 40, 40);
+      const headers = [['REQUEST','Item Code','Description','Qty','Price','Job No','Total Amount','Status','Order']];
+      const rows = data.map(item => [
+        item['REQUEST'] || '',
+        item['Item Code'] || '',
+        item['Description'] || '',
+        item['Qty'] || 0,
+        item['Price'] || 0,
+        item['Job No'] || '',
+        ((Number(item['Qty']) || 0) * (Number(item['Price']) || 0)).toFixed(2),
+        item['Status'] || '',
+        item['Order'] || ''
+      ]);
+      // Simple table rendering
+      let x = 40, y = 70;
+      headers.concat(rows).forEach((row, i) => {
+        let line = row.join(' | ');
+        doc.text(line, x, y + i * 18);
+      });
+      doc.save('gisco_summary.pdf');
+    }
+
+    function toggleLanguage() {
+      const next = getLang() === 'ar' ? 'en' : 'ar';
+      setLang(next);
+    }
+
+    // Robust auto-load trigger: run immediately if DOM is already ready
+    (function initAutoLoad(){
+      const start = () => {
+        // Apply persisted language on load
+        applyLang(getLang());
+        if (!window.XLSX) { showError('Excel parser (XLSX) not loaded. Check CDN connectivity.'); return; }
+        // If opened via file://, show local load option instead of fetching
+        const isFile = location.protocol === 'file:';
+        const btn = document.getElementById('btnLocal');
+        const input = document.getElementById('localFile');
+        const ps = document.getElementById('pathSelector');
+        if (btn && input) {
+          input.addEventListener('change', (e) => loadLocalFile(e.target.files[0]));
+        }
+        if (isFile) {
+          if (btn) btn.style.display = 'inline-block';
+          if (ps) ps.style.display = 'inline-block';
+          showError('Opened without server. Use "Load Local Excel" to select sh.xlsx.');
+        } else {
+          autoLoadExcel();
+        }
+      };
+      if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', start, { once: true });
+      } else {
+        start();
+      }
+    })();
+  </script>
+
+</body>
+</html>
