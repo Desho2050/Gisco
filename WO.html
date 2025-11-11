@@ -403,11 +403,13 @@
               handled = true;
             }
           } else if (h.key === 'LPO'){
+            const loc = row['LOCATION'] ?? '';
+            const cam = row['CAMP'] ?? '';
             const raw = row[h.key] ?? '';
             const name = String(raw).trim();
             if (name){
-              const file = name.toLowerCase().endsWith('.pdf') ? name : name + '.pdf';
-              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file}')" title="Open ${file}">${name}</a>`;
+              const file = name.toLowerCase().endsWith('.pdf') ? name : name +'.pdf';
+              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file +  ' ' + cam +  '  (  ' + loc +'   )  '}')" title="Open ${file}">${name }</a>`;
               handled = true;
             } else {
               td.textContent = '';
@@ -415,6 +417,8 @@
             }
           } else if (h.key === 'DO'){
             const lpoRaw = row['LPO'] ?? '';
+             const loc = row['LOCATION'] ?? '';
+            const cam = row['CAMP'] ?? '';
             const lpoName = String(lpoRaw).trim();
             const doLabelRaw = row[h.key] ?? '';
             const doLabel = String(doLabelRaw).trim();
@@ -422,7 +426,7 @@
               const base = lpoName ? lpoName.replace(/\.pdf$/i,'') : doLabel.replace(/\.pdf$/i,'');
               const file = lpoName ? `DO${base}.pdf` : (/^DOPO/.test(base) ? `${base}.pdf` : `DO${base}.pdf`);
               const label = doLabel || (lpoName ? `DO${base}` : `DO${base}`);
-              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file}')" title="Open ${file}">${label}</a>`;
+              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file+  ' ' + cam +  '  (  ' + loc +'   )  '}')" title="Open ${file}">${label}</a>`;
               handled = true;
             } else {
               td.textContent = '';
@@ -430,6 +434,9 @@
             }
           } else if (h.key === 'WO'){
             const raw = row['WO NO.'] ?? '';
+             const lpoRaw = row['LPO'] ?? '';
+             const loc = row['LOCATION'] ?? '';
+            const cam = row['CAMP'] ?? '';
             const name = String(raw).trim();
             if (name){
               let file;
@@ -445,7 +452,7 @@
                   file = `${name}.pdf`;
                 }
               }
-              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file}')" title="Open ${file}">${name}</a>`;
+              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file + '  ( ' +lpoRaw+  ' )  ' + cam +  '  (  ' + loc +'   )  '}')" title="Open ${file}">${name}</a>`;
               handled = true;
             } else {
               td.textContent = '';
