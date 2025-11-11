@@ -348,11 +348,34 @@
     const selLocation = document.getElementById('filterLocation');
     const selType = document.getElementById('filterType');
     let ALL_ROWS = [];
+    let PDF_MAP = {};
 
     function setStatus(msg, isError=false){
       if (!statusEl) return;
       statusEl.textContent = msg || '';
       statusEl.style.color = isError ? '#b00020' : 'var(--muted)';
+    }
+    async function loadRemotePdfMap(){
+      try {
+        const res = await fetch('attachs-remote.json?ts=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json && typeof json === 'object') PDF_MAP = json;
+      } catch (e) {}
+    }
+    async function resolvePdfUrl(file){
+      const mapped = PDF_MAP[file] || PDF_MAP[file.toLowerCase()] || null;
+      if (mapped) return mapped;
+      const root = encodeURIComponent(file);
+      try {
+        const r = await fetch(root, { method: 'HEAD', cache: 'no-store' });
+        if (r.ok) return root;
+      } catch (e) {}
+      return 'attachs/' + encodeURIComponent(file);
+    }
+    async function openPdfViewerFromFile(file, title){
+      const url = await resolvePdfUrl(file);
+      return openPdfViewer(url, title);
     }
     function renderRows(rows){
       const tbody = document.querySelector('#dataTable tbody');
@@ -384,8 +407,7 @@
             const name = String(raw).trim();
             if (name){
               const file = name.toLowerCase().endsWith('.pdf') ? name : name + '.pdf';
-              const url = 'attachs/' + encodeURIComponent(file);
-              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewer('${url}','${file}')" title="Open ${file}">${name}</a>`;
+              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file}')" title="Open ${file}">${name}</a>`;
               handled = true;
             } else {
               td.textContent = '';
@@ -399,9 +421,8 @@
             if (lpoName || doLabel){
               const base = lpoName ? lpoName.replace(/\.pdf$/i,'') : doLabel.replace(/\.pdf$/i,'');
               const file = lpoName ? `DO${base}.pdf` : (/^DOPO/.test(base) ? `${base}.pdf` : `DO${base}.pdf`);
-              const url = 'attachs/' + encodeURIComponent(file);
               const label = doLabel || (lpoName ? `DO${base}` : `DO${base}`);
-              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewer('${url}','${file}')" title="Open ${file}">${label}</a>`;
+              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file}')" title="Open ${file}">${label}</a>`;
               handled = true;
             } else {
               td.textContent = '';
@@ -424,8 +445,7 @@
                   file = `${name}.pdf`;
                 }
               }
-              const url = 'attachs/' + encodeURIComponent(file);
-              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewer('${url}','${file}')" title="Open ${file}">${name}</a>`;
+              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file}')" title="Open ${file}">${name}</a>`;
               handled = true;
             } else {
               td.textContent = '';
@@ -667,7 +687,7 @@
       }
     }
     btnLoad.addEventListener('click', loadFromFile);
-    document.addEventListener('DOMContentLoaded', loadFromServer);
+    document.addEventListener('DOMContentLoaded', async () => { await loadRemotePdfMap(); loadFromServer(); });
     // PDF viewer helpers
     function openPdfViewer(url, title){
       const overlay = document.getElementById('pdfOverlay');
