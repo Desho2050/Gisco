@@ -23,9 +23,9 @@
       /* group colors */
       --col-meta: #000000;
       --col-split: #16a34a;
-      --col-window: #22c55e;
-      --col-cooler: #f59e0b;
-      --col-used: #d97706;
+      --col-window: #c022c5;
+      --col-cooler: #00eeff;
+      --col-used: #d90606;
       --col-fridge: #6b7280;
       --col-freezer: #9ca3af;
       --col-package: #60a5fa;
@@ -49,17 +49,47 @@
     .btn { height:36px; padding:0 14px; border:1px solid var(--border); border-radius:8px; background:#fff; color:var(--text); display:inline-flex; align-items:center; gap:8px; cursor:pointer; text-decoration:none; }
     .btn.primary { background: var(--brand); color:#fff; border-color:#173a5a; }
     .file { height:36px; }
-    .table-wrap { background: var(--surface); border:1px solid var(--border); border-radius:10px; overflow:auto; margin-top:12px; }
+    .table-wrap { background: var(--surface); border:1px solid var(--border); border-radius:10px; overflow:auto; margin-top:5px; }
     table { width: 100%; border-collapse: collapse; table-layout:auto; }
     /* Ensure horizontal scroll when total width exceeds viewport */
-    #dataTable { min-width: 1900px; }
-    /* Increase all column base width by ~10px */
-    #dataTable th, #dataTable td { min-width: 20px; }
+    #dataTable { min-width: 3000px; }
+ 
     /* Wider Camp & Location columns via colgroup */
-    #dataTable col.col-camp { width: clamp(60px, 22vw, 20px); }
-    #dataTable col.col-location { width: clamp(60px, 22vw, 90px); }
+    #dataTable col.col-wo { width: clamp(60px, 22vw, 10%); }
+    #dataTable col.col-camp { width: clamp(60px, 22vw, 15%); }
+    #dataTable col.col-location { width: clamp(60px, 22vw, 20%); }
+
+    #dataTable col.col-split-1-5,
+    #dataTable col.col-split-2,
+    #dataTable col.col-split-2-5,
+    #dataTable col.col-split-3,
+    #dataTable col.col-window,
+    #dataTable col.col-cooler,
+    #dataTable col.col-used,
+    #dataTable col.col-fridge,
+    #dataTable col.col-freezer,
+    #dataTable col.col-pkg-8,
+    #dataTable col.col-pkg-10,
+    #dataTable col.col-pkg-12,
+    #dataTable col.col-pkg-15,
+    #dataTable col.col-pkg-20,
+    #dataTable col.col-pkg-25,
+    #dataTable col.col-freestand-5,
+    #dataTable col.col-freestand-8 {
+      width: 50px;
+    }
+    #dataTable col.col-amount { width: clamp(80px, 13vw, 5%); }
+    #dataTable col.col-start-date { width: clamp(70px, 5vw, 5%); }
+    #dataTable col.col-end-date { width: clamp(70px, 5vw, 5%); }
+    #dataTable col.col-remain-days { width: clamp(85px, 5vw, 5%); }
+    #dataTable col.col-percentage { width: clamp(80px, 5vw, 5%); }
+    #dataTable col.col-lpo { width: clamp(75px, 12vw, 5%); }
+    #dataTable col.col-do { width: clamp(75px, 12vw, 5%); }
+    #dataTable col.col-wo-pdf { width: clamp(75px, 12vw, 5%); }
+    #dataTable col.col-cost { width: clamp(90px, 14vw, 5%); }
     thead th { background: var(--col-meta); color:#fff; position: sticky; top: 0; z-index: 2; padding:8px; font-size: clamp(12px, 0.9vw, 14px); text-align:center; white-space: normal; overflow-wrap: anywhere; hyphens: auto; border: 1px solid var(--grid); }
-    tbody td { border: 1px solid var(--grid); padding: 8px; text-align: center; font-size: clamp(11px, 0.85vw, 13px); white-space: normal; overflow-wrap: anywhere; hyphens: auto; }
+  tbody td { border: 1px solid var(--grid); padding: 0 0px; text-align: center; font-size: 11px; font-weight: bold; white-space: normal; overflow-wrap: anywhere; hyphens:auto; height: 3px; }
+  #dataTable tbody tr { height: 6px; }
     /* header color per group */
     .th-meta { background: var(--col-meta); }
     .th-split { background: var(--col-split); }
@@ -84,7 +114,7 @@
     td.cooler.is-numeric,
     td.freezer.is-numeric,
     td.freestand.is-numeric { background: transparent; color: inherit; }
-    .count-badge { display:inline-flex; align-items:center; justify-content:center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 6px; font-weight: 700; color:#fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3), 0 1px 2px rgba(0,0,0,0.15); }
+    .count-badge { display:inline-flex; align-items:center; justify-content:center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 6px; font-weight: 700; color:#fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3), 0 1px 2px rgba(0,0,0,0.15); }
     .count-badge.split { background: var(--col-split); }
     .count-badge.window { background: var(--col-window); }
     .count-badge.package { background: var(--col-package); }
@@ -94,7 +124,7 @@
     .count-badge.freezer { background: var(--col-freezer); }
     .count-badge.freestand { background: var(--col-freestand); }
     /* LPO cell button */
-    .lpo-btn { display:inline-flex; align-items:center; justify-content:center; height: 50px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: #09ced5; color: var(--brand); font-weight: 700; font-size: 12px; text-decoration: none; cursor: pointer; }
+    .lpo-btn { display:inline-flex; align-items:center; justify-content:center; height: 30px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: #09ced5; color: var(--brand); font-weight: 700; font-size: 12px; text-decoration: none; cursor: pointer; }
     .lpo-btn:hover { background: #07de7a; border-color: #08e3e3; }
     /* PDF viewer overlay */
     .pdf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; z-index: 9999; }
@@ -115,14 +145,24 @@
     .card { border:1px solid var(--border); border-radius:8px; padding:10px; background:#fff; }
     .card .title { font-weight:700; font-size:13px; color: var(--muted); }
     .card .value { margin-top:6px; font-size:20px; font-weight:700; color: var(--brand); }
-    .charts { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:12px; margin-top:12px; }
+    .charts {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      gap: 12px;
+      margin-top: 12px;
+    }
     .chart-card { border:1px solid var(--border); border-radius:8px; padding:10px; background:#fff; }
     .chart-card .title { font-weight:700; font-size:13px; color: var(--muted); margin-bottom:6px; }
+    .separated-wo-charts { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:12px; }
+    .mini-card { border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; }
+    .mini-title { font-weight:700; font-size:12px; color: var(--muted); margin-bottom:4px; }
+    .mini-card canvas { width:100%; }
     /* Responsive tweaks */
     @media (max-width: 640px){
       .controls { flex-direction: column; align-items: stretch; }
       .btn { width: 100%; }
-      table { }
+    
       #dataTable col.col-camp { width: clamp(140px, 40vw, 220px); }
       #dataTable col.col-location { width: clamp(180px, 60vw, 280px); }
       thead th, tbody td { padding: 2px; }
@@ -138,39 +178,25 @@
     <section class="controls">
       <input class="file" type="file" id="excelFile" accept=".xlsx,.xls" />
       <button class="btn primary" id="btnLoad">Load Selected Excel</button>
-      <select class="btn" id="filterCamp" title="Filter by Camp"></select>
-      <select class="btn" id="filterLocation" title="Filter by Location"></select>
-      <select class="btn" id="filterType" title="Filter by Type"></select>
+
+      <select class="btn" id="filterCamp" title="Filter By Camp" style="color: #000000; font-size: large; background-color: #41ccec;"><option value="">Filter By Camp</option></select>
+      <select class="btn" id="filterLocation" title="Filter by Location" style="color: #000000; font-size: large; background-color: #41ccec;"></select>
+      <select class="btn" id="filterType" title="Filter by Type" style="color: #000000; font-size: large; background-color: #41ccec;"></select>
     </section>
     <div id="statusBar" class="status"></div>
     <section id="statsPanel" class="stats">
       <div class="cards">
-        <div class="card"><div class="title">Total Splits</div><div id="statTotalSplit" class="value">0</div></div>
-        <div class="card"><div class="title">Total Packages</div><div id="statTotalPackage" class="value">0</div></div>
-        <div class="card"><div class="title">Total Free Stand</div><div id="statTotalFreestand" class="value">0</div></div>
-        <div class="card"><div class="title">Total Window</div><div id="statTotalWindow" class="value">0</div></div>
-        <div class="card"><div class="title">Total Used AC</div><div id="statTotalUsed" class="value">0</div></div>
-        <div class="card"><div class="title">Total Cooler</div><div id="statTotalCooler" class="value">0</div></div>
-        <div class="card"><div class="title">Total Fridge</div><div id="statTotalFridge" class="value">0</div></div>
-        <div class="card"><div class="title">Total Freezer</div><div id="statTotalFreezer" class="value">0</div></div>
-        <div class="card"><div class="title">Total Cost Without VAT</div><div id="statTotalCostNoVat" class="value">0</div></div>
-      </div>
-      <div class="charts">
-        <div class="chart-card">
-          <div class="title">Split ACs by Ton</div>
-          <canvas id="chartSplit" height="160"></canvas>
-        </div>
-        <div class="chart-card">
-          <div class="title">Package ACs by Ton</div>
-          <canvas id="chartPackage" height="160"></canvas>
-        </div>
-        <div class="chart-card">
-          <div class="title">Group Composition</div>
-          <canvas id="chartGroups" height="160"></canvas>
-        </div>
-      </div>
-    </section>
-    <section class="table-wrap">
+        <div class="card" style="background-color: #32cc6b; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Splits</div><div id="statTotalSplit" class="value">0</div></div>
+        <div class="card" style="background-color: #40a7de; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Packages</div><div id="statTotalPackage" class="value">0</div></div>
+        <div class="card" style="background-color: #9d9a9a; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Free Stand</div><div id="statTotalFreestand" class="value">0</div></div>
+        <div class="card" style="background-color: #c809af; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Window</div><div id="statTotalWindow" class="value">0</div></div>
+        <div class="card" style="background-color: #c20909; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Used AC</div><div id="statTotalUsed" class="value">0</div></div>
+        <div class="card" style="background-color: #08cfe9; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Cooler</div><div id="statTotalCooler" class="value">0</div></div>
+        <div class="card" style="background-color: #777575; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Fridge</div><div id="statTotalFridge" class="value">0</div></div>
+        <div class="card" style="background-color: #c6c2c2; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Freezer</div><div id="statTotalFreezer" class="value">0</div></div>
+        <div class="card" style="background-color: #111010; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Cost Without VAT</div><div id="statTotalCostNoVat" class="value">0</div></div>
+    </div>
+   
       <!-- PDF viewer overlay (created once and reused) -->
       <div id="pdfOverlay" class="pdf-overlay" aria-hidden="true">
         <div class="pdf-dialog" role="dialog" aria-modal="true" aria-label="PDF viewer">
@@ -183,9 +209,35 @@
       </div>
       <table id="dataTable">
         <colgroup>
-          <col />
+          <col class="col-wo" />
           <col class="col-camp" />
           <col class="col-location" />
+          <col class="col-split-1-5" />
+          <col class="col-split-2" />
+          <col class="col-split-2-5" />
+          <col class="col-split-3" />
+          <col class="col-window" />
+          <col class="col-cooler" />
+          <col class="col-used" />
+          <col class="col-fridge" />
+          <col class="col-freezer" />
+          <col class="col-pkg-8" />
+          <col class="col-pkg-10" />
+          <col class="col-pkg-12" />
+          <col class="col-pkg-15" />
+          <col class="col-pkg-20" />
+          <col class="col-pkg-25" />
+          <col class="col-freestand-5" />
+          <col class="col-freestand-8" />
+          <col class="col-amount" />
+          <col class="col-start-date" />
+          <col class="col-end-date" />
+          <col class="col-remain-days" />
+          <col class="col-percentage" />
+          <col class="col-lpo" />
+          <col class="col-do" />
+          <col class="col-wo-pdf" />
+          <col class="col-cost" />
         </colgroup>
         <thead>
           <tr>
@@ -223,6 +275,30 @@
         <tbody></tbody>
       </table>
     </section>
+    <div class="charts" style="display:flex;">
+      <div class="chart-card">
+        <div class="title">Split ACs by Ton</div>
+        <canvas id="chartSplit" height="250"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="title">Package ACs by Ton</div>
+        <canvas id="chartPackage" height="250"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="title">Group Composition</div>
+        <canvas id="chartGroups" height="250"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="title">Total Project Progress</div>
+        <div style="position:relative;">
+          <canvas id="chartProgress" height="250"></canvas>
+          <span class="progress-value" style="position:absolute;left:0;right:0;top:40%;text-align:center;font-size:1.5em;font-weight:bold;color:#16a34a;pointer-events:none;">0%</span>
+        </div>
+      </div>
+      
+</div>
+
+    
   </main>
 
   <script>
@@ -546,7 +622,8 @@
       });
       return counts;
     }
-    let charts = { split:null, pkg:null, groups:null };
+    let charts = { split:null, pkg:null, groups:null, progress:null, remainWO:null };
+    let miniCharts = [];
     function renderCharts(counts){
       const splitLabels = ['1.5 TON','2 TON','2.5 TON','3TON'];
       const splitData = splitLabels.map(l => counts.split[l]);
@@ -566,6 +643,7 @@
       const ctxSplit = document.getElementById('chartSplit');
       const ctxPkg = document.getElementById('chartPackage');
       const ctxGroups = document.getElementById('chartGroups');
+      const ctxProgress = document.getElementById('chartProgress');
       const bgMeta = getComputedStyle(document.documentElement);
       const colors = {
         split: bgMeta.getPropertyValue('--col-split').trim() || '#16a34a',
@@ -601,7 +679,39 @@
         },
         options: { responsive:true, plugins:{ legend:{ position:'bottom' } } }
       });
+      // Total Project Progress Chart
+      if (charts.progress) charts.progress.destroy();
+      // Calculate average WO PERCENTAGE
+      let sum = 0, count = 0;
+      ALL_ROWS.forEach(row => {
+        const p = parsePercentage(row['WO PERCENTAGE']);
+        if (p !== null) { sum += p; count++; }
+      });
+      const avg = count > 0 ? Math.round(sum / count) : 0;
+      charts.progress = new Chart(ctxProgress, {
+        type: 'doughnut',
+        data: {
+          labels: ['Progress', ''],
+          datasets: [{
+            data: [avg, 100 - avg],
+            backgroundColor: ['#16a34a', '#e5e7eb']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true, position: 'bottom' },
+            tooltip: { enabled: true }
+          },
+          cutout: '70%',
+        }
+      });
+      // Show value in center
+      ctxProgress.parentNode.querySelector('.progress-value').textContent = `${avg}%`;
+   
     }
+
+    
     function renderStats(rows){
       const c = computeCounts(rows);
       // compute total cost without VAT (COST column)
@@ -623,6 +733,35 @@
       byId('statTotalCostNoVat', formatAED(totalCostNoVat));
       // charts
       renderCharts(c);
+      const container = document.getElementById('separatedWO');
+      if (container){
+        miniCharts.forEach(ch => { try { ch.destroy(); } catch (e) {} });
+        miniCharts = [];
+        container.innerHTML = '';
+        rows.forEach(r => {
+          const label = String(r['WO NO.'] || '').trim();
+          const v = remainingDays(r['END DATE']);
+          const n = typeof v === 'number' ? v : 0;
+          const card = document.createElement('div');
+          card.className = 'mini-card';
+          const title = document.createElement('div');
+          title.className = 'mini-title';
+          title.textContent = label;
+          const cv = document.createElement('canvas');
+          cv.width = 300;
+          cv.height = 120;
+          card.appendChild(title);
+          card.appendChild(cv);
+          container.appendChild(card);
+          const color = remainingColor(n) || '#22c55e';
+          const chart = new Chart(cv, {
+            type: 'bar',
+            data: { labels: ['Days'], datasets: [{ data: [n], backgroundColor: [color] }] },
+            options: { responsive: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+          });
+          miniCharts.push(chart);
+        });
+      }
     }
     function hasGroupValue(row, group){
       const keys = GROUP_KEYS[group] || [];
