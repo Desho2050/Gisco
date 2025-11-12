@@ -449,7 +449,7 @@
         const r = await fetch(root, { method: 'HEAD', cache: 'no-store' });
         if (r.ok) return root;
       } catch (e) {}
-      return 'attachs/' + encodeURIComponent(file);
+      return encodeURIComponent(file);
     }
     async function openPdfViewerFromFile(file, title){
       const url = await resolvePdfUrl(file);
