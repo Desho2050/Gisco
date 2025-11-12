@@ -406,22 +406,16 @@
       updateCounter(rows.length);
     }
 
-    function updateCounter(visible, total){
-      if (total !== undefined){
-        document.getElementById('resultCount').textContent = `${visible} / ${total} (showing first 1000)`;
-      } else {
-        document.getElementById('resultCount').textContent = String(visible);
-      }
+    function updateCounter(visible){
+      document.getElementById('resultCount').textContent = String(visible);
     }
     
-    // Render filtered rows with smart pagination
+    // Render all filtered rows without pagination limit
     function renderFilteredRows(indices){
       const tbody = document.getElementById('tableBody');
       tbody.innerHTML = '';
-      const limit = 1000; // render max 1000 rows for performance
-      const toRender = indices.slice(0, limit);
       
-      for (const idx of toRender){
+      for (const idx of indices){
         const r = ALL_ROWS[idx];
         if (!r) continue;
         const tr = document.createElement('tr');
@@ -435,7 +429,7 @@
         tr.dataset.index = r.searchIndex;
         tbody.appendChild(tr);
       }
-      updateCounter(toRender.length, indices.length);
+      updateCounter(indices.length);
     }
 
     function escapeHtml(s){
@@ -500,7 +494,7 @@
         if (cached && Array.isArray(cached.rows)){
           ALL_ROWS = cached.rows;
           buildSearchIndex(ALL_ROWS);
-          renderTable(cached.rows.slice(0, 1000));
+          renderTable(cached.rows);
           setStatus(`Loaded ${cached.rows.length} rows (cached)`);
           showLoader(false);
           // Revalidate in background
@@ -518,8 +512,8 @@
         const rows = json.map(buildRow);
         ALL_ROWS = rows;
         buildSearchIndex(ALL_ROWS);
-        renderTable(rows.slice(0, 1000));
-        setStatus(`Loaded ${rows.length} rows from Oracle.xlsx (showing first 1000)`);
+        renderTable(rows);
+        setStatus(`Loaded ${rows.length} rows from Oracle.xlsx`);
         if (rows.length === 0){
           setStatus('No rows found in Oracle.xlsx. Check sheet headers.', true);
         }
@@ -549,7 +543,7 @@
         buildSearchIndex(ALL_ROWS);
         await idbSet(CACHE_KEY, { rows, ts: Date.now() });
         if (rows.length !== cachedCount){
-          renderTable(rows.slice(0, 1000));
+          renderTable(rows);
           setStatus(`Updated to ${rows.length} rows from Oracle.xlsx`);
         }
       } catch { /* silent */ }
@@ -575,8 +569,8 @@
         const rows = json.map(buildRow);
         ALL_ROWS = rows;
         buildSearchIndex(ALL_ROWS);
-        renderTable(rows.slice(0, 1000));
-        setStatus(`Loaded ${rows.length} rows from local file (showing first 1000)`);
+        renderTable(rows);
+        setStatus(`Loaded ${rows.length} rows from local file`);
         if (rows.length === 0) setStatus('No rows found. Check sheet headers.', true);
         showLoader(false);
       } catch(e){
