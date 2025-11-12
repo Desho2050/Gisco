@@ -160,6 +160,13 @@
     .mini-card { border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; }
     .mini-title { font-weight:700; font-size:12px; color: var(--muted); margin-bottom:4px; }
     .mini-card canvas { width:100%; }
+    /* Alert panel for WOs with remaining days < 30 */
+    .alert-panel { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin-top: 12px; display: none; }
+    .alert-panel.show { display: block; }
+    .alert-panel .title { font-weight: 700; font-size: 14px; color: #856404; margin-bottom: 8px; }
+    .alert-panel .alert-list { list-style: none; padding: 0; margin: 0; }
+    .alert-panel .alert-item { padding: 6px 8px; background: rgba(255, 255, 255, 0.6); border-left: 3px solid #f5610b; margin-bottom: 6px; border-radius: 4px; font-size: 12px; color: #333; }
+    .alert-panel .alert-item:last-child { margin-bottom: 0; }
     /* Responsive tweaks */
     @media (max-width: 640px){
       .controls { flex-direction: column; align-items: stretch; }
@@ -186,6 +193,10 @@
       <select class="btn" id="filterType" title="Filter by Type" style="color: #000000; font-size: large; background-color: #41ccec;"></select>
     </section>
     <div id="statusBar" class="status"></div>
+    <div id="alertPanel" class="alert-panel">
+      <div class="title">⚠️ Work Orders Alert – Remaining Days < 30</div>
+      <ul class="alert-list" id="alertList"></ul>
+    </div>
     <section id="statsPanel" class="stats">
       <div class="cards">
         <div class="card" style="background-color: #32cc6b; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Splits</div><div id="statTotalSplit" class="value">0</div></div>
@@ -460,6 +471,26 @@
           setStatus(body);
         }
       }catch(e){ console.warn('Notification failed', e); }
+    }
+
+    function updateAlertPanel(alertWOs){
+      const panel = document.getElementById('alertPanel');
+      const list = document.getElementById('alertList');
+      if (!panel || !list) return;
+      
+      if (alertWOs.length === 0){
+        panel.classList.remove('show');
+        list.innerHTML = '';
+        return;
+      }
+      
+      list.innerHTML = alertWOs.map(wo => 
+        `<li class="alert-item">WO: ${wo.wo} and Camp: ${wo.camp} and Location: ${wo.location} and ${wo.days} Days Remaining</li>`
+      ).join('');
+      panel.classList.add('show');
+      
+      // Also update status bar with summary
+      setStatus(`⚠️ ${alertWOs.length} Work Order(s) with remaining days < 30`);
     }
 
     function setStatus(msg, isError=false){
@@ -822,28 +853,33 @@
       renderStats(filtered);
       // Notify for any visible WO with remaining days < 30 (avoid duplicates)
       try{
+        const alertWOs = []; // collect all WOs with days < 30 for panel display
         filtered.forEach(r => {
           const days = remainingDays(r['END DATE']);
           const wo = String(r['WO NO.'] ?? '').trim();
           const camp = String(r['CAMP'] ?? '').trim();
           const loc = String(r['LOCATION'] ?? '').trim();
           if (wo && Number.isFinite(days) && days < 30 && days > 0){
+            alertWOs.push({ wo, camp, location: loc, days });
             const key = wo; // use WO number as unique key to avoid repeat notifications
             if (!NOTIFIED_WO.has(key)){
-              // send notification (only if permission granted)
+              // send system notification (only if permission granted)
               if (Notification && Notification.permission === 'granted'){
                 sendSystemNotification(wo, camp, loc, days);
               } else {
-                // still call sendSystemNotification to fallback to status bar if needed
-                sendSystemNotification(wo, camp, loc, days);
+                // fallback: notification will be shown in alert panel
               }
               NOTIFIED_WO.add(key);
             }
           }
         });
+        // Update alert panel and status bar with all matching WOs
+        updateAlertPanel(alertWOs);
         saveNotifiedToStorage();
       }catch(e){ console.warn('Notification loop failed', e); }
-      setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows.`);
+      if (alertWOs && alertWOs.length === 0){
+        setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows.`);
+      }
     }
     function setControlsVisible(v){
       fileInput.style.display = v ? '' : 'none';
