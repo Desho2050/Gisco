@@ -827,7 +827,7 @@
           const wo = String(r['WO NO.'] ?? '').trim();
           const camp = String(r['CAMP'] ?? '').trim();
           const loc = String(r['LOCATION'] ?? '').trim();
-          if (wo && Number.isFinite(days) && days < 30){
+          if (wo && Number.isFinite(days) && days < 30 && days >= 0){
             const key = wo; // use WO number as unique key to avoid repeat notifications
             if (!NOTIFIED_WO.has(key)){
               // send notification (only if permission granted)
