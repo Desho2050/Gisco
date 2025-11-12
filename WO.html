@@ -160,13 +160,13 @@
     .mini-card { border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; }
     .mini-title { font-weight:700; font-size:12px; color: var(--muted); margin-bottom:4px; }
     .mini-card canvas { width:100%; }
-    /* Alert panel for WOs with remaining days < 30 */
-    .alert-panel { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin-top: 12px; display: none; }
-    .alert-panel.show { display: block; }
-    .alert-panel .title { font-weight: 700; font-size: 14px; color: #856404; margin-bottom: 8px; }
-    .alert-panel .alert-list { list-style: none; padding: 0; margin: 0; }
-    .alert-panel .alert-item { padding: 6px 8px; background: rgba(255, 255, 255, 0.6); border-left: 3px solid #f5610b; margin-bottom: 6px; border-radius: 4px; font-size: 12px; color: #333; }
-    .alert-panel .alert-item:last-child { margin-bottom: 0; }
+    /* Toast notifications */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; max-width: 400px; }
+    .toast { background: #fff; border-left: 4px solid #f5610b; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s ease-out; font-size: 14px; color: #333; }
+    @keyframes slideIn { from { transform: translateX(450px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(450px); opacity: 0; } }
+    .toast.removing { animation: slideOut 0.3s ease-out forwards; }
+
     /* Responsive tweaks */
     @media (max-width: 640px){
       .controls { flex-direction: column; align-items: stretch; }
@@ -193,10 +193,6 @@
       <select class="btn" id="filterType" title="Filter by Type" style="color: #000000; font-size: large; background-color: #41ccec;"></select>
     </section>
     <div id="statusBar" class="status"></div>
-    <div id="alertPanel" class="alert-panel">
-      <div class="title">⚠️ Work Orders Alert – Remaining Days < 30</div>
-      <ul class="alert-list" id="alertList"></ul>
-    </div>
     <section id="statsPanel" class="stats">
       <div class="cards">
         <div class="card" style="background-color: #32cc6b; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Splits</div><div id="statTotalSplit" class="value">0</div></div>
@@ -438,59 +434,47 @@
     const selType = document.getElementById('filterType');
     let ALL_ROWS = [];
     let PDF_MAP = {};
-    // notified WO keys (persisted to localStorage to avoid duplicate system notifications)
-    let NOTIFIED_WO = new Set();
-    const NOTIFIED_STORAGE_KEY = 'wo_notified';
+    let NOTIFIED_WO = new Set(); // track WOs we've already toasted in this session
 
     function loadNotifiedFromStorage(){
-      // Clear notified set on each page load so notifications appear every time
-      NOTIFIED_WO = new Set();
+      // (Notification system removed)
     }
     function saveNotifiedToStorage(){
-      try{ localStorage.setItem(NOTIFIED_STORAGE_KEY, JSON.stringify(Array.from(NOTIFIED_WO))); }catch(e){ console.warn('Failed to save notified set', e); }
+      // (Notification system removed)
     }
 
     async function requestNotificationPermission(){
-      if (!('Notification' in window)) return false;
-      try{
-        if (Notification.permission === 'granted') return true;
-        if (Notification.permission === 'denied') return false;
-        const p = await Notification.requestPermission();
-        return p === 'granted';
-      }catch(e){ return false; }
+      // (Notification system removed)
     }
 
     function sendSystemNotification(woNo, camp, location, days){
-      const title = 'تحذير امر عمل علي وشك الانتهاء';
-      const body = `امر العمل : ${woNo}   معسكر : ${camp}   الموقع : ${location}   ${days}  يوم متبقي علي الانتهاء `;
-      try{
-        if ('Notification' in window && Notification.permission === 'granted'){
-          new Notification(title, { body });
-        } else {
-          // fallback: small visible in-page status update
-          setStatus(body);
-        }
-      }catch(e){ console.warn('Notification failed', e); }
+      // (Notification system removed)
     }
 
     function updateAlertPanel(alertWOs){
-      const panel = document.getElementById('alertPanel');
-      const list = document.getElementById('alertList');
-      if (!panel || !list) return;
-      
-      if (alertWOs.length === 0){
-        panel.classList.remove('show');
-        list.innerHTML = '';
-        return;
+      // (Notification system removed)
+    }
+
+    function showToast(message, duration = 5000){
+      let container = document.getElementById('toastContainer');
+      if (!container){
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
       }
       
-      list.innerHTML = alertWOs.map(wo => 
-        `<li class="alert-item">امر العمل : ${wo.wo}   معسكر : ${wo.camp}   الموقع : ${wo.location}   ${wo.days}  يوم متبقي علي الانتهاء </li>`
-      ).join('');
-      panel.classList.add('show');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      container.appendChild(toast);
       
-      // Also update status bar with summary
-      setStatus(`⚠️ ${alertWOs.length} أمر عمل متبقي عليه أقل من 30 يوم`);
+      const removeToast = () => {
+        toast.classList.add('removing');
+        setTimeout(() => { toast.remove(); }, 300);
+      };
+      
+      setTimeout(removeToast, duration);
     }
 
     function setStatus(msg, isError=false){
@@ -853,35 +837,25 @@
       });
       renderRows(filtered);
       renderStats(filtered);
-      // Notify for any visible WO with remaining days < 30 (avoid duplicates)
-      try{
-        const alertWOs = []; // collect all WOs with days < 30 for panel display
+      
+      // Show toast notifications for WOs with 0 < remaining days < 30
+      try {
         filtered.forEach(r => {
           const days = remainingDays(r['END DATE']);
           const wo = String(r['WO NO.'] ?? '').trim();
-          const camp = String(r['CAMP'] ?? '').trim();
-          const loc = String(r['LOCATION'] ?? '').trim();
           if (wo && Number.isFinite(days) && days < 30 && days > 0){
-            alertWOs.push({ wo, camp, location: loc, days });
-            const key = wo; // use WO number as unique key to avoid repeat notifications
-            if (!NOTIFIED_WO.has(key)){
-              // send system notification (only if permission granted)
-              if (Notification && Notification.permission === 'granted'){
-                sendSystemNotification(wo, camp, loc, days);
-              } else {
-                // fallback: notification will be shown in alert panel
-              }
-              NOTIFIED_WO.add(key);
+            if (!NOTIFIED_WO.has(wo)){
+              const camp = String(r['CAMP'] ?? '').trim();
+              const loc = String(r['LOCATION'] ?? '').trim();
+              const msg = `⚠️ : ${wo} امر العمل  بمعسكر: ${camp} الموقع: ${loc} متبقي  ${days}  يوم لانتهاء امر العمل`;
+              showToast(msg, 6000);
+              NOTIFIED_WO.add(wo);
             }
           }
         });
-        // Update alert panel and status bar with all matching WOs
-        updateAlertPanel(alertWOs);
-        saveNotifiedToStorage();
-      }catch(e){ console.warn('Notification loop failed', e); }
-      if (alertWOs && alertWOs.length === 0){
-        setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows.`);
-      }
+      } catch (e) { console.warn('Toast notification error:', e); }
+      
+      setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows.`);
     }
     function setControlsVisible(v){
       fileInput.style.display = v ? '' : 'none';
@@ -945,9 +919,6 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       await loadRemotePdfMap();
-      // load persisted notified keys and request notification permission
-      loadNotifiedFromStorage();
-      try{ await requestNotificationPermission(); }catch(e){}
 
       // Decide whether to show file controls based on network + server availability
       const serverOk = await checkServerAvailability();
@@ -957,14 +928,19 @@
         loadFromServer();
       } else {
         setControlsVisible(true);
-       
       }
 
       // Listen for connectivity changes and update controls accordingly
       window.addEventListener('online', async () => {
         setStatus('Network online — checking server...');
         const ok = await checkServerAvailability();
-        if (ok){ setControlsVisible(false); loadFromServer(); }
+        if (ok){ 
+          setControlsVisible(false); 
+          loadFromServer(); 
+        } else {
+          setControlsVisible(true);
+          setStatus('Server unavailable. Use local file to load data.', true);
+        }
       });
       window.addEventListener('offline', () => {
         setControlsVisible(true);
