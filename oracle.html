@@ -237,14 +237,10 @@
     const DATA_VERSION = '1';
     const CACHE_KEY = excelPath + '|v' + DATA_VERSION;
     
-    // Optimization: Pre-indexed search + debouncing + virtual scrolling
+    // Optimization: Pre-indexed search
     let ALL_ROWS = [];
     let SEARCH_INDEX = new Map(); // token -> Set of row indices
     let VISIBLE_INDICES = []; // indices of currently visible rows (after filtering)
-    let FILTER_TIMEOUT = null;
-    const DEBOUNCE_DELAY = 400; // ms
-    const VIRTUAL_SCROLL_BATCH = 100; // rows to render at once
-    let SCROLL_POS = 0;
 
     // Worker-based parsing for responsiveness
     let ORACLE_WORKER = null;
@@ -461,22 +457,19 @@
 
     // Debounced, indexed filter for massive datasets
     function filterNowOptimized(){
-      clearTimeout(FILTER_TIMEOUT);
-      FILTER_TIMEOUT = setTimeout(() => {
-        const q1 = document.getElementById('q1').value.trim().toLowerCase();
-        const q2 = document.getElementById('q2').value.trim().toLowerCase();
-        const q3 = document.getElementById('q3').value.trim().toLowerCase();
-        const q4 = document.getElementById('q4').value.trim().toLowerCase();
+      const q1 = document.getElementById('q1').value.trim().toLowerCase();
+      const q2 = document.getElementById('q2').value.trim().toLowerCase();
+      const q3 = document.getElementById('q3').value.trim().toLowerCase();
+      const q4 = document.getElementById('q4').value.trim().toLowerCase();
 
-        const queries = [q1,q2,q3,q4].filter(Boolean);
-        
-        // Use fast indexed search: O(token_count) instead of O(58k rows)
-        const matchIndices = Array.from(fastFilterIndices(queries)).sort((a,b) => a - b);
-        VISIBLE_INDICES = matchIndices;
-        
-        // Render only first 1000 results to keep DOM manageable
-        renderFilteredRows(matchIndices);
-      }, DEBOUNCE_DELAY);
+      const queries = [q1,q2,q3,q4].filter(Boolean);
+      
+      // Use fast indexed search: O(token_count) instead of O(58k rows)
+      const matchIndices = Array.from(fastFilterIndices(queries)).sort((a,b) => a - b);
+      VISIBLE_INDICES = matchIndices;
+      
+      // Render all results using indexed search
+      renderFilteredRows(matchIndices);
     }
 
     function setStatus(msg, isError=false){
