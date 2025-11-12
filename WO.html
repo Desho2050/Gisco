@@ -48,6 +48,8 @@
     .controls { background: var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .btn { height:36px; padding:0 14px; border:1px solid var(--border); border-radius:8px; background:#fff; color:var(--text); display:inline-flex; align-items:center; gap:8px; cursor:pointer; text-decoration:none; }
     .btn.primary { background: var(--brand); color:#fff; border-color:#173a5a; }
+    .btn.print-btn { height: 42px; padding: 0 20px; font-size: 16px; font-weight: 700; background: #10b981; color: #fff; border-color: #059669; min-width: 140px; }
+    .btn.print-btn:hover { background: #059669; box-shadow: 0 4px 12px rgba(16, 180, 129, 0.3); }
     .file { height:36px; }
     .table-wrap { background: var(--surface); border:1px solid var(--border); border-radius:10px; overflow:auto; margin-top:5px; }
     table { width: 100%; border-collapse: collapse; table-layout:auto; }
@@ -178,7 +180,7 @@
     <section class="controls">
       <input class="file" type="file" id="excelFile" accept=".xlsx,.xls" />
       <button class="btn primary" id="btnLoad">Load Selected Excel</button>
-
+      <button class="btn print-btn" id="printBtn" title="Print this page">🖨️ Print</button>
       <select class="btn" id="filterCamp" title="Filter By Camp" style="color: #000000; font-size: large; background-color: #41ccec;"><option value="">Filter By Camp</option></select>
       <select class="btn" id="filterLocation" title="Filter by Location" style="color: #000000; font-size: large; background-color: #41ccec;"></select>
       <select class="btn" id="filterType" title="Filter by Type" style="color: #000000; font-size: large; background-color: #41ccec;"></select>
@@ -833,6 +835,10 @@
       }
     }
     btnLoad.addEventListener('click', loadFromFile);
+    const printBtn = document.getElementById('printBtn');
+    if (printBtn) {
+      printBtn.addEventListener('click', () => window.print());
+    }
     document.addEventListener('DOMContentLoaded', async () => { await loadRemotePdfMap(); loadFromServer(); });
     // PDF viewer helpers
     function openPdfViewer(url, title){
