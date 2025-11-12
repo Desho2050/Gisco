@@ -432,12 +432,8 @@
     const NOTIFIED_STORAGE_KEY = 'wo_notified';
 
     function loadNotifiedFromStorage(){
-      try{
-        const raw = localStorage.getItem(NOTIFIED_STORAGE_KEY);
-        if (!raw) return;
-        const arr = JSON.parse(raw);
-        if (Array.isArray(arr)) NOTIFIED_WO = new Set(arr);
-      }catch(e){ console.warn('Failed to load notified set', e); }
+      // Clear notified set on each page load so notifications appear every time
+      NOTIFIED_WO = new Set();
     }
     function saveNotifiedToStorage(){
       try{ localStorage.setItem(NOTIFIED_STORAGE_KEY, JSON.stringify(Array.from(NOTIFIED_WO))); }catch(e){ console.warn('Failed to save notified set', e); }
