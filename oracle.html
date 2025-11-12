@@ -349,36 +349,6 @@
       return { code, description, unit, qty, type, searchIndex };
     }
 
-    // Build reverse search index: token -> Set of row indices
-    function buildSearchIndex(rows){
-      SEARCH_INDEX.clear();
-      rows.forEach((row, idx) => {
-        const tokens = row.searchIndex.split(/[\s|]+/).filter(t => t.length > 0);
-        tokens.forEach(token => {
-          if (!SEARCH_INDEX.has(token)) SEARCH_INDEX.set(token, new Set());
-          SEARCH_INDEX.get(token).add(idx);
-        });
-      });
-    }
-
-    // Fast filtered search using pre-built index: O(token_count) instead of O(n)
-    function fastFilterIndices(queries){
-      if (queries.length === 0) return new Set(ALL_ROWS.keys ? ALL_ROWS.keys() : ALL_ROWS.map((_,i) => i));
-      
-      const tokenSets = queries.flatMap(q => 
-        q.split(/\s+/).filter(t => t.length > 0)
-      );
-      
-      let result = null;
-      for (const token of tokenSets){
-        const tokenSet = SEARCH_INDEX.get(token) || new Set();
-        if (result === null) result = new Set(tokenSet);
-        else result = new Set([...result].filter(i => tokenSet.has(i)));
-        if (result.size === 0) break;
-      }
-      return result || new Set();
-    }
-
     function escapeHtml(s){
       return String(s)
         .replaceAll('&','&amp;')
@@ -436,7 +406,6 @@
         const json = await parseInWorker(buf);
         const rows = json.map(buildRow);
         ALL_ROWS = rows;
-        buildSearchIndex(ALL_ROWS);
         renderTable(rows);
         setStatus(`Loaded ${rows.length} rows from Oracle.xlsx`);
         if (rows.length === 0){
@@ -465,7 +434,6 @@
         const cached = await idbGet(CACHE_KEY);
         const cachedCount = cached && Array.isArray(cached.rows) ? cached.rows.length : -1;
         ALL_ROWS = rows;
-        buildSearchIndex(ALL_ROWS);
         await idbSet(CACHE_KEY, { rows, ts: Date.now() });
         if (rows.length !== cachedCount){
           renderTable(rows);
@@ -493,7 +461,6 @@
         const json = await parseInWorker(buf);
         const rows = json.map(buildRow);
         ALL_ROWS = rows;
-        buildSearchIndex(ALL_ROWS);
         renderTable(rows);
         setStatus(`Loaded ${rows.length} rows from local file`);
         if (rows.length === 0) setStatus('No rows found. Check sheet headers.', true);
