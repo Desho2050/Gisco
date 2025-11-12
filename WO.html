@@ -517,23 +517,7 @@
       return encodeURIComponent(file);
     }
 
-    // Try fetching a resource from multiple candidate paths, return ArrayBuffer on first success
-    async function tryFetchPaths(paths){
-      for (const p of paths){
-        try{
-          console.info('[tryFetchPaths] attempting', p);
-          const res = await fetch(p, { cache: 'no-store' });
-          if (res && res.ok){
-            console.info('[tryFetchPaths] success', p);
-            return await res.arrayBuffer();
-          }
-          console.warn('[tryFetchPaths] not ok:', p, res && res.status, res && res.statusText);
-        }catch(err){
-          console.warn('[tryFetchPaths] fetch error for', p, err && (err.message || err));
-        }
-      }
-      throw new Error('All fetch attempts failed');
-    }
+    
     async function openPdfViewerFromFile(file, title){
       const url = await resolvePdfUrl(file);
       return openPdfViewer(url, title);
@@ -926,15 +910,9 @@
     async function loadFromServer(){
       try {
         setStatus('Loading data from server…');
-        // Try multiple candidate paths to improve diagnostics and compatibility
-        const ts = '?ts=' + Date.now();
-        const candidates = [
-          'WO.xlsx' + ts,
-          './WO.xlsx' + ts,
-          '/WO.xlsx' + ts,
-          'WO.xlsx'
-        ];
-        const buf = await tryFetchPaths(candidates);
+        const res = await fetch('WO.xlsx?ts=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('Fetch failed: ' + res.status + ' ' + res.statusText);
+        const buf = await res.arrayBuffer();
         const data = new Uint8Array(buf);
         const wb = XLSX.read(data, { type: 'array' });
         const sheetName = wb.SheetNames[0];
@@ -946,8 +924,8 @@
         setStatus(`Online: loaded ${rows.length} rows from server.`);
         setControlsVisible(false);
       } catch (e){
-        console.error('Server load failed:', e && (e.message || e));
-        setStatus('Server unavailable. Use local file to load data.', true);
+        console.warn('Server load failed, falling back to local file:', e);
+       
         setControlsVisible(true);
       }
     }
@@ -956,10 +934,42 @@
     if (printBtn) {
       printBtn.addEventListener('click', () => window.print());
     }
-    document.addEventListener('DOMContentLoaded', async () => { await loadRemotePdfMap(); loadFromServer();
+    // Check server availability by attempting a HEAD request to the workbook
+    async function checkServerAvailability(){
+      try{
+        if (!navigator.onLine) return false;
+        const res = await fetch('WO.xlsx?ts=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+        return !!(res && res.ok);
+      }catch(e){ return false; }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadRemotePdfMap();
       // load persisted notified keys and request notification permission
       loadNotifiedFromStorage();
       try{ await requestNotificationPermission(); }catch(e){}
+
+      // Decide whether to show file controls based on network + server availability
+      const serverOk = await checkServerAvailability();
+      if (serverOk){
+        setControlsVisible(false);
+        // Load data from server (fire-and-forget)
+        loadFromServer();
+      } else {
+        setControlsVisible(true);
+       
+      }
+
+      // Listen for connectivity changes and update controls accordingly
+      window.addEventListener('online', async () => {
+        setStatus('Network online — checking server...');
+        const ok = await checkServerAvailability();
+        if (ok){ setControlsVisible(false); loadFromServer(); }
+      });
+      window.addEventListener('offline', () => {
+        setControlsVisible(true);
+        setStatus('Offline — please use local file to load data.', true);
+      });
     });
     // PDF viewer helpers
     function openPdfViewer(url, title){
