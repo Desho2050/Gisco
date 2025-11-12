@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -349,6 +350,28 @@
       return { code, description, unit, qty, type, searchIndex };
     }
 
+    function renderTable(rows){
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      for (const r of rows){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="code">${escapeHtml(r.code)}</td>
+          <td>${escapeHtml(r.description)}</td>
+          <td class="unit">${escapeHtml(r.unit)}</td>
+          <td class="qty">${escapeHtml(r.qty)}</td>
+          <td class="type">${escapeHtml(r.type)}</td>
+        `;
+        tr.dataset.index = r.searchIndex;
+        tbody.appendChild(tr);
+      }
+      updateCounter(rows.length);
+    }
+
+    function updateCounter(n){
+      document.getElementById('resultCount').textContent = String(n);
+    }
+
     function escapeHtml(s){
       return String(s)
         .replaceAll('&','&amp;')
@@ -405,7 +428,6 @@
         const buf = await res.arrayBuffer();
         const json = await parseInWorker(buf);
         const rows = json.map(buildRow);
-        ALL_ROWS = rows;
         renderTable(rows);
         setStatus(`Loaded ${rows.length} rows from Oracle.xlsx`);
         if (rows.length === 0){
@@ -433,7 +455,6 @@
         // Update cache and UI if row count differs (basic change detection)
         const cached = await idbGet(CACHE_KEY);
         const cachedCount = cached && Array.isArray(cached.rows) ? cached.rows.length : -1;
-        ALL_ROWS = rows;
         await idbSet(CACHE_KEY, { rows, ts: Date.now() });
         if (rows.length !== cachedCount){
           renderTable(rows);
@@ -460,7 +481,6 @@
         const buf = await file.arrayBuffer();
         const json = await parseInWorker(buf);
         const rows = json.map(buildRow);
-        ALL_ROWS = rows;
         renderTable(rows);
         setStatus(`Loaded ${rows.length} rows from local file`);
         if (rows.length === 0) setStatus('No rows found. Check sheet headers.', true);
@@ -472,7 +492,7 @@
       }
     }
 
-    // Wire events — use original simple filter
+    // Wire events
     for (const id of ['q1','q2','q3','q4']){
       document.addEventListener('input', (e) => {
         if (e.target && e.target.id === id) filterNow();
