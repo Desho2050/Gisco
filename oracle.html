@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -173,8 +172,8 @@
         <button id="btnPreview" class="btn primary" title="Preview results"><span>🔎</span>Preview</button>
         <button id="btnPrint" class="btn" title="Print current results"><span>🖨️</span>Print</button>
         <input type="file" id="localFile" accept=".xlsx,.xls" style="display:none" />
-        <button id="btnLocal" class="btn success" style="display:none" title="Load local Excel" onclick="document.getElementById('localFile').click()">Load Excel</button>
-        <input type="text" id="pathSelector" placeholder="Selected file path" readonly style="height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;min-width:220px;display:none" />
+        <button id="btnLocal" class="btn success" title="Load local Excel" onclick="document.getElementById('localFile').click()">Load Excel</button>
+        <input type="text" id="pathSelector" placeholder="Selected file path" readonly style="height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;min-width:220px;" />
       </div>
       <div class="counter"><span id="resultCount">0</span> <span data-i18n="results_label">results</span></div>
     </div>
@@ -220,6 +219,7 @@
         page_sub_en: 'بحث محسّن'
       }
     };
+
     const getLang = () => localStorage.getItem('lang') || 'ar';
     const applyLang = (lang) => {
       document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
@@ -234,111 +234,14 @@
       applyLang(getLang());
       document.querySelectorAll('[data-lang]').forEach(btn => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
     });
-    const excelPath = 'Oracle.xlsx'; // Load Oracle.xlsx by default
+
+    const excelPath = 'Oracle.xlsx';
     const DATA_VERSION = '1';
     const CACHE_KEY = excelPath + '|v' + DATA_VERSION;
-    let ALL_ROWS = []; // Store all 58k rows for filtering
+    let ALL_ROWS = [];
+    let SEARCH_INDEX = [];
 
-    // Worker-based parsing for responsiveness
-    let ORACLE_WORKER = null;
-    function getWorker(){
-      if (!ORACLE_WORKER) ORACLE_WORKER = new Worker('oracle-worker.js');
-      return ORACLE_WORKER;
-    }
-    function parseInWorker(buf){
-      return new Promise((resolve, reject) => {
-        try {
-          const w = getWorker();
-          const onMsg = (e) => {
-            w.removeEventListener('message', onMsg);
-            const { ok, json, error } = e.data || {};
-            if (ok) resolve(json);
-            else reject(new Error(error || 'Worker parsing failed'));
-          };
-          const onErr = (err) => {
-            w.removeEventListener('error', onErr);
-            reject(err);
-          };
-          w.addEventListener('message', onMsg);
-          w.addEventListener('error', onErr);
-          // Transfer ownership of buffer to avoid copying
-          w.postMessage({ buffer: buf }, [buf]);
-        } catch (e){
-          reject(e);
-        }
-      });
-    }
-
-    // Worker-based filtering for 58k rows
-    let FILTER_WORKER = null;
-    function getFilterWorker(){
-      if (!FILTER_WORKER) FILTER_WORKER = new Worker('oracle-filter-worker.js');
-      return FILTER_WORKER;
-    }
-    function filterWithWorker(queries, rows){
-      return new Promise((resolve, reject) => {
-        try {
-          const w = getFilterWorker();
-          const onMsg = (e) => {
-            w.removeEventListener('message', onMsg);
-            const { ok, matchingIndices, error } = e.data || {};
-            if (ok) resolve(matchingIndices || []);
-            else reject(new Error(error || 'Worker filtering failed'));
-          };
-          const onErr = (err) => {
-            w.removeEventListener('error', onErr);
-            reject(err);
-          };
-          w.addEventListener('message', onMsg);
-          w.addEventListener('error', onErr);
-          w.postMessage({ queries, rows });
-        } catch (e){
-          reject(e);
-        }
-      });
-    }
-
-    // Simple IndexedDB cache helpers
-    function idbOpen(){
-      return new Promise((resolve, reject) => {
-        if (!('indexedDB' in window)) { resolve(null); return; }
-        const req = indexedDB.open('excelCache', 1);
-        req.onupgradeneeded = () => {
-          const db = req.result;
-          if (!db.objectStoreNames.contains('files')) db.createObjectStore('files');
-        };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    }
-    async function idbGet(key){
-      try {
-        const db = await idbOpen();
-        if (!db) return null;
-        return await new Promise((resolve, reject) => {
-          const tx = db.transaction('files','readonly');
-          const store = tx.objectStore('files');
-          const r = store.get(key);
-          r.onsuccess = () => resolve(r.result || null);
-          r.onerror = () => reject(r.error);
-        });
-      } catch { return null; }
-    }
-    async function idbSet(key, value){
-      try {
-        const db = await idbOpen();
-        if (!db) return false;
-        return await new Promise((resolve, reject) => {
-          const tx = db.transaction('files','readwrite');
-          const store = tx.objectStore('files');
-          const r = store.put(value, key);
-          r.onsuccess = () => resolve(true);
-          r.onerror = () => reject(r.error);
-        });
-      } catch { return false; }
-    }
-
-    // Flexible field mapping: best-effort matching on common header names
+    // Flexible field mapping
     const FIELD_ALIASES = {
       code: ['oracle code','oracle_code','code','item code','item_code','itemid','id'],
       description: ['item description','description','desc','item name','name'],
@@ -358,7 +261,6 @@
         const nk = normalizeKey(alias);
         if (normToKey.has(nk)) return obj[normToKey.get(nk)];
       }
-      // fallback: first non-empty string/number
       for (const k of keys){
         const v = obj[k];
         if (v !== undefined && v !== null && String(v).trim() !== '') return v;
@@ -383,8 +285,8 @@
     function renderTable(rows){
       const tbody = document.getElementById('tableBody');
       tbody.innerHTML = '';
-      for (let rowIndex = 0; rowIndex < rows.length; rowIndex++){
-        const r = rows[rowIndex];
+      for (let i = 0; i < rows.length; i++){
+        const r = rows[i];
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="code">${escapeHtml(r.code)}</td>
@@ -393,8 +295,7 @@
           <td class="qty">${escapeHtml(r.qty)}</td>
           <td class="type">${escapeHtml(r.type)}</td>
         `;
-        tr.dataset.index = r.searchIndex;
-        tr.dataset.rowIndex = String(rowIndex); // Store row index for filtering
+        tr.dataset.rowIndex = String(i);
         tbody.appendChild(tr);
       }
       updateCounter(rows.length);
@@ -407,104 +308,187 @@
     function escapeHtml(s){
       return String(s)
         .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
+        .replaceAll('<','<')
+        .replaceAll('>','>')
         .replaceAll('"','&quot;')
         .replaceAll("'",'&#39;');
     }
 
-    async function filterNow(){
+    // Debounced search
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, 150);
+      };
+    }
+
+    // Fast filtering
+    function filterNow(){
       const q1 = document.getElementById('q1').value.trim().toLowerCase();
       const q2 = document.getElementById('q2').value.trim().toLowerCase();
       const q3 = document.getElementById('q3').value.trim().toLowerCase();
       const q4 = document.getElementById('q4').value.trim().toLowerCase();
 
       const queries = [q1,q2,q3,q4].filter(Boolean);
-      
-      // If no filters, show all rows
+
       if (queries.length === 0){
         const tbody = document.getElementById('tableBody');
-        for (const tr of Array.from(tbody.children)){
-          tr.style.display = '';
-        }
+        Array.from(tbody.children).forEach(tr => tr.style.display = '');
         updateCounter(ALL_ROWS.length);
         return;
       }
 
-      try {
-        // Use worker to filter 58k rows without blocking UI
-        const matchingIndices = await filterWithWorker(queries, ALL_ROWS);
-        const tbody = document.getElementById('tableBody');
-        let visible = 0;
-        
-        // Build a Set of matching indices for O(1) lookup
-        const matchSet = new Set(matchingIndices);
-        
-        for (const tr of Array.from(tbody.children)){
-          const dataIndex = parseInt(tr.dataset.rowIndex || -1, 10);
-          const shouldShow = matchSet.has(dataIndex);
-          tr.style.display = shouldShow ? '' : 'none';
-          if (shouldShow) visible++;
-        }
-        updateCounter(visible);
-      } catch (err){
-        console.error('Filter worker error:', err);
-        // Fallback to main thread filtering if worker fails
-        const tbody = document.getElementById('tableBody');
-        let visible = 0;
-        for (const tr of Array.from(tbody.children)){
-          const idx = tr.dataset.index || '';
-          const ok = queries.every(q => q.split(/\s+/).every(tok => idx.includes(tok)));
-          tr.style.display = ok ? '' : 'none';
-          if (ok) visible++;
-        }
-        updateCounter(visible);
+      if (!SEARCH_INDEX.length && ALL_ROWS.length > 0) {
+        SEARCH_INDEX = ALL_ROWS.map(row => row.searchIndex);
       }
+
+      const matches = [];
+      for (let i = 0; i < SEARCH_INDEX.length; i++) {
+        const idx = SEARCH_INDEX[i];
+        let match = true;
+        for (const q of queries) {
+          if (!idx.includes(q)) {
+            match = false;
+            break;
+          }
+        }
+        if (match) matches.push(i);
+      }
+
+      const tbody = document.getElementById('tableBody');
+      const rows = Array.from(tbody.children);
+      let visible = 0;
+      for (let i = 0; i < rows.length; i++) {
+        rows[i].style.display = matches.includes(i) ? '' : 'none';
+        if (matches.includes(i)) visible++;
+      }
+      updateCounter(visible);
     }
 
-    function setStatus(msg, isError=false){
-      const el = document.getElementById('statusBar');
-      el.textContent = msg || '';
-      el.style.color = isError ? '#b00020' : 'var(--muted)';
-    }
-    function showLoader(show){ const el = document.getElementById('loader'); if (el) el.style.display = show ? 'inline-flex' : 'none'; }
+    const debouncedFilter = debounce(filterNow, 150);
 
+    // IndexedDB cache
+    function idbOpen(){
+      return new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) { resolve(null); return; }
+        const req = indexedDB.open('excelCache', 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains('files')) db.createObjectStore('files');
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function idbGet(key){
+      try {
+        const db = await idbOpen();
+        if (!db) return null;
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction('files','readonly');
+          const store = tx.objectStore('files');
+          const r = store.get(key);
+          r.onsuccess = () => resolve(r.result || null);
+          r.onerror = () => reject(r.error);
+        });
+      } catch { return null; }
+    }
+
+    async function idbSet(key, value){
+      try {
+        const db = await idbOpen();
+        if (!db) return false;
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction('files','readwrite');
+          const store = tx.objectStore('files');
+          const r = store.put(value, key);
+          r.onsuccess = () => resolve(true);
+          r.onerror = () => reject(r.error);
+        });
+      } catch { return false; }
+    }
+
+    // Load Excel directly using SheetJS (no worker needed)
     async function loadExcel(){
       try {
         showLoader(true);
-        // Try cache first
+        setStatus('Checking cache…');
+
         const cached = await idbGet(CACHE_KEY);
-        if (cached && Array.isArray(cached.rows)){
+        if (cached && Array.isArray(cached.rows) && cached.rows.length > 0){
           ALL_ROWS = cached.rows;
-          renderTable(cached.rows);
-          setStatus(`Loaded ${cached.rows.length} rows (cached)`);
+          SEARCH_INDEX = cached.rows.map(r => r.searchIndex);
+          renderTable(ALL_ROWS);
+          setStatus(`Loaded ${ALL_ROWS.length} rows from cache`);
           showLoader(false);
-          // Revalidate in background
-          setTimeout(() => revalidateExcel().catch(()=>{}), 0);
+          setTimeout(() => revalidateExcel().catch(console.error), 2000);
           return;
         }
-        // No cache: fetch and parse via worker
-        setStatus('Loading Oracle.xlsx…');
+
+        // No cache → fetch file
+        setStatus('Fetching Oracle.xlsx…');
         const res = await fetch(excelPath + '?v=' + DATA_VERSION);
-        if (!res.ok){
-          throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+
+        const arrayBuffer = await res.arrayBuffer();
+        setStatus('Parsing Excel data…');
+
+        // Parse with SheetJS — robust handling
+        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellText: true, cellDates: true });
+
+        // Get first worksheet
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+
+        // Convert to JSON
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+        if (!jsonData || jsonData.length === 0) {
+          throw new Error('No data found in worksheet.');
         }
-        const buf = await res.arrayBuffer();
-        const json = await parseInWorker(buf);
-        const rows = json.map(buildRow);
+
+        // Extract headers (first row)
+        const headers = jsonData[0].map(h => String(h || '').trim());
+        const rows = [];
+
+        // Process data rows (skip header)
+        for (let i = 1; i < jsonData.length; i++) {
+          const row = {};
+          const dataRow = jsonData[i];
+          for (let j = 0; j < headers.length && j < dataRow.length; j++) {
+            const key = headers[j];
+            const value = dataRow[j];
+            row[key] = value === undefined ? '' : value;
+          }
+          if (Object.keys(row).length > 0) {
+            rows.push(buildRow(row));
+          }
+        }
+
+        if (rows.length === 0) {
+          throw new Error('No valid rows parsed. Check if Excel has headers and data.');
+        }
+
         ALL_ROWS = rows;
+        SEARCH_INDEX = rows.map(r => r.searchIndex);
         renderTable(rows);
         setStatus(`Loaded ${rows.length} rows from Oracle.xlsx`);
-        if (rows.length === 0){
-          setStatus('No rows found in Oracle.xlsx. Check sheet headers.', true);
-        }
-        // Cache the parsed rows
-        idbSet(CACHE_KEY, { rows, ts: Date.now() }).catch(()=>{});
+        
+        // Cache it
+        idbSet(CACHE_KEY, { rows, ts: Date.now() }).catch(console.error);
         showLoader(false);
-      } catch (err){
-        console.error('Failed to load Excel', err);
-        setStatus('Auto-load failed. If opened without a server, use "Load Local Excel"', true);
-        const btn = document.getElementById('btnLocal'); if (btn) btn.style.display = 'inline-flex';
+
+      } catch (err) {
+        console.error('Excel load failed:', err);
+        setStatus(`Failed to load Excel: ${err.message}`, true);
+        const btn = document.getElementById('btnLocal');
+        if (btn) btn.style.display = 'inline-flex';
         updateCounter(0);
         showLoader(false);
       }
@@ -514,70 +498,137 @@
       try {
         const res = await fetch(excelPath + '?v=' + DATA_VERSION);
         if (!res.ok) return;
-        const buf = await res.arrayBuffer();
-        const json = await parseInWorker(buf);
-        const rows = json.map(buildRow);
-        // Update cache and UI if row count differs (basic change detection)
-        const cached = await idbGet(CACHE_KEY);
-        const cachedCount = cached && Array.isArray(cached.rows) ? cached.rows.length : -1;
-        ALL_ROWS = rows;
-        await idbSet(CACHE_KEY, { rows, ts: Date.now() });
-        if (rows.length !== cachedCount){
-          renderTable(rows);
-          setStatus(`Updated to ${rows.length} rows from Oracle.xlsx`);
+
+        const arrayBuffer = await res.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellText: true, cellDates: true });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+        if (!jsonData || jsonData.length === 0) return;
+
+        const headers = jsonData[0].map(h => String(h || '').trim());
+        const rows = [];
+
+        for (let i = 1; i < jsonData.length; i++) {
+          const row = {};
+          const dataRow = jsonData[i];
+          for (let j = 0; j < headers.length && j < dataRow.length; j++) {
+            const key = headers[j];
+            const value = dataRow[j];
+            row[key] = value === undefined ? '' : value;
+          }
+          if (Object.keys(row).length > 0) {
+            rows.push(buildRow(row));
+          }
         }
-      } catch { /* silent */ }
+
+        if (rows.length !== ALL_ROWS.length) {
+          ALL_ROWS = rows;
+          SEARCH_INDEX = rows.map(r => r.searchIndex);
+          renderTable(rows);
+          setStatus(`Updated to ${rows.length} rows`);
+        }
+
+        idbSet(CACHE_KEY, { rows, ts: Date.now() }).catch(console.error);
+
+      } catch (err) {
+        console.error('Revalidation failed:', err);
+      }
     }
 
     async function loadLocalFile(file){
+      if (!file) return;
+
+      const ps = document.getElementById('pathSelector');
+      const input = document.getElementById('localFile');
+      const fname = file.name.toLowerCase();
+
+      if (fname !== 'oracle.xlsx'){
+        setStatus('Please select the file named "Oracle.xlsx" only.', true);
+        if (ps) { ps.value = ''; ps.style.display = 'none'; }
+        if (input) input.value = '';
+        return;
+      }
+
+      if (ps) { ps.style.display = 'inline-flex'; ps.value = file.name; }
+      setStatus('Loading local Excel…');
+      showLoader(true);
+
       try {
-        if (!file) return;
-        const ps = document.getElementById('pathSelector');
-        const input = document.getElementById('localFile');
-        const fname = String(file.name || '').toLowerCase();
-        if (fname !== 'oracle.xlsx'){
-          setStatus('Please select the file named "Oracle.xlsx" only.', true);
-          if (ps) { ps.value = ''; ps.style.display = 'none'; }
-          if (input) { input.value = ''; }
-          return;
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellText: true, cellDates: true });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+        if (!jsonData || jsonData.length === 0) throw new Error('No data found.');
+
+        const headers = jsonData[0].map(h => String(h || '').trim());
+        const rows = [];
+
+        for (let i = 1; i < jsonData.length; i++) {
+          const row = {};
+          const dataRow = jsonData[i];
+          for (let j = 0; j < headers.length && j < dataRow.length; j++) {
+            const key = headers[j];
+            const value = dataRow[j];
+            row[key] = value === undefined ? '' : value;
+          }
+          if (Object.keys(row).length > 0) {
+            rows.push(buildRow(row));
+          }
         }
-        if (ps) { ps.style.display = 'inline-flex'; ps.value = file.name; }
-        setStatus('Loading local Excel…');
-        showLoader(true);
-        const buf = await file.arrayBuffer();
-        const json = await parseInWorker(buf);
-        const rows = json.map(buildRow);
+
+        if (rows.length === 0) throw new Error('No valid rows parsed.');
+
         ALL_ROWS = rows;
+        SEARCH_INDEX = rows.map(r => r.searchIndex);
         renderTable(rows);
         setStatus(`Loaded ${rows.length} rows from local file`);
-        if (rows.length === 0) setStatus('No rows found. Check sheet headers.', true);
-        showLoader(false);
-      } catch(e){
-        console.error('Local load failed', e);
-        setStatus('Local load failed. Ensure the file is a valid .xlsx', true);
+        idbSet(CACHE_KEY, { rows, ts: Date.now() }).catch(console.error);
+
+      } catch (err) {
+        console.error('Local load failed:', err);
+        setStatus(`Local load failed: ${err.message}`, true);
+      } finally {
         showLoader(false);
       }
     }
 
-    // Wire events
-    for (const id of ['q1','q2','q3','q4']){
-      document.addEventListener('input', (e) => {
-        if (e.target && e.target.id === id) filterNow();
-      });
+    function setStatus(msg, isError=false){
+      const el = document.getElementById('statusBar');
+      el.textContent = msg || '';
+      el.style.color = isError ? '#b00020' : 'var(--muted)';
     }
-    document.getElementById('btnPreview').addEventListener('click', filterNow);
-    document.getElementById('btnPrint').addEventListener('click', () => window.print());
 
-    window.addEventListener('DOMContentLoaded', () => {
+    function showLoader(show){
+      const el = document.getElementById('loader');
+      if (el) el.style.display = show ? 'inline-flex' : 'none';
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
       const input = document.getElementById('localFile');
       if (input) input.addEventListener('change', (e) => loadLocalFile(e.target.files[0]));
-      if (location.protocol === 'file:'){
-        const btn = document.getElementById('btnLocal'); if (btn) btn.style.display = 'inline-flex';
-        const ps = document.getElementById('pathSelector'); if (ps) ps.style.display = 'inline-flex';
+
+      for (const id of ['q1','q2','q3','q4']){
+        document.getElementById(id).addEventListener('input', debouncedFilter);
+      }
+
+      document.getElementById('btnPreview').addEventListener('click', filterNow);
+      document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+      // Auto-load on server, fallback to local on file://
+      if (location.protocol === 'file:') {
+        const btn = document.getElementById('btnLocal');
+        const ps = document.getElementById('pathSelector');
+        if (btn) btn.style.display = 'inline-flex';
+        if (ps) ps.style.display = 'inline-flex';
         setStatus('Opened without server. Use "Load Local Excel" to select Oracle.xlsx');
       } else {
         loadExcel().catch(err => {
-          console.error('Failed to load Excel', err);
+          console.error('Auto-load failed:', err);
           setStatus(`Error loading Oracle.xlsx: ${err.message}`, true);
           updateCounter(0);
         });
