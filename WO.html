@@ -188,7 +188,6 @@
 
 .toast-icon {
   font-size: 20px;
-  font-weight: bold
   color: #f5610b;
 }
 
@@ -493,28 +492,15 @@
     function updateAlertPanel(alertWOs){
       // (Notification system removed)
     }
-function showToast(message, duration = 20000, icon = '🔔') {
-  let container = document.getElementById('toastContainer');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'toastContainer';
-    container.className = 'toast-container';
-    document.body.appendChild(container);
-  }
 
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${message}</span>`;
-  container.appendChild(toast);
-
-  const removeToast = () => {
-    toast.classList.add('removing');
-    setTimeout(() => { toast.remove(); }, 500); // matches slideOut duration
-  };
-
-  setTimeout(removeToast, duration);
-}
- 
+    function showToast(message, duration = 5000){
+      let container = document.getElementById('toastContainer');
+      if (!container){
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
       
       const toast = document.createElement('div');
       toast.className = 'toast';
@@ -1032,9 +1018,6 @@ function showToast(message, duration = 20000, icon = '🔔') {
   </script>
 </body>
 </html>
-
-
-
 
 
 
