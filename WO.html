@@ -160,24 +160,12 @@
     .mini-card { border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; }
     .mini-title { font-weight:700; font-size:12px; color: var(--muted); margin-bottom:4px; }
     .mini-card canvas { width:100%; }
-function showToast(message) {
-  const container = document.querySelector('.toast-container') || createToastContainer();
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = message;
-  container.appendChild(toast);
-
-  // Show for 5 seconds before starting slide out
-  setTimeout(() => {
-    toast.classList.add('removing');
-  }, 5000); // 5000ms = 5 seconds
-
-  // Remove from DOM after animation completes (20s + 5s = 25s total)
-  setTimeout(() => {
-    toast.remove();
-  }, 25000);
-}
-
+    /* Toast notifications */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; max-width: 400px; }
+    .toast { background: #fff; border-left: 4px solid #f5610b; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.5s ease-out; font-size: 14px; color: #333; }
+    @keyframes slideIn { from { transform: translateX(450px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(450px); opacity: 0; } }
+    .toast.removing { animation: slideOut 5000s ease-out forwards; }
 function createToastContainer() {
   const container = document.createElement('div');
   container.className = 'toast-container';
@@ -998,6 +986,7 @@ function createToastContainer() {
   </script>
 </body>
 </html>
+
 
 
 
