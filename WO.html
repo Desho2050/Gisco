@@ -162,10 +162,10 @@
     .mini-card canvas { width:100%; }
     /* Toast notifications */
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; max-width: 400px; }
-    .toast { background: #fff; border-left: 4px solid #f5610b; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s ease-out; font-size: 14px; color: #333; }
+    .toast { background: #fff; border-left: 4px solid #f5610b; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.5s ease-out; font-size: 14px; color: #333; }
     @keyframes slideIn { from { transform: translateX(450px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(450px); opacity: 0; } }
-    .toast.removing { animation: slideOut 5s ease-out forwards; }
+    .toast.removing { animation: slideOut 20s ease-out forwards; }
 
     /* Responsive tweaks */
     @media (max-width: 640px){
@@ -980,5 +980,6 @@
   </script>
 </body>
 </html>
+
 
 
