@@ -9,20 +9,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --brand: #1e4672;
-      --accent: #7f3fbf;
+      --brand: #9e42f5;
+      --accent: #18dbe2;
       --bg: #f4f6f9;
-      --surface: #ffffff;
+      --surface: #04e7c9;
       --text: #172b4d;
       --muted: #6b778c;
       --border: #dde5ef;
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+   .topbar{height: 200px;;}
     .topbar { background: linear-gradient(135deg, var(--brand), var(--accent)); color: #fff; padding: 18px 22px; box-shadow: 0 8px 26px rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .brand { display: flex; align-items: center; gap: 12px; }
-    .logo { height: 96px; width: auto; border-radius: 0; object-fit: contain; box-shadow: none; }
-    .title { font-weight: 700; letter-spacing: 0.3px; color: #000 !important; }
+    .logo { height: 200px; width: 500px; border-radius: 5%; }
+    .title { font-weight: 700; font-size: larger; letter-spacing: 0.3px; color: #000000 !important; }
     .subtitle { font-size: 13px; opacity: 0.95; }
     .lang-switch { display: inline-flex; gap: 8px; align-items: center; }
     .btn.small { height: 28px; padding: 0 10px; font-size: 12px; min-width: auto; }
@@ -57,12 +58,23 @@
 <body>
   <header class="topbar">
     <div class="brand">
+      <div><style>
+        .logo {
+          width: 500px;
+          height: 165px;
+          padding: 10px;
+          border-radius: 20px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          
+        };</style>
       <img src="Logo.bmp" alt="GISCO logo" class="logo">
-      <div>
-        <div class="title" data-i18n="brand_title" style="color:white";>شركة الخليج للخدمات الصناعية</div>
+      <div class="title" style="color: aliceblue; text-align: center;" >شركة الخليج للخدمات الصناعية
+        </div>
+       
       </div>
     </div>
     <div class="lang-switch" aria-label="Language Switch">
+     
       <button class="btn small" data-lang="ar">عربي</button>
       <button class="btn small" data-lang="en">English</button>
     </div>
@@ -214,6 +226,4 @@
 
 </body>
 </html>
-
-
 
