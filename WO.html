@@ -165,7 +165,10 @@
     .toast { background: #fff; border-left: 4px solid #f5610b; border-radius: 6px; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.5s ease-out; font-size: 14px; color: #333; }
     @keyframes slideIn { from { transform: translateX(450px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(450px); opacity: 0; } }
-    .toast.removing { animation: slideOut 5000s ease-out forwards; }
+    
+    .setTimeout(() => {toast.remove();}, 25000);
+.toast.removing { animation: slideOut 5000s ease-out forwards; }
+                       
 function createToastContainer() {
   const container = document.createElement('div');
   container.className = 'toast-container';
@@ -986,6 +989,7 @@ function createToastContainer() {
   </script>
 </body>
 </html>
+
 
 
 
