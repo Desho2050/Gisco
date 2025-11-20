@@ -27,15 +27,15 @@
     .subtitle { font-size: 13px; opacity: 0.95; }
     .lang-switch { display: inline-flex; gap: 8px; align-items: center; }
     .btn.small { height: 28px; padding: 0 10px; font-size: 12px; min-width: auto; }
-    .container { max-width: 1100px; margin: 26px auto; padding: 0 16px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-    .card { color:#ffffff;background:#000000; border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: 0 6px 18px rgba(16, 24, 40, 0.08); display: grid; gap: 8px; }
-    .card h3 { margin: 0; font-size: 18px; color: #ffffff; }
-    .card p { margin: 0; color:#ffffff; font-size: 13px; }
+    .container { max-width: 2000px; margin: 26px auto; padding: 0 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+    .card { color:#000000;background:#30e9f7; border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: 0 6px 18px rgba(16, 24, 40, 0.08); display: grid; gap: 8px; }
+    .card h3 { margin: 0; font-size: 18px; color: #000000; }
+    .card p { margin: 0; color:#000000; font-size: 13px; }
     .badge { display: inline-flex;color:#ffffff; align-items: center; text-align: center; font-size: 20px; font-weight: 700; color: #ffffff; background: #ff00ff; border-radius: 999px; margin-inline-start: 12px; height: 40px; width: 80px; justify-content: center; }
     .actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
     .btn { height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none; white-space: nowrap; min-width: 160px; justify-content: center; }
-    .btn.primary { background:#18dbe2; color: #000000; border-color: #183a5e; font-weight: bold; }
+    .btn.primary { background:#ffffff; color: #000000; border-color: #183a5e; font-weight: bold; }
     .btn:hover { box-shadow: 0 2px 8px rgba(16, 24, 40, 0.12); }
     .footer { margin-top: 20px; color: var(--muted); font-size: 12px; }
     .meta { margin-top: 6px; font-size: 12px; color: var(--muted); }
@@ -114,9 +114,10 @@
       <button class="btn small" data-lang="ar">عربي</button>
       <button class="btn small" data-lang="en">English</button>
     </div>
+    
   </header>
 
-  <main class="container" style="width: 800px;">
+  <main class="container" style="display: block; ">
     <div class="grid" style="display: columns; gap: 20px; justify-content: center; align-items: center; ">
       <section class="card" style="box-shadow: 0 4px 20px ;">
         <h3 data-i18n="card_oracle_title">Oracle Materials ( البحث في الاوراكل)</h3>
@@ -124,7 +125,7 @@
         <div class="actions">
           <a class="btn primary" href="oracle.html" data-i18n="open_oracle">Open Oracle Page</a>
         </div>
-        <div class="meta" style="color: #ffffff;"><span data-i18n="data_label" style="color: #ffffff;">Data:</span> <span id="oracleCount">loading…</span></div>
+        <div class="meta" style="color: #000000;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="oracleCount">loading…</span></div>
       </section>
 
       <section class="card"style="box-shadow: 0 4px 20px ;">
@@ -133,7 +134,7 @@
         <div class="actions">
           <a class="btn primary" href="materials.html" data-i18n="open_materials">Open Materials Page</a>
         </div>
-        <div class="meta" style="color: #ffffff;"><span data-i18n="data_label" style="color: #ffffff;">Data:</span> <span id="materialsCount">loading…</span></div>
+        <div class="meta" style="color: #050505;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="materialsCount">loading…</span></div>
       </section>
 
       <section class="card"style="box-shadow: 0 4px 20px ;">
@@ -142,7 +143,7 @@
         <div class="actions">
           <a class="btn primary" href="Requests.html" data-i18n="open_requests">Open Requests Page</a>
         </div>
-        <div class="meta" style="color: #ffffff;"><span data-i18n="data_label" style="color: #ffffff;">Data:</span> <span id="requestsCount">loading…</span></div>
+        <div class="meta" style="color: #000000;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="requestsCount">loading…</span></div>
       </section>
 
       <section class="card"style="box-shadow: 0 4px 20px ;">
@@ -151,7 +152,7 @@
         <div class="actions">
     <a class="btn primary" href="Shuhrah.html" data-i18n="open_sh">Open Al-Shuhrah Compressors</a>
         </div>
-        <div class="meta" style="color: #ffffff;"><span data-i18n="data_label" style="color: #ffffff;">Data:</span> <span id="purchaseCount">loading…</span></div>
+        <div class="meta" style="color: #000000;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="purchaseCount">loading…</span></div>
       </section>
 
       <section class="card" style="box-shadow: 0 4px 20px ;">
@@ -160,10 +161,18 @@
         <div class="actions">
           <a class="btn primary" href="WO.html" data-i18n="open_wo">Open Work Orders Page</a>
         </div>
-        <div class="meta" style="color: #ffffff;"><span data-i18n="data_label" style="color: #ffffff;">Data:</span> <span id="woCount">loading…</span></div>
+        <div class="meta" style="color: #000000;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="woCount">loading…</span></div>
       </section>
 
-      
+       <section class="card" style="box-shadow: 0 4px 20px ;">
+        <h3><span data-i18n="EMP_Card">4378M Staff Management</span><span class="badge" data-i18n="new_badge">New</span></h3>
+        <p data-i18n="EMP_Card_Desc">Open 4378M Staff Management.</p>
+        <div class="actions">
+          <a class="btn primary" href="EMP.html" data-i18n="EMP_Card_Desc">Open 4378M Staff Management</a>
+        </div>
+        <div class="meta" style="color: #000000;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="empcount">loading…</span></div>
+      </section>
+
     </div>
 
    <div class="credit" style="text-shadow: #9e42f5; text-decoration-color: #3300ec;box-shadow: 0 4px 20px ;padding: 5%; border-radius: 20px;">Programmed By Mostafa Al-Najar<br>تصميم وبرمجة م: مصطفي النجار</div>
@@ -190,10 +199,13 @@
         card_wo_title: '4378M Work Orders Summary',
         card_wo_desc: 'Open the 4378M work orders summary.',
         open_wo: 'Open Work Orders Page',
+        EMP_Card: '4378M Staff Management',
+        EMP_Card_Desc: 'Open 4378M Staff Management.',
         new_badge: 'New',
         data_label: 'Data:',
         rows_suffix: ' rows',
         file_not_found: 'file not found'
+      
       },
       ar: {
         brand_title: 'شركة الخليج للخدمات الصناعية',
@@ -213,6 +225,8 @@
         card_wo_desc: 'افتح ملخص أوامر العمل 4378M.',
         open_wo: 'فتح صفحة أوامر العمل',
         new_badge: '  جديد ',
+        EMP_Card: 'ادارة الموظفين ',
+        EMP_Card_Desc: 'فتح ادارة الموظفين.',
         data_label: 'البيانات:',
         rows_suffix: ' صفوف',
         file_not_found: 'الملف غير موجود'
@@ -257,6 +271,7 @@
       setCount('requestsCount', await countRows('Requests.xlsx'));
       setCount('purchaseCount', await countRows('sh.xlsx'));
       setCount('woCount', await countRows('WO.xlsx'));
+      setCount('empcount', await countRows('EMP.xlsx'));
     });
   </script>
 
