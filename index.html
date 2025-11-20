@@ -9,11 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --brand: #9e42f5;
-      --accent: #18dbe2;
+      --brand: #3500f7;
+      --accent: #008075;
       --bg: #f4f6f9;
       --surface: #04e7c9;
-      --text: #172b4d;
+      --text: #4400ff;
       --muted: #6b778c;
       --border: #dde5ef;
     }
@@ -23,7 +23,7 @@
     .topbar { background: linear-gradient(135deg, var(--brand), var(--accent)); color: #fff; padding: 18px 22px; box-shadow: 0 8px 26px rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .brand { display: flex; align-items: center; gap: 12px; }
     .logo { height: 200px; width: 500px; border-radius: 5%; }
-    .title { font-weight: 700; font-size: larger; letter-spacing: 0.3px; color: #000000 !important; }
+    .title { font-weight: 700; font-size: larger; letter-spacing: 0.3px; color: #ffffff !important; }
     .subtitle { font-size: 13px; opacity: 0.95; }
     .lang-switch { display: inline-flex; gap: 8px; align-items: center; }
     .btn.small { height: 28px; padding: 0 10px; font-size: 12px; min-width: auto; }
@@ -55,11 +55,11 @@
     }
   </style>
 </head>
-<body>
+<body style="background-color: #8dfdea;">
   <header class="topbar" style="display: flex;">
     <img src="Logo.bmp" alt="GISCO logo" class="logo" style="width: 500px;height: 165px;padding: 10px;border-radius: 20px;box-shadow: 0 4px 20px ">
     
-  <div class="title" style="color: aliceblue; text-align: center;box-shadow: 0 4px 20px ;padding: 2%; border-radius: 15px;" >شركة الخليج للخدمات الصناعية<br>Gulf Industrial Service Company</div>
+  <div class="title" style="color: rgb(255, 255, 255); text-align: center;box-shadow: 0 4px 20px ;padding: 2%; border-radius: 15px;" >شركة الخليج للخدمات الصناعية<br>Gulf Industrial Service Company</div>
      <div class="clock-container" style=" box-shadow: 0 4px 20px; display: block; font-size: 35px; text-align: center; border-radius: 15px; padding: 1%;" >
     <div class="time" id="time">--:--:--</div>
     <div class="date" id="date"></div>
@@ -116,15 +116,15 @@
     </div>
   </header>
 
-  <main class="container">
-    <div class="grid">
+  <main class="container" style="width: 800px;">
+    <div class="grid" style="display: columns; gap: 20px; justify-content: center; align-items: center; ">
       <section class="card" style="box-shadow: 0 4px 20px ;">
         <h3 data-i18n="card_oracle_title">Oracle Materials ( البحث في الاوراكل)</h3>
         <p data-i18n="card_oracle_desc">Enhanced search across Oracle.xlsx with multi-input filtering.</p>
         <div class="actions">
           <a class="btn primary" href="oracle.html" data-i18n="open_oracle">Open Oracle Page</a>
         </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="oracleCount">loading…</span></div>
+        <div class="meta" style="color: #ffffff;"><span data-i18n="data_label" style="color: #ffffff;">Data:</span> <span id="oracleCount">loading…</span></div>
       </section>
 
       <section class="card"style="box-shadow: 0 4px 20px ;">
@@ -133,7 +133,7 @@
         <div class="actions">
           <a class="btn primary" href="materials.html" data-i18n="open_materials">Open Materials Page</a>
         </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="materialsCount">loading…</span></div>
+        <div class="meta" style="color: #ffffff;"><span data-i18n="data_label" style="color: #ffffff;">Data:</span> <span id="materialsCount">loading…</span></div>
       </section>
 
       <section class="card"style="box-shadow: 0 4px 20px ;">
@@ -142,7 +142,7 @@
         <div class="actions">
           <a class="btn primary" href="Requests.html" data-i18n="open_requests">Open Requests Page</a>
         </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="requestsCount">loading…</span></div>
+        <div class="meta" style="color: #ffffff;"><span data-i18n="data_label" style="color: #ffffff;">Data:</span> <span id="requestsCount">loading…</span></div>
       </section>
 
       <section class="card"style="box-shadow: 0 4px 20px ;">
@@ -151,7 +151,7 @@
         <div class="actions">
     <a class="btn primary" href="Shuhrah.html" data-i18n="open_sh">Open Al-Shuhrah Compressors</a>
         </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="purchaseCount">loading…</span></div>
+        <div class="meta" style="color: #ffffff;"><span data-i18n="data_label" style="color: #ffffff;">Data:</span> <span id="purchaseCount">loading…</span></div>
       </section>
 
       <section class="card" style="box-shadow: 0 4px 20px ;">
@@ -160,7 +160,7 @@
         <div class="actions">
           <a class="btn primary" href="WO.html" data-i18n="open_wo">Open Work Orders Page</a>
         </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="woCount">loading…</span></div>
+        <div class="meta" style="color: #ffffff;"><span data-i18n="data_label" style="color: #ffffff;">Data:</span> <span id="woCount">loading…</span></div>
       </section>
 
       
