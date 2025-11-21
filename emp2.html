@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -344,15 +343,24 @@
       background: #2980b9;
     }
     
-    .counter-container {
+    /* Combined Counter Container */
+    .combined-counter-container {
       background: #7200a2; 
       border: 1px solid #ddd;
       border-radius: 10px; 
       display: flex; 
-      justify-content: space-between;
+      justify-content: center;
       padding: 15px 30px;
       margin: 20px;
       color: white;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+    }
+    
+    .counter-separator {
+      margin: 0 10px;
+      opacity: 0.8;
     }
   </style>
 </head>
@@ -361,6 +369,11 @@
     <header>
       <h1>Employee Management System</h1>
     </header>
+
+    <!-- Combined Counter -->
+    <div class="combined-counter-container" id="combinedCounter">
+      loading...
+    </div>
 
     <div class="controls">
       <div class="btn-group">
@@ -390,16 +403,6 @@
     </div>
 
     <div id="statusBar" class="status-bar" style="visibility: hidden;height: 1px;"></div>
-    <div class="counter-container">
-      <div>
-        <span class="count-label" id="countLabel" style="color: rgb(255, 255, 255); font-weight: bold;"></span>
-        <span class="count-value" id="resultCount" style="color: rgb(255, 255, 255); font-weight: bold;"></span>
-      </div>
-      <div>
-        <span class="count-label" id="sumLabel" style="color: rgb(255, 255, 255); font-weight: bold;"></span>
-        <span class="count-value" id="sumAmount" style="color: rgb(255, 255, 255); font-weight: bold;">0.00</span>
-      </div>
-    </div>
     <table>
       <thead>
         <tr>
@@ -461,7 +464,8 @@
         absentDays: "Absent Days",
         emergencyLeaves: "Emergency Leaves",
         annualLeaves: "Annual Leaves",
-        performance: "Performance"
+        performance: "Performance",
+        combinedCounterFormat: "Total Salaries : {0} AED + Total Overtime : {1} AED ::: Total Cost : {2} AED"
       },
       ar: {
         serial: "الرقم",
@@ -485,7 +489,8 @@
         absentDays: "أيام الغياب",
         emergencyLeaves: "إجازات طارئة",
         annualLeaves: "إجازات سنوية",
-        performance: "الأداء"
+        performance: "الأداء",
+        combinedCounterFormat: "إجمالي الرواتب : {0} درهم + إجمالي العمل الإضافي : {1} درهم ::: إجمالي التكلفة : {2} درهم"
       }
     };
 
@@ -511,8 +516,6 @@
       const btnPreview = document.getElementById('btnPreview');
       const btnSave = document.getElementById('btnSave');
       const btnLocal = document.getElementById('btnLocal');
-      const countLabel = document.getElementById('countLabel');
-      const sumLabel = document.getElementById('sumLabel');
       const Brand = document.querySelector('header h1');
       const popupTitle = document.getElementById('popupTitle');
       const detailsLabel = document.querySelector('th[data-lang-key="details"]');
@@ -525,8 +528,6 @@
         btnPreview.textContent = 'تحديث النتائج';
         btnSave.textContent = 'حفظ التغييرات';
         btnLocal.textContent = 'تحميل ملف Excel محلي';
-        countLabel.textContent = 'عدد الموظفين';
-        sumLabel.textContent = 'إجمالي الرواتب';
         popupTitle.textContent = 'تفاصيل الموظف';
         detailsLabel.textContent = 'تفاصيل';
       } else {
@@ -537,10 +538,13 @@
         btnPreview.textContent = 'Update Results';
         btnSave.textContent = 'Save Changes';
         btnLocal.textContent = 'Load Local Excel';
-        countLabel.textContent = 'Count of Employees';
-        sumLabel.textContent = 'Total Salaries';
         popupTitle.textContent = 'Employee Details';
         detailsLabel.textContent = 'Details';
+      }
+      
+      // Update combined counter if data is available
+      if (window.totalSalaries !== undefined && window.totalOvertime !== undefined) {
+        updateCombinedCounter(window.totalSalaries, window.totalOvertime);
       }
     };
 
@@ -561,7 +565,7 @@
       TotalSalary: ['TotalSalary', 'Total_Salary', 'GrossSalary']
     };
 
-    // Details field aliases - UPDATED WITH NEW FIELDS
+    // Details field aliases
     const DETAILS_FIELD_ALIASES = {
       code: ['code', 'employee_code', 'emp_code'],
       name: ['name', 'Name', 'ArabicName'],
@@ -663,7 +667,7 @@
       const warningLetters = formatDate(pickField(item, DETAILS_FIELD_ALIASES.warningLetters) || '');
       const absentDays = formatDate(pickField(item, DETAILS_FIELD_ALIASES.absentDays) || '');
       const emergencyLeaves = formatDate(pickField(item, DETAILS_FIELD_ALIASES.emergencyLeaves) || '');
-      const annualLeaves = formatDate(pickField(item, DETAILS_FIELD_ALIASES.annualLeaves) || '');
+      const annualLeaves = String(pickField(item, DETAILS_FIELD_ALIASES.annualLeaves) || '').trim();
       const performance = Number(pickField(item, DETAILS_FIELD_ALIASES.performance) || 0);
       const siteJoiningDate = formatDate(pickField(item, DETAILS_FIELD_ALIASES.siteJoiningDate) || '');
       const resignation = formatDate(pickField(item, DETAILS_FIELD_ALIASES.resignation) || '');
@@ -706,48 +710,30 @@
       return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(Number(n || 0));
     }
 
-    function formatPercentage(n) {
-      return Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '%';
-    }
-
     function formatDateDisplay(date) {
       if (!date) return '-';
       return date;
     }
 
-    // NEW: Process multiple rows for the same employee
-    function processEmployeeDetails(employeeRows) {
-      if (employeeRows.length === 0) return null;
+    // NEW: Format combined counter text
+    function formatCounterText(totalSalaries, totalOvertime, totalCost) {
+      const lang = getLang();
+      const format = LANGUAGES[lang].combinedCounterFormat;
+      return format
+        .replace('{0}', formatMoney(totalSalaries))
+        .replace('{1}', formatMoney(totalOvertime))
+        .replace('{2}', formatMoney(totalCost));
+    }
+
+    // NEW: Update combined counter
+    function updateCombinedCounter(totalSalaries, totalOvertime) {
+      const totalCost = totalSalaries + totalOvertime;
+      const counterText = formatCounterText(totalSalaries, totalOvertime, totalCost);
+      document.getElementById('combinedCounter').textContent = counterText;
       
-      // Initialize with first row
-      const result = { ...employeeRows[0] };
-      
-      // Date fields to collect all unique values
-      const dateFields = ['warningLetters', 'absentDays', 'emergencyLeaves', 'siteJoiningDate', 'resignation'];
-      
-      // Numeric fields to sum
-      const numericFields = ['totalOvertime', 'performance'];
-      
-      // For date fields, collect all unique non-empty values
-      dateFields.forEach(field => {
-        const values = new Set();
-        employeeRows.forEach(row => {
-          if (row[field] && row[field] !== '') {
-            values.add(row[field]);
-          }
-        });
-        result[field] = Array.from(values);
-      });
-      
-      // For numeric fields, sum all values
-      numericFields.forEach(field => {
-        result[field] = employeeRows.reduce((sum, row) => {
-          return sum + (Number(row[field]) || 0);
-        }, 0);
-      });
-      
-      // Non-date/numeric fields just take the first value
-      return result;
+      // Store globally for language updates
+      window.totalSalaries = totalSalaries;
+      window.totalOvertime = totalOvertime;
     }
 
     function renderTable(rows) {
@@ -784,8 +770,18 @@
       
       // Update edit mode indicator
       updateEditModeIndicator();
-      updateCounter(rows.length);
-      updateTotals();
+      
+      // Calculate and update totals
+      let totalSalaries = 0;
+      for (const tr of Array.from(tbody.children)) {
+        if (tr.style.display === 'none') continue;
+        const t = Number(tr.dataset.total || 0);
+        if (!Number.isNaN(t)) totalSalaries += t;
+      }
+      
+      // Update combined counter with current total salaries and cached overtime
+      const totalOvertime = window.totalOvertime !== undefined ? window.totalOvertime : 0;
+      updateCombinedCounter(totalSalaries, totalOvertime);
     }
 
     function updateEditModeIndicator() {
@@ -817,22 +813,6 @@
       }
     }
 
-    function updateCounter(count) {
-      document.getElementById('resultCount').textContent = String(count);
-    }
-
-    function updateTotals() {
-      const tbody = document.getElementById('tableBody');
-      let sum = 0;
-      for (const tr of Array.from(tbody.children)) {
-        if (tr.style.display === 'none') continue;
-        const t = Number(tr.dataset.total || 0);
-        if (!Number.isNaN(t)) sum += t;
-      }
-      const el = document.getElementById('sumAmount');
-      if (el) el.textContent = formatAED(sum);
-    }
-
     function setStatus(msg, isError = false) {
       const el = document.getElementById('statusBar');
       el.textContent = msg || '';
@@ -850,8 +830,7 @@
         for (const tr of Array.from(tbody.children)) {
           tr.style.display = '';
         }
-        updateCounter(currentData.length);
-        updateTotals();
+        renderTable(currentData); // This will recalculate totals
         return;
       }
       
@@ -866,8 +845,18 @@
         if (matches) visible++;
       }
       
-      updateCounter(visible);
-      updateTotals();
+      // Calculate visible total
+      let totalSalaries = 0;
+      for (const tr of Array.from(tbody.children)) {
+        if (tr.style.display === '') {
+          const t = Number(tr.dataset.total || 0);
+          if (!Number.isNaN(t)) totalSalaries += t;
+        }
+      }
+      
+      // Update combined counter with filtered total salaries and cached overtime
+      const totalOvertime = window.totalOvertime !== undefined ? window.totalOvertime : 0;
+      updateCombinedCounter(totalSalaries, totalOvertime);
     }
 
     function calculateTotalSalary(row) {
@@ -913,7 +902,16 @@
         }
         
         // Recalculate totals
-        updateTotals();
+        let totalSalaries = 0;
+        const tbody = document.getElementById('tableBody');
+        for (const tr of Array.from(tbody.children)) {
+          const t = Number(tr.dataset.total || 0);
+          if (!Number.isNaN(t)) totalSalaries += t;
+        }
+        
+        // Update combined counter
+        const totalOvertime = window.totalOvertime !== undefined ? window.totalOvertime : 0;
+        updateCombinedCounter(totalSalaries, totalOvertime);
         
         // Create a new workbook
         const wb = XLSX.utils.book_new();
@@ -959,7 +957,6 @@
         setStatus('فشل التحميل التلقائي. إذا تم فتحه بدون خادم، استخدم "تحميل ملف Excel محلي"', true);
         const btn = document.getElementById('btnLocal'); 
         if (btn) btn.style.display = 'inline-flex';
-        updateCounter(0);
       }
     }
 
@@ -1012,6 +1009,29 @@
         detailsLoaded = false;
         detailsError = err.message;
         setStatus('فشل تحميل EmpDetails.xlsx: ' + err.message, true);
+      }
+    }
+
+    // NEW: Calculate total overtime from EmpDetails.xlsx
+    async function calculateTotalOvertime() {
+      try {
+        const res = await fetch(detailsExcelPath + '?ts=' + Date.now());
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        const buf = await res.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        
+        let total = 0;
+        for (const row of json) {
+          const overtime = Number(pickField(row, DETAILS_FIELD_ALIASES.totalOvertime)) || 0;
+          total += overtime;
+        }
+        
+        return total;
+      } catch (e) {
+        console.warn('Failed to calculate total overtime:', e);
+        return 0; // Return 0 instead of null for calculations
       }
     }
 
@@ -1153,19 +1173,72 @@
         </div>
       `;
       
-      // Numeric fields (summed values)
+      // Total Overtime (summed value)
       content += `
         <div class="detail-item">
           <div class="detail-label">${lang === 'ar' ? 'إجمالي الساعات الإضافية' : 'Total Overtime'}</div>
           <div class="detail-value">${formatNumber(processedData.totalOvertime)}</div>
         </div>
+      `;
+      
+      // Performance Progress Bar
+      const performanceValue = Math.min(100, Math.max(0, processedData.performance || 0));
+      const performanceText = `${formatNumber(performanceValue)}%`;
+      
+      content += `
         <div class="detail-item">
           <div class="detail-label">${lang === 'ar' ? 'الأداء' : 'Performance'}</div>
-          <div class="detail-value">${formatPercentage(processedData.performance)}</div>
+          <div class="detail-value">
+            <div class="progress-container">
+              <div class="progress-bar" style="width: ${performanceValue}%">
+                <div class="progress-text">${performanceText}</div>
+              </div>
+            </div>
+          </div>
         </div>
       `;
       
       document.getElementById('popupContent').innerHTML = content;
+    }
+
+    // NEW: Process multiple rows for the same employee
+    function processEmployeeDetails(employeeRows) {
+      if (employeeRows.length === 0) return null;
+      
+      // Initialize with first row
+      const result = { ...employeeRows[0] };
+      
+      // Date fields to collect all unique values
+      const dateFields = ['warningLetters', 'absentDays', 'emergencyLeaves', 'siteJoiningDate', 'resignation'];
+      
+      // Numeric fields to sum
+      const numericFields = ['totalOvertime'];
+      
+      // For date fields, collect all unique non-empty values
+      dateFields.forEach(field => {
+        const values = new Set();
+        employeeRows.forEach(row => {
+          if (row[field] && row[field] !== '') {
+            values.add(row[field]);
+          }
+        });
+        result[field] = Array.from(values);
+      });
+      
+      // For numeric fields, sum all values
+      numericFields.forEach(field => {
+        result[field] = employeeRows.reduce((sum, row) => {
+          return sum + (Number(row[field]) || 0);
+        }, 0);
+      });
+      
+      // Performance field: average the values
+      result.performance = employeeRows.reduce((sum, row) => {
+        return sum + (Number(row.performance) || 0);
+      }, 0) / employeeRows.length;
+      
+      // Non-date/numeric fields just take the first value
+      return result;
     }
 
     // Event listeners
@@ -1228,53 +1301,32 @@
         if (ps) ps.style.display = 'inline-flex';
         setStatus('تم الفتح بدون خادم. استخدم "تحميل ملف Excel محلي" لتحديد EMP.xlsx');
       } else {
-        // Load both files in parallel
+        // Load all data in parallel
         Promise.allSettled([
           loadExcel(),
-          loadDetailsData()
-        ]).then(() => {
-          // Both done (success or failure)
+          loadDetailsData(),
+          calculateTotalOvertime()
+        ]).then((results) => {
+          // Set overtime total from the third promise result
+          const overtimeResult = results[2];
+          let totalOvertime = 0;
+          if (overtimeResult.status === 'fulfilled') {
+            totalOvertime = overtimeResult.value || 0;
+          }
+          
+          // Store globally and update counter
+          window.totalOvertime = totalOvertime;
+          
+          // Calculate total salaries from current data
+          let totalSalaries = 0;
+          if (currentData && currentData.length > 0) {
+            totalSalaries = currentData.reduce((sum, row) => sum + (row.TotalSalary || 0), 0);
+          }
+          
+          updateCombinedCounter(totalSalaries, totalOvertime);
         });
       }
     });
   </script>
-<!-- Code injected by live-server -->
-<script>
-	// <![CDATA[  <-- For SVG support
-	if ('WebSocket' in window) {
-		(function () {
-			function refreshCSS() {
-				var sheets = [].slice.call(document.getElementsByTagName("link"));
-				var head = document.getElementsByTagName("head")[0];
-				for (var i = 0; i < sheets.length; ++i) {
-					var elem = sheets[i];
-					var parent = elem.parentElement || head;
-					parent.removeChild(elem);
-					var rel = elem.rel;
-					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
-						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
-						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
-					}
-					parent.appendChild(elem);
-				}
-			}
-			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
-			var address = protocol + window.location.host + window.location.pathname + '/ws';
-			var socket = new WebSocket(address);
-			socket.onmessage = function (msg) {
-				if (msg.data == 'reload') window.location.reload();
-				else if (msg.data == 'refreshcss') refreshCSS();
-			};
-			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
-				console.log('Live reload enabled.');
-				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
-			}
-		})();
-	}
-	else {
-		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
-	}
-	// ]]>
-</script>
 </body>
 </html>
