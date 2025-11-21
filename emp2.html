@@ -737,7 +737,7 @@
       const warningLetters = formatDate(pickField(item, DETAILS_FIELD_ALIASES.warningLetters) || '');
       const absentDays = formatDate(pickField(item, DETAILS_FIELD_ALIASES.absentDays) || '');
       const emergencyLeaves = formatDate(pickField(item, DETAILS_FIELD_ALIASES.emergencyLeaves) || '');
-      const annualLeaves = String(pickField(item, DETAILS_FIELD_ALIASES.annualLeaves) || '').trim();
+      const annualLeaves = formatDate(pickField(item, DETAILS_FIELD_ALIASES.annualLeaves) || '');
       const performance = Number(pickField(item, DETAILS_FIELD_ALIASES.performance) || 0);
       const siteJoiningDate = formatDate(pickField(item, DETAILS_FIELD_ALIASES.siteJoiningDate) || '');
       const resignation = formatDate(pickField(item, DETAILS_FIELD_ALIASES.resignation) || '');
@@ -1398,3 +1398,4 @@
   </script>
 </body>
 </html>
+
