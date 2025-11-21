@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee Data Viewer</title>
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f7fa;
+      color: #333;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    header {
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.8em;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 20px;
+      background: #ecf0f1;
+      border-bottom: 1px solid #ddd;
+    }
+    .search-box {
+      flex: 1;
+      min-width: 300px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    .btn {
+      padding: 10px 15px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    .btn:hover {
+      background: #2980b9;
+    }
+    .btn-print {
+      background: #2ecc71;
+    }
+    .btn-print:hover {
+      background: #27ae60;
+    }
+    .btn-save {
+      background: #9b59b6;
+    }
+    .btn-save:hover {
+      background: #8e44ad;
+    }
+    .btn-toggle-edit {
+      background: #e67e22;
+    }
+    .btn-toggle-edit:hover {
+      background: #d35400;
+    }
+    .btn-home {
+      background: #34495e;
+    }
+    .btn-home:hover {
+      background: #2c3e50;
+    }
+    .status-bar {
+      padding: 10px 20px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #eee;
+      color: #7f8c8d;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #34495e;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    tr:hover {
+      background-color: #e8f4ff;
+    }
+    .total-row {
+      background-color: #e3f2fd;
+      font-weight: bold;
+    }
+    .summary {
+      padding: 15px 20px;
+      background: #f8f9fa;
+      border-top: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .counter {
+      font-weight: bold;
+      color: #2c3e50;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .count-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 120px;
+    }
+    .count-label {
+      font-size: 0.9em;
+      color: #555;
+    }
+    .count-value {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    .lang-selector {
+      margin-left: auto;
+    }
+    .lang-btn {
+      background: #9b59b6;
+      padding: 5px 10px;
+      margin-left: 5px;
+    }
+    .lang-btn.active {
+      background: #8e44ad;
+      opacity: 0.8;
+    }
+    .file-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    #btnLocal {
+      display: none;
+    }
+    #pathSelector {
+      display: none;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+    }
+    .edit-input {
+      width: 100%;
+      padding: 4px 6px;
+      border: 1px solid #ddd;
+      border-radius: 2px;
+    }
+    .edit-input:focus {
+      outline: 2px solid #3498db;
+    }
+    .edit-mode .edit-input {
+      background-color: #fff;
+      border-color: #ddd;
+    }
+    .edit-mode .edit-input:disabled {
+      background-color: #f8f9fa;
+      border-color: #ccc;
+      cursor: not-allowed;
+    }
+    .edit-mode .code, .edit-mode .BasicSalary, .edit-mode .Allowances, .edit-mode .total {
+      background-color: #f8f9fa;
+    }
+    .edit-mode th {
+      background-color: #3498db !important;
+    }
+    .edit-mode .edit-input {
+      cursor: pointer;
+    }
+    .edit-mode .edit-input:hover {
+      background-color: #f0f7ff;
+    }
+    .edit-mode .edit-input[readonly] {
+      background-color: #e8f4ff;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .edit-indicator {
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      font-weight: bold;
+      background-color: #e74c3c;
+      color: white;
+      display: none;
+    }
+    .edit-mode .edit-indicator {
+      display: inline-block;
+    }
+    .search-placeholder {
+      color: #7f8c8d;
+      font-style: italic;
+    }
+    
+    /* Details Popup Styles */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0s, opacity 0.3s linear;
+    }
+    
+    .popup-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    .popup-content {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+      width: 80%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 20px;
+      position: relative;
+    }
+    
+    .popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .popup-header h2 {
+      margin: 0;
+      color: #2c3e50;
+    }
+    
+    .close-popup {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .employee-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    
+    .detail-item {
+      margin-bottom: 15px;
+    }
+    
+    .detail-label {
+      font-weight: bold;
+      color: #34495e;
+      margin-bottom: 5px;
+    }
+    
+    .detail-value {
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border: 1px solid #eee;
+    }
+    
+    .date-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    
+    .date-item {
+      background: #e3f2fd;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #3498db;
+      font-size: 1.2em;
+    }
+    
+    .btn-details {
+      background: #3498db;
+      padding: 5px 10px;
+      font-size: 0.9em;
+      border-radius: 4px;
+    }
+    
+    .btn-details:hover {
+      background: #2980b9;
+    }
+    
+    .counter-container {
+      background: #7200a2; 
+      border: 1px solid #ddd;
+      border-radius: 10px; 
+      display: flex; 
+      justify-content: space-between;
+      padding: 15px 30px;
+      margin: 20px;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Employee Management System</h1>
+    </header>
+
+    <div class="controls">
+      <div class="btn-group">
+        <button id="btnHome" class="btn btn-home">الرجوع الي الرئيسية</button>
+        <button id="btnToggleEdit" class="btn btn-toggle-edit">تمكين التحرير</button>
+        <span id="editIndicator" class="edit-indicator">وضع التحرير</span>
+      </div>
+      
+      <div class="search-box">
+        <input type="text" id="globalSearch" placeholder="ابحث بأي جزء من النص (بحث شامل)">
+      </div>
+      
+      <button id="btnPreview" class="btn">تحديث النتائج</button>
+      <button id="btnPrint" class="btn btn-print">طباعة</button>
+      <button id="btnSave" class="btn btn-save">حفظ التغييرات</button>
+      
+      <div class="file-controls">
+        <input type="file" id="localFile" accept=".xlsx" style="display: none;">
+        <button id="btnLocal" class="btn">تحميل ملف Excel محلي</button>
+        <span id="pathSelector" class="path-selector"></span>
+      </div>
+      
+      <div class="lang-selector">
+        <button class="btn lang-btn" data-lang="en">EN</button>
+        <button class="btn lang-btn" data-lang="ar">AR</button>
+      </div>
+    </div>
+
+    <div id="statusBar" class="status-bar" style="visibility: hidden;height: 1px;"></div>
+    <div class="counter-container">
+      <div>
+        <span class="count-label" id="countLabel"></span>
+        <span class="count-value" id="resultCount"></span>
+      </div>
+      <div>
+        <span class="count-label" id="sumLabel"></span>
+        <span class="count-value" id="sumAmount">0.00</span>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th data-lang-key="serial">SNo</th>
+          <th data-lang-key="code">Code</th>
+          <th data-lang-key="name">Name</th>
+          <th data-lang-key="engName">English Name</th>
+          <th data-lang-key="job">Job</th>
+          <th data-lang-key="id">ID</th>
+          <th data-lang-key="nationality">Nationality</th>
+          <th data-lang-key="joinDate">Joining Date</th>
+          <th data-lang-key="basicSalary">Basic Salary</th>
+          <th data-lang-key="allowances">Allowances</th>
+          <th data-lang-key="totalSalary">Total Salary</th>
+          <th data-lang-key="details">Details</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- Rows will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Details Popup -->
+  <div class="popup-overlay" id="detailsPopup">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h2 id="popupTitle">Employee Details</h2>
+        <button class="close-popup" id="closePopup">&times;</button>
+      </div>
+      <div id="popupContent" class="employee-details-grid">
+        <!-- Content will be populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Language management
+    const LANGUAGES = {
+      en: {
+        serial: "SNo",
+        code: "Code",
+        name: "Name",
+        engName: "English Name",
+        job: "Job",
+        id: "ID",
+        nationality: "Nationality",
+        joinDate: "Joining Date",
+        basicSalary: "Basic Salary",
+        allowances: "Allowances",
+        totalSalary: "Total Salary",
+        Brand:"Employee Management System",
+        details: "Details",
+        siteJoiningDate: "Site Joining Date",
+        resignation: "Resignation",
+        totalOvertime: "Total Overtime",
+        designation: "Designation",
+        warningLetters: "Warning Letters",
+        absentDays: "Absent Days",
+        emergencyLeaves: "Emergency Leaves",
+        annualLeaves: "Annual Leaves",
+        performance: "Performance"
+      },
+      ar: {
+        serial: "الرقم",
+        code: "الكود",
+        name: "الاسم",
+        engName: "الاسم الإنجليزي",
+        job: "الوظيفة",
+        id: "الهوية",
+        nationality: "الجنسية",
+        joinDate: "تاريخ الالتحاق",
+        basicSalary: "الراتب الأساسي",
+        allowances: "البدلات",
+        totalSalary: "إجمالي الراتب",
+        Brand:"نظام إدارة الموظفين",
+        details: "تفاصيل",
+        siteJoiningDate: "تاريخ الالتحاق بالموقع",
+        resignation: "تاريخ الاستقالة",
+        totalOvertime: "إجمالي الساعات الإضافية",
+        designation: "الوظيفة",
+        warningLetters: "التحذيرات",
+        absentDays: "أيام الغياب",
+        emergencyLeaves: "إجازات طارئة",
+        annualLeaves: "إجازات سنوية",
+        performance: "الأداء"
+      }
+    };
+
+    const getLang = () => localStorage.getItem('lang') || 'en';
+    const setLang = (lang) => { 
+      localStorage.setItem('lang', lang); 
+      applyLang(lang); 
+    };
+
+    const applyLang = (lang) => {
+      document.querySelectorAll('[data-lang-key]').forEach(el => {
+        const key = el.getAttribute('data-lang-key');
+        el.textContent = LANGUAGES[lang][key] || key;
+      });
+      document.querySelectorAll('[data-lang]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+      
+      // Update button and placeholder text based on language
+      const btnHome = document.getElementById('btnHome');
+      const btnToggleEdit = document.getElementById('btnToggleEdit');
+      const globalSearch = document.getElementById('globalSearch');
+      const btnPreview = document.getElementById('btnPreview');
+      const btnSave = document.getElementById('btnSave');
+      const btnLocal = document.getElementById('btnLocal');
+      const countLabel = document.getElementById('countLabel');
+      const sumLabel = document.getElementById('sumLabel');
+      const Brand = document.querySelector('header h1');
+      const popupTitle = document.getElementById('popupTitle');
+      const detailsLabel = document.querySelector('th[data-lang-key="details"]');
+      
+      if (lang === 'ar') {
+        Brand.textContent = 'نظام إدارة الموظفين';
+        btnHome.textContent = 'الرجوع الي الرئيسية';
+        btnToggleEdit.textContent = 'تمكين التحرير';
+        globalSearch.placeholder = 'ابحث بأي جزء من النص (بحث شامل)';
+        btnPreview.textContent = 'تحديث النتائج';
+        btnSave.textContent = 'حفظ التغييرات';
+        btnLocal.textContent = 'تحميل ملف Excel محلي';
+        countLabel.textContent = 'عدد الموظفين';
+        sumLabel.textContent = 'إجمالي الرواتب';
+        popupTitle.textContent = 'تفاصيل الموظف';
+        detailsLabel.textContent = 'تفاصيل';
+      } else {
+        Brand.textContent = 'Employee Management System';
+        btnHome.textContent = 'Back to Main Page';
+        btnToggleEdit.textContent = 'Enable Editing';
+        globalSearch.placeholder = 'Search any part of text (Global Search)';
+        btnPreview.textContent = 'Update Results';
+        btnSave.textContent = 'Save Changes';
+        btnLocal.textContent = 'Load Local Excel';
+        countLabel.textContent = 'Count of Employees';
+        sumLabel.textContent = 'Total Salaries';
+        popupTitle.textContent = 'Employee Details';
+        detailsLabel.textContent = 'Details';
+      }
+    };
+
+    // Configuration
+    const excelPath = 'EMP.xlsx';
+    const detailsExcelPath = 'EmpDetails.xlsx';
+    const FIELD_ALIASES = {
+      SNo: ['SNo', 'Serial', 'SerialNo'],
+      code: ['code', 'employee_code', 'emp_code'],
+      Name: ['name', 'Name', 'ArabicName'],
+      NameEng: ['EnglishName', 'NameEng', 'English_Name'],
+      job: ["job", "JobTitle", "Position"],
+      ID: ['ID', 'EmployeeID', 'EmpID'],
+      NATIONALITY: ['NATIONALITY', 'Nationality', 'Citizenship'],
+      JoiningDate: ["Joining Date", "JoiningDate", "HireDate", "Start Date"],
+      BasicSalary: ['BasicSalary', 'Basic_Salary', 'BaseSalary'],
+      Allowances: ['Allowances', 'Allowance', 'Additions'],
+      TotalSalary: ['TotalSalary', 'Total_Salary', 'GrossSalary']
+    };
+
+    // Details field aliases - UPDATED WITH NEW FIELDS
+    const DETAILS_FIELD_ALIASES = {
+      code: ['code', 'employee_code', 'emp_code'],
+      name: ['name', 'Name', 'ArabicName'],
+      NameEng: ['EnglishName', 'NameEng', 'English_Name'],
+      designation: ['designation', 'job', 'JobTitle', 'Position'],
+      warningLetters: ['warning_letters', 'WarningLetters', 'Warnings'],
+      absentDays: ['absent_days', 'AbsentDays', 'Absences'],
+      emergencyLeaves: ['emergency_leaves', 'EmergencyLeaves', 'EmergencyDays'],
+      annualLeaves: ['annual_leaves', 'AnnualLeaves', 'AnnualVacation'],
+      performance: ['performance', 'Performance', 'Performance%', 'PerformancePercent'],
+      siteJoiningDate: ['site_joining_date', 'SiteJoiningDate', 'SiteJoinDate', 'JoiningDateSite'],
+      resignation: ['resignation', 'ResignationDate', 'ResignDate', 'TerminationDate'],
+      totalOvertime: ['total_overtime', 'TotalOvertime', 'OvertimeHours', 'Overtime']
+    };
+
+    // Global state
+    let originalData = [];
+    let currentData = [];
+    let detailsData = [];
+    let isEditMode = false;
+    let detailsLoaded = false;
+    let detailsError = null;
+
+    // Helper functions
+    function normalizeKey(k) {
+      return String(k || '').toLowerCase().replace(/\s+|_/g, '').trim();
+    }
+
+    function pickField(obj, aliases) {
+      const keys = Object.keys(obj);
+      const normToKey = new Map(keys.map(k => [normalizeKey(k), k]));
+      for (const alias of aliases) {
+        const nk = normalizeKey(alias);
+        if (normToKey.has(nk)) return obj[normToKey.get(nk)];
+      }
+      // Fallback to first non-empty value
+      for (const k of keys) {
+        const v = obj[k];
+        if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+      }
+      return '';
+    }
+
+    function formatDate(val) {
+      if (val === null || val === undefined || val === '') return '';
+      if (typeof val === 'number' && isFinite(val)) {
+        // Excel date number conversion
+        const base = Date.UTC(1899, 11, 30);
+        const ms = Math.round(val) * 86400000;
+        const d = new Date(base + ms);
+        return !Number.isNaN(d.getTime()) ? d.toISOString().slice(0,10) : String(val);
+      }
+      if (Object.prototype.toString.call(val) === '[object Date]') {
+        return val.toISOString().slice(0,10);
+      }
+      const s = String(val).trim();
+      const d1 = new Date(s);
+      return !Number.isNaN(d1.getTime()) ? d1.toISOString().slice(0,10) : s;
+    }
+
+    function buildRow(item) {
+      const SNo = String(pickField(item, FIELD_ALIASES.SNo) || '').trim();
+      const code = String(pickField(item, FIELD_ALIASES.code) || '').trim();
+      const Name = String(pickField(item, FIELD_ALIASES.Name) || '').trim();
+      const NameEng = String(pickField(item, FIELD_ALIASES.NameEng) || '').trim();
+      const job = String(pickField(item, FIELD_ALIASES.job) || '').trim();
+      const ID = String(pickField(item, FIELD_ALIASES.ID) || '').trim();
+      const NATIONALITY = String(pickField(item, FIELD_ALIASES.NATIONALITY) || '').trim();
+      const JoiningDate = formatDate(pickField(item, FIELD_ALIASES.JoiningDate) || '');
+      const BasicSalary = Number(pickField(item, FIELD_ALIASES.BasicSalary) || 0);
+      const Allowances = Number(pickField(item, FIELD_ALIASES.Allowances) || 0);
+      const TotalSalary = Number(pickField(item, FIELD_ALIASES.TotalSalary) || 0);
+
+      const searchIndex = [SNo, code, Name, NameEng, job, ID, NATIONALITY, BasicSalary, Allowances, TotalSalary, JoiningDate]
+        .map(s => String(s).toLowerCase())
+        .join(' | ');
+
+      return {
+        SNo,
+        code,
+        Name,
+        NameEng,
+        job,
+        ID,
+        NATIONALITY,
+        BasicSalary,
+        Allowances,
+        TotalSalary,
+        JoiningDate,
+        searchIndex
+      };
+    }
+
+    function buildDetailsRow(item) {
+      const code = String(pickField(item, DETAILS_FIELD_ALIASES.code) || '').trim();
+      const name = String(pickField(item, DETAILS_FIELD_ALIASES.name) || '').trim();
+      const NameEng = String(pickField(item, DETAILS_FIELD_ALIASES.NameEng) || '').trim();
+      const designation = String(pickField(item, DETAILS_FIELD_ALIASES.designation) || '').trim();
+      const warningLetters = formatDate(pickField(item, DETAILS_FIELD_ALIASES.warningLetters) || '');
+      const absentDays = formatDate(pickField(item, DETAILS_FIELD_ALIASES.absentDays) || '');
+      const emergencyLeaves = formatDate(pickField(item, DETAILS_FIELD_ALIASES.emergencyLeaves) || '');
+      const annualLeaves = formatDate(pickField(item, DETAILS_FIELD_ALIASES.annualLeaves) || '');
+      const performance = Number(pickField(item, DETAILS_FIELD_ALIASES.performance) || 0);
+      const siteJoiningDate = formatDate(pickField(item, DETAILS_FIELD_ALIASES.siteJoiningDate) || '');
+      const resignation = formatDate(pickField(item, DETAILS_FIELD_ALIASES.resignation) || '');
+      const totalOvertime = Number(pickField(item, DETAILS_FIELD_ALIASES.totalOvertime) || 0);
+
+      return {
+        code,
+        name,
+        NameEng,
+        designation,
+        warningLetters,
+        absentDays,
+        emergencyLeaves,
+        annualLeaves,
+        performance,
+        siteJoiningDate,
+        resignation,
+        totalOvertime
+      };
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '<')
+        .replaceAll('>', '>')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function formatNumber(n) {
+      return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 6 });
+    }
+
+    function formatMoney(n) {
+      return Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatAED(n) {
+      return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(Number(n || 0));
+    }
+
+    function formatPercentage(n) {
+      return Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '%';
+    }
+
+    function formatDateDisplay(date) {
+      if (!date) return '-';
+      return date;
+    }
+
+    // NEW: Process multiple rows for the same employee
+    function processEmployeeDetails(employeeRows) {
+      if (employeeRows.length === 0) return null;
+      
+      // Initialize with first row
+      const result = { ...employeeRows[0] };
+      
+      // Date fields to collect all unique values
+      const dateFields = ['warningLetters', 'absentDays', 'emergencyLeaves', 'siteJoiningDate', 'resignation'];
+      
+      // Numeric fields to sum
+      const numericFields = ['totalOvertime', 'performance'];
+      
+      // For date fields, collect all unique non-empty values
+      dateFields.forEach(field => {
+        const values = new Set();
+        employeeRows.forEach(row => {
+          if (row[field] && row[field] !== '') {
+            values.add(row[field]);
+          }
+        });
+        result[field] = Array.from(values);
+      });
+      
+      // For numeric fields, sum all values
+      numericFields.forEach(field => {
+        result[field] = employeeRows.reduce((sum, row) => {
+          return sum + (Number(row[field]) || 0);
+        }, 0);
+      });
+      
+      // Non-date/numeric fields just take the first value
+      return result;
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        const tr = document.createElement('tr');
+        
+        // Determine if we're in edit mode
+        const isEditing = isEditMode;
+        
+        // Create the row with appropriate inputs or static text
+        tr.innerHTML = `
+          <td>${escapeHtml(r.SNo)}</td>
+          <td class="code">${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.code)}" data-field="code" data-index="${i}">` : escapeHtml(r.code)}</td>
+          <td>${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.Name)}" data-field="Name" data-index="${i}">` : escapeHtml(r.Name)}</td>
+          <td>${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.NameEng)}" data-field="NameEng" data-index="${i}">` : escapeHtml(r.NameEng)}</td>
+          <td>${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.job)}" data-field="job" data-index="${i}">` : escapeHtml(r.job)}</td>
+          <td>${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.ID)}" data-field="ID" data-index="${i}">` : escapeHtml(r.ID)}</td>
+          <td>${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.NATIONALITY)}" data-field="NATIONALITY" data-index="${i}">` : escapeHtml(r.NATIONALITY)}</td>
+          <td>${isEditing ? `<input type="date" class="edit-input" value="${r.JoiningDate}" data-field="JoiningDate" data-index="${i}">` : escapeHtml(r.JoiningDate)}</td>
+          <td class="BasicSalary">${isEditing ? `<input type="number" class="edit-input" value="${r.BasicSalary}" data-field="BasicSalary" data-index="${i}">` : formatNumber(r.BasicSalary)}</td>
+          <td class="Allowances">${isEditing ? `<input type="number" class="edit-input" value="${r.Allowances}" data-field="Allowances" data-index="${i}">` : formatNumber(r.Allowances)}</td>
+          <td class="total">${isEditing ? `<input type="number" class="edit-input" value="${r.TotalSalary}" data-field="TotalSalary" data-index="${i}" readonly>` : formatMoney(r.TotalSalary)}</td>
+          <td><button class="btn-details" data-code="${escapeHtml(r.code)}">${getLang() === 'ar' ? 'تفاصيل' : 'Details'}</button></td>
+        `;
+        
+        tr.dataset.index = i;
+        tr.dataset.searchIndex = r.searchIndex;
+        tr.dataset.total = String(r.TotalSalary || 0);
+        tbody.appendChild(tr);
+      }
+      
+      // Update edit mode indicator
+      updateEditModeIndicator();
+      updateCounter(rows.length);
+      updateTotals();
+    }
+
+    function updateEditModeIndicator() {
+      const editIndicator = document.getElementById('editIndicator');
+      const btnToggleEdit = document.getElementById('btnToggleEdit');
+      
+      if (isEditMode) {
+        editIndicator.style.display = 'inline-block';
+        btnToggleEdit.textContent = 'تعطيل التحرير';
+        document.getElementById('tableBody').classList.add('edit-mode');
+        if (document.getElementById('btnSave')) {
+          document.getElementById('btnSave').style.display = 'inline-flex';
+        }
+      } else {
+        editIndicator.style.display = 'none';
+        btnToggleEdit.textContent = 'تمكين التحرير';
+        document.getElementById('tableBody').classList.remove('edit-mode');
+        if (document.getElementById('btnSave')) {
+          document.getElementById('btnSave').style.display = 'none';
+        }
+      }
+      
+      // Update button text based on language
+      const lang = getLang();
+      if (lang === 'ar') {
+        btnToggleEdit.textContent = isEditMode ? 'تعطيل التحرير' : 'تمكين التحرير';
+      } else {
+        btnToggleEdit.textContent = isEditMode ? 'Disable Editing' : 'Enable Editing';
+      }
+    }
+
+    function updateCounter(count) {
+      document.getElementById('resultCount').textContent = String(count);
+    }
+
+    function updateTotals() {
+      const tbody = document.getElementById('tableBody');
+      let sum = 0;
+      for (const tr of Array.from(tbody.children)) {
+        if (tr.style.display === 'none') continue;
+        const t = Number(tr.dataset.total || 0);
+        if (!Number.isNaN(t)) sum += t;
+      }
+      const el = document.getElementById('sumAmount');
+      if (el) el.textContent = formatAED(sum);
+    }
+
+    function setStatus(msg, isError = false) {
+      const el = document.getElementById('statusBar');
+      el.textContent = msg || '';
+      el.style.color = isError ? '#b00020' : 'var(--muted, #7f8c8d)';
+      el.style.visibility = msg ? 'visible' : 'hidden';
+      el.style.height = msg ? 'auto' : '1px';
+    }
+
+    function filterNow() {
+      const query = document.getElementById('globalSearch').value.trim().toLowerCase();
+      
+      if (!query) {
+        // Show all rows if search is empty
+        const tbody = document.getElementById('tableBody');
+        for (const tr of Array.from(tbody.children)) {
+          tr.style.display = '';
+        }
+        updateCounter(currentData.length);
+        updateTotals();
+        return;
+      }
+      
+      const tbody = document.getElementById('tableBody');
+      let visible = 0;
+      
+      for (const tr of Array.from(tbody.children)) {
+        const idx = tr.dataset.searchIndex || '';
+        // Check if any part of the search query matches any part of the row data
+        const matches = query.split(/\s+/).every(tok => idx.includes(tok));
+        tr.style.display = matches ? '' : 'none';
+        if (matches) visible++;
+      }
+      
+      updateCounter(visible);
+      updateTotals();
+    }
+
+    function calculateTotalSalary(row) {
+      return Number(row.BasicSalary || 0) + Number(row.Allowances || 0);
+    }
+
+    function updateRowData(index) {
+      const row = currentData[index];
+      const tr = document.querySelector(`tr[data-index="${index}"]`);
+      if (!tr) return;
+
+      // Update the row object with values from inputs
+      row.code = tr.querySelector('input[data-field="code"]').value;
+      row.Name = tr.querySelector('input[data-field="Name"]').value;
+      row.NameEng = tr.querySelector('input[data-field="NameEng"]').value;
+      row.job = tr.querySelector('input[data-field="job"]').value;
+      row.ID = tr.querySelector('input[data-field="ID"]').value;
+      row.NATIONALITY = tr.querySelector('input[data-field="NATIONALITY"]').value;
+      row.JoiningDate = tr.querySelector('input[data-field="JoiningDate"]').value;
+      row.BasicSalary = Number(tr.querySelector('input[data-field="BasicSalary"]').value) || 0;
+      row.Allowances = Number(tr.querySelector('input[data-field="Allowances"]').value) || 0;
+      row.TotalSalary = calculateTotalSalary(row);
+
+      // Update the total salary input field
+      const totalInput = tr.querySelector('input[data-field="TotalSalary"]');
+      if (totalInput) totalInput.value = row.TotalSalary;
+
+      // Update search index
+      row.searchIndex = [row.SNo, row.code, row.Name, row.NameEng, row.job, row.ID, row.NATIONALITY, row.BasicSalary, row.Allowances, row.TotalSalary, row.JoiningDate]
+        .map(s => String(s).toLowerCase())
+        .join(' | ');
+
+      // Update dataset values
+      tr.dataset.searchIndex = row.searchIndex;
+      tr.dataset.total = String(row.TotalSalary);
+    }
+
+    function saveChanges() {
+      try {
+        // Update all rows from inputs
+        for (let i = 0; i < currentData.length; i++) {
+          updateRowData(i);
+        }
+        
+        // Recalculate totals
+        updateTotals();
+        
+        // Create a new workbook
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(currentData);
+        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+        
+        // Save the file
+        XLSX.writeFile(wb, "EMP.xlsx");
+        setStatus("تم حفظ التغييرات بنجاح!");
+      } catch (error) {
+        console.error("Save error:", error);
+        setStatus("خطأ في حفظ الملف: " + error.message, true);
+      }
+    }
+
+    function toggleEditMode() {
+      isEditMode = !isEditMode;
+      renderTable(currentData);
+      
+      // If entering edit mode, show save button
+      const btnSave = document.getElementById('btnSave');
+      if (btnSave) {
+        btnSave.style.display = isEditMode ? 'inline-flex' : 'none';
+      }
+    }
+
+    async function loadExcel() {
+      try {
+        setStatus('جاري تحميل EMP.xlsx…');
+        const res = await fetch(excelPath + '?ts=' + Date.now());
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        const buf = await res.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        originalData = json.map(buildRow);
+        currentData = JSON.parse(JSON.stringify(originalData)); // Deep copy
+        renderTable(currentData);
+        setStatus(`تم تحميل البيانات بنجاح`);
+        if (currentData.length === 0) setStatus('لم يتم العثور على صفوف. تحقق من رؤوس الجدول.', true);
+      } catch (err) {
+        console.error('Excel load error', err);
+        setStatus('فشل التحميل التلقائي. إذا تم فتحه بدون خادم، استخدم "تحميل ملف Excel محلي"', true);
+        const btn = document.getElementById('btnLocal'); 
+        if (btn) btn.style.display = 'inline-flex';
+        updateCounter(0);
+      }
+    }
+
+    async function loadLocalFile(file) {
+      try {
+        if (!file) return;
+        const ps = document.getElementById('pathSelector');
+        const input = document.getElementById('localFile');
+        const fname = String(file.name || '').toLowerCase();
+        
+        if (fname !== 'emp.xlsx') {
+          setStatus('الرجاء اختيار الملف باسم "EMP.xlsx" فقط.', true);
+          if (ps) { ps.value = ''; ps.style.display = 'none'; }
+          if (input) { input.value = ''; }
+          return;
+        }
+        
+        if (ps) { ps.style.display = 'inline-flex'; ps.value = file.name; }
+        setStatus('جاري تحميل ملف Excel المحلي…');
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        originalData = json.map(buildRow);
+        currentData = JSON.parse(JSON.stringify(originalData)); // Deep copy
+        renderTable(currentData);
+        setStatus(`تم تحميل البيانات بنجاح`);
+        if (currentData.length === 0) setStatus('لم يتم العثور على صفوف. تحقق من رؤوس الجدول.', true);
+      } catch(e) {
+        console.error('Local load failed', e);
+        setStatus('فشل تحميل الملف المحلي. تأكد من أن الملف هو ملف .xlsx صالح', true);
+      }
+    }
+
+    async function loadDetailsData() {
+      try {
+        setStatus('جاري تحميل EmpDetails.xlsx…');
+        const res = await fetch(detailsExcelPath + '?ts=' + Date.now());
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        const buf = await res.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        detailsData = json.map(buildDetailsRow);
+        detailsLoaded = true;
+        detailsError = null;
+        setStatus('تم تحميل بيانات التفاصيل بنجاح');
+      } catch (err) {
+        console.error('Details Excel load error', err);
+        detailsLoaded = false;
+        detailsError = err.message;
+        setStatus('فشل تحميل EmpDetails.xlsx: ' + err.message, true);
+      }
+    }
+
+    function showEmployeeDetails(code) {
+      const popup = document.getElementById('detailsPopup');
+      const popupContent = document.getElementById('popupContent');
+      const lang = getLang();
+      const title = lang === 'ar' ? 'تفاصيل الموظف' : 'Employee Details';
+      document.getElementById('popupTitle').textContent = title;
+
+      // Show loading state
+      popupContent.innerHTML = `<div class="loading">${lang === 'ar' ? 'جاري تحميل التفاصيل...' : 'Loading details...'}</div>`;
+      popup.classList.add('active');
+
+      // If details are already loaded, show immediately
+      if (detailsLoaded) {
+        renderEmployeeDetails(code);
+        return;
+      }
+
+      // If there was an error, show retry option
+      if (detailsError) {
+        popupContent.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: #e74c3c;">
+            ${lang === 'ar' ? 'فشل تحميل بيانات التفاصيل' : 'Failed to load details'}
+            <br><br>
+            <button class="btn" id="retryDetailsBtn" style="background: #3498db;">
+              ${lang === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+            </button>
+          </div>
+        `;
+        document.getElementById('retryDetailsBtn').onclick = () => {
+          loadDetailsData().then(() => {
+            renderEmployeeDetails(code);
+          });
+        };
+        return;
+      }
+
+      // If still loading, wait a bit and check again (simple polling)
+      const checkLoaded = () => {
+        if (detailsLoaded) {
+          renderEmployeeDetails(code);
+        } else if (detailsError) {
+          // Show error after delay
+          popupContent.innerHTML = `<div class="loading" style="color: #e74c3c;">${lang === 'ar' ? 'فشل التحميل' : 'Load failed'}</div>`;
+        } else {
+          setTimeout(checkLoaded, 300);
+        }
+      };
+      setTimeout(checkLoaded, 100);
+    }
+
+    function renderEmployeeDetails(code) {
+      const lang = getLang();
+      
+      // Find all rows for this employee
+      const employeeRows = detailsData.filter(emp => emp.code === code);
+      
+      if (employeeRows.length === 0) {
+        document.getElementById('popupContent').innerHTML = `
+          <div style="text-align: center; padding: 30px;">
+            ${lang === 'ar' ? `لم يتم العثور على تفاصيل للموظف ذي الكود: ${code}` : `No details found for employee code: ${code}`}
+          </div>
+        `;
+        return;
+      }
+      
+      // Process multiple rows
+      const processedData = processEmployeeDetails(employeeRows);
+      
+      // Build details content
+      let content = '';
+      
+      // Basic info (single value fields)
+      content += `
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'الكود' : 'Code'}</div>
+          <div class="detail-value">${escapeHtml(processedData.code)}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'الاسم' : 'Name'}</div>
+          <div class="detail-value">${escapeHtml(processedData.name)}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'الاسم الإنجليزي' : 'English Name'}</div>
+          <div class="detail-value">${escapeHtml(processedData.NameEng)}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'الوظيفة' : 'Designation'}</div>
+          <div class="detail-value">${escapeHtml(processedData.designation)}</div>
+        </div>
+      `;
+      
+      // Date fields (show all unique dates)
+      const dateFields = [
+        { key: 'warningLetters', label: lang === 'ar' ? 'التحذيرات' : 'Warning Letters' },
+        { key: 'absentDays', label: lang === 'ar' ? 'أيام الغياب' : 'Absent Days' },
+        { key: 'emergencyLeaves', label: lang === 'ar' ? 'إجازات طارئة' : 'Emergency Leaves' },
+        { key: 'siteJoiningDate', label: lang === 'ar' ? 'تاريخ الالتحاق بالموقع' : 'Site Joining Date' },
+        { key: 'resignation', label: lang === 'ar' ? 'تاريخ الاستقالة' : 'Resignation' }
+      ];
+      
+      dateFields.forEach(field => {
+        const dates = processedData[field.key] || [];
+        if (dates.length === 0) {
+          content += `
+            <div class="detail-item">
+              <div class="detail-label">${field.label}</div>
+              <div class="detail-value">-</div>
+            </div>
+          `;
+        } else if (dates.length === 1) {
+          content += `
+            <div class="detail-item">
+              <div class="detail-label">${field.label}</div>
+              <div class="detail-value">${formatDateDisplay(dates[0])}</div>
+            </div>
+          `;
+        } else {
+          // Multiple dates - show as list
+          const dateItems = dates.map(date => `<span class="date-item">${formatDateDisplay(date)}</span>`).join('');
+          content += `
+            <div class="detail-item">
+              <div class="detail-label">${field.label}</div>
+              <div class="detail-value">
+                <div class="date-list">${dateItems}</div>
+              </div>
+            </div>
+          `;
+        }
+      });
+      
+      // Annual leaves (single value)
+      content += `
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'إجازات سنوية' : 'Annual Leaves'}</div>
+          <div class="detail-value">${escapeHtml(processedData.annualLeaves)}</div>
+        </div>
+      `;
+      
+      // Numeric fields (summed values)
+      content += `
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'إجمالي الساعات الإضافية' : 'Total Overtime'}</div>
+          <div class="detail-value">${formatNumber(processedData.totalOvertime)}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'الأداء' : 'Performance'}</div>
+          <div class="detail-value">${formatPercentage(processedData.performance)}</div>
+        </div>
+      `;
+      
+      document.getElementById('popupContent').innerHTML = content;
+    }
+
+    // Event listeners
+    const globalSearch = document.getElementById('globalSearch');
+    globalSearch.addEventListener('input', filterNow);
+
+    // Use event delegation for dynamic buttons
+    document.getElementById('tableBody').addEventListener('click', (e) => {
+      if (e.target.classList.contains('btn-details')) {
+        const code = e.target.dataset.code;
+        showEmployeeDetails(code);
+      }
+    });
+
+    // Input handler for edit mode
+    document.getElementById('tableBody').addEventListener('input', (e) => {
+      if (e.target.classList.contains('edit-input') && isEditMode) {
+        const index = parseInt(e.target.dataset.index);
+        const field = e.target.dataset.field;
+        if (field === 'BasicSalary' || field === 'Allowances') {
+          updateRowData(index);
+        }
+      }
+    });
+
+    // Popup close handlers
+    document.getElementById('closePopup').addEventListener('click', () => {
+      document.getElementById('detailsPopup').classList.remove('active');
+    });
+    document.getElementById('detailsPopup').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('detailsPopup')) {
+        document.getElementById('detailsPopup').classList.remove('active');
+      }
+    });
+
+    document.getElementById('btnPreview').addEventListener('click', filterNow);
+    document.getElementById('btnPrint').addEventListener('click', () => window.print());
+    document.getElementById('btnSave').addEventListener('click', saveChanges);
+    document.getElementById('btnToggleEdit').addEventListener('click', toggleEditMode);
+    document.getElementById('btnHome').addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+
+    // Initialize on DOM load
+    window.addEventListener('DOMContentLoaded', () => {
+      applyLang(getLang());
+      document.querySelectorAll('[data-lang]').forEach(btn => 
+        btn.addEventListener('click', () => setLang(btn.dataset.lang))
+      );
+      
+      const input = document.getElementById('localFile');
+      if (input) {
+        input.addEventListener('change', (e) => loadLocalFile(e.target.files[0]));
+      }
+      
+      if (location.protocol === 'file:') {
+        const btn = document.getElementById('btnLocal'); 
+        if (btn) btn.style.display = 'inline-flex';
+        const ps = document.getElementById('pathSelector'); 
+        if (ps) ps.style.display = 'inline-flex';
+        setStatus('تم الفتح بدون خادم. استخدم "تحميل ملف Excel محلي" لتحديد EMP.xlsx');
+      } else {
+        // Load both files in parallel
+        Promise.allSettled([
+          loadExcel(),
+          loadDetailsData()
+        ]).then(() => {
+          // Both done (success or failure)
+        });
+      }
+    });
+  </script>
+</body>
+</html>
