@@ -1,330 +1,1399 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GISCO – Main Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Data Viewer</title>
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
   <style>
-    :root {
-      --brand: #3500f7;
-      --accent: #008075;
-      --bg: #f4f6f9;
-      --surface: #04e7c9;
-      --text: #4400ff;
-      --muted: #6b778c;
-      --border: #dde5ef;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 10px;
+      background-color: #f5f7fa;
+      color: #333;
+      line-height: 1.5;
     }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-   .topbar{height: 200px;;}
-    .topbar { background: linear-gradient(135deg, var(--brand), var(--accent)); color: #fff; padding: 18px 22px; box-shadow: 0 8px 26px rgba(0,0,0,0.12); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .logo { height: 200px; width: 500px; border-radius: 5%; }
-    .title { font-weight: 700; font-size: larger; letter-spacing: 0.3px; color: #ffffff !important; }
-    .subtitle { font-size: 13px; opacity: 0.95; }
-    .lang-switch { display: inline-flex; gap: 8px; align-items: center; }
-    .btn.small { height: 28px; padding: 0 10px; font-size: 12px; min-width: auto; }
-    .container { max-width: 2000px; margin: 26px auto; padding: 0 16px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-    .card { color:#000000;background:#30e9f7; border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: 0 6px 18px rgba(16, 24, 40, 0.08); display: grid; gap: 8px; }
-    .card h3 { margin: 0; font-size: 18px; color: #000000; }
-    .card p { margin: 0; color:#000000; font-size: 13px; }
-    .badge { display: inline-flex;color:#ffffff; align-items: center; text-align: center; font-size: 20px; font-weight: 700; color: #ffffff; background: #ff00ff; border-radius: 999px; margin-inline-start: 12px; height: 40px; width: 80px; justify-content: center; }
-    .actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
-    .btn { height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none; white-space: nowrap; min-width: 160px; justify-content: center; }
-    .btn.primary { background:#ffffff; color: #000000; border-color: #183a5e; font-weight: bold; }
-    .btn:hover { box-shadow: 0 2px 8px rgba(16, 24, 40, 0.12); }
-    .footer { margin-top: 20px; color: var(--muted); font-size: 12px; }
-    .meta { margin-top: 6px; font-size: 12px; color: var(--muted); }
-    .credit { margin: 40px auto; text-align: center; font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
-    /* Responsive tweaks */
-    .title { font-size: clamp(16px, 2vw, 20px); }
-    .logo { height: clamp(56px, 10vw, 96px); }
-    @media (max-width: 900px){
-      .topbar { flex-wrap: wrap; }
-      .container { margin: 18px auto; }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
     }
-    @media (max-width: 640px){
-      .grid { grid-template-columns: 1fr; }
-      .actions { flex-direction: column; align-items: stretch; }
-      .actions .btn { width: 100%; min-width: 0; }
-      .credit { font-size: 22px; }
+    header {
+      background: #2c3e50;
+      color: white;
+      padding: 15px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.5em;
+      text-align: center;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 15px;
+      background: #ecf0f1;
+      border-bottom: 1px solid #ddd;
+    }
+    .search-box {
+      flex: 1;
+      min-width: 200px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    .btn {
+      padding: 10px 12px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+      min-height: 40px;
+    }
+    .btn:hover {
+      background: #2980b9;
+    }
+    .btn-print {
+      background: #2ecc71;
+    }
+    .btn-print:hover {
+      background: #27ae60;
+    }
+    .btn-save {
+      background: #9b59b6;
+    }
+    .btn-save:hover {
+      background: #8e44ad;
+    }
+    .btn-toggle-edit {
+      background: #e67e22;
+    }
+    .btn-toggle-edit:hover {
+      background: #d35400;
+    }
+    .btn-home {
+      background: #34495e;
+    }
+    .btn-home:hover {
+      background: #2c3e50;
+    }
+    .status-bar {
+      padding: 8px 15px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #eee;
+      color: #7f8c8d;
+      font-size: 0.9em;
     }
     
-    /* Arabic font for date/time */
-    .arabic-clock {
-      font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Responsive Table */
+    .table-container {
+      overflow-x: auto;
+      padding: 0 10px 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px; /* Ensure table doesn't get too narrow */
+    }
+    th, td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+      font-size: 0.9em;
+    }
+    th {
+      background-color: #34495e;
+      color: white;
+      position: sticky;
+      top: 0;
+      white-space: nowrap;
+    }
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    tr:hover {
+      background-color: #e8f4ff;
+    }
+    
+    /* Combined Counter */
+    .combined-counter-container {
+      background: #7200a2; 
+      border: 1px solid #ddd;
+      border-radius: 8px; 
+      padding: 12px;
+      margin: 15px;
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 1.4;
+    }
+    
+    /* Details Popup */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0s, opacity 0.3s linear;
+    }
+    
+    .popup-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    .popup-content {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+      width: 95%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 15px;
+      position: relative;
+    }
+    
+    .popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .popup-header h2 {
+      margin: 0;
+      font-size: 1.3em;
+      color: #2c3e50;
+    }
+    
+    .close-popup {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .employee-details-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    
+    .detail-item {
+      margin-bottom: 10px;
+    }
+    
+    .detail-label {
+      font-weight: bold;
+      color: #34495e;
+      margin-bottom: 4px;
+      font-size: 0.95em;
+    }
+    
+    .detail-value {
+      padding: 6px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      font-size: 0.95em;
+    }
+    
+    .date-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    
+    .date-item {
+      background: #e3f2fd;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #3498db;
+      font-size: 1.1em;
+    }
+    
+    .btn-details {
+      background: #3498db;
+      padding: 5px 8px;
+      font-size: 0.8em;
+      border-radius: 4px;
+      min-height: auto;
+      height: auto;
+    }
+    
+    .btn-details:hover {
+      background: #2980b9;
+    }
+    
+    /* Edit mode inputs */
+    .edit-input {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    
+    /* Progress bar */
+    .progress-container {
+      width: 100%;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      height: 20px;
+      position: relative;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #8BC34A);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 0.85em;
+    }
+    
+    .progress-text {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      font-weight: bold;
+      text-shadow: 0 1px 1px rgba(255,255,255,0.7);
+      font-size: 0.85em;
+    }
+    
+    /* Mobile-specific adjustments */
+    @media (max-width: 768px) {
+      .btn-group {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      
+      .lang-selector {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 5px;
+      }
+      
+      .file-controls {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .search-box {
+        order: 1;
+        width: 100%;
+      }
+      
+      .btn-group {
+        order: 2;
+        justify-content: center;
+      }
+      
+      .lang-selector {
+        order: 3;
+      }
+      
+      .file-controls {
+        order: 4;
+        justify-content: center;
+      }
+      
+      /* Buttons in controls */
+      .btn {
+        padding: 8px 10px;
+        font-size: 0.85em;
+        flex: 1;
+        min-width: 120px;
+      }
+      
+      /* Header adjustments */
+      header {
+        padding: 12px;
+      }
+      
+      h1 {
+        font-size: 1.3em;
+      }
+      
+      /* Table adjustments */
+      th, td {
+        padding: 8px 6px;
+        font-size: 0.85em;
+      }
+      
+      /* Counter adjustments */
+      .combined-counter-container {
+        font-size: 13px;
+        padding: 10px;
+        margin: 10px 5px;
+      }
+      
+      /* Details popup */
+      .popup-content {
+        padding: 12px;
+      }
+      
+      .popup-header h2 {
+        font-size: 1.2em;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 5px;
+      }
+      
+      .btn {
+        padding: 7px;
+        font-size: 0.8em;
+        min-width: 100px;
+      }
+      
+      .search-box input {
+        padding: 8px;
+        font-size: 0.95em;
+      }
+      
+      .combined-counter-container {
+        font-size: 12px;
+        line-height: 1.3;
+      }
+      
+      /* Table */
+      th, td {
+        padding: 6px 4px;
+        font-size: 0.8em;
+      }
+      
+      /* Details */
+      .detail-label {
+        font-size: 0.9em;
+      }
+      
+      .detail-value {
+        font-size: 0.9em;
+        padding: 5px;
+      }
     }
   </style>
-  <!-- Arabic font for better Arabic text rendering -->
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body style="background-color: #8dfdea;">
-  <header class="topbar" style="display: flex;">
-    <img src="Logo.bmp" alt="GISCO logo" class="logo" style="width: 500px;height: 165px;padding: 10px;border-radius: 20px;box-shadow: 0 4px 20px ">
-    
-  <div class="title" style="color: rgb(255, 255, 255); text-align: center;box-shadow: 0 4px 20px ;padding: 2%; border-radius: 15px;" >شركة الخليج للخدمات الصناعية<br>Gulf Industrial Service Company</div>
-     <div class="clock-container" style=" box-shadow: 0 4px 20px; display: block; font-size: 35px; text-align: center; border-radius: 15px; padding: 1%;" >
-    <div class="time" id="time">--:--:--</div>
-    <div class="date" id="date"></div>
- </div>
+<body>
+  <div class="container">
+    <header>
+      <h1>Employee Management System</h1>
+    </header>
 
-  <script>
-    // Global variable to track current language
-    let currentLang = localStorage.getItem('lang') || 'ar';
-    
-    function updateClock() {
-      const now = new Date();
-      
-      // Time formatting (same for both languages)
-      const time = now.toLocaleTimeString('en-US', { hour12: false });
-      document.getElementById('time').textContent = time;
-      
-      // Date formatting based on language
-      if (currentLang === 'ar') {
-        // Arabic date format with Arabic numerals
-        const options = { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric',
-          calendar: 'gregory'
-        };
-        
-        // Get date parts in English first
-        const day = now.toLocaleDateString('en-US', { day: 'numeric' });
-        const month = now.toLocaleDateString('en-US', { month: 'long' });
-        const year = now.toLocaleDateString('en-US', { year: 'numeric' });
-        const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
-        
-        // Arabic translations
-        const arabicWeekdays = {
-          'Sunday': 'الأحد',
-          'Monday': 'الاثنين',
-          'Tuesday': 'الثلاثاء',
-          'Wednesday': 'الأربعاء',
-          'Thursday': 'الخميس',
-          'Friday': 'الجمعة',
-          'Saturday': 'السبت'
-        };
-        
-        const arabicMonths = {
-          'January': 'يناير',
-          'February': 'فبراير',
-          'March': 'مارس',
-          'April': 'أبريل',
-          'May': 'مايو',
-          'June': 'يونيو',
-          'July': 'يوليو',
-          'August': 'أغسطس',
-          'September': 'سبتمبر',
-          'October': 'أكتوبر',
-          'November': 'نوفمبر',
-          'December': 'ديسمبر'
-        };
-        
-        // Convert numbers to Arabic-Indic digits
-        const arabicNumerals = {
-          '0': '٠', '1': '١', '2': '٢', '3': '٣', '4': '٤',
-          '5': '٥', '6': '٦', '7': '٧', '8': '٨', '9': '٩'
-        };
-        
-        const convertToArabicNumerals = (numStr) => {
-          return numStr.replace(/\d/g, d => arabicNumerals[d]);
-        };
-        
-        const arabicDate = `${arabicWeekdays[weekday]}, ${convertToArabicNumerals(day)} ${arabicMonths[month]} ${convertToArabicNumerals(year)}`;
-        document.getElementById('date').textContent = arabicDate;
-        document.getElementById('date').className = 'date arabic-clock';
-      } else {
-        // English date format
-        const date = now.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        document.getElementById('date').textContent = date;
-        document.getElementById('date').className = 'date';
-      }
-    }
-
-    // Initialize and update clock every second
-    setInterval(updateClock, 1000);
-    updateClock(); // initial call
-  </script>
-      
-      <div class="lang-switch" aria-label="Language Switch">
-        <button class="btn small" data-lang="ar">عربي</button>
-        <button class="btn small" data-lang="en">English</button>
-      </div>
-  </header>
-
-  <main class="container" style="display: block; ">
-    <div class="grid" style="display: columns; gap: 20px; justify-content: center; align-items: center; ">
-      <section class="card" style="box-shadow: 0 4px 20px ;">
-        <h3 data-i18n="card_oracle_title">Oracle Materials ( البحث في الاوراكل)</h3>
-        <p data-i18n="card_oracle_desc">Enhanced search across Oracle.xlsx with multi-input filtering.</p>
-        <div class="actions">
-          <a class="btn primary" href="oracle.html" data-i18n="open_oracle">Open Oracle Page</a>
-        </div>
-        <div class="meta" style="color: #000000;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="oracleCount">loading…</span></div>
-      </section>
-
-      <section class="card"style="box-shadow: 0 4px 20px ;">
-        <h3 data-i18n="card_materials_title">Received Materials (البحث في المواد المستلمة)</h3>
-        <p data-i18n="card_materials_desc">Same design, powered by Materials.xlsx with totals and search.</p>
-        <div class="actions">
-          <a class="btn primary" href="materials.html" data-i18n="open_materials">Open Materials Page</a>
-        </div>
-        <div class="meta" style="color: #050505;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="materialsCount">loading…</span></div>
-      </section>
-
-      <section class="card"style="box-shadow: 0 4px 20px ;">
-        <h3 data-i18n="card_requests_title">Requests Summary (البحث في ملخص الطلبات)</h3>
-        <p data-i18n="card_requests_desc">Open the requests summary with search and filters.</p>
-        <div class="actions">
-          <a class="btn primary" href="Requests.html" data-i18n="open_requests">Open Requests Page</a>
-        </div>
-        <div class="meta" style="color: #000000;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="requestsCount">loading…</span></div>
-      </section>
-
-      <section class="card"style="box-shadow: 0 4px 20px ;">
-        <h3 data-i18n="card_sh_title">Al-Shuhrah Compressors (البحث في مواد محل الشهرة)</h3>
-        <p data-i18n="card_sh_desc">Editable table with totals, export to Excel/PDF.</p>
-        <div class="actions">
-    <a class="btn primary" href="Shuhrah.html" data-i18n="open_sh">Open Al-Shuhrah Compressors</a>
-        </div>
-        <div class="meta" style="color: #000000;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="purchaseCount">loading…</span></div>
-      </section>
-
-      <section class="card" style="box-shadow: 0 4px 20px ;">
-        <h3><span data-i18n="card_wo_title">4378M Work Orders Summary</span><span class="badge" data-i18n="new_badge">New</span></h3>
-        <p data-i18n="card_wo_desc">Open the 4378M work orders summary.</p>
-        <div class="actions">
-          <a class="btn primary" href="WO.html" data-i18n="open_wo">Open Work Orders Page</a>
-        </div>
-        <div class="meta" style="color: #000000;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="woCount">loading…</span></div>
-      </section>
-
-       <section class="card" style="box-shadow: 0 4px 20px ;">
-        <h3><span data-i18n="EMP_Card">4378M Staff Management</span><span class="badge" data-i18n="new_badge">New</span></h3>
-        <p data-i18n="EMP_Card_Desc">Open 4378M Staff Management.</p>
-        <div class="actions">
-          <a class="btn primary" href="emp2.html" data-i18n="EMP_Card_Desc">Open 4378M Staff Management</a>
-        </div>
-        <div class="meta" style="color: #000000;"><span data-i18n="data_label" style="color: #000000;">Data:</span> <span id="empcount">loading…</span></div>
-      </section>
-
+    <!-- Combined Counter -->
+    <div class="combined-counter-container" id="combinedCounter">
+      loading...
     </div>
 
-   <div class="credit" style="text-shadow: #9e42f5; text-decoration-color: #3300ec;box-shadow: 0 4px 20px ;padding: 5%; border-radius: 20px;">Programmed By Mostafa Al-Najar<br>تصميم وبرمجة م: مصطفي النجار</div>
-  </main>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script>
-    // Simple i18n dictionary and language persistence
-    const I18N = {
-      en: {
-        brand_title: 'Gulf Industrial Service Company',
-        card_oracle_title: 'Oracle Materials (Search Oracle)',
-        card_oracle_desc: 'Enhanced search across Oracle.xlsx with multi-input filtering.',
-        open_oracle: 'Open Oracle Page',
-        card_materials_title: 'Received Materials (Search Received Materials)',
-        card_materials_desc: 'Same design, powered by Materials.xlsx with totals and search.',
-        open_materials: 'Open Materials Page',
-        card_requests_title: 'Requests Summary (Search Requests Summary)',
-        card_requests_desc: 'Open the requests summary with search and filters.',
-        open_requests: 'Open Requests Page',
-        card_sh_title: 'Al-Shuhrah Compressors (Search Al-Shuhrah Materials)',
-        card_sh_desc: 'Editable table with totals, export to Excel/PDF.',
-        open_sh: 'Open Al-Shuhrah Compressors',
-        card_wo_title: '4378M Work Orders Summary',
-        card_wo_desc: 'Open the 4378M work orders summary.',
-        open_wo: 'Open Work Orders Page',
-        EMP_Card: '4378M Staff Management',
-        EMP_Card_Desc: 'Open 4378M Staff Management.',
-        new_badge: 'New',
-        data_label: 'Data:',
-        rows_suffix: ' rows',
-        file_not_found: 'file not found'
+    <div class="controls">
+      <div class="btn-group">
+        <button id="btnHome" class="btn btn-home">الرجوع الي الرئيسية</button>
+        <button id="btnToggleEdit" class="btn btn-toggle-edit">تمكين التحرير</button>
+      </div>
       
+      <div class="search-box">
+        <input type="text" id="globalSearch" placeholder="ابحث بأي جزء من النص (بحث شامل)">
+      </div>
+      
+      <button id="btnPreview" class="btn">تحديث النتائج</button>
+      <button id="btnPrint" class="btn btn-print">طباعة</button>
+      <button id="btnSave" class="btn btn-save">حفظ التغييرات</button>
+      
+      <div class="file-controls">
+        <input type="file" id="localFile" accept=".xlsx" style="display: none;">
+        <button id="btnLocal" class="btn">تحميل ملف Excel محلي</button>
+      </div>
+      
+      <div class="lang-selector">
+        <button class="btn lang-btn" data-lang="en">EN</button>
+        <button class="btn lang-btn" data-lang="ar">AR</button>
+      </div>
+    </div>
+
+    <div id="statusBar" class="status-bar" style="visibility: hidden;height: 1px;"></div>
+    
+    <!-- Responsive Table Container -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th data-lang-key="serial">SNo</th>
+            <th data-lang-key="code">Code</th>
+            <th data-lang-key="name">Name</th>
+            <th data-lang-key="engName">English Name</th>
+            <th data-lang-key="job">Job</th>
+            <th data-lang-key="id">ID</th>
+            <th data-lang-key="nationality">Nationality</th>
+            <th data-lang-key="joinDate">Joining Date</th>
+            <th data-lang-key="basicSalary">Basic Salary</th>
+            <th data-lang-key="allowances">Allowances</th>
+            <th data-lang-key="totalSalary">Total Salary</th>
+            <th data-lang-key="details">Details</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Rows will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Details Popup -->
+  <div class="popup-overlay" id="detailsPopup">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h2 id="popupTitle">Employee Details</h2>
+        <button class="close-popup" id="closePopup">&times;</button>
+      </div>
+      <div id="popupContent" class="employee-details-grid">
+        <!-- Content will be populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Language management
+    const LANGUAGES = {
+      en: {
+        serial: "SNo",
+        code: "Code",
+        name: "Name",
+        engName: "English Name",
+        job: "Job",
+        id: "ID",
+        nationality: "Nationality",
+        joinDate: "Joining Date",
+        basicSalary: "Basic Salary",
+        allowances: "Allowances",
+        totalSalary: "Total Salary",
+        Brand:"Employee Management System",
+        details: "Details",
+        siteJoiningDate: "Site Joining Date",
+        resignation: "Resignation",
+        totalOvertime: "Total Overtime",
+        designation: "Designation",
+        warningLetters: "Warning Letters",
+        absentDays: "Absent Days",
+        emergencyLeaves: "Emergency Leaves",
+        annualLeaves: "Annual Leaves",
+        performance: "Performance",
+        combinedCounterFormat: "Total Salaries : {0} AED + Total Overtime : {1} AED ::: Total Cost : {2} AED"
       },
       ar: {
-        brand_title: 'شركة الخليج للخدمات الصناعية',
-        card_oracle_title: 'مواد الاوراكل ( البحث في الاوراكل )',
-        card_oracle_desc: 'بحث محسّن عبر Oracle.xlsx مع تصفية متعددة المدخلات.',
-        open_oracle: 'فتح صفحة الاوراكل',
-        card_materials_title: 'المواد المستلمة ( البحث في المواد المستلمة )',
-        card_materials_desc: 'نفس التصميم باستخدام Materials.xlsx مع المجاميع والبحث.',
-        open_materials: 'فتح صفحة المواد',
-        card_requests_title: 'ملخص الطلبات ( البحث في ملخص الطلبات )',
-        card_requests_desc: 'افتح ملخص الطلبات مع البحث والمرشحات.',
-        open_requests: 'فتح صفحة الطلبات',
-        card_sh_title: 'ضواغط الشهرة ( البحث في مواد محل الشهرة )',
-        card_sh_desc: 'جدول قابل للتعديل مع المجاميع والتصدير إلى Excel/PDF.',
-        open_sh: 'فتح صفحة الشهرة',
-        card_wo_title: 'ملخص أوامر العمل 4378M',
-        card_wo_desc: 'افتح ملخص أوامر العمل 4378M.',
-        open_wo: 'فتح صفحة أوامر العمل',
-        new_badge: '  جديد ',
-        EMP_Card: 'ادارة الموظفين ',
-        EMP_Card_Desc: 'فتح ادارة الموظفين.',
-        data_label: 'البيانات:',
-        rows_suffix: ' صفوف',
-        file_not_found: 'الملف غير موجود'
+        serial: "الرقم",
+        code: "الكود",
+        name: "الاسم",
+        engName: "الاسم الإنجليزي",
+        job: "الوظيفة",
+        id: "الهوية",
+        nationality: "الجنسية",
+        joinDate: "تاريخ الالتحاق",
+        basicSalary: "الراتب الأساسي",
+        allowances: "البدلات",
+        totalSalary: "إجمالي الراتب",
+        Brand:"نظام إدارة الموظفين",
+        details: "تفاصيل",
+        siteJoiningDate: "تاريخ الالتحاق بالموقع",
+        resignation: "تاريخ الاستقالة",
+        totalOvertime: "إجمالي الساعات الإضافية",
+        designation: "الوظيفة",
+        warningLetters: "التحذيرات",
+        absentDays: "أيام الغياب",
+        emergencyLeaves: "إجازات طارئة",
+        annualLeaves: "إجازات سنوية",
+        performance: "الأداء",
+        combinedCounterFormat: "إجمالي الرواتب : {0} درهم + إجمالي العمل الإضافي : {1} درهم ::: إجمالي التكلفة : {2} درهم"
       }
     };
-    const getLang = () => localStorage.getItem('lang') || 'ar';
-    const applyLang = (lang) => {
-      document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-      const dict = I18N[lang] || I18N.ar;
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (dict[key]) el.textContent = dict[key];
-      });
-      
-      // Update global language variable and refresh clock
-      currentLang = lang;
-      updateClock();
-    };
+
+    const getLang = () => localStorage.getItem('lang') || 'en';
     const setLang = (lang) => { 
       localStorage.setItem('lang', lang); 
       applyLang(lang); 
     };
-    async function countRows(path){
+
+    const applyLang = (lang) => {
+      document.querySelectorAll('[data-lang-key]').forEach(el => {
+        const key = el.getAttribute('data-lang-key');
+        el.textContent = LANGUAGES[lang][key] || key;
+      });
+      document.querySelectorAll('[data-lang]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+      
+      // Update button and placeholder text based on language
+      const btnHome = document.getElementById('btnHome');
+      const btnToggleEdit = document.getElementById('btnToggleEdit');
+      const globalSearch = document.getElementById('globalSearch');
+      const btnPreview = document.getElementById('btnPreview');
+      const btnSave = document.getElementById('btnSave');
+      const btnLocal = document.getElementById('btnLocal');
+      const Brand = document.querySelector('header h1');
+      const popupTitle = document.getElementById('popupTitle');
+      const detailsLabel = document.querySelector('th[data-lang-key="details"]');
+      
+      if (lang === 'ar') {
+        Brand.textContent = 'نظام إدارة الموظفين';
+        btnHome.textContent = 'الرجوع الي الرئيسية';
+        btnToggleEdit.textContent = 'تمكين التحرير';
+        globalSearch.placeholder = 'ابحث بأي جزء من النص (بحث شامل)';
+        btnPreview.textContent = 'تحديث النتائج';
+        btnSave.textContent = 'حفظ التغييرات';
+        btnLocal.textContent = 'تحميل ملف Excel محلي';
+        popupTitle.textContent = 'تفاصيل الموظف';
+        detailsLabel.textContent = 'تفاصيل';
+      } else {
+        Brand.textContent = 'Employee Management System';
+        btnHome.textContent = 'Back to Main Page';
+        btnToggleEdit.textContent = 'Enable Editing';
+        globalSearch.placeholder = 'Search any part of text (Global Search)';
+        btnPreview.textContent = 'Update Results';
+        btnSave.textContent = 'Save Changes';
+        btnLocal.textContent = 'Load Local Excel';
+        popupTitle.textContent = 'Employee Details';
+        detailsLabel.textContent = 'Details';
+      }
+      
+      // Update combined counter if data is available
+      if (window.totalSalaries !== undefined && window.totalOvertime !== undefined) {
+        updateCombinedCounter(window.totalSalaries, window.totalOvertime);
+      }
+    };
+
+    // Configuration
+    const excelPath = 'EMP.xlsx';
+    const detailsExcelPath = 'EmpDetails.xlsx';
+    const FIELD_ALIASES = {
+      SNo: ['SNo', 'Serial', 'SerialNo'],
+      code: ['code', 'employee_code', 'emp_code'],
+      Name: ['name', 'Name', 'ArabicName'],
+      NameEng: ['EnglishName', 'NameEng', 'English_Name'],
+      job: ["job", "JobTitle", "Position"],
+      ID: ['ID', 'EmployeeID', 'EmpID'],
+      NATIONALITY: ['NATIONALITY', 'Nationality', 'Citizenship'],
+      JoiningDate: ["Joining Date", "JoiningDate", "HireDate", "Start Date"],
+      BasicSalary: ['BasicSalary', 'Basic_Salary', 'BaseSalary'],
+      Allowances: ['Allowances', 'Allowance', 'Additions'],
+      TotalSalary: ['TotalSalary', 'Total_Salary', 'GrossSalary']
+    };
+
+    // Details field aliases
+    const DETAILS_FIELD_ALIASES = {
+      code: ['code', 'employee_code', 'emp_code'],
+      name: ['name', 'Name', 'ArabicName'],
+      NameEng: ['EnglishName', 'NameEng', 'English_Name'],
+      designation: ['designation', 'job', 'JobTitle', 'Position'],
+      warningLetters: ['warning_letters', 'WarningLetters', 'Warnings'],
+      absentDays: ['absent_days', 'AbsentDays', 'Absences'],
+      emergencyLeaves: ['emergency_leaves', 'EmergencyLeaves', 'EmergencyDays'],
+      annualLeaves: ['annual_leaves', 'AnnualLeaves', 'AnnualVacation'],
+      performance: ['performance', 'Performance', 'Performance%', 'PerformancePercent'],
+      siteJoiningDate: ['site_joining_date', 'SiteJoiningDate', 'SiteJoinDate', 'JoiningDateSite'],
+      resignation: ['resignation', 'ResignationDate', 'ResignDate', 'TerminationDate'],
+      totalOvertime: ['total_overtime', 'TotalOvertime', 'OvertimeHours', 'Overtime']
+    };
+
+    // Global state
+    let originalData = [];
+    let currentData = [];
+    let detailsData = [];
+    let isEditMode = false;
+    let detailsLoaded = false;
+    let detailsError = null;
+
+    // Helper functions
+    function normalizeKey(k) {
+      return String(k || '').toLowerCase().replace(/\s+|_/g, '').trim();
+    }
+
+    function pickField(obj, aliases) {
+      const keys = Object.keys(obj);
+      const normToKey = new Map(keys.map(k => [normalizeKey(k), k]));
+      for (const alias of aliases) {
+        const nk = normalizeKey(alias);
+        if (normToKey.has(nk)) return obj[normToKey.get(nk)];
+      }
+      // Fallback to first non-empty value
+      for (const k of keys) {
+        const v = obj[k];
+        if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+      }
+      return '';
+    }
+
+    function formatDate(val) {
+      if (val === null || val === undefined || val === '') return '';
+      if (typeof val === 'number' && isFinite(val)) {
+        // Excel date number conversion
+        const base = Date.UTC(1899, 11, 30);
+        const ms = Math.round(val) * 86400000;
+        const d = new Date(base + ms);
+        return !Number.isNaN(d.getTime()) ? d.toISOString().slice(0,10) : String(val);
+      }
+      if (Object.prototype.toString.call(val) === '[object Date]') {
+        return val.toISOString().slice(0,10);
+      }
+      const s = String(val).trim();
+      const d1 = new Date(s);
+      return !Number.isNaN(d1.getTime()) ? d1.toISOString().slice(0,10) : s;
+    }
+
+    function buildRow(item) {
+      const SNo = String(pickField(item, FIELD_ALIASES.SNo) || '').trim();
+      const code = String(pickField(item, FIELD_ALIASES.code) || '').trim();
+      const Name = String(pickField(item, FIELD_ALIASES.Name) || '').trim();
+      const NameEng = String(pickField(item, FIELD_ALIASES.NameEng) || '').trim();
+      const job = String(pickField(item, FIELD_ALIASES.job) || '').trim();
+      const ID = String(pickField(item, FIELD_ALIASES.ID) || '').trim();
+      const NATIONALITY = String(pickField(item, FIELD_ALIASES.NATIONALITY) || '').trim();
+      const JoiningDate = formatDate(pickField(item, FIELD_ALIASES.JoiningDate) || '');
+      const BasicSalary = Number(pickField(item, FIELD_ALIASES.BasicSalary) || 0);
+      const Allowances = Number(pickField(item, FIELD_ALIASES.Allowances) || 0);
+      const TotalSalary = Number(pickField(item, FIELD_ALIASES.TotalSalary) || 0);
+
+      const searchIndex = [SNo, code, Name, NameEng, job, ID, NATIONALITY, BasicSalary, Allowances, TotalSalary, JoiningDate]
+        .map(s => String(s).toLowerCase())
+        .join(' | ');
+
+      return {
+        SNo,
+        code,
+        Name,
+        NameEng,
+        job,
+        ID,
+        NATIONALITY,
+        BasicSalary,
+        Allowances,
+        TotalSalary,
+        JoiningDate,
+        searchIndex
+      };
+    }
+
+    function buildDetailsRow(item) {
+      const code = String(pickField(item, DETAILS_FIELD_ALIASES.code) || '').trim();
+      const name = String(pickField(item, DETAILS_FIELD_ALIASES.name) || '').trim();
+      const NameEng = String(pickField(item, DETAILS_FIELD_ALIASES.NameEng) || '').trim();
+      const designation = String(pickField(item, DETAILS_FIELD_ALIASES.designation) || '').trim();
+      const warningLetters = formatDate(pickField(item, DETAILS_FIELD_ALIASES.warningLetters) || '');
+      const absentDays = formatDate(pickField(item, DETAILS_FIELD_ALIASES.absentDays) || '');
+      const emergencyLeaves = formatDate(pickField(item, DETAILS_FIELD_ALIASES.emergencyLeaves) || '');
+      const annualLeaves = String(pickField(item, DETAILS_FIELD_ALIASES.annualLeaves) || '').trim();
+      const performance = Number(pickField(item, DETAILS_FIELD_ALIASES.performance) || 0);
+      const siteJoiningDate = formatDate(pickField(item, DETAILS_FIELD_ALIASES.siteJoiningDate) || '');
+      const resignation = formatDate(pickField(item, DETAILS_FIELD_ALIASES.resignation) || '');
+      const totalOvertime = Number(pickField(item, DETAILS_FIELD_ALIASES.totalOvertime) || 0);
+
+      return {
+        code,
+        name,
+        NameEng,
+        designation,
+        warningLetters,
+        absentDays,
+        emergencyLeaves,
+        annualLeaves,
+        performance,
+        siteJoiningDate,
+        resignation,
+        totalOvertime
+      };
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '<')
+        .replaceAll('>', '>')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function formatNumber(n) {
+      return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 6 });
+    }
+
+    function formatMoney(n) {
+      return Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatAED(n) {
+      return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(Number(n || 0));
+    }
+
+    function formatDateDisplay(date) {
+      if (!date) return '-';
+      return date;
+    }
+
+    // NEW: Format combined counter text
+    function formatCounterText(totalSalaries, totalOvertime, totalCost) {
+      const lang = getLang();
+      const format = LANGUAGES[lang].combinedCounterFormat;
+      return format
+        .replace('{0}', formatMoney(totalSalaries))
+        .replace('{1}', formatMoney(totalOvertime))
+        .replace('{2}', formatMoney(totalCost));
+    }
+
+    // NEW: Update combined counter
+    function updateCombinedCounter(totalSalaries, totalOvertime) {
+      const totalCost = totalSalaries + totalOvertime;
+      const counterText = formatCounterText(totalSalaries, totalOvertime, totalCost);
+      document.getElementById('combinedCounter').textContent = counterText;
+      
+      // Store globally for language updates
+      window.totalSalaries = totalSalaries;
+      window.totalOvertime = totalOvertime;
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        const tr = document.createElement('tr');
+        
+        // Determine if we're in edit mode
+        const isEditing = isEditMode;
+        
+        // Create the row with appropriate inputs or static text
+        tr.innerHTML = `
+          <td>${escapeHtml(r.SNo)}</td>
+          <td class="code">${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.code)}" data-field="code" data-index="${i}">` : escapeHtml(r.code)}</td>
+          <td>${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.Name)}" data-field="Name" data-index="${i}">` : escapeHtml(r.Name)}</td>
+          <td>${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.NameEng)}" data-field="NameEng" data-index="${i}">` : escapeHtml(r.NameEng)}</td>
+          <td>${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.job)}" data-field="job" data-index="${i}">` : escapeHtml(r.job)}</td>
+          <td>${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.ID)}" data-field="ID" data-index="${i}">` : escapeHtml(r.ID)}</td>
+          <td>${isEditing ? `<input type="text" class="edit-input" value="${escapeHtml(r.NATIONALITY)}" data-field="NATIONALITY" data-index="${i}">` : escapeHtml(r.NATIONALITY)}</td>
+          <td>${isEditing ? `<input type="date" class="edit-input" value="${r.JoiningDate}" data-field="JoiningDate" data-index="${i}">` : escapeHtml(r.JoiningDate)}</td>
+          <td class="BasicSalary">${isEditing ? `<input type="number" class="edit-input" value="${r.BasicSalary}" data-field="BasicSalary" data-index="${i}">` : formatNumber(r.BasicSalary)}</td>
+          <td class="Allowances">${isEditing ? `<input type="number" class="edit-input" value="${r.Allowances}" data-field="Allowances" data-index="${i}">` : formatNumber(r.Allowances)}</td>
+          <td class="total">${isEditing ? `<input type="number" class="edit-input" value="${r.TotalSalary}" data-field="TotalSalary" data-index="${i}" readonly>` : formatMoney(r.TotalSalary)}</td>
+          <td><button class="btn-details" data-code="${escapeHtml(r.code)}">${getLang() === 'ar' ? 'تفاصيل' : 'Details'}</button></td>
+        `;
+        
+        tr.dataset.index = i;
+        tr.dataset.searchIndex = r.searchIndex;
+        tr.dataset.total = String(r.TotalSalary || 0);
+        tbody.appendChild(tr);
+      }
+      
+      // Update edit mode indicator
+      updateEditModeIndicator();
+      
+      // Calculate and update totals
+      let totalSalaries = 0;
+      for (const tr of Array.from(tbody.children)) {
+        if (tr.style.display === 'none') continue;
+        const t = Number(tr.dataset.total || 0);
+        if (!Number.isNaN(t)) totalSalaries += t;
+      }
+      
+      // Update combined counter with current total salaries and cached overtime
+      const totalOvertime = window.totalOvertime !== undefined ? window.totalOvertime : 0;
+      updateCombinedCounter(totalSalaries, totalOvertime);
+    }
+
+    function updateEditModeIndicator() {
+      const editIndicator = document.getElementById('editIndicator');
+      const btnToggleEdit = document.getElementById('btnToggleEdit');
+      
+      if (isEditMode) {
+        btnToggleEdit.textContent = 'تعطيل التحرير';
+        document.getElementById('tableBody').classList.add('edit-mode');
+        if (document.getElementById('btnSave')) {
+          document.getElementById('btnSave').style.display = 'inline-flex';
+        }
+      } else {
+        btnToggleEdit.textContent = 'تمكين التحرير';
+        document.getElementById('tableBody').classList.remove('edit-mode');
+        if (document.getElementById('btnSave')) {
+          document.getElementById('btnSave').style.display = 'none';
+        }
+      }
+      
+      // Update button text based on language
+      const lang = getLang();
+      if (lang === 'ar') {
+        btnToggleEdit.textContent = isEditMode ? 'تعطيل التحرير' : 'تمكين التحرير';
+      } else {
+        btnToggleEdit.textContent = isEditMode ? 'Disable Editing' : 'Enable Editing';
+      }
+    }
+
+    function setStatus(msg, isError = false) {
+      const el = document.getElementById('statusBar');
+      el.textContent = msg || '';
+      el.style.color = isError ? '#b00020' : 'var(--muted, #7f8c8d)';
+      el.style.visibility = msg ? 'visible' : 'hidden';
+      el.style.height = msg ? 'auto' : '1px';
+    }
+
+    function filterNow() {
+      const query = document.getElementById('globalSearch').value.trim().toLowerCase();
+      
+      if (!query) {
+        // Show all rows if search is empty
+        const tbody = document.getElementById('tableBody');
+        for (const tr of Array.from(tbody.children)) {
+          tr.style.display = '';
+        }
+        renderTable(currentData); // This will recalculate totals
+        return;
+      }
+      
+      const tbody = document.getElementById('tableBody');
+      let visible = 0;
+      
+      for (const tr of Array.from(tbody.children)) {
+        const idx = tr.dataset.searchIndex || '';
+        // Check if any part of the search query matches any part of the row data
+        const matches = query.split(/\s+/).every(tok => idx.includes(tok));
+        tr.style.display = matches ? '' : 'none';
+        if (matches) visible++;
+      }
+      
+      // Calculate visible total
+      let totalSalaries = 0;
+      for (const tr of Array.from(tbody.children)) {
+        if (tr.style.display === '') {
+          const t = Number(tr.dataset.total || 0);
+          if (!Number.isNaN(t)) totalSalaries += t;
+        }
+      }
+      
+      // Update combined counter with filtered total salaries and cached overtime
+      const totalOvertime = window.totalOvertime !== undefined ? window.totalOvertime : 0;
+      updateCombinedCounter(totalSalaries, totalOvertime);
+    }
+
+    function calculateTotalSalary(row) {
+      return Number(row.BasicSalary || 0) + Number(row.Allowances || 0);
+    }
+
+    function updateRowData(index) {
+      const row = currentData[index];
+      const tr = document.querySelector(`tr[data-index="${index}"]`);
+      if (!tr) return;
+
+      // Update the row object with values from inputs
+      row.code = tr.querySelector('input[data-field="code"]').value;
+      row.Name = tr.querySelector('input[data-field="Name"]').value;
+      row.NameEng = tr.querySelector('input[data-field="NameEng"]').value;
+      row.job = tr.querySelector('input[data-field="job"]').value;
+      row.ID = tr.querySelector('input[data-field="ID"]').value;
+      row.NATIONALITY = tr.querySelector('input[data-field="NATIONALITY"]').value;
+      row.JoiningDate = tr.querySelector('input[data-field="JoiningDate"]').value;
+      row.BasicSalary = Number(tr.querySelector('input[data-field="BasicSalary"]').value) || 0;
+      row.Allowances = Number(tr.querySelector('input[data-field="Allowances"]').value) || 0;
+      row.TotalSalary = calculateTotalSalary(row);
+
+      // Update the total salary input field
+      const totalInput = tr.querySelector('input[data-field="TotalSalary"]');
+      if (totalInput) totalInput.value = row.TotalSalary;
+
+      // Update search index
+      row.searchIndex = [row.SNo, row.code, row.Name, row.NameEng, row.job, row.ID, row.NATIONALITY, row.BasicSalary, row.Allowances, row.TotalSalary, row.JoiningDate]
+        .map(s => String(s).toLowerCase())
+        .join(' | ');
+
+      // Update dataset values
+      tr.dataset.searchIndex = row.searchIndex;
+      tr.dataset.total = String(row.TotalSalary);
+    }
+
+    function saveChanges() {
       try {
-        const res = await fetch(path);
-        if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+        // Update all rows from inputs
+        for (let i = 0; i < currentData.length; i++) {
+          updateRowData(i);
+        }
+        
+        // Recalculate totals
+        let totalSalaries = 0;
+        const tbody = document.getElementById('tableBody');
+        for (const tr of Array.from(tbody.children)) {
+          const t = Number(tr.dataset.total || 0);
+          if (!Number.isNaN(t)) totalSalaries += t;
+        }
+        
+        // Update combined counter
+        const totalOvertime = window.totalOvertime !== undefined ? window.totalOvertime : 0;
+        updateCombinedCounter(totalSalaries, totalOvertime);
+        
+        // Create a new workbook
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(currentData);
+        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+        
+        // Save the file
+        XLSX.writeFile(wb, "EMP.xlsx");
+        setStatus("تم حفظ التغييرات بنجاح!");
+      } catch (error) {
+        console.error("Save error:", error);
+        setStatus("خطأ في حفظ الملف: " + error.message, true);
+      }
+    }
+
+    function toggleEditMode() {
+      isEditMode = !isEditMode;
+      renderTable(currentData);
+      
+      // If entering edit mode, show save button
+      const btnSave = document.getElementById('btnSave');
+      if (btnSave) {
+        btnSave.style.display = isEditMode ? 'inline-flex' : 'none';
+      }
+    }
+
+    async function loadExcel() {
+      try {
+        setStatus('جاري تحميل EMP.xlsx…');
+        const res = await fetch(excelPath + '?ts=' + Date.now());
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
         const buf = await res.arrayBuffer();
         const wb = XLSX.read(buf, { type: 'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
-        return json.length;
-      } catch (e) {
-        console.warn('Count failed for', path, e);
-        return null;
+        originalData = json.map(buildRow);
+        currentData = JSON.parse(JSON.stringify(originalData)); // Deep copy
+        renderTable(currentData);
+        setStatus(`تم تحميل البيانات بنجاح`);
+        if (currentData.length === 0) setStatus('لم يتم العثور على صفوف. تحقق من رؤوس الجدول.', true);
+      } catch (err) {
+        console.error('Excel load error', err);
+        setStatus('فشل التحميل التلقائي. إذا تم فتحه بدون خادم، استخدم "تحميل ملف Excel محلي"', true);
+        const btn = document.getElementById('btnLocal'); 
+        if (btn) btn.style.display = 'inline-flex';
       }
     }
-    function setCount(id, n){
-      const el = document.getElementById(id);
-      if (!el) return;
-      const dict = I18N[getLang()] || I18N.ar;
-      el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
+
+    async function loadLocalFile(file) {
+      try {
+        if (!file) return;
+        const ps = document.getElementById('pathSelector');
+        const input = document.getElementById('localFile');
+        const fname = String(file.name || '').toLowerCase();
+        
+        if (fname !== 'emp.xlsx') {
+          setStatus('الرجاء اختيار الملف باسم "EMP.xlsx" فقط.', true);
+          if (ps) { ps.value = ''; ps.style.display = 'none'; }
+          if (input) { input.value = ''; }
+          return;
+        }
+        
+        if (ps) { ps.style.display = 'inline-flex'; ps.value = file.name; }
+        setStatus('جاري تحميل ملف Excel المحلي…');
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        originalData = json.map(buildRow);
+        currentData = JSON.parse(JSON.stringify(originalData)); // Deep copy
+        renderTable(currentData);
+        setStatus(`تم تحميل البيانات بنجاح`);
+        if (currentData.length === 0) setStatus('لم يتم العثور على صفوف. تحقق من رؤوس الجدول.', true);
+      } catch(e) {
+        console.error('Local load failed', e);
+        setStatus('فشل تحميل الملف المحلي. تأكد من أن الملف هو ملف .xlsx صالح', true);
+      }
     }
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Apply language and wire toggle
+
+    async function loadDetailsData() {
+      try {
+        setStatus('جاري تحميل EmpDetails.xlsx…');
+        const res = await fetch(detailsExcelPath + '?ts=' + Date.now());
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        const buf = await res.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        detailsData = json.map(buildDetailsRow);
+        detailsLoaded = true;
+        detailsError = null;
+        setStatus('تم تحميل بيانات التفاصيل بنجاح');
+      } catch (err) {
+        console.error('Details Excel load error', err);
+        detailsLoaded = false;
+        detailsError = err.message;
+        setStatus('فشل تحميل EmpDetails.xlsx: ' + err.message, true);
+      }
+    }
+
+    // NEW: Calculate total overtime from EmpDetails.xlsx
+    async function calculateTotalOvertime() {
+      try {
+        const res = await fetch(detailsExcelPath + '?ts=' + Date.now());
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        const buf = await res.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        
+        let total = 0;
+        for (const row of json) {
+          const overtime = Number(pickField(row, DETAILS_FIELD_ALIASES.totalOvertime)) || 0;
+          total += overtime;
+        }
+        
+        return total;
+      } catch (e) {
+        console.warn('Failed to calculate total overtime:', e);
+        return 0; // Return 0 instead of null for calculations
+      }
+    }
+
+    function showEmployeeDetails(code) {
+      const popup = document.getElementById('detailsPopup');
+      const popupContent = document.getElementById('popupContent');
+      const lang = getLang();
+      const title = lang === 'ar' ? 'تفاصيل الموظف' : 'Employee Details';
+      document.getElementById('popupTitle').textContent = title;
+
+      // Show loading state
+      popupContent.innerHTML = `<div class="loading">${lang === 'ar' ? 'جاري تحميل التفاصيل...' : 'Loading details...'}</div>`;
+      popup.classList.add('active');
+
+      // If details are already loaded, show immediately
+      if (detailsLoaded) {
+        renderEmployeeDetails(code);
+        return;
+      }
+
+      // If there was an error, show retry option
+      if (detailsError) {
+        popupContent.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: #e74c3c;">
+            ${lang === 'ar' ? 'فشل تحميل بيانات التفاصيل' : 'Failed to load details'}
+            <br><br>
+            <button class="btn" id="retryDetailsBtn" style="background: #3498db;">
+              ${lang === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+            </button>
+          </div>
+        `;
+        document.getElementById('retryDetailsBtn').onclick = () => {
+          loadDetailsData().then(() => {
+            renderEmployeeDetails(code);
+          });
+        };
+        return;
+      }
+
+      // If still loading, wait a bit and check again (simple polling)
+      const checkLoaded = () => {
+        if (detailsLoaded) {
+          renderEmployeeDetails(code);
+        } else if (detailsError) {
+          // Show error after delay
+          popupContent.innerHTML = `<div class="loading" style="color: #e74c3c;">${lang === 'ar' ? 'فشل التحميل' : 'Load failed'}</div>`;
+        } else {
+          setTimeout(checkLoaded, 300);
+        }
+      };
+      setTimeout(checkLoaded, 100);
+    }
+
+    function renderEmployeeDetails(code) {
+      const lang = getLang();
+      
+      // Find all rows for this employee
+      const employeeRows = detailsData.filter(emp => emp.code === code);
+      
+      if (employeeRows.length === 0) {
+        document.getElementById('popupContent').innerHTML = `
+          <div style="text-align: center; padding: 30px;">
+            ${lang === 'ar' ? `لم يتم العثور على تفاصيل للموظف ذي الكود: ${code}` : `No details found for employee code: ${code}`}
+          </div>
+        `;
+        return;
+      }
+      
+      // Process multiple rows
+      const processedData = processEmployeeDetails(employeeRows);
+      
+      // Build details content
+      let content = '';
+      
+      // Basic info (single value fields)
+      content += `
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'الكود' : 'Code'}</div>
+          <div class="detail-value">${escapeHtml(processedData.code)}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'الاسم' : 'Name'}</div>
+          <div class="detail-value">${escapeHtml(processedData.name)}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'الاسم الإنجليزي' : 'English Name'}</div>
+          <div class="detail-value">${escapeHtml(processedData.NameEng)}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'الوظيفة' : 'Designation'}</div>
+          <div class="detail-value">${escapeHtml(processedData.designation)}</div>
+        </div>
+      `;
+      
+      // Date fields (show all unique dates)
+      const dateFields = [
+        { key: 'warningLetters', label: lang === 'ar' ? 'التحذيرات' : 'Warning Letters' },
+        { key: 'absentDays', label: lang === 'ar' ? 'أيام الغياب' : 'Absent Days' },
+        { key: 'emergencyLeaves', label: lang === 'ar' ? 'إجازات طارئة' : 'Emergency Leaves' },
+        { key: 'siteJoiningDate', label: lang === 'ar' ? 'تاريخ الالتحاق بالموقع' : 'Site Joining Date' },
+        { key: 'resignation', label: lang === 'ar' ? 'تاريخ الاستقالة' : 'Resignation' }
+      ];
+      
+      dateFields.forEach(field => {
+        const dates = processedData[field.key] || [];
+        if (dates.length === 0) {
+          content += `
+            <div class="detail-item">
+              <div class="detail-label">${field.label}</div>
+              <div class="detail-value">-</div>
+            </div>
+          `;
+        } else if (dates.length === 1) {
+          content += `
+            <div class="detail-item">
+              <div class="detail-label">${field.label}</div>
+              <div class="detail-value">${formatDateDisplay(dates[0])}</div>
+            </div>
+          `;
+        } else {
+          // Multiple dates - show as list
+          const dateItems = dates.map(date => `<span class="date-item">${formatDateDisplay(date)}</span>`).join('');
+          content += `
+            <div class="detail-item">
+              <div class="detail-label">${field.label}</div>
+              <div class="detail-value">
+                <div class="date-list">${dateItems}</div>
+              </div>
+            </div>
+          `;
+        }
+      });
+      
+      // Annual leaves (single value)
+      content += `
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'إجازات سنوية' : 'Annual Leaves'}</div>
+          <div class="detail-value">${escapeHtml(processedData.annualLeaves)}</div>
+        </div>
+      `;
+      
+      // Total Overtime (summed value)
+      content += `
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'إجمالي الساعات الإضافية' : 'Total Overtime'}</div>
+          <div class="detail-value">${formatNumber(processedData.totalOvertime)}</div>
+        </div>
+      `;
+      
+      // Performance Progress Bar
+      const performanceValue = Math.min(100, Math.max(0, processedData.performance || 0));
+      const performanceText = `${formatNumber(performanceValue)}%`;
+      
+      content += `
+        <div class="detail-item">
+          <div class="detail-label">${lang === 'ar' ? 'الأداء' : 'Performance'}</div>
+          <div class="detail-value">
+            <div class="progress-container">
+              <div class="progress-bar" style="width: ${performanceValue}%">
+                <div class="progress-text">${performanceText}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('popupContent').innerHTML = content;
+    }
+
+    // NEW: Process multiple rows for the same employee
+    function processEmployeeDetails(employeeRows) {
+      if (employeeRows.length === 0) return null;
+      
+      // Initialize with first row
+      const result = { ...employeeRows[0] };
+      
+      // Date fields to collect all unique values
+      const dateFields = ['warningLetters', 'absentDays', 'emergencyLeaves', 'siteJoiningDate', 'resignation'];
+      
+      // Numeric fields to sum
+      const numericFields = ['totalOvertime'];
+      
+      // For date fields, collect all unique non-empty values
+      dateFields.forEach(field => {
+        const values = new Set();
+        employeeRows.forEach(row => {
+          if (row[field] && row[field] !== '') {
+            values.add(row[field]);
+          }
+        });
+        result[field] = Array.from(values);
+      });
+      
+      // For numeric fields, sum all values
+      numericFields.forEach(field => {
+        result[field] = employeeRows.reduce((sum, row) => {
+          return sum + (Number(row[field]) || 0);
+        }, 0);
+      });
+      
+      // Performance field: average the values
+      result.performance = employeeRows.reduce((sum, row) => {
+        return sum + (Number(row.performance) || 0);
+      }, 0) / employeeRows.length;
+      
+      // Non-date/numeric fields just take the first value
+      return result;
+    }
+
+    // Event listeners
+    const globalSearch = document.getElementById('globalSearch');
+    globalSearch.addEventListener('input', filterNow);
+
+    // Use event delegation for dynamic buttons
+    document.getElementById('tableBody').addEventListener('click', (e) => {
+      if (e.target.classList.contains('btn-details')) {
+        const code = e.target.dataset.code;
+        showEmployeeDetails(code);
+      }
+    });
+
+    // Input handler for edit mode
+    document.getElementById('tableBody').addEventListener('input', (e) => {
+      if (e.target.classList.contains('edit-input') && isEditMode) {
+        const index = parseInt(e.target.dataset.index);
+        const field = e.target.dataset.field;
+        if (field === 'BasicSalary' || field === 'Allowances') {
+          updateRowData(index);
+        }
+      }
+    });
+
+    // Popup close handlers
+    document.getElementById('closePopup').addEventListener('click', () => {
+      document.getElementById('detailsPopup').classList.remove('active');
+    });
+    document.getElementById('detailsPopup').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('detailsPopup')) {
+        document.getElementById('detailsPopup').classList.remove('active');
+      }
+    });
+
+    document.getElementById('btnPreview').addEventListener('click', filterNow);
+    document.getElementById('btnPrint').addEventListener('click', () => window.print());
+    document.getElementById('btnSave').addEventListener('click', saveChanges);
+    document.getElementById('btnToggleEdit').addEventListener('click', toggleEditMode);
+    document.getElementById('btnHome').addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+
+    // Initialize on DOM load
+    window.addEventListener('DOMContentLoaded', () => {
       applyLang(getLang());
-      document.querySelectorAll('[data-lang]').forEach(btn => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
-      setCount('oracleCount', await countRows('Oracle.xlsx'));
-      setCount('materialsCount', await countRows('Materials.xlsx'));
-      setCount('requestsCount', await countRows('Requests.xlsx'));
-      setCount('purchaseCount', await countRows('sh.xlsx'));
-      setCount('woCount', await countRows('WO.xlsx'));
-      setCount('empcount', await countRows('EMP.xlsx'));
+      document.querySelectorAll('[data-lang]').forEach(btn => 
+        btn.addEventListener('click', () => setLang(btn.dataset.lang))
+      );
+      
+      const input = document.getElementById('localFile');
+      if (input) {
+        input.addEventListener('change', (e) => loadLocalFile(e.target.files[0]));
+      }
+      
+      if (location.protocol === 'file:') {
+        const btn = document.getElementById('btnLocal'); 
+        if (btn) btn.style.display = 'inline-flex';
+        const ps = document.getElementById('pathSelector'); 
+        if (ps) ps.style.display = 'inline-flex';
+        setStatus('تم الفتح بدون خادم. استخدم "تحميل ملف Excel محلي" لتحديد EMP.xlsx');
+      } else {
+        // Load all data in parallel
+        Promise.allSettled([
+          loadExcel(),
+          loadDetailsData(),
+          calculateTotalOvertime()
+        ]).then((results) => {
+          // Set overtime total from the third promise result
+          const overtimeResult = results[2];
+          let totalOvertime = 0;
+          if (overtimeResult.status === 'fulfilled') {
+            totalOvertime = overtimeResult.value || 0;
+          }
+          
+          // Store globally and update counter
+          window.totalOvertime = totalOvertime;
+          
+          // Calculate total salaries from current data
+          let totalSalaries = 0;
+          if (currentData && currentData.length > 0) {
+            totalSalaries = currentData.reduce((sum, row) => sum + (row.TotalSalary || 0), 0);
+          }
+          
+          updateCombinedCounter(totalSalaries, totalOvertime);
+        });
+      }
     });
   </script>
 </body>
