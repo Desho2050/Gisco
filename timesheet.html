@@ -26,25 +26,60 @@
     * {
       margin: 0;
       padding: 0;
-      box-sizing: border-box-200px;
+      box-sizing: border-box; /* Fixed typo */
     }
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
       background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
       color: var(--dark);
-      min-height: 80vh;
+      min-height: 100vh;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .back-btn-container {
+      width: 100%;
+      max-width: 850px;
+      margin: 10px auto;
+      text-align: center;
+    }
+
+    .btn-back {
+      background: var(--gray);
+      padding: 10px 24px;
+      font-size: 16px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 10px;
+      color: white;
+      box-shadow: var(--shadow);
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-back:hover {
+      background: #475569;
+      transform: translateY(-2px);
     }
 
     .container {
       max-width: 850px;
+      width: 100%;
       margin: 0 auto;
       background: white;
       border-radius: 16px;
       box-shadow: var(--card-shadow);
       padding: 15px;
-      margin-top: 15px;
+      margin-top: 10px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     header {
@@ -72,8 +107,8 @@
     .card {
       background: white;
       border-radius: 12px;
-      padding: 10px;
-      margin-bottom: 5px;
+      padding: 15px;
+      margin-bottom: 15px;
       border: 1px solid var(--border);
       box-shadow: var(--shadow);
     }
@@ -195,7 +230,7 @@
 
     /* Input Group */
     .input-group {
-      margin: 20px 0;
+      margin: 15px 0;
     }
 
     .input-group label {
@@ -226,7 +261,7 @@
     /* Employee Table */
     .emp-table-container {
       overflow-x: auto;
-      margin: 20px 0;
+      margin: 15px 0;
       border-radius: 12px;
       border: 1px solid var(--border);
     }
@@ -234,12 +269,12 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 400px;
+      min-width: 500px;
     }
 
     th {
       background: var(--light);
-      padding: 16px;
+      padding: 12px;
       text-align: left;
       font-weight: 600;
       color: var(--dark);
@@ -248,7 +283,7 @@
     }
 
     td {
-      padding: 16px;
+      padding: 12px;
       border-bottom: 1px solid var(--border);
       font-size: 15px;
     }
@@ -257,28 +292,36 @@
       text-align: right;
     }
 
-    input[type="text"].emp-input {
+    input[type="text"].emp-input,
+    input[type="number"].overtime-input {
       padding: 8px 12px;
       border: 2px solid var(--border);
       border-radius: 6px;
       font-size: 15px;
       width: 100%;
-      max-width: 200px;
+      max-width: 120px;
       font-family: inherit;
       transition: border-color 0.2s ease;
     }
 
-    input[type="text"].emp-input:focus {
-      outline: solid 2px;
+    input[type="text"].emp-input:focus,
+    input[type="number"].overtime-input:focus {
+      outline: none;
       border-color: var(--primary);
     }
 
-    input[type="text"].emp-input.invalid {
+    input[type="text"].emp-input.invalid,
+    input[type="number"].overtime-input.invalid {
       border-color: var(--danger);
       background: #fef2f2;
     }
 
-    .duplicate-warning {
+    input[type="number"].overtime-input {
+      max-width: 80px;
+    }
+
+    .duplicate-warning,
+    .overtime-warning {
       color: var(--danger);
       font-size: 12px;
       margin-top: 4px;
@@ -289,7 +332,7 @@
       display: flex;
       gap: 12px;
       justify-content: flex-end;
-      padding: 16px;
+      padding: 12px;
       background: var(--light);
       border-top: 1px solid var(--border);
       border-radius: 0 0 12px 12px;
@@ -338,7 +381,8 @@
     /* Generate Button */
     .generate-btn-container {
       text-align: center;
-      margin-top: 24px;
+      margin-top: 20px;
+      margin-bottom: 20px;
     }
 
     .btn-generate {
@@ -374,7 +418,7 @@
     /* Responsive */
     @media (max-width: 600px) {
       .container {
-        padding: 20px;
+        padding: 15px;
       }
       
       h1 {
@@ -382,12 +426,12 @@
       }
       
       .card {
-        padding: 20px;
+        padding: 15px;
       }
       
       th, td {
-        padding: 12px 8px;
-        font-size: 14px;
+        padding: 8px 6px;
+        font-size: 13px;
       }
       
       .action-btn {
@@ -398,6 +442,7 @@
       .btn-generate {
         width: 100%;
         justify-content: center;
+        padding: 12px;
       }
       
       .emp-counter {
@@ -405,32 +450,33 @@
         margin-top: 8px;
         display: inline-block;
       }
+      
+      input[type="text"].emp-input,
+      input[type="number"].overtime-input {
+        max-width: none;
+      }
+    }
+    
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      color: var(--dark);
+      padding: 15px;
+      font-size: 14px;
+    }
+    
+    .footer.arabic {
+      font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
   </style>
- 
 </head>
 <body>
-   <!-- Back to Main Page Button -->
-<div style="
-  text-align: center;
-  margin: 30px 0;
-">
-  <a href="index.html" class="btn-generate" style="
-    background: var(--gray);
-    padding: 12px 28px;
-    font-size: 16px;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    border-radius: 10px;
-    color: white;
-    box-shadow: var(--shadow);
-    transition: all 0.2s ease;
-  ">
-    <i class="fas fa-arrow-left"></i> Back to Main Dashboard
-  </a>
-</div>
+  <div class="back-btn-container">
+    <a href="index.html" class="btn-back">
+      <i class="fas fa-arrow-left"></i> Back to Main Dashboard
+    </a>
+  </div>
+  
   <div class="container">
     <header>
       <h1><i class="fas fa-clock"></i> Professional Timesheet Generator</h1>
@@ -456,7 +502,7 @@
       <h2 class="card-title"><i class="fas fa-building"></i> Workplace Configuration</h2>
       <div class="input-group">
         <label for="wplaceInput">Workplace Code (Wplace)</label>
-        <input type="text" id="wplaceInput" placeholder="Workplace code will be loaded from file"  />
+        <input type="text" id="wplaceInput" placeholder="Workplace code will be loaded from file" />
       </div>
     </div>
 
@@ -473,6 +519,8 @@
             <thead>
               <tr>
                 <th>Employee Code</th>
+                <th>NOT<br><small>(Non-Work Overtime)</small></th>
+                <th>WOT<br><small>(Work Overtime)</small></th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -495,6 +543,11 @@
         <i class="fas fa-file-download"></i> Generate Timesheet
       </button>
     </div>
+  </div>
+
+  <div class="footer">
+    <div>Designed & Programmed By: Mostafa Al-najjar 2025</div>
+    <div class="footer arabic">تصميم وبرمجة: مصطفي النجار 2025</div>
   </div>
 
   <script>
@@ -566,15 +619,47 @@
 
     function updateEmpCounter() {
       const counterEl = document.getElementById('empCounter');
-      const validCount = empCodes.filter(code => String(code).trim() !== '').length;
+      const validCount = empCodes.filter(empData => String(empData.code || '').trim() !== '').length;
       const totalCount = empCodes.length;
       counterEl.textContent = `${totalCount} Employee${totalCount !== 1 ? 's' : ''} (${validCount} valid)`;
+    }
+
+    function validateOvertimeInputs() {
+      let isValid = true;
+      
+      // Validate NOT inputs (Non-Work Overtime)
+      document.querySelectorAll('.not-input').forEach(input => {
+        const val = parseInt(input.value) || 0;
+        if (val < 0 || val > 999) {
+          input.classList.add('invalid');
+          isValid = false;
+        } else {
+          input.classList.remove('invalid');
+        }
+      });
+      
+      // Validate WOT inputs (Work Overtime)
+      document.querySelectorAll('.wot-input').forEach(input => {
+        const val = parseInt(input.value) || 0;
+        if (val < 0 || val > 999) {
+          input.classList.add('invalid');
+          isValid = false;
+        } else {
+          input.classList.remove('invalid');
+        }
+      });
+      
+      return isValid;
     }
 
     function renderEmpTable() {
       const tbody = document.getElementById('empTableBody');
       tbody.innerHTML = '';
-      empCodes.forEach((code, i) => {
+      empCodes.forEach((empData, i) => {
+        const code = empData.code || '';
+        const not = empData.not !== undefined ? empData.not : '';
+        const wot = empData.wot !== undefined ? empData.wot : '';
+        
         const normalizedCode = String(code).trim();
         const duplicate = isDuplicateEmpCode(code, i);
         const inputClass = duplicate ? 'emp-input invalid' : 'emp-input';
@@ -587,6 +672,14 @@
             ${warning}
           </td>
           <td>
+            <input type="number" min="0" max="999" value="${not}" data-index="${i}" class="overtime-input not-input" placeholder="NOT" />
+            <span class="overtime-warning" id="not-warning-${i}" style="display:none;"></span>
+          </td>
+          <td>
+            <input type="number" min="0" max="999" value="${wot}" data-index="${i}" class="overtime-input wot-input" placeholder="WOT" />
+            <span class="overtime-warning" id="wot-warning-${i}" style="display:none;"></span>
+          </td>
+          <td>
             <button class="action-btn btn-remove" data-index="${i}">
               <i class="fas fa-trash"></i> Remove
             </button>
@@ -594,24 +687,31 @@
         `;
         tbody.appendChild(tr);
       });
-      updateEmpCounter(); // Update counter after rendering
+      updateEmpCounter();
       updateGenerateButton();
     }
 
     function updateGenerateButton() {
-      const hasDuplicates = empCodes.some((code, i) => isDuplicateEmpCode(code, i));
-      const hasEmpty = empCodes.some(code => !String(code).trim());
-      document.getElementById('generateBtn').disabled = empCodes.length === 0 || hasDuplicates || hasEmpty;
+      const hasDuplicates = empCodes.some((empData, i) => {
+        const code = empData.code || '';
+        return isDuplicateEmpCode(code, i);
+      });
+      const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
+      const hasInvalidOvertime = !validateOvertimeInputs();
+      document.getElementById('generateBtn').disabled = empCodes.length === 0 || hasDuplicates || hasEmpty || hasInvalidOvertime;
     }
 
     function addNewEmpRow() {
-      empCodes.push('');
+      empCodes.push({ code: '', not: '', wot: '' });
       renderEmpTable();
     }
 
     function checkDuplicates() {
       renderEmpTable();
-      const hasDuplicates = empCodes.some((code, i) => isDuplicateEmpCode(code, i));
+      const hasDuplicates = empCodes.some((empData, i) => {
+        const code = empData.code || '';
+        return isDuplicateEmpCode(code, i);
+      });
       if (hasDuplicates) {
         showStatus('There are duplicate employee codes. Please resolve duplicates before generating.', true);
       } else {
@@ -620,8 +720,18 @@
     }
 
     function updateEmpCode(index, value) {
-      empCodes[index] = value;
-     
+      empCodes[index] = empCodes[index] || {};
+      empCodes[index].code = value;
+    }
+    
+    function updateNOT(index, value) {
+      empCodes[index] = empCodes[index] || {};
+      empCodes[index].not = value;
+    }
+    
+    function updateWOT(index, value) {
+      empCodes[index] = empCodes[index] || {};
+      empCodes[index].wot = value;
     }
 
     function removeEmpCode(index) {
@@ -661,14 +771,26 @@
         return;
       }
 
-      const hasDuplicates = empCodes.some((code, i) => isDuplicateEmpCode(code, i));
-      const hasEmpty = empCodes.some(code => !String(code).trim());
+      // Validate employee codes
+      const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
       if (hasEmpty) {
         showStatus('Employee code cannot be empty.', true);
         return;
       }
+
+      // Validate duplicates
+      const hasDuplicates = empCodes.some((empData, i) => {
+        const code = empData.code || '';
+        return isDuplicateEmpCode(code, i);
+      });
       if (hasDuplicates) {
         showStatus('Duplicate employee codes are not allowed.', true);
+        return;
+      }
+
+      // Validate overtime values
+      if (!validateOvertimeInputs()) {
+        showStatus('Invalid overtime values. Please check your inputs.', true);
         return;
       }
 
@@ -681,31 +803,93 @@
       const startDate = new Date(year, month - 1, 15);
       const endDate = new Date(year, month, 14);
 
+      // Build list of dates with day information
       const dates = [];
       let currentDate = new Date(startDate);
       while (currentDate <= endDate) {
-        dates.push(new Date(currentDate));
+        dates.push({
+          date: new Date(currentDate),
+          isSunday: currentDate.getDay() === 0
+        });
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
       // Build rows as objects
       const rows = [];
 
-      dates.forEach(date => {
-        const isSunday = date.getDay() === 0;
-        const event = isSunday ? 'OFF' : 'P';
-        const worked = isSunday ? 0 : 8;
-
-        empCodes.forEach(code => {
-          const empCodeStr = String(code).trim();
+      // Process each employee
+      empCodes.forEach(empData => {
+        const empCodeStr = String(empData.code).trim();
+        const notTotal = parseInt(empData.not) || 0;
+        const wotTotal = parseInt(empData.wot) || 0;
+        
+        // Calculate NOT distribution (Non-Work Overtime - max 2 per row, ONLY on non-Sundays)
+        const nonSundayRows = dates.filter(d => !d.isSunday).length;
+        const notDistribution = new Array(dates.length).fill(0);
+        let remainingNOT = notTotal;
+        
+        if (nonSundayRows > 0) {
+          // Distribute NOT (max 2 per non-Sunday row)
+          let nonSundayIndex = 0;
+          for (let i = 0; i < dates.length && remainingNOT > 0; i++) {
+            if (!dates[i].isSunday) {
+              const allocation = Math.min(2, remainingNOT);
+              notDistribution[i] = allocation;
+              remainingNOT -= allocation;
+              nonSundayIndex++;
+            }
+          }
+        }
+        
+        // Calculate WOT distribution (Work Overtime - only on Sundays)
+        const sundayRows = dates.filter(d => d.isSunday).length;
+        const wotDistribution = new Array(dates.length).fill(0);
+        let remainingWOT = wotTotal;
+        
+        if (sundayRows > 0 && remainingWOT > 0) {
+          // Try to allocate 8 hours per Sunday first
+          const idealAllocation = Math.min(8, Math.floor(remainingWOT / sundayRows));
+          let allocated = 0;
+          
+          // First pass: allocate ideal amount
+          for (let i = 0; i < dates.length; i++) {
+            if (dates[i].isSunday) {
+              const allocation = Math.min(idealAllocation, remainingWOT);
+              wotDistribution[i] = allocation;
+              remainingWOT -= allocation;
+              allocated += allocation;
+            }
+          }
+          
+          // Second pass: distribute remaining hours (up to 10 per Sunday)
+          if (remainingWOT > 0) {
+            for (let i = 0; i < dates.length && remainingWOT > 0; i++) {
+              if (dates[i].isSunday && wotDistribution[i] < 10) {
+                const canAllocate = Math.min(10 - wotDistribution[i], remainingWOT);
+                wotDistribution[i] += canAllocate;
+                remainingWOT -= canAllocate;
+              }
+            }
+          }
+        }
+        
+        // Create rows for this employee
+        dates.forEach((dateInfo, index) => {
+          const isSunday = dateInfo.isSunday;
+          const event = isSunday ? 'OFF' : 'P';
+          const worked = isSunday ? 0 : 8;
+          
+          // Ensure NOT is 0 on Sundays (as per rules)
+          const finalNOT = isSunday ? 0 : notDistribution[index];
+          
           rows.push({
-            DATE: dateToExcelSerial(date),
+            DATE: dateToExcelSerial(dateInfo.date),
             EmpCode: empCodeStr,
             Event: event,
             Wplace: wplaceValue,
             Worked: worked,
-            NOT: 0,
-            WOT: 0
+            NOT: finalNOT,
+            WOT: wotDistribution[index]
           });
         });
       });
@@ -786,16 +970,14 @@
             const sheet = wb.Sheets[wb.SheetNames[0]];
             
             const extractedData = extractDataFromSheet(sheet);
-            empCodes = extractedData.empCodes;
+            empCodes = extractedData.empCodes.map(code => ({ code, not: '', wot: '' }));
             const wplaceValue = extractedData.wplace;
             
             const wplaceInput = document.getElementById('wplaceInput');
             if (wplaceValue) {
               wplaceInput.value = wplaceValue;
-             // wplaceInput.readOnly = true;
             } else {
               wplaceInput.placeholder = "No Wplace found in file";
-              wplaceInput.readOnly = false;
             }
             
             if (empCodes.length === 0) {
@@ -824,7 +1006,18 @@
           if (!isNaN(idx)) {
             updateEmpCode(idx, e.target.value);
           }
+        } else if (e.target.classList.contains('not-input')) {
+          const idx = parseInt(e.target.dataset.index, 10);
+          if (!isNaN(idx)) {
+            updateNOT(idx, e.target.value);
+          }
+        } else if (e.target.classList.contains('wot-input')) {
+          const idx = parseInt(e.target.dataset.index, 10);
+          if (!isNaN(idx)) {
+            updateWOT(idx, e.target.value);
+          }
         }
+        updateGenerateButton();
       });
 
       document.getElementById('empTableBody').addEventListener('click', (e) => {
@@ -842,12 +1035,8 @@
       document.getElementById('generateBtn').addEventListener('click', generateTimesheet);
 
       hideStatus();
-      updateEmpCounter(); // Initialize counter
+      updateEmpCounter();
     });
   </script>
- 
 </body>
-<footer style="text-align: center;color:#1e293b"> Designed & Programmed By : Mostafa Al-najjar 2025</footer>
-<footer style="text-align: center;color:#1e293b"> تصميم وبرمجة : مصطفي النجار 2025</footer>
 </html>
-
