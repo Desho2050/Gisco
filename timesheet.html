@@ -26,7 +26,7 @@
     * {
       margin: 0;
       padding: 0;
-      box-sizing: border-box; /* Fixed typo */
+      box-sizing: border-box;
     }
 
     body {
@@ -196,7 +196,7 @@
       transform: translateY(-1px);
     }
 
-    #excelFile {
+    #excelFile, #empFile {
       display: none;
     }
 
@@ -383,6 +383,9 @@
       text-align: center;
       margin-top: 20px;
       margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
     }
 
     .btn-generate {
@@ -413,6 +416,137 @@
       transform: none;
       box-shadow: none;
       color: var(--gray);
+    }
+
+    /* Report Popup */
+    .report-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .report-popup.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .report-content {
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 900px;
+      max-height: 80vh;
+      overflow: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      padding: 25px;
+      position: relative;
+    }
+
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .report-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .close-report {
+      background: var(--danger);
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .report-table th {
+      background: var(--primary);
+      color: white;
+      padding: 12px 10px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .report-table td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .report-table tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .report-total {
+      font-weight: 700;
+      text-align: right;
+      padding: 15px 10px;
+      border-top: 2px solid var(--border);
+      margin-top: 10px;
+    }
+
+    .report-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .report-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-print {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-print:hover {
+      background: #059669;
+    }
+
+    .btn-export {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-export:hover {
+      background: var(--primary-dark);
     }
 
     /* Responsive */
@@ -455,6 +589,20 @@
       input[type="number"].overtime-input {
         max-width: none;
       }
+      
+      .generate-btn-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .report-content {
+        width: 95%;
+        padding: 15px;
+      }
+      
+      .report-table {
+        font-size: 12px;
+      }
     }
     
     .footer {
@@ -467,6 +615,33 @@
     
     .footer.arabic {
       font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    /* Loading indicator */
+    .loading {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(59, 130, 246, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -484,18 +659,32 @@
     </header>
 
     <div class="card">
-      <h2 class="card-title"><i class="fas fa-file-excel"></i> Upload Template</h2>
+      <h2 class="card-title"><i class="fas fa-file-excel"></i> Upload Templates</h2>
       <div class="file-upload-container" id="fileUploadContainer">
         <div class="file-upload-icon">
           <i class="fas fa-file-excel"></i>
         </div>
-        <div class="file-upload-text">Choose Excel File</div>
+        <div class="file-upload-text">Choose Timesheet Template</div>
         <div class="file-upload-subtext">Upload your existing timesheet template (.xlsx)</div>
         <button class="file-upload-btn" id="fileBtn">
           <i class="fas fa-upload"></i> Browse Files
         </button>
       </div>
       <input type="file" id="excelFile" accept=".xlsx, .xls" />
+      
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border);">
+        <div class="file-upload-container" id="empFileUploadContainer">
+          <div class="file-upload-icon">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="file-upload-text">Choose Employee Data File</div>
+          <div class="file-upload-subtext">Upload emp.xlsx with employee basic salaries</div>
+          <button class="file-upload-btn" id="empFileBtn">
+            <i class="fas fa-upload"></i> Browse Files
+          </button>
+        </div>
+        <input type="file" id="empFile" accept=".xlsx, .xls" />
+      </div>
     </div>
 
     <div class="card">
@@ -542,7 +731,55 @@
       <button id="generateBtn" class="btn-generate" disabled>
         <i class="fas fa-file-download"></i> Generate Timesheet
       </button>
+      <button id="showReportBtn" class="btn-generate" disabled>
+        <i class="fas fa-chart-bar"></i> Show Overtime Report
+      </button>
     </div>
+  </div>
+
+  <!-- Report Popup -->
+  <div class="report-popup" id="reportPopup">
+    <div class="report-content">
+      <div class="report-header">
+        <div class="report-title">Overtime Report</div>
+        <button class="close-report" id="closeReport">&times;</button>
+      </div>
+      
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>SN</th>
+            <th>Emp Code</th>
+            <th>NOT</th>
+            <th>WOT</th>
+            <th>Overtime Amount</th>
+          </tr>
+        </thead>
+        <tbody id="reportTableBody">
+          <!-- Report data will be inserted here -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" class="report-total">Total Overtime Amount:</td>
+            <td class="report-total" id="totalAmount">0.00</td>
+          </tr>
+        </tfoot>
+      </table>
+      
+      <div class="report-actions">
+        <button class="report-btn btn-print" id="printReport">
+          <i class="fas fa-print"></i> Print
+        </button>
+        <button class="report-btn btn-export" id="exportReport">
+          <i class="fas fa-file-excel"></i> Export to Excel
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading Indicator -->
+  <div class="loading" id="loadingIndicator">
+    <div class="spinner"></div>
   </div>
 
   <div class="footer">
@@ -552,6 +789,8 @@
 
   <script>
     let empCodes = [];
+    let empData = {}; // To store employee data from emp.xlsx { code: { basicSalary: value } }
+    let empFileLoaded = false;
     const REQUIRED_HEADERS = ['DATE', 'EmpCode', 'Event', 'Wplace', 'Worked', 'NOT', 'WOT'];
 
     // Utility Functions
@@ -611,10 +850,43 @@
       };
     }
 
+    function extractEmpDataFromSheet(sheet) {
+      const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      if (json.length === 0) throw new Error('Empty sheet');
+
+      const headers = json[0].map(normalizeHeader);
+      const codeIndex = headers.findIndex(h => 
+  h.toLowerCase().includes('code') || h.toLowerCase().includes('emp')
+);
+const basicSalaryIndex = headers.findIndex(h => 
+  h.toLowerCase().includes('salary') || h.toLowerCase().includes('basic')
+);
+      
+      if (codeIndex === -1 || basicSalaryIndex === -1) {
+        throw new Error('Required columns "code" and "Basic Salary" not found in emp.xlsx');
+      }
+      
+      const empData = {};
+      for (let i = 1; i < json.length; i++) {
+        const code = json[i][codeIndex];
+        const salary = json[i][basicSalaryIndex];
+        
+        if (code !== undefined && code !== null && code !== '' && 
+            salary !== undefined && salary !== null && !isNaN(salary)) {
+          empData[String(code).trim()] = parseFloat(salary);
+        }
+      }
+      
+      return empData;
+    }
+
     function isDuplicateEmpCode(value, excludeIndex = -1) {
       const normalized = String(value).trim();
       if (!normalized) return false;
-      return empCodes.some((code, idx) => idx !== excludeIndex && String(code).trim() === normalized);
+      return empCodes.some((empData, idx) => {
+        const code = empData.code || '';
+        return idx !== excludeIndex && String(code).trim() === normalized;
+      });
     }
 
     function updateEmpCounter() {
@@ -698,7 +970,11 @@
       });
       const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
       const hasInvalidOvertime = !validateOvertimeInputs();
-      document.getElementById('generateBtn').disabled = empCodes.length === 0 || hasDuplicates || hasEmpty || hasInvalidOvertime;
+      const canGenerate = empCodes.length > 0 && !hasDuplicates && !hasEmpty && !hasInvalidOvertime;
+      const canShowReport = canGenerate 
+      
+      document.getElementById('generateBtn').disabled = !canGenerate;
+      document.getElementById('showReportBtn').disabled = !canShowReport;
     }
 
     function addNewEmpRow() {
@@ -757,6 +1033,17 @@
       }
 
       return Math.floor(serial);
+    }
+
+    function calculateOvertimeAmount(empCode, not, wot) {
+      // Get basic salary from empData
+      const basicSalary = empData[empCode] || 0;
+      
+      // Calculate overtime amount: ((Basic Salary /200)*NOT) + ((Basic Salary/200)*WOT)
+      const rate = basicSalary / 200;
+      const amount = (rate * not) + (rate * wot * 1.25); // WOT is paid at 1.25 rate
+      
+      return amount;
     }
 
     function generateTimesheet() {
@@ -942,7 +1229,102 @@
       XLSX.writeFile(wb, filename);
     }
 
+    function showOvertimeReport() {
+      const reportTableBody = document.getElementById('reportTableBody');
+      reportTableBody.innerHTML = '';
+      
+      let totalAmount = 0;
+      
+      empCodes.forEach((empData, index) => {
+        const empCode = empData.code || '';
+        if (!empCode.trim()) return;
+        
+        const not = parseInt(empData.not) || 0;
+        const wot = parseInt(empData.wot) || 0;
+        const overtimeAmount = calculateOvertimeAmount(empCode, not, wot);
+        totalAmount += overtimeAmount;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${empCode}</td>
+          <td>${not}</td>
+          <td>${wot}</td>
+          <td>${overtimeAmount.toFixed(2)}</td>
+        `;
+        reportTableBody.appendChild(row);
+      });
+      
+      document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+      document.getElementById('reportPopup').classList.add('active');
+    }
+
+    function printReport() {
+      const printContent = document.querySelector('.report-content').innerHTML;
+      const originalBody = document.body.innerHTML;
+      
+      document.body.innerHTML = `
+        <div style="padding: 20px; font-family: Arial, sans-serif;">
+          ${printContent}
+        </div>
+      `;
+      
+      window.print();
+      document.body.innerHTML = originalBody;
+      
+      // Re-initialize event listeners
+      document.getElementById('closeReport').addEventListener('click', () => {
+        document.getElementById('reportPopup').classList.remove('active');
+      });
+      document.getElementById('printReport').addEventListener('click', printReport);
+      document.getElementById('exportReport').addEventListener('click', exportReport);
+    }
+
+    function exportReport() {
+      const reportData = [];
+      
+      // Add headers
+      reportData.push(['SN', 'Emp Code', 'NOT', 'WOT', 'Overtime Amount']);
+      
+      // Add data rows
+      empCodes.forEach((empData, index) => {
+        const empCode = empData.code || '';
+        if (!empCode.trim()) return;
+        
+        const not = parseInt(empData.not) || 0;
+        const wot = parseInt(empData.wot) || 0;
+        const overtimeAmount = calculateOvertimeAmount(empCode, not, wot);
+        
+        reportData.push([index + 1, empCode, not, wot, overtimeAmount.toFixed(2)]);
+      });
+      
+      // Add total row
+      const totalAmount = reportData.slice(1).reduce((sum, row) => sum + parseFloat(row[4]), 0);
+      reportData.push(['', '', '', 'Total:', totalAmount.toFixed(2)]);
+      
+      // Create worksheet
+      const ws = XLSX.utils.aoa_to_sheet(reportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Overtime Report');
+      
+      const now = new Date();
+      const monthName = now.toLocaleString('en-US', { month: 'long' });
+      const year = now.getFullYear();
+      XLSX.writeFile(wb, `Overtime_Report_${monthName}_${year}.xlsx`);
+    }
+
+    // Show loading indicator
+    function showLoading() {
+      document.getElementById('loadingIndicator').style.display = 'flex';
+    }
+    
+    // Hide loading indicator
+    function hideLoading() {
+      document.getElementById('loadingIndicator').style.display = 'none';
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+      // File upload event listeners
       document.getElementById('fileUploadContainer').addEventListener('click', () => {
         document.getElementById('excelFile').click();
       });
@@ -952,6 +1334,16 @@
         document.getElementById('excelFile').click();
       });
 
+      document.getElementById('empFileUploadContainer').addEventListener('click', () => {
+        document.getElementById('empFile').click();
+      });
+
+      document.getElementById('empFileBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('empFile').click();
+      });
+
+      // Timesheet template file processing
       document.getElementById('excelFile').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -1000,6 +1392,49 @@
         reader.readAsArrayBuffer(file);
       });
 
+      // Employee data file processing
+      document.getElementById('empFile').addEventListener('change', (e) => {
+        showLoading();
+        const file = e.target.files[0];
+        if (!file) {
+          hideLoading();
+          return;
+        }
+
+        const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+        if (!validTypes.includes(file.type)) {
+          hideLoading();
+          showStatus('Please upload a valid Excel file (.xlsx or .xls)', true);
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = new Uint8Array(ev.target.result);
+            const wb = XLSX.read(data, { type: 'array', cellNF: true, cellDates: true });
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            
+            empData = extractEmpDataFromSheet(sheet);
+            empFileLoaded = true;
+            showStatus(`Successfully loaded employee data with ${Object.keys(empData).length} records.`, false);
+            updateGenerateButton();
+          } catch (err) {
+            console.error('Employee file reading error:', err);
+            showStatus('Error reading employee file: ' + (err.message || 'Invalid Excel file format'), true);
+          }
+          hideLoading();
+        };
+        
+        reader.onerror = () => {
+          hideLoading();
+          showStatus('Error reading employee file. Please try again.', true);
+        };
+        
+        reader.readAsArrayBuffer(file);
+      });
+
+      // Employee table event listeners
       document.getElementById('empTableBody').addEventListener('input', (e) => {
         if (e.target.classList.contains('emp-input')) {
           const idx = parseInt(e.target.dataset.index, 10);
@@ -1030,9 +1465,16 @@
         }
       });
 
+      // Button event listeners
       document.getElementById('addEmpBtn').addEventListener('click', addNewEmpRow);
       document.getElementById('CheckDuplicates').addEventListener('click', checkDuplicates);
       document.getElementById('generateBtn').addEventListener('click', generateTimesheet);
+      document.getElementById('showReportBtn').addEventListener('click', showOvertimeReport);
+      document.getElementById('closeReport').addEventListener('click', () => {
+        document.getElementById('reportPopup').classList.remove('active');
+      });
+      document.getElementById('printReport').addEventListener('click', printReport);
+      document.getElementById('exportReport').addEventListener('click', exportReport);
 
       hideStatus();
       updateEmpCounter();
