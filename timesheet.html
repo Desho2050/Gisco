@@ -752,9 +752,9 @@
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Timesheet');
-
+      const wplaceSanitized = wplaceValue.replace(/[^a-z0-9]/gi, '_').substring(0, 10);
       const monthName = now.toLocaleString('en-US', { month: 'long' });
-      const filename = `${monthName} ${year} Timesheet.xlsx`;
+      const filename = `${monthName} ${year} ${wplaceSanitized} Timesheet.xlsx`;
       XLSX.writeFile(wb, filename);
     }
 
