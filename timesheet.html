@@ -448,7 +448,7 @@
       max-height: 80vh;
       overflow: auto;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      padding: 25px;
+      padding: 5px;
       position: relative;
     }
 
@@ -456,8 +456,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
       border-bottom: 2px solid var(--border);
     }
 
@@ -490,13 +490,13 @@
     .report-table th {
       background: var(--primary);
       color: white;
-      padding: 12px 10px;
+      padding: 5px 5px;
       text-align: center;
       font-weight: 600;
     }
 
     .report-table td {
-      padding: 10px;
+      padding: 5px;
       text-align: center;
       border-bottom: 1px solid var(--border);
     }
@@ -1264,7 +1264,7 @@ const basicSalaryIndex = headers.findIndex(h =>
       const originalBody = document.body.innerHTML;
       
       document.body.innerHTML = `
-        <div style="padding: 20px; font-family: Arial, sans-serif;">
+        <div style="padding: 5px; font-family: Arial, sans-serif;">
           ${printContent}
         </div>
       `;
