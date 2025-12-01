@@ -30,6 +30,12 @@
 #empCounter {
   font-weight: bold;
   font-size: 20px;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.577);
+  background-color: rgb(98, 255, 0);
+  color: #1e293b;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #01429d;
 }
 
 
@@ -596,7 +602,8 @@
         <div class="file-upload-icon">
           <i class="fas fa-file-excel"></i>
         </div>
-        <div class="file-upload-text" >Choose Timesheet Template</div>
+        <div class="file-upload-text" >Choose your Excel Timesheet file</div>
+        <div class="file-upload-text" >اختر ملف التايم شيت الخاص بك</div>
         <div class="file-upload-subtext" >Upload your existing timesheet template (.xlsx)</div>
         <button class="file-upload-btn" id="fileBtn" >
           <i class="fas fa-upload"></i> Browse Files
@@ -608,7 +615,9 @@
           <div class="file-upload-icon">
             <i class="fas fa-users"></i>
           </div>
-          <div class="file-upload-text">Choose Employee Data File</div>
+          <div class="file-upload-text">Choose Employee Data File(Optional:Only for load Employee Names and Salaries) </div>
+          <div class="file-upload-text">اختر ملف بيانات الموظفين (اختياري: فقط لتحميل أسماء ورواتب الموظفين) </div>
+          
           <div class="file-upload-subtext">Upload emp.xlsx with employee basic salaries</div>
           <button class="file-upload-btn" id="empFileBtn">
             <i class="fas fa-upload"></i> Browse Files
@@ -619,6 +628,7 @@
     </div>
     <div class="card">
       <h2 class="card-title"><i class="fas fa-building"></i> Workplace Configuration</h2>
+      <h2 style="text-align: left;font-size: 14px;"> رقم المشروع</h2>
       <div class="input-group">
         <label for="wplaceInput">Workplace Code (Wplace)</label>
         <input type="text" id="wplaceInput" placeholder="Workplace code will be loaded from file" />
