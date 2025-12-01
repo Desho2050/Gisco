@@ -852,15 +852,18 @@
         const codeWarning = duplicateCode ? '<span class="duplicate-warning">Duplicate!</span>' : '';
         const nameWarning = duplicateName ? '<span class="duplicate-warning">Duplicate!</span>' : '';
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <input type="text" value="${code}" data-index="${i}" class="${codeInputClass}" placeholder="Enter employee code" />
-            ${codeWarning}
-          </td>
-          <td>
-            <input type="text" value="${autoName}" data-index="${i}" class="${nameInputClass}" placeholder="Name" style="background:#f1f5f9;" readonly />
-            ${nameWarning}
-          </td>
+    
+
+tr.innerHTML = `
+  <td>
+    <input type="text" value="${code}" data-index="${i}" class="${codeInputClass}" placeholder="Enter employee code" />
+    ${codeWarning}
+  </td>
+  <td>
+    <input type="text" value="${autoName}" data-index="${i}" class="${nameInputClass}" placeholder="Name" style="background:#f1f5f9;" disabled />
+    ${nameWarning}
+  </td>
+
           <td>
             <input type="number" min="0" max="999" value="${not}" data-index="${i}" class="overtime-input not-input" placeholder="NOT" />
             <span class="overtime-warning" id="not-warning-${i}" style="display:none;"></span>
