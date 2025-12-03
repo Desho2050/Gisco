@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1426,27 +1427,42 @@ showStatus('Error reading employee file. Please try again.', true);
 reader.readAsArrayBuffer(file);
 });
 
+// Handle real-time input (just update data, no validation or re-render)
 document.getElementById('empTableBody').addEventListener('input', (e) => {
-const target = e.target;
-const index = parseInt(target.dataset.index, 10);
-if (isNaN(index) || index < 0 || index >= empCodes.length) return;
-if (target.classList.contains('emp-input')) {
-const newCode = target.value.trim();
-empCodes[index].code = newCode;
-if (empFileLoaded && empData[newCode]) {
-empCodes[index].name = empData[newCode].name || '';
-} else {
-empCodes[index].name = '';
-}
-renderEmpTable();
-} else if (target.classList.contains('not-input')) {
-empCodes[index].not = target.value;
-updateGenerateButton();
-} else if (target.classList.contains('wot-input')) {
-empCodes[index].wot = target.value;
-updateGenerateButton();
-}
+  const target = e.target;
+  const index = parseInt(target.dataset.index, 10);
+  if (isNaN(index) || index < 0 || index >= empCodes.length) return;
+
+  if (target.classList.contains('emp-input')) {
+    const newCode = target.value.trim();
+    empCodes[index].code = newCode;
+    // Update name if empFile is loaded
+    if (empFileLoaded && empData[newCode]) {
+      empCodes[index].name = empData[newCode].name || '';
+    } else {
+      empCodes[index].name = '';
+    }
+    // Note: We do NOT re-render here to avoid flicker
+  } else if (target.classList.contains('not-input')) {
+    empCodes[index].not = target.value;
+    updateGenerateButton();
+  } else if (target.classList.contains('wot-input')) {
+    empCodes[index].wot = target.value;
+    updateGenerateButton();
+  }
 });
+
+// NEW: Handle blur (when user leaves the field) → validate duplicates & re-render
+document.getElementById('empTableBody').addEventListener('blur', (e) => {
+  const target = e.target;
+  const index = parseInt(target.dataset.index, 10);
+  if (isNaN(index) || index < 0 || index >= empCodes.length) return;
+
+  if (target.classList.contains('emp-input')) {
+    // After user finishes editing, validate and re-render to show warnings
+    renderEmpTable();
+  }
+}, true); // Use capture phase to ensure it fires even if focus moves quickly
 
 document.getElementById('empTableBody').addEventListener('click', (e) => {
 if (e.target.closest('.btn-remove')) {
