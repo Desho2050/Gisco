@@ -594,6 +594,44 @@ animation: spin 1s linear infinite;
 @keyframes spin {
 to { transform: rotate(360deg); }
 }
+
+/* New styles for PHD section */
+.phd-container {
+margin-top: 15px;
+padding-top: 15px;
+padding-left: 15px;
+padding-right: 15px;
+border-radius: 15px;
+border-top: 1px dashed var(--border);
+background-color: rgba(134, 243, 238, 0.452);
+border-color: #1e293b;
+box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1);
+}
+.phd-list {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+margin-top: 10px;
+}
+.phd-tag {
+background: #e0f2fe;
+color: var(--primary);
+padding: 6px 12px;
+border-radius: 20px;
+font-size: 20px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.phd-tag .remove-phd {
+background: none;
+border: none;
+color: var(--danger);
+cursor: pointer;
+font-size: 16px;
+padding: 0;
+margin-left: 5px;
+}
 </style>
 </head>
 <body>
@@ -644,6 +682,25 @@ to { transform: rotate(360deg); }
 <label for="wplaceInput">Workplace Code (Wplace)</label>
 <input type="text" id="wplaceInput" placeholder="Workplace code will be loaded from file" />
 </div>
+<!-- New PHD Section -->
+<div class="phd-container">
+<h3 class="card-title" style="margin: 10px 0;">
+<i class="fas fa-calendar-day"></i> Public Holidays (PHD)
+</h3>
+<div class="input-group" style="display: flex; align-items: center; gap: 10px;">
+<label for="phdDate">Add Public Holiday Date</label>
+<input type="date" id="phdDate" style="font-size: 16px; border-radius: 10px; margin-left: 20px; margin-right: 20px ; width: 200px; justify-content: center;text-align: center;font-weight: bold;" />
+<button id="addPhdBtn" class="action-btn btn-add" style="margin-top: 8px; padding: 6px 12px;">
+<i class="fas fa-plus"></i> Add Holiday
+</button>
+</div>
+<div class="phd-list" id="phdList">
+<!-- PHD dates will appear here -->
+</div>
+</div>
+</div>
+
+
 </div>
 <div id="status" class="status" style="display:none;"></div>
 <div id="empList" style="display:none;">
@@ -739,13 +796,19 @@ let empCodes = [];
 let empData = {};
 let empFileLoaded = false;
 const REQUIRED_HEADERS = ['DATE', 'EmpCode', 'Event', 'Wplace', 'Worked', 'NOT', 'WOT'];
-
+let publicHolidays = [];
 function showStatus(msg, isError = false) {
 const el = document.getElementById('status');
 el.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${msg}`;
 el.className = `status ${isError ? 'error' : 'success'}`;
 el.style.display = 'flex';
 }
+// New function to check if a date is a public holiday
+function isPublicHoliday(date) {
+    const dateStr = date.toISOString().split('T')[0];
+    return publicHolidays.includes(dateStr);
+}
+
 
 function hideStatus() {
 document.getElementById('status').style.display = 'none';
@@ -937,6 +1000,26 @@ function addNewEmpRow() {
 empCodes.push({ code: '', name: '', not: '', wot: '' });
 renderEmpTable();
 }
+// New function to render PHD list
+function renderPhdList() {
+    const phdList = document.getElementById('phdList');
+    phdList.innerHTML = '';
+    
+    if (publicHolidays.length === 0) {
+        phdList.innerHTML = '<div style="color: var(--gray);">No public holidays added</div>';
+        return;
+    }
+    
+    publicHolidays.forEach((dateStr, index) => {
+        const tag = document.createElement('div');
+        tag.className = 'phd-tag';
+        tag.innerHTML = `
+            ${dateStr}
+            <button class="remove-phd" data-index="${index}">×</button>
+        `;
+        phdList.appendChild(tag);
+    });
+}
 
 function checkDuplicates() {
 renderEmpTable();
@@ -992,154 +1075,196 @@ const rate = basicSalary / 200;
 const amount = (rate * not) + (rate * wot * 1.25);
 return amount;
 }
-
+function formatDateLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
 function generateTimesheet() {
-if (empCodes.length === 0) {
-showStatus('No employee codes to generate.', true);
-return;
-}
-const wplaceValue = document.getElementById('wplaceInput').value.trim();
-if (!wplaceValue) {
-showStatus('Workplace code (Wplace) cannot be empty.', true);
-return;
-}
-const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
-if (hasEmpty) {
-showStatus('Employee code cannot be empty.', true);
-return;
-}
-const hasDuplicates = empCodes.some((empData, i) => {
-const code = empData.code || '';
-return isDuplicateEmpCode(code, i);
-});
-if (hasDuplicates) {
-showStatus('Duplicate employee codes are not allowed.', true);
-return;
-}
-const hasDuplicateNames = empCodes.some((empData, i) => {
-const name = empData.name || '';
-return isDuplicateEmpName(name, i);
-});
-if (hasDuplicateNames) {
-showStatus('Duplicate employee names are not allowed.', true);
-return;
-}
-if (!validateOvertimeInputs()) {
-showStatus('Invalid overtime values. Please check your inputs.', true);
-return;
-}
-hideStatus();
-const now = new Date();
-const year = now.getFullYear();
-const month = now.getMonth();
-const startDate = new Date(year, month - 1, 15);
-const endDate = new Date(year, month, 14);
-const dates = [];
-let currentDate = new Date(startDate);
-while (currentDate <= endDate) {
-dates.push({
-date: new Date(currentDate),
-isSunday: currentDate.getDay() === 0
-});
-currentDate.setDate(currentDate.getDate() + 1);
-}
-const rows = [];
-empCodes.forEach(empData => {
-const empCodeStr = String(empData.code).trim();
-const notTotal = parseInt(empData.not) || 0;
-const wotTotal = parseInt(empData.wot) || 0;
-const nonSundayRows = dates.filter(d => !d.isSunday).length;
-const notDistribution = new Array(dates.length).fill(0);
-let remainingNOT = notTotal;
-if (nonSundayRows > 0) {
-let nonSundayIndex = 0;
-for (let i = 0; i < dates.length && remainingNOT > 0; i++) {
-if (!dates[i].isSunday) {
-const allocation = Math.min(2, remainingNOT);
-notDistribution[i] = allocation;
-remainingNOT -= allocation;
-nonSundayIndex++;
-}
-}
-}
-const sundayRows = dates.filter(d => d.isSunday).length;
-const wotDistribution = new Array(dates.length).fill(0);
-let remainingWOT = wotTotal;
-if (sundayRows > 0 && remainingWOT > 0) {
-const idealAllocation = Math.min(8, Math.floor(remainingWOT / sundayRows));
-let allocated = 0;
-for (let i = 0; i < dates.length; i++) {
-if (dates[i].isSunday) {
-const allocation = Math.min(idealAllocation, remainingWOT);
-wotDistribution[i] = allocation;
-remainingWOT -= allocation;
-allocated += allocation;
-}
-}
-if (remainingWOT > 0) {
-for (let i = 0; i < dates.length && remainingWOT > 0; i++) {
-if (dates[i].isSunday && wotDistribution[i] < 10) {
-const canAllocate = Math.min(10 - wotDistribution[i], remainingWOT);
-wotDistribution[i] += canAllocate;
-remainingWOT -= canAllocate;
-}
-}
-}
-}
-dates.forEach((dateInfo, index) => {
-const isSunday = dateInfo.isSunday;
-const event = isSunday ? 'OFF' : 'P';
-const worked = isSunday ? 0 : 8;
-const finalNOT = isSunday ? 0 : notDistribution[index];
-rows.push({
-DATE: dateToExcelSerial(dateInfo.date),
-EmpCode: empCodeStr,
-Event: event,
-Wplace: wplaceValue,
-Worked: worked,
-NOT: finalNOT,
-WOT: wotDistribution[index]
-});
-});
-});
-const ws = XLSX.utils.json_to_sheet(rows);
-ws['!cols'] = [
-{ wch: 15 },
-{ wch: 15 },
-{ wch: 10 },
-{ wch: 12 },
-{ wch: 10 },
-{ wch: 10 },
-{ wch: 10 }
-];
-const range = XLSX.utils.decode_range(ws['!ref']);
-for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-const dateCell = ws[XLSX.utils.encode_cell({ r: R, c: 0 })];
-const empCodeCell = ws[XLSX.utils.encode_cell({ r: R, c: 1 })];
-const eventCell = ws[XLSX.utils.encode_cell({ r: R, c: 2 })];
-const wplaceCell = ws[XLSX.utils.encode_cell({ r: R, c: 3 })];
-const workedCell = ws[XLSX.utils.encode_cell({ r: R, c: 4 })];
-const notCell = ws[XLSX.utils.encode_cell({ r: R, c: 5 })];
-const wotCell = ws[XLSX.utils.encode_cell({ r: R, c: 6 })];
-if (dateCell) {
-dateCell.t = 'n';
-dateCell.z = 'm/d/yyyy';
-}
-if (empCodeCell) empCodeCell.t = 's';
-if (eventCell) eventCell.t = 's';
-if (wplaceCell) wplaceCell.t = 's';
-if (workedCell) workedCell.t = 'n';
-if (notCell) notCell.t = 'n';
-if (wotCell) wotCell.t = 'n';
-}
-const wb = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb, ws, 'Timesheet');
-const wplaceSanitized = wplaceValue.replace(/[^a-z0-9]/gi, '_').substring(0, 10);
-const monthName = now.toLocaleString('en-US', { month: 'long' });
-const filename = `${monthName} ${year} ${wplaceSanitized} Timesheet.xlsx`;
-XLSX.writeFile(wb, filename);
+    if (empCodes.length === 0) {
+        showStatus('No employee codes to generate.', true);
+        return;
+    }
+
+    const wplaceValue = document.getElementById('wplaceInput').value.trim();
+    if (!wplaceValue) {
+        showStatus('Workplace code (Wplace) cannot be empty.', true);
+        return;
+    }
+
+    // Validate employee data
+    const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
+    if (hasEmpty) {
+        showStatus('Employee code cannot be empty.', true);
+        return;
+    }
+
+    const hasDuplicates = empCodes.some((empData, i) => {
+        const code = empData.code || '';
+        return isDuplicateEmpCode(code, i);
+    });
+    if (hasDuplicates) {
+        showStatus('Duplicate employee codes are not allowed.', true);
+        return;
+    }
+
+    const hasDuplicateNames = empCodes.some((empData, i) => {
+        const name = empData.name || '';
+        return isDuplicateEmpName(name, i);
+    });
+    if (hasDuplicateNames) {
+        showStatus('Duplicate employee names are not allowed.', true);
+        return;
+    }
+
+    if (!validateOvertimeInputs()) {
+        showStatus('Invalid overtime values. Please check your inputs.', true);
+        return;
+    }
+
+    hideStatus();
+
+    // Determine date range: 15th of prev month to 14th of current month
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth(); // current month (0-indexed)
+    const startDate = new Date(year, month - 1, 15);
+    const endDate = new Date(year, month, 14);
+
+    // Generate list of dates with flags
+    const dates = [];
+    let currentDate = new Date(startDate);
+   while (currentDate <= endDate) {
+    const dateStr = formatDateLocal(currentDate); // ← LOCAL date string
+    dates.push({
+        date: new Date(currentDate),
+        isSunday: currentDate.getDay() === 0,
+        isPhd: publicHolidays.includes(dateStr) // now matches user input
+    });
+    currentDate.setDate(currentDate.getDate() + 1);
 }
 
+    const rows = [];
+
+    empCodes.forEach(empData => {
+        const empCodeStr = String(empData.code).trim();
+        const notTotal = parseInt(empData.not) || 0;
+        const wotTotal = parseInt(empData.wot) || 0;
+
+        // === Distribute NOT (only on weekdays, excluding Sundays & PHDs) ===
+        const notDistribution = new Array(dates.length).fill(0);
+        let remainingNOT = notTotal;
+        if (remainingNOT > 0) {
+            for (let i = 0; i < dates.length && remainingNOT > 0; i++) {
+                if (!dates[i].isSunday && !dates[i].isPhd) {
+                    const alloc = Math.min(2, remainingNOT);
+                    notDistribution[i] = alloc;
+                    remainingNOT -= alloc;
+                }
+            }
+        }
+
+        // === Distribute WOT (only on Sundays and PHDs) ===
+        const wotDistribution = new Array(dates.length).fill(0);
+        let remainingWOT = wotTotal;
+        if (remainingWOT > 0) {
+            // Get indices of eligible days
+            const holidayIndices = [];
+            for (let i = 0; i < dates.length; i++) {
+                if (dates[i].isSunday || dates[i].isPhd) {
+                    holidayIndices.push(i);
+                    wotDistribution[i] = 0;
+                }
+            }
+
+            if (holidayIndices.length === 0) {
+                // No Sundays or PHDs → cannot assign WOT
+                if (wotTotal > 0) {
+                    showStatus(`WOT for ${empCodeStr} cannot be assigned: no Sundays or public holidays in period.`, true);
+                    return;
+                }
+            } else {
+                // Distribute WOT fairly using round-robin
+                let idx = 0;
+                while (remainingWOT > 0) {
+                    const pos = idx % holidayIndices.length;
+                    const i = holidayIndices[pos];
+                    if (wotDistribution[i] < 10) {
+                        wotDistribution[i]++;
+                        remainingWOT--;
+                    }
+                    idx++;
+                    // Safety break to avoid infinite loop (should not happen)
+                    if (idx > holidayIndices.length * 10) break;
+                }
+            }
+        }
+
+        // === Build rows for this employee ===
+        dates.forEach((dateInfo, index) => {
+            let event, worked, finalNOT;
+
+            if (dateInfo.isPhd) {
+                event = 'PHD';
+                worked = 0;
+                finalNOT = 0;
+            } else if (dateInfo.isSunday) {
+                event = 'OFF';
+                worked = 0;
+                finalNOT = 0;
+            } else {
+                event = 'P';
+                worked = 8;
+                finalNOT = notDistribution[index];
+            }
+
+            rows.push({
+                DATE: dateToExcelSerial(dateInfo.date),
+                EmpCode: empCodeStr,
+                Event: event,
+                Wplace: wplaceValue,
+                Worked: worked,
+                NOT: finalNOT,
+                WOT: wotDistribution[index]
+            });
+        });
+    });
+
+    // === Create Excel workbook ===
+    const ws = XLSX.utils.json_to_sheet(rows, { header: REQUIRED_HEADERS });
+    ws['!cols'] = [
+        { wch: 15 }, // DATE
+        { wch: 15 }, // EmpCode
+        { wch: 10 }, // Event
+        { wch: 12 }, // Wplace
+        { wch: 10 }, // Worked
+        { wch: 10 }, // NOT
+        { wch: 10 }  // WOT
+    ];
+
+    // Format DATE column as date in Excel
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: 0 });
+        if (ws[cellRef]) {
+            ws[cellRef].t = 'n';
+            ws[cellRef].z = 'm/d/yyyy';
+        }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Timesheet');
+
+    // Generate filename
+    const wplaceSanitized = wplaceValue.replace(/[^a-z0-9]/gi, '_').substring(0, 10);
+    const monthName = now.toLocaleString('en-US', { month: 'long' });
+    const year2 = now.getFullYear();
+    const filename = `${monthName} ${year2} ${wplaceSanitized} Timesheet.xlsx`;
+
+    // Save file
+    XLSX.writeFile(wb, filename);
+}
 function showOvertimeReport() {
 const reportTableBody = document.getElementById('reportTableBody');
 reportTableBody.innerHTML = '';
@@ -1324,6 +1449,41 @@ function initEventListeners() {
 document.getElementById('fileUploadContainer').addEventListener('click', () => {
 document.getElementById('excelFile').click();
 });
+
+// New PHD event listeners
+document.getElementById('addPhdBtn').addEventListener('click', () => {
+    const phdInput = document.getElementById('phdDate');
+    const dateValue = phdInput.value;
+    
+    if (!dateValue) {
+        showStatus('Please select a date', true);
+        return;
+    }
+    
+    // Check if date is already added
+    if (publicHolidays.includes(dateValue)) {
+        showStatus('This date is already added as a public holiday', true);
+        return;
+    }
+    
+    publicHolidays.push(dateValue);
+    renderPhdList();
+    phdInput.value = '';
+    showStatus(`Public holiday added: ${dateValue}`, false);
+});
+
+document.getElementById('phdList').addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-phd')) {
+        const index = parseInt(e.target.dataset.index);
+        if (!isNaN(index) && index >= 0 && index < publicHolidays.length) {
+            publicHolidays.splice(index, 1);
+            renderPhdList();
+            showStatus('Public holiday removed', false);
+        }
+    }
+});
+
+
 document.getElementById('fileBtn').addEventListener('click', (e) => {
 e.stopPropagation();
 document.getElementById('excelFile').click();
