@@ -501,7 +501,7 @@ background: var(--primary-dark);
 display: flex;
 align-items: center;
 gap: 8px;
-margin-right: 30px;
+margin-right: 15px;
 font-size: 14px;
 }
 .fit-to-page-container input {
@@ -594,47 +594,8 @@ animation: spin 1s linear infinite;
 @keyframes spin {
 to { transform: rotate(360deg); }
 }
-
-/* New styles for PHD section */
-.phd-container {
-margin-top: 15px;
-padding-top: 15px;
-padding-left: 15px;
-padding-right: 15px;
-border-radius: 15px;
-border-top: 1px dashed var(--border);
-background-color: rgba(134, 243, 238, 0.452);
-border-color: #1e293b;
-box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1);
-}
-.phd-list {
-display: flex;
-flex-wrap: wrap;
-gap: 8px;
-margin-top: 10px;
-}
-.phd-tag {
-background: #e0f2fe;
-color: var(--primary);
-padding: 6px 12px;
-border-radius: 20px;
-font-size: 20px;
-display: flex;
-align-items: center;
-gap: 8px;
-}
-.phd-tag .remove-phd {
-background: none;
-border: none;
-color: var(--danger);
-cursor: pointer;
-font-size: 16px;
-padding: 0;
-margin-left: 5px;
-}
 </style>
 </head>
-<body>
 <body>
 <div class="back-btn-container">
 <a href="index.html" class="btn-back">
@@ -683,25 +644,7 @@ margin-left: 5px;
 <label for="wplaceInput">Workplace Code (Wplace)</label>
 <input type="text" id="wplaceInput" placeholder="Workplace code will be loaded from file" />
 </div>
-
-<!-- New PHD Section -->
-<div class="phd-container">
-<h3 class="card-title" style="margin: 10px 0;">
-<i class="fas fa-calendar-day"></i> Public Holidays (PHD)
-</h3>
-<div class="input-group" style="display: flex; align-items: center; gap: 10px;">
-<label for="phdDate">Add Public Holiday Date</label>
-<input type="date" id="phdDate" style="font-size: 16px; border-radius: 10px; margin-left: 20px; margin-right: 20px ; width: 200px; justify-content: center;text-align: center;font-weight: bold;" />
-<button id="addPhdBtn" class="action-btn btn-add" style="margin-top: 8px; padding: 6px 12px;">
-<i class="fas fa-plus"></i> Add Holiday
-</button>
 </div>
-<div class="phd-list" id="phdList">
-<!-- PHD dates will appear here -->
-</div>
-</div>
-</div>
-
 <div id="status" class="status" style="display:none;"></div>
 <div id="empList" style="display:none;">
 <div class="card">
@@ -796,46 +739,12 @@ let empCodes = [];
 let empData = {};
 let empFileLoaded = false;
 const REQUIRED_HEADERS = ['DATE', 'EmpCode', 'Event', 'Wplace', 'Worked', 'NOT', 'WOT'];
-let publicHolidays = [];
 
 function showStatus(msg, isError = false) {
 const el = document.getElementById('status');
 el.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${msg}`;
 el.className = `status ${isError ? 'error' : 'success'}`;
 el.style.display = 'flex';
-}
-function formatDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-// New function to check if a date is a public holiday
-function isPublicHoliday(date) {
-    const dateStr = formatDate(date);
-    return publicHolidays.includes(dateStr);
-}
-
-// New function to render PHD list
-function renderPhdList() {
-    const phdList = document.getElementById('phdList');
-    phdList.innerHTML = '';
-    
-    if (publicHolidays.length === 0) {
-        phdList.innerHTML = '<div style="color: var(--gray);">No public holidays added</div>';
-        return;
-    }
-    
-    publicHolidays.forEach((dateStr, index) => {
-        const tag = document.createElement('div');
-        tag.className = 'phd-tag';
-        tag.innerHTML = `
-            ${dateStr}
-            <button class="remove-phd" data-index="${index}">×</button>
-        `;
-        phdList.appendChild(tag);
-    });
 }
 
 function hideStatus() {
@@ -1130,8 +1039,7 @@ let currentDate = new Date(startDate);
 while (currentDate <= endDate) {
 dates.push({
 date: new Date(currentDate),
-isSunday: currentDate.getDay() === 0,
-isPhd: isPublicHoliday(currentDate)
+isSunday: currentDate.getDay() === 0
 });
 currentDate.setDate(currentDate.getDate() + 1);
 }
@@ -1140,13 +1048,13 @@ empCodes.forEach(empData => {
 const empCodeStr = String(empData.code).trim();
 const notTotal = parseInt(empData.not) || 0;
 const wotTotal = parseInt(empData.wot) || 0;
-const nonSundayRows = dates.filter(d => !d.isSunday && !d.isPhd).length;
+const nonSundayRows = dates.filter(d => !d.isSunday).length;
 const notDistribution = new Array(dates.length).fill(0);
 let remainingNOT = notTotal;
 if (nonSundayRows > 0) {
 let nonSundayIndex = 0;
 for (let i = 0; i < dates.length && remainingNOT > 0; i++) {
-if (!dates[i].isSunday && !dates[i].isPhd) {
+if (!dates[i].isSunday) {
 const allocation = Math.min(2, remainingNOT);
 notDistribution[i] = allocation;
 remainingNOT -= allocation;
@@ -1154,14 +1062,14 @@ nonSundayIndex++;
 }
 }
 }
-const sundayOrPhdRows = dates.filter(d => d.isSunday || d.isPhd).length;
+const sundayRows = dates.filter(d => d.isSunday).length;
 const wotDistribution = new Array(dates.length).fill(0);
 let remainingWOT = wotTotal;
-if (sundayOrPhdRows > 0 && remainingWOT > 0) {
-const idealAllocation = Math.min(8, Math.floor(remainingWOT / sundayOrPhdRows));
+if (sundayRows > 0 && remainingWOT > 0) {
+const idealAllocation = Math.min(8, Math.floor(remainingWOT / sundayRows));
 let allocated = 0;
 for (let i = 0; i < dates.length; i++) {
-if (dates[i].isSunday || dates[i].isPhd) {
+if (dates[i].isSunday) {
 const allocation = Math.min(idealAllocation, remainingWOT);
 wotDistribution[i] = allocation;
 remainingWOT -= allocation;
@@ -1170,7 +1078,7 @@ allocated += allocation;
 }
 if (remainingWOT > 0) {
 for (let i = 0; i < dates.length && remainingWOT > 0; i++) {
-if ((dates[i].isSunday || dates[i].isPhd) && wotDistribution[i] < 10) {
+if (dates[i].isSunday && wotDistribution[i] < 10) {
 const canAllocate = Math.min(10 - wotDistribution[i], remainingWOT);
 wotDistribution[i] += canAllocate;
 remainingWOT -= canAllocate;
@@ -1179,21 +1087,10 @@ remainingWOT -= canAllocate;
 }
 }
 dates.forEach((dateInfo, index) => {
-let event, worked, finalNOT;
-// Check if it's a public holiday
-if (dateInfo.isPhd) {
-event = 'PHD';
-worked = 0;
-finalNOT = 0;
-} else if (dateInfo.isSunday) {
-event = 'OFF';
-worked = 0;
-finalNOT = 0;
-} else {
-event = 'P';
-worked = 8;
-finalNOT = notDistribution[index];
-}
+const isSunday = dateInfo.isSunday;
+const event = isSunday ? 'OFF' : 'P';
+const worked = isSunday ? 0 : 8;
+const finalNOT = isSunday ? 0 : notDistribution[index];
 rows.push({
 DATE: dateToExcelSerial(dateInfo.date),
 EmpCode: empCodeStr,
@@ -1285,7 +1182,7 @@ const reportTable = document.querySelector('.report-table').cloneNode(true);
 const totalAmount = document.getElementById('totalAmount').textContent;
 const reportTitle = document.querySelector('.report-title').textContent;
 const printContent = `
-<div class="report-title" style="font-size:18pt; font-weight:bold; text-align:center; margin-bottom:10mm; margin-right:10mm;margin-left:10mm">${reportTitle}</div>
+<div class="report-title" style="font-size:18pt; font-weight:bold; text-align:center; margin-bottom:10mm;">${reportTitle}</div>
 <table class="report-table">
 ${reportTable.innerHTML}
 </table>
@@ -1447,39 +1344,6 @@ if (!validTypes.includes(file.type)) {
 showStatus('Please upload a valid Excel file (.xlsx or .xls)', true);
 return;
 }
-// New PHD event listeners
-document.getElementById('addPhdBtn').addEventListener('click', () => {
-    const phdInput = document.getElementById('phdDate');
-    const dateValue = phdInput.value;
-    
-    if (!dateValue) {
-        showStatus('Please select a date', true);
-        return;
-    }
-    
-    // Check if date is already added
-    if (publicHolidays.includes(dateValue)) {
-        showStatus('This date is already added as a public holiday', true);
-        return;
-    }
-    
-    publicHolidays.push(dateValue);
-    renderPhdList();
-    phdInput.value = '';
-    showStatus(`Public holiday added: ${dateValue}`, false);
-});
-
-document.getElementById('phdList').addEventListener('click', (e) => {
-    if (e.target.classList.contains('remove-phd')) {
-        const index = parseInt(e.target.dataset.index);
-        if (!isNaN(index) && index >= 0 && index < publicHolidays.length) {
-            publicHolidays.splice(index, 1);
-            renderPhdList();
-            showStatus('Public holiday removed', false);
-        }
-    }
-});
-
 const reader = new FileReader();
 reader.onload = (ev) => {
 try {
@@ -1563,27 +1427,42 @@ showStatus('Error reading employee file. Please try again.', true);
 reader.readAsArrayBuffer(file);
 });
 
+// Handle real-time input (just update data, no validation or re-render)
 document.getElementById('empTableBody').addEventListener('input', (e) => {
-const target = e.target;
-const index = parseInt(target.dataset.index, 10);
-if (isNaN(index) || index < 0 || index >= empCodes.length) return;
-if (target.classList.contains('emp-input')) {
-const newCode = target.value.trim();
-empCodes[index].code = newCode;
-if (empFileLoaded && empData[newCode]) {
-empCodes[index].name = empData[newCode].name || '';
-} else {
-empCodes[index].name = '';
-}
-renderEmpTable();
-} else if (target.classList.contains('not-input')) {
-empCodes[index].not = target.value;
-updateGenerateButton();
-} else if (target.classList.contains('wot-input')) {
-empCodes[index].wot = target.value;
-updateGenerateButton();
-}
+  const target = e.target;
+  const index = parseInt(target.dataset.index, 10);
+  if (isNaN(index) || index < 0 || index >= empCodes.length) return;
+
+  if (target.classList.contains('emp-input')) {
+    const newCode = target.value.trim();
+    empCodes[index].code = newCode;
+    // Update name if empFile is loaded
+    if (empFileLoaded && empData[newCode]) {
+      empCodes[index].name = empData[newCode].name || '';
+    } else {
+      empCodes[index].name = '';
+    }
+    // Note: We do NOT re-render here to avoid flicker
+  } else if (target.classList.contains('not-input')) {
+    empCodes[index].not = target.value;
+    updateGenerateButton();
+  } else if (target.classList.contains('wot-input')) {
+    empCodes[index].wot = target.value;
+    updateGenerateButton();
+  }
 });
+
+// NEW: Handle blur (when user leaves the field) → validate duplicates & re-render
+document.getElementById('empTableBody').addEventListener('blur', (e) => {
+  const target = e.target;
+  const index = parseInt(target.dataset.index, 10);
+  if (isNaN(index) || index < 0 || index >= empCodes.length) return;
+
+  if (target.classList.contains('emp-input')) {
+    // After user finishes editing, validate and re-render to show warnings
+    renderEmpTable();
+  }
+}, true); // Use capture phase to ensure it fires even if focus moves quickly
 
 document.getElementById('empTableBody').addEventListener('click', (e) => {
 if (e.target.closest('.btn-remove')) {
