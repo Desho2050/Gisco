@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Work Orders – WO.xlsx Viewer</title>
+  <title>Work Orders – Project 4378M RAK & FUJ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    :root {
+ :root {
       --brand: #1e4672;
       --accent: #16a34a;
       --bg: #f4f6f9;
@@ -55,12 +55,10 @@
     table { width: 100%; border-collapse: collapse; table-layout:auto; }
     /* Ensure horizontal scroll when total width exceeds viewport */
     #dataTable { min-width: 1800px; }
- 
     /* Wider Camp & Location columns via colgroup */
     #dataTable col.col-wo { width: clamp(60px, 22vw, 10%); }
     #dataTable col.col-camp { width: clamp(60px, 22vw, 15%); }
     #dataTable col.col-location { width: clamp(60px, 22vw, 20%); }
-
     #dataTable col.col-split-1-5,
     #dataTable col.col-split-2,
     #dataTable col.col-split-2-5,
@@ -169,7 +167,6 @@
   max-width: 400px;
   font-family: 'Segoe UI', Tahoma, sans-serif;
 }
-
 .toast {
   display: flex;
   align-items: center;
@@ -185,31 +182,111 @@
   color: #333;
   transition: opacity 0.3s ease;
 }
-
 .toast-icon {
   font-size: 20px;
   color: #f5610b;
 }
-
 @keyframes slideIn {
   from { transform: translateX(450px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
-
 @keyframes slideOut {
   from { transform: translateX(0); opacity: 1; }
   to { transform: translateX(450px); opacity: 0; }
 }
-
 .toast.removing {
   animation: slideOut 0.5s ease-out forwards;
 }
+ .action-cell {
+      padding: 0.25rem !important;
+    }
+    .action-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      margin: 0.125rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+    }
+    .edit-btn { background:#03979c; }
+    .save-btn { background:#2f36f4; color:white; }
+    .cancel-btn { background: var(--muted); }
+    .delete-btn { background: var(--col-used); }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    }
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal h3 {
+      margin-top: 0;
+      font-size: 1.25rem;
+      color: var(--primary);
+    }
+    .modal label {
+      display: block;
+      margin-top: 0.75rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    .modal input,
+    .modal select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    .modal-buttons {
+      margin-top: 1.5rem;
+      text-align: right;
+    }
+    .modal-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      margin-left: 0.5rem;
+      font-weight: 600;
+    }
+    .close-modal {
+      background: var(--muted);
+      color: white;
+    }
+    .submit-modal {
+      background: var(--accent);
+      color: white;
+    }
+    @media (max-width: 768px) {
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn {
+        width: 100%;
+      }}
 /*======================================================================================*/  
     /* Responsive tweaks */
     @media (max-width: 640px){
       .controls { flex-direction: column; align-items: stretch; }
       .btn { width: 100%; }
-    
       #dataTable col.col-camp { width: clamp(140px, 40vw, 220px); }
       #dataTable col.col-location { width: clamp(180px, 60vw, 280px); }
       thead th, tbody td { padding: 2px; }
@@ -217,34 +294,62 @@
   </style>
 </head>
 <body>
-  <header class="topbar" >
-    <div class="title" >WORK ORDER PROJECT 4378M RAK & FUJ </div>
-    <a class="btn" style="background-color: #08e3e3;" href="index.html">Back to Main Page</a>
+  <header class="topbar">
+    <div class="title">WORK ORDER PROJECT 4378M RAK & FUJ</div>
+    <a class="btn" style="background-color: var(--accent);" href="index.html">Back to Main Page</a>
   </header>
   <main class="container">
     <section class="controls">
-      <input class="file" type="file" id="excelFile" accept=".xlsx,.xls" />
-      <button class="btn primary" id="btnLoad">Load Selected Excel</button>
+      <button class="btn add-row-btn" id="addRowBtn">➕ Add New Work Order</button>
       <button class="btn print-btn" id="printBtn" title="Print this page">🖨️ Print</button>
-      <select class="btn" id="filterCamp" title="Filter By Camp" style="color: #000000; font-size: large; background-color: #41ccec;"><option value="">Filter By Camp</option></select>
-      <select class="btn" id="filterLocation" title="Filter by Location" style="color: #000000; font-size: large; background-color: #41ccec;"></select>
-      <select class="btn" id="filterType" title="Filter by Type" style="color: #000000; font-size: large; background-color: #41ccec;"></select>
+      <select class="btn" id="filterCamp" title="Filter By Camp" style="color: #000000; font-size: large; background-color: var(--accent);">
+        <option value="">Filter By Camp</option>
+      </select>
+      <select class="btn" id="filterLocation" title="Filter by Location" style="color: #000000; font-size: large; background-color: var(--accent);"></select>
+      <select class="btn" id="filterType" title="Filter by Type" style="color: #000000; font-size: large; background-color: var(--accent);"></select>
     </section>
     <div id="statusBar" class="status"></div>
     <section id="statsPanel" class="stats">
       <div class="cards">
-        <div class="card" style="background-color: #32cc6b; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Splits</div><div id="statTotalSplit" class="value">0</div></div>
-        <div class="card" style="background-color: #40a7de; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Packages</div><div id="statTotalPackage" class="value">0</div></div>
-        <div class="card" style="background-color: #9d9a9a; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Free Stand</div><div id="statTotalFreestand" class="value">0</div></div>
-        <div class="card" style="background-color: #c809af; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Window</div><div id="statTotalWindow" class="value">0</div></div>
-        <div class="card" style="background-color: #c20909; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Used AC</div><div id="statTotalUsed" class="value">0</div></div>
-        <div class="card" style="background-color: #08cfe9; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Cooler</div><div id="statTotalCooler" class="value">0</div></div>
-        <div class="card" style="background-color: #777575; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Fridge</div><div id="statTotalFridge" class="value">0</div></div>
-        <div class="card" style="background-color: #c6c2c2; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Freezer</div><div id="statTotalFreezer" class="value">0</div></div>
-        <div class="card" style="background-color: #111010; color: #fff;"><div class="title" style="color: #eaf4ff;">Total Cost Without VAT</div><div id="statTotalCostNoVat" class="value">0</div></div>
-    </div>
-   
-      <!-- PDF viewer overlay (created once and reused) -->
+        <!-- Stats cards unchanged -->
+        <div class="card" style="background-color: var(--col-split); color: #fff;">
+          <div class="title" style="color: #eaf4ff;">Total Splits</div>
+          <div id="statTotalSplit" class="value"style="color: #eaf4ff;">0</div>
+        </div>
+        <div class="card" style="background-color: var(--col-package); color: #fff;">
+          <div class="title" style="color: #eaf4ff;">Total Packages</div>
+          <div id="statTotalPackage" class="value" style="color: #eaf4ff;">0</div>
+        </div>
+        <div class="card" style="background-color:#6b778c; color: #fff;">
+          <div class="title" style="color: #fafafa;">Total Free Stand</div>
+          <div id="statTotalFreestand" class="value" style="color: #ffffff;">0</div>
+        </div>
+        <div class="card" style="background-color: var(--col-window); color: #fff;">
+          <div class="title" style="color: #eaf4ff;">Total Window</div>
+          <div id="statTotalWindow" class="value" style="color: #eaf4ff;">0</div>
+        </div>
+        <div class="card" style="background-color: var(--col-used); color: #fff;">
+          <div class="title" style="color: #eaf4ff;">Total Used AC</div>
+          <div id="statTotalUsed" class="value" style="color: #eaf4ff;">0</div>
+        </div>
+        <div class="card" style="background-color:cyan; color: #fff;">
+          <div class="title" style="color: #000000;">Total Cooler</div>
+          <div id="statTotalCooler" class="value" style="color: #000000;">0</div>
+        </div>
+        <div class="card" style="background-color: var(--col-fridge); color: #fff;">
+          <div class="title" style="color: #eaf4ff;">Total Fridge</div>
+          <div id="statTotalFridge" class="value" style="color: #eaf4ff;">0</div>
+        </div>
+        <div class="card" style="background-color: var(--col-freezer); color: #fff;">
+          <div class="title" style="color: #eaf4ff;">Total Freezer</div>
+          <div id="statTotalFreezer" class="value"style="color: #eaf4ff;">0</div>
+        </div>
+        <div class="card" style="background-color:#172b4d; color: #fff;">
+          <div class="title" style="color: #fcfcfc;">Total Cost Without VAT</div>
+          <div id="statTotalCostNoVat" class="value" style="color: #ffffff; ">0</div>
+        </div>
+      </div>
+      <!-- PDF viewer overlay -->
       <div id="pdfOverlay" class="pdf-overlay" aria-hidden="true">
         <div class="pdf-dialog" role="dialog" aria-modal="true" aria-label="PDF viewer">
           <div class="pdf-header">
@@ -252,6 +357,32 @@
             <button id="pdfClose" class="pdf-close" type="button">Close</button>
           </div>
           <iframe id="pdfFrame" class="pdf-frame" src="about:blank" title="PDF"></iframe>
+        </div>
+      </div>
+      <!-- Modal for Add New Row -->
+      <div id="addModal" class="modal">
+        <div class="modal-content">
+          <h3>Add New Work Order</h3>
+          <form id="addForm">
+            <!-- Dynamically filled via JS -->
+          </form>
+          <div class="modal-buttons">
+            <button type="button" class="modal-btn close-modal" id="closeAddModal">Cancel</button>
+            <button type="submit" class="modal-btn submit-modal" form="addForm">Add Work Order</button>
+          </div>
+        </div>
+      </div>
+      <!-- Modal for Edit Row -->
+      <div id="editModal" class="modal">
+        <div class="modal-content">
+          <h3>Edit Work Order</h3>
+          <form id="editForm">
+            <!-- Dynamically filled via JS -->
+          </form>
+          <div class="modal-buttons">
+            <button type="button" class="modal-btn close-modal" id="closeEditModal">Cancel</button>
+            <button type="submit" class="modal-btn submit-modal" form="editForm">Save Changes</button>
+          </div>
         </div>
       </div>
       <table id="dataTable">
@@ -285,10 +416,11 @@
           <col class="col-do" />
           <col class="col-wo-pdf" />
           <col class="col-cost" />
+          <col class="col-actions" />
         </colgroup>
         <thead>
           <tr>
-            <th class="th-meta">WO NO. </th>
+            <th class="th-meta">WO NO.</th>
             <th class="th-meta">CAMP</th>
             <th class="th-meta">LOCATION</th>
             <th class="th-split">Split 1.5TON</th>
@@ -317,12 +449,13 @@
             <th class="th-meta">DO</th>
             <th class="th-meta">WO</th>
             <th class="th-meta">Spilt Cost without VAT</th>
+            <th class="th-meta">Actions</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </section>
-    <div class="charts" style="display:flex;">
+    <div class="charts">
       <div class="chart-card">
         <div class="title">Split ACs by Ton</div>
         <canvas id="chartSplit" height="250"></canvas>
@@ -342,91 +475,110 @@
           <span class="progress-value" style="position:absolute;left:0;right:0;top:40%;text-align:center;font-size:1.5em;font-weight:bold;color:#16a34a;pointer-events:none;">0%</span>
         </div>
       </div>
-      
-</div>
-
-    
+    </div>
   </main>
-
   <script>
+    // =============================
+    // Supabase Client Initialization
+    // =============================
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // =============================
+    // Updated HEADERS
+    // =============================
     const HEADERS = [
-      { label: 'WO NO. ', key: 'WO NO.' },
-      { label: 'CAMP', key: 'CAMP' },
-      { label: 'LOCATION', key: 'LOCATION' },
-      { label: 'Split 1.5TON', key: '1.5 TON', group: 'split' },
-      { label: 'Split 2TON', key: '2 TON', group: 'split' },
-      { label: 'Split 2.5TON', key: '2.5 TON', group: 'split' },
-      { label: 'Split 3TON', key: '3TON', group: 'split' },
-      { label: 'Window 2TON', key: '2TON', group: 'window' },
-      { label: 'COOLER', key: 'COOLER', group: 'cooler' },
-      { label: 'used AC', key: 'used AC', group: 'used' },
-      { label: 'FRIDGE', key: 'FRIDGE', group: 'fridge' },
-      { label: 'FREEZER', key: 'FREEZER', group: 'freezer' },
-      { label: 'Package 8TON', key: '8 TON', group: 'package' },
-      { label: 'Package 10TON', key: '10 TON', group: 'package' },
-      { label: 'Package 12 TON', key: '12 TON', group: 'package' },
-      { label: 'Package 15TON', key: '15 TON', group: 'package' },
-      { label: 'Package 20TON', key: '20 TON', group: 'package' },
-      { label: 'Package 25TON', key: '25 TON', group: 'package' },
-      { label: 'FREE STAND 5TON', key: 'F 5TON', group: 'freestand' },
-      { label: 'FREE STAND 8TON', key: 'F 8TON', group: 'freestand' },
-      { label: 'WORK ORDER AMOUNT', key: 'WORK ORDER AMOUNT' },
-      { label: 'START DATE', key: 'START DATE' },
-      { label: 'END DATE', key: 'END DATE' },
+      { label: 'WO NO.', key: 'wo_no' },
+      { label: 'CAMP', key: 'camp' },
+      { label: 'LOCATION', key: 'location' },
+      { label: 'Split 1.5TON', key: 'split_1_5', group: 'split' },
+      { label: 'Split 2TON', key: 'split_2', group: 'split' },
+      { label: 'Split 2.5TON', key: 'split_2_5', group: 'split' },
+      { label: 'Split 3TON', key: 'split_3', group: 'split' },
+      { label: 'Window 2TON', key: 'window_2', group: 'window' },
+      { label: 'COOLER', key: 'cooler', group: 'cooler' },
+      { label: 'used AC', key: 'used_ac', group: 'used' },
+      { label: 'FRIDGE', key: 'fridge', group: 'fridge' },
+      { label: 'FREEZER', key: 'freezer', group: 'freezer' },
+      { label: 'Package 8TON', key: 'pkg_8', group: 'package' },
+      { label: 'Package 10TON', key: 'pkg_10', group: 'package' },
+      { label: 'Package 12 TON', key: 'pkg_12', group: 'package' },
+      { label: 'Package 15TON', key: 'pkg_15', group: 'package' },
+      { label: 'Package 20TON', key: 'pkg_20', group: 'package' },
+      { label: 'Package 25TON', key: 'pkg_25', group: 'package' },
+      { label: 'FREE STAND 5TON', key: 'free_5ton', group: 'freestand' },
+      { label: 'FREE STAND 8TON', key: 'free_8ton', group: 'freestand' },
+      { label: 'WORK ORDER AMOUNT', key: 'amount' },
+      { label: 'START DATE', key: 'start_date' },
+      { label: 'END DATE', key: 'end_date' },
       { label: 'REMAINING DAYS', key: null, group: 'remain' },
-      { label: 'WO PERCENTAGE', key: 'WO PERCENTAGE' },
-      { label: 'LPO', key: 'LPO' },
-      { label: 'DO', key: 'DO' },
-      { label: 'WO', key: 'WO' },
-      { label: 'Spilt Cost without VAT', key: 'COST' }
+      { label: 'WO PERCENTAGE', key: 'wo_percentage' },
+      { label: 'LPO', key: 'lpo' },
+      { label: 'DO', key: 'do_doc' },
+      { label: 'WO', key: 'wo_pdf' },
+      { label: 'Spilt Cost without VAT', key: 'cost' }
     ];
+    // =============================
+    // Utility Functions (unchanged)
+    // =============================
+function sortByWoNo(rows) {
+  return [...rows].sort((a, b) => {
+    const woA = String(a.wo_no || '').trim();
+    const woB = String(b.wo_no || '').trim();
 
-    function isNumericOnly(val){
+    // Try numeric comparison if both are numbers
+    const numA = parseFloat(woA);
+    const numB = parseFloat(woB);
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return numA - numB;
+    }
+
+    // Otherwise, fall back to locale-aware string comparison
+    return woA.localeCompare(woB, undefined, { numeric: true, sensitivity: 'base' });
+  });
+}
+
+    function isNumericOnly(val) {
       if (val === null || val === undefined) return false;
       if (typeof val === 'number') return Number.isFinite(val);
       const s = String(val).trim();
       if (!s) return false;
       return /^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(s);
     }
-    function excelSerialToDate(n){
-      if (typeof n === 'number' && isFinite(n)){
-        const base = Date.UTC(1899, 11, 30);
-        const d = new Date(base + Math.round(n) * 86400000);
-        return Number.isNaN(d.getTime()) ? null : d;
-      }
-      if (Object.prototype.toString.call(n) === '[object Date]') return n;
-      const s = String(n || '').trim();
-      const d = new Date(s);
+    function parseDate(val) {
+      if (!val) return null;
+      const d = new Date(val);
       return Number.isNaN(d.getTime()) ? null : d;
     }
-    function formatDMY(d){
+    function formatDMY(d) {
       if (!d) return '';
-      const pad2 = (x) => String(x).padStart(2,'0');
-      return `${pad2(d.getUTCDate())}/${pad2(d.getUTCMonth()+1)}/${d.getUTCFullYear()}`;
+      const pad2 = (x) => String(x).padStart(2, '0');
+      return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
     }
-    function remainingDays(endVal){
-      const end = excelSerialToDate(endVal);
+    function remainingDays(endDateStr) {
+      const end = parseDate(endDateStr);
       if (!end) return '';
       const today = new Date();
-      const diff = Math.ceil((end.getTime() - today.getTime()) / 86400000);
+      today.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      const diff = Math.ceil((end - today) / 86400000);
       return Math.max(0, diff);
     }
-    function remainingColor(days){
+    function remainingColor(days) {
       if (!Number.isFinite(days)) return '';
       if (days === 0) return getComputedStyle(document.documentElement).getPropertyValue('--rd-zero').trim();
       if (days <= 30) return getComputedStyle(document.documentElement).getPropertyValue('--rd-low').trim();
       if (days <= 60) return getComputedStyle(document.documentElement).getPropertyValue('--rd-mid').trim();
       return getComputedStyle(document.documentElement).getPropertyValue('--rd-high').trim();
     }
-    function remainingTextColor(days){
-      if (days === 0 || days <= 7) return '#fff';
-      return '#000';
+    function remainingTextColor(days) {
+      return (days === 0 || days <= 7) ? '#fff' : '#000';
     }
-    function parsePercentage(val){
+    function parsePercentage(val) {
       if (val === null || val === undefined) return null;
-      if (typeof val === 'number'){
+      if (typeof val === 'number') {
         let n = val;
-        if (n <= 1) n = n * 100; // treat 0-1 as fraction
+        if (n <= 1) n = n * 100;
         return Math.max(0, Math.min(100, Math.round(n)));
       }
       const s = String(val).trim();
@@ -437,7 +589,7 @@
       if (/%$/.test(s) === false && n <= 1) n = n * 100;
       return Math.max(0, Math.min(100, Math.round(n)));
     }
-    function percentColor(p){
+    function percentColor(p) {
       const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
       if (p === 0) return css('--progress-zero');
       if (p === 100) return css('--rd-zero');
@@ -445,122 +597,327 @@
       if (p >= 40) return css('--rd-mid');
       return css('--rd-low');
     }
-    function percentTextColor(p){
-      if (p === 0) return '#000';
-      if (p <= 25) return '#000';
+    function percentTextColor(p) {
+      if (p === 0 || p <= 25) return '#000';
       return p < 40 ? '#fff' : '#000';
     }
-
-    // Format numbers as AED currency (e.g., AED 12,345.67)
     const AED_FORMATTER = new Intl.NumberFormat('en-AE', {
       style: 'currency',
       currency: 'AED',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
-    function formatAED(value){
+    function formatAED(value) {
       const n = Number(value);
-      if (!Number.isFinite(n)) return 'AED 0.00';
-      return AED_FORMATTER.format(n);
+      return Number.isFinite(n) ? AED_FORMATTER.format(n) : 'AED 0.00';
     }
-
-    const fileInput = document.getElementById('excelFile');
-    const btnLoad = document.getElementById('btnLoad');
+    // =============================
+    // UI References
+    // =============================
     const statusEl = document.getElementById('statusBar');
     const selCamp = document.getElementById('filterCamp');
     const selLocation = document.getElementById('filterLocation');
     const selType = document.getElementById('filterType');
+    const printBtn = document.getElementById('printBtn');
+    const addRowBtn = document.getElementById('addRowBtn');
+    const addModal = document.getElementById('addModal');
+    const addForm = document.getElementById('addForm');
+    const closeAddModal = document.getElementById('closeAddModal');
+    // EDIT MODAL REFS
+    const editModal = document.getElementById('editModal');
+    const editForm = document.getElementById('editForm');
+    const closeEditModal = document.getElementById('closeEditModal');
     let ALL_ROWS = [];
     let PDF_MAP = {};
-    let NOTIFIED_WO = new Set(); // track WOs we've already toasted in this session
-
-    function loadNotifiedFromStorage(){
-      // (Notification system removed)
-    }
-    function saveNotifiedToStorage(){
-      // (Notification system removed)
-    }
-
-    async function requestNotificationPermission(){
-      // (Notification system removed)
-    }
-
-    function sendSystemNotification(woNo, camp, location, days){
-      // (Notification system removed)
-    }
-
-    function updateAlertPanel(alertWOs){
-      // (Notification system removed)
-    }
-
-    function showToast(message, duration = 20000){
+    let NOTIFIED_WO = new Set();
+    // =============================
+    // Toast / Status
+    // =============================
+    function showToast(message, duration = 20000) {
       let container = document.getElementById('toastContainer');
-      if (!container){
+      if (!container) {
         container = document.createElement('div');
         container.id = 'toastContainer';
         container.className = 'toast-container';
         document.body.appendChild(container);
       }
-      
       const toast = document.createElement('div');
       toast.className = 'toast';
       toast.textContent = message;
       container.appendChild(toast);
-      
       const removeToast = () => {
         toast.classList.add('removing');
-        setTimeout(() => { toast.remove(); }, 300);
+        setTimeout(() => toast.remove(), 300);
       };
-      
       setTimeout(removeToast, duration);
     }
-
-    function setStatus(msg, isError=false){
-      if (!statusEl) return;
-      statusEl.textContent = msg || '';
-      statusEl.style.color = isError ? '#b00020' : 'var(--muted)';
+    function setStatus(msg, isError = false) {
+      if (statusEl) {
+        statusEl.textContent = msg || '';
+        statusEl.style.color = isError ? '#b00020' : 'var(--muted)';
+      }
     }
-    async function loadRemotePdfMap(){
+    // =============================
+    // PDF Helpers (unchanged)
+    // =============================
+    async function loadRemotePdfMap() {
       try {
         const res = await fetch('attachs-remote.json?ts=' + Date.now(), { cache: 'no-store' });
-        if (!res.ok) return;
-        const json = await res.json();
-        if (json && typeof json === 'object') PDF_MAP = json;
-      } catch (e) {}
+        if (res.ok) {
+          const json = await res.json();
+          if (json && typeof json === 'object') PDF_MAP = json;
+        }
+      } catch (e) { /* ignore */ }
     }
-    async function resolvePdfUrl(file){
-      const mapped = PDF_MAP[file] || PDF_MAP[file.toLowerCase()] || null;
-      if (mapped) return mapped;
-      const root = encodeURIComponent(file);
-      try {
-        const r = await fetch(root, { method: 'HEAD', cache: 'no-store' });
-        if (r.ok) return root;
-      } catch (e) {}
-      return encodeURIComponent(file);
-    }
-
-    
-    async function openPdfViewerFromFile(file, title){
+   async function resolvePdfUrl(file) {
+  // Ensure .pdf extension
+  if (!file.toLowerCase().endsWith('.pdf')) {
+    file += '.pdf';
+  }
+  // Your GitHub raw URL
+  const GITHUB_USER = 'Desho2050';
+  const GITHUB_REPO = 'Gisco';
+  const BRANCH = 'main';
+  const FOLDER = ''; // or 'pdfs' if your files are in a folder
+  const basePath = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}`;
+  const filePath = FOLDER ? `${FOLDER}/${file}` : file;
+  const directUrl = `${basePath}/${encodeURIComponent(filePath)}`;
+  // ✅ USE GOOGLE DOCS VIEWER TO FORCE INLINE PREVIEW
+  const googleViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(directUrl)}&embedded=true`;
+  return googleViewerUrl;
+}
+    async function openPdfViewerFromFile(file, title) {
       const url = await resolvePdfUrl(file);
       return openPdfViewer(url, title);
     }
-    function renderRows(rows){
+    function openPdfViewer(url, title) {
+      const overlay = document.getElementById('pdfOverlay');
+      const frame = document.getElementById('pdfFrame');
+      const titleEl = document.getElementById('pdfTitle');
+      if (!overlay || !frame) return true;
+      frame.src = url;
+      if (titleEl) titleEl.textContent = title || 'PDF';
+      overlay.style.display = 'flex';
+      overlay.setAttribute('aria-hidden', 'false');
+      return false;
+    }
+    (function setupPdfOverlay() {
+      const overlay = document.getElementById('pdfOverlay');
+      const btn = document.getElementById('pdfClose');
+      if (!overlay || !btn) return;
+      btn.addEventListener('click', () => {
+        overlay.style.display = 'none';
+        overlay.setAttribute('aria-hidden', 'true');
+        const frame = document.getElementById('pdfFrame');
+        if (frame) frame.src = 'about:blank';
+      });
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.style.display = 'none';
+          overlay.setAttribute('aria-hidden', 'true');
+          const frame = document.getElementById('pdfFrame');
+          if (frame) frame.src = 'about:blank';
+        }
+      });
+    })();
+    // =============================
+    // CRUD Functions — MODIFIED FOR MODAL EDIT
+    // =============================
+    function renderActionCell(rowData, rowId) {
+      const td = document.createElement('td');
+      td.className = 'action-cell';
+      const editBtn = document.createElement('button');
+      editBtn.className = 'action-btn edit-btn';
+      editBtn.textContent = 'Edit';
+      editBtn.onclick = () => openEditModal(rowData);
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'action-btn delete-btn';
+      deleteBtn.textContent = 'Del';
+      deleteBtn.onclick = () => confirmDelete(rowData.wo_no);
+      td.appendChild(editBtn);
+      td.appendChild(deleteBtn);
+      return td;
+    }
+
+    // ====== EDIT MODAL HANDLERS ======
+    function buildEditForm(rowData) {
+      editForm.innerHTML = '';
+      HEADERS.forEach(h => {
+        if (h.key === null) return;
+        const label = document.createElement('label');
+        label.textContent = h.label;
+        const input = document.createElement('input');
+        let val = rowData[h.key] ?? '';
+        if (h.key === 'start_date' || h.key === 'end_date') {
+          input.type = 'date';
+          const d = parseDate(val);
+          input.value = d ? d.toISOString().split('T')[0] : '';
+        } else if (h.key === 'wo_percentage' || h.key === 'cost') {
+          input.type = 'number';
+          if (h.key === 'cost') input.step = '0.01';
+          input.value = val;
+        } else {
+          input.type = 'text';
+          input.value = String(val);
+        }
+        input.name = h.key;
+        editForm.appendChild(label);
+        editForm.appendChild(input);
+      });
+    }
+
+    function openEditModal(rowData) {
+      buildEditForm(rowData);
+      editModal.style.display = 'flex';
+      // Store original wo_no in form dataset or closure
+      editForm.dataset.woNo = rowData.wo_no;
+    }
+
+    closeEditModal.addEventListener('click', () => {
+      editModal.style.display = 'none';
+    });
+
+    editForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const woNo = editForm.dataset.woNo;
+      if (!woNo) {
+        setStatus('Error: Missing work order number.', true);
+        return;
+      }
+
+      const formData = new FormData(editForm);
+      const updatedData = {};
+      for (let [key, value] of formData.entries()) {
+        if (value === '') {
+          updatedData[key] = null;
+        } else if (key === 'start_date' || key === 'end_date') {
+          updatedData[key] = new Date(value).toISOString();
+        } else if (key === 'wo_percentage' || key === 'cost') {
+          const num = parseFloat(value);
+          updatedData[key] = isNaN(num) ? null : num;
+        } else {
+          updatedData[key] = value;
+        }
+  
+
+      }
+
+      try {
+        const { error } = await supabaseClient
+          .from('WO')
+          .update(updatedData)
+          .eq('wo_no', woNo);
+        if (error) throw error;
+        editModal.style.display = 'none';
+        setStatus('Work order updated successfully.');
+        await loadFromSupabase(); // refresh
+      } catch (err) {
+        console.error(err);
+        setStatus('Failed to update work order.', true);
+      }
+    });
+
+    // ====== ADD MODAL (unchanged logic, minor fix)
+    function buildAddForm() {
+      addForm.innerHTML = '';
+      HEADERS.forEach(h => {
+        if (h.key === null) return;
+        const label = document.createElement('label');
+        label.textContent = h.label;
+        const input = document.createElement('input');
+        if (h.key === 'start_date' || h.key === 'end_date') {
+          input.type = 'date';
+        } else if (h.key === 'wo_percentage' || h.key === 'cost') {
+          input.type = 'number';
+          if (h.key === 'cost') input.step = '0.01';
+        } else {
+          input.type = 'text';
+        }
+        input.name = h.key;
+        addForm.appendChild(label);
+        addForm.appendChild(input);
+      });
+    }
+    addRowBtn.addEventListener('click', () => {
+      buildAddForm();
+      addModal.style.display = 'flex';
+    });
+    closeAddModal.addEventListener('click', () => {
+      addModal.style.display = 'none';
+    });
+    addForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(addForm);
+      const newRow = {};
+      for (let [key, value] of formData.entries()) {
+        if (value === '') newRow[key] = null;
+        else if (key === 'start_date' || key === 'end_date') {
+          newRow[key] = new Date(value).toISOString();
+        } else if (key === 'wo_percentage' || key === 'cost') {
+          const num = parseFloat(value);
+          newRow[key] = isNaN(num) ? null : num;
+        } else {
+          newRow[key] = value;
+        }
+      }
+      try {
+        const { error } = await supabaseClient
+          .from('WO')
+          .insert([newRow]);
+        if (error) throw error;
+        addModal.style.display = 'none';
+        setStatus('New work order added.');
+        loadFromSupabase();
+        // Inside addForm submit handler, after success:
+addModal.style.display = 'none';
+setStatus('New work order added.');
+await loadFromSupabase(); // ✅ Already includes sorting
+      } catch (err) {
+        console.error(err);
+        setStatus('Failed to add work order.', true);
+      }
+    });
+
+    // ====== DELETE (simplified to use wo_no directly)
+    function confirmDelete(woNo) {
+      if (!confirm('Are you sure you want to delete this work order?')) return;
+      deleteRow(woNo);
+    }
+    async function deleteRow(woNo) {
+      try {
+        const { error } = await supabaseClient
+          .from('WO')
+          .delete()
+          .eq('wo_no', woNo);
+        if (error) throw error;
+        setStatus('Row deleted.');
+        await loadFromSupabase(); // ✅ Already sorts
+      } catch (err) {
+        console.error(err);
+        setStatus('Failed to delete row.', true);
+      }
+    }
+
+    // =============================
+    // Rendering & Filtering (unchanged)
+    // =============================
+    function renderRows(rows) {
       const tbody = document.querySelector('#dataTable tbody');
       tbody.innerHTML = '';
-      rows.forEach(row => {
+      rows.forEach((row, idx) => {
         const tr = document.createElement('tr');
         HEADERS.forEach(h => {
           const td = document.createElement('td');
           let handled = false;
           let val = '';
-          if (h.key === null && h.label === 'REMAINING DAYS'){
-            val = remainingDays(row['END DATE']);
+          if (h.key === null && h.label === 'REMAINING DAYS') {
+            val = remainingDays(row.end_date);
             td.classList.add('remain');
-          } else if (h.key === 'START DATE' || h.key === 'END DATE'){
-            val = formatDMY(excelSerialToDate(row[h.key]));
-          } else if (h.key === 'WO PERCENTAGE'){
+          } else if (h.key === 'start_date' || h.key === 'end_date') {
+            val = formatDMY(parseDate(row[h.key]));
+          } else if (h.key === 'wo_percentage') {
             const p = parsePercentage(row[h.key]);
-            if (p !== null){
+            if (p !== null) {
               const bg = percentColor(p);
               const fg = percentTextColor(p);
               td.innerHTML = `<div class="progress-cell"><div class="progress-bar" style="width:${p}%; background:${bg}"></div><span class="progress-text" style="color:${fg}">${p}%</span></div>`;
@@ -569,100 +926,99 @@
               td.textContent = '';
               handled = true;
             }
-          } else if (h.key === 'LPO'){
-            const loc = row['LOCATION'] ?? '';
-            const cam = row['CAMP'] ?? '';
+          } else if (h.key === 'lpo') {
+            const loc = row.location ?? '';
+            const cam = row.camp ?? '';
             const raw = row[h.key] ?? '';
             const name = String(raw).trim();
-            if (name){
-              const file = name.toLowerCase().endsWith('.pdf') ? name : name +'.pdf';
-              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file +  ' ' + cam +  '  (  ' + loc +'   )  '}')" title="Open ${file}">${name }</a>`;
+            if (name) {
+              const file = name.toLowerCase().endsWith('.pdf') ? name : name + '.pdf';
+              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
               handled = true;
             } else {
               td.textContent = '';
               handled = true;
             }
-          } else if (h.key === 'DO'){
-            const lpoRaw = row['LPO'] ?? '';
-             const loc = row['LOCATION'] ?? '';
-            const cam = row['CAMP'] ?? '';
+          } else if (h.key === 'do_doc') {
+            const lpoRaw = row.lpo ?? '';
+            const loc = row.location ?? '';
+            const cam = row.camp ?? '';
             const lpoName = String(lpoRaw).trim();
             const doLabelRaw = row[h.key] ?? '';
             const doLabel = String(doLabelRaw).trim();
-            if (lpoName || doLabel){
-              const base = lpoName ? lpoName.replace(/\.pdf$/i,'') : doLabel.replace(/\.pdf$/i,'');
+            if (lpoName || doLabel) {
+              const base = lpoName ? lpoName.replace(/\.pdf$/i, '') : doLabel.replace(/\.pdf$/i, '');
               const file = lpoName ? `DO${base}.pdf` : (/^DOPO/.test(base) ? `${base}.pdf` : `DO${base}.pdf`);
               const label = doLabel || (lpoName ? `DO${base}` : `DO${base}`);
-              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file+  ' ' + cam +  '  (  ' + loc +'   )  '}')" title="Open ${file}">${label}</a>`;
+              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} ${cam} (${loc})')" title="Open ${file}">${label}</a>`;
               handled = true;
             } else {
               td.textContent = '';
               handled = true;
             }
-          } else if (h.key === 'WO'){
-            const raw = row['WO NO.'] ?? '';
-             const lpoRaw = row['LPO'] ?? '';
-             const loc = row['LOCATION'] ?? '';
-            const cam = row['CAMP'] ?? '';
+          } else if (h.key === 'wo_pdf') {
+            const raw = row.wo_no ?? '';
+            const lpoRaw = row.lpo ?? '';
+            const loc = row.location ?? '';
+            const cam = row.camp ?? '';
             const name = String(raw).trim();
-            if (name){
+            if (name) {
               let file;
-              if (/\.pdf$/i.test(name)){
+              if (/\.pdf$/i.test(name)) {
                 file = name;
               } else {
                 const m = name.match(/^WO\s+(\d+)$/i);
-                if (m){
+                if (m) {
                   file = `WO${m[1]}.pdf`;
-                } else if (/^WO\d+$/i.test(name)){
+                } else if (/^WO\d+$/i.test(name)) {
                   file = `${name}.pdf`;
                 } else {
                   file = `${name}.pdf`;
                 }
               }
-              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file + '  ( ' +lpoRaw+  ' )  ' + cam +  '  (  ' + loc +'   )  '}')" title="Open ${file}">${name}</a>`;
+              td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} (${lpoRaw}) ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
               handled = true;
             } else {
               td.textContent = '';
               handled = true;
             }
-          } else if (h.key === 'COST'){
+          } else if (h.key === 'cost') {
             const v = row[h.key];
-            if (isNumericOnly(v)){
-              td.textContent = formatAED(Number(v));
-            } else {
-              td.textContent = String(v ?? '');
-            }
+            td.textContent = isNumericOnly(v) ? formatAED(Number(v)) : String(v ?? '');
             handled = true;
           } else {
             val = row[h.key] ?? '';
           }
           const group = h.group || '';
           if (group) td.classList.add(group);
-          if (group && isNumericOnly(val) && group !== 'remain'){
+          if (group && isNumericOnly(val) && group !== 'remain') {
             td.classList.add('is-numeric');
             td.innerHTML = `<span class="count-badge ${group}">${val}</span>`;
-          } else if (group === 'remain' && isNumericOnly(val)){
+          } else if (group === 'remain' && isNumericOnly(val)) {
             const num = Number(val);
             const bg = remainingColor(num);
             const fg = remainingTextColor(num);
             td.innerHTML = `<span class="remain-badge" style="background:${bg}; color:${fg}">${num}</span>`;
-          } else {
-            if (!handled) td.textContent = val;
+          } else if (!handled) {
+            td.textContent = val;
           }
           tr.appendChild(td);
         });
+        tr.appendChild(renderActionCell(row, idx));
         tbody.appendChild(tr);
       });
     }
-    function uniqueSorted(values){
+    function uniqueSorted(values) {
       const set = new Set(values.filter(v => v !== '' && v !== null && v !== undefined).map(v => String(v).trim()).filter(Boolean));
-      return ['All', ...Array.from(set).sort((a,b)=>a.localeCompare(b))];
+      return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
     }
-    const TYPE_OPTIONS = ['All','split','window','package','used','fridge','cooler','freezer','freestand'];
-    function initFilters(){
-      const camps = uniqueSorted(ALL_ROWS.map(r => r['CAMP']));
-      const locs = uniqueSorted(ALL_ROWS.map(r => r['LOCATION']));
-      function fillSelect(sel, opts){ sel.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join(''); }
+    const TYPE_OPTIONS = ['All', 'split', 'window', 'package', 'used', 'fridge', 'cooler', 'freezer', 'freestand'];
+    function initFilters() {
+      const camps = uniqueSorted(ALL_ROWS.map(r => r.camp));
+      const locs = uniqueSorted(ALL_ROWS.map(r => r.location));
+      const fillSelect = (sel, opts) => {
+        sel.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+      };
       fillSelect(selCamp, camps);
       fillSelect(selLocation, locs);
       fillSelect(selType, TYPE_OPTIONS);
@@ -671,16 +1027,16 @@
       selType.addEventListener('change', applyFilters);
     }
     const GROUP_KEYS = {
-      split: ['1.5 TON','2 TON','2.5 TON','3TON'],
-      window: ['2TON'],
-      package: ['8 TON','10 TON','12 TON','15 TON','20 TON','25 TON'],
-      used: ['used AC'],
-      fridge: ['FRIDGE'],
-      cooler: ['COOLER'],
-      freezer: ['FREEZER'],
-      freestand: ['F 5TON','F 8TON']
+      split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
+      window: ['window_2'],
+      package: ['pkg_8', 'pkg_10', 'pkg_12', 'pkg_15', 'pkg_20', 'pkg_25'],
+      used: ['used_ac'],
+      fridge: ['fridge'],
+      cooler: ['cooler'],
+      freezer: ['freezer'],
+      freestand: ['free_5ton', 'free_8ton']
     };
-    function sumValues(rows, keys){
+    function sumValues(rows, keys) {
       let total = 0;
       rows.forEach(r => {
         keys.forEach(k => {
@@ -690,18 +1046,17 @@
       });
       return total;
     }
-    function computeCounts(rows){
+    function computeCounts(rows) {
       const counts = {
-        split: { '1.5 TON': 0, '2 TON': 0, '2.5 TON': 0, '3TON': 0, total: 0 },
-        window: { '2TON': 0, total: 0 },
-        package: { '8 TON':0,'10 TON':0,'12 TON':0,'15 TON':0,'20 TON':0,'25 TON':0, total: 0 },
-        freestand: { 'F 5TON':0,'F 8TON':0, total: 0 },
-        used: { 'used AC':0, total: 0 },
-        fridge: { 'FRIDGE':0, total: 0 },
-        cooler: { 'COOLER':0, total: 0 },
-        freezer: { 'FREEZER':0, total: 0 }
+        split: { split_1_5: 0, split_2: 0, split_2_5: 0, split_3: 0, total: 0 },
+        window: { window_2: 0, total: 0 },
+        package: { pkg_8: 0, pkg_10: 0, pkg_12: 0, pkg_15: 0, pkg_20: 0, pkg_25: 0, total: 0 },
+        freestand: { free_5ton: 0, free_8ton: 0, total: 0 },
+        used: { used_ac: 0, total: 0 },
+        fridge: { fridge: 0, total: 0 },
+        cooler: { cooler: 0, total: 0 },
+        freezer: { freezer: 0, total: 0 }
       };
-      // per-key sums
       Object.keys(counts).forEach(group => {
         const keys = GROUP_KEYS[group];
         keys.forEach(k => {
@@ -713,14 +1068,23 @@
       });
       return counts;
     }
-    let charts = { split:null, pkg:null, groups:null, progress:null, remainWO:null };
+    function hasGroupValue(row, group) {
+      const keys = GROUP_KEYS[group] || [];
+      return keys.some(k => {
+        const v = row[k];
+        if (!isNumericOnly(v)) return false;
+        const num = Number(v);
+        return Number.isFinite(num) && num > 0;
+      });
+    }
+    let charts = { split: null, pkg: null, groups: null, progress: null };
     let miniCharts = [];
-    function renderCharts(counts){
-      const splitLabels = ['1.5 TON','2 TON','2.5 TON','3TON'];
-      const splitData = splitLabels.map(l => counts.split[l]);
-      const pkgLabels = ['8 TON','10 TON','12 TON','15 TON','20 TON','25 TON'];
-      const pkgData = pkgLabels.map(l => counts.package[l]);
-      const groupLabels = ['split','window','package','freestand','used','cooler','fridge','freezer'];
+    function renderCharts(counts) {
+      const splitLabels = ['1.5 TON', '2 TON', '2.5 TON', '3TON'];
+      const splitData = [counts.split.split_1_5, counts.split.split_2, counts.split.split_2_5, counts.split.split_3];
+      const pkgLabels = ['8 TON', '10 TON', '12 TON', '15 TON', '20 TON', '25 TON'];
+      const pkgData = [counts.package.pkg_8, counts.package.pkg_10, counts.package.pkg_12, counts.package.pkg_15, counts.package.pkg_20, counts.package.pkg_25];
+      const groupLabels = ['split', 'window', 'package', 'freestand', 'used', 'cooler', 'fridge', 'freezer'];
       const groupTotals = [
         counts.split.total,
         counts.window.total,
@@ -738,44 +1102,39 @@
       const bgMeta = getComputedStyle(document.documentElement);
       const colors = {
         split: bgMeta.getPropertyValue('--col-split').trim() || '#16a34a',
-        window: bgMeta.getPropertyValue('--col-window').trim() || '#22c55e',
+        window: bgMeta.getPropertyValue('--col-window').trim() || '#c022c5',
         package: bgMeta.getPropertyValue('--col-package').trim() || '#60a5fa',
         freestand: bgMeta.getPropertyValue('--col-freestand').trim() || '#94a3b8',
-        used: bgMeta.getPropertyValue('--col-used').trim() || '#d97706',
-        cooler: bgMeta.getPropertyValue('--col-cooler').trim() || '#f59e0b',
+        used: bgMeta.getPropertyValue('--col-used').trim() || '#d90606',
+        cooler: bgMeta.getPropertyValue('--col-cooler').trim() || '#00eeff',
         fridge: bgMeta.getPropertyValue('--col-fridge').trim() || '#6b7280',
         freezer: bgMeta.getPropertyValue('--col-freezer').trim() || '#9ca3af'
       };
-      // Split bar chart
       if (charts.split) charts.split.destroy();
       charts.split = new Chart(ctxSplit, {
         type: 'bar',
-        data: { labels: splitLabels, datasets: [{ label:'Split', data: splitData, backgroundColor: colors.split }] },
-        options: { responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+        data: { labels: splitLabels, datasets: [{ label: 'Split', data: splitData, backgroundColor: colors.split }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
       });
-      // Package bar chart
       if (charts.pkg) charts.pkg.destroy();
       charts.pkg = new Chart(ctxPkg, {
         type: 'bar',
-        data: { labels: pkgLabels, datasets: [{ label:'Package', data: pkgData, backgroundColor: colors.package }] },
-        options: { responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+        data: { labels: pkgLabels, datasets: [{ label: 'Package', data: pkgData, backgroundColor: colors.package }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
       });
-      // Groups doughnut chart
       if (charts.groups) charts.groups.destroy();
       charts.groups = new Chart(ctxGroups, {
         type: 'doughnut',
         data: {
           labels: groupLabels,
-          datasets: [{ data: groupTotals, backgroundColor: [colors.split, colors.window, colors.package, colors.freestand, colors.used, colors.cooler, colors.fridge, colors.freezer] }]
+          datasets: [{ data: groupTotals, backgroundColor: Object.values(colors) }]
         },
-        options: { responsive:true, plugins:{ legend:{ position:'bottom' } } }
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
       });
-      // Total Project Progress Chart
       if (charts.progress) charts.progress.destroy();
-      // Calculate average WO PERCENTAGE
       let sum = 0, count = 0;
       ALL_ROWS.forEach(row => {
-        const p = parsePercentage(row['WO PERCENTAGE']);
+        const p = parsePercentage(row.wo_percentage);
         if (p !== null) { sum += p; count++; }
       });
       const avg = count > 0 ? Math.round(sum / count) : 0;
@@ -783,36 +1142,27 @@
         type: 'doughnut',
         data: {
           labels: ['Progress', ''],
-          datasets: [{
-            data: [avg, 100 - avg],
-            backgroundColor: ['#16a34a', '#e5e7eb']
-          }]
+          datasets: [{ data: [avg, 100 - avg], backgroundColor: ['#16a34a', '#e5e7eb'] }]
         },
         options: {
           responsive: true,
-          plugins: {
-            legend: { display: true, position: 'bottom' },
-            tooltip: { enabled: true }
-          },
-          cutout: '70%',
+          plugins: { legend: { display: true, position: 'bottom' } },
+          cutout: '70%'
         }
       });
-      // Show value in center
       ctxProgress.parentNode.querySelector('.progress-value').textContent = `${avg}%`;
-   
     }
-
-    
-    function renderStats(rows){
+    function renderStats(rows) {
       const c = computeCounts(rows);
-      // compute total cost without VAT (COST column)
       let totalCostNoVat = 0;
       rows.forEach(r => {
-        const v = r['COST'];
+        const v = r.cost;
         if (isNumericOnly(v)) totalCostNoVat += Number(v);
       });
-      // update cards
-      const byId = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = String(val); };
+      const byId = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(val);
+      };
       byId('statTotalSplit', c.split.total);
       byId('statTotalPackage', c.package.total);
       byId('statTotalFreestand', c.freestand.total);
@@ -822,212 +1172,61 @@
       byId('statTotalFridge', c.fridge.total);
       byId('statTotalFreezer', c.freezer.total);
       byId('statTotalCostNoVat', formatAED(totalCostNoVat));
-      // charts
       renderCharts(c);
-      const container = document.getElementById('separatedWO');
-      if (container){
-        miniCharts.forEach(ch => { try { ch.destroy(); } catch (e) {} });
-        miniCharts = [];
-        container.innerHTML = '';
-        rows.forEach(r => {
-          const label = String(r['WO NO.'] || '').trim();
-          const v = remainingDays(r['END DATE']);
-          const n = typeof v === 'number' ? v : 0;
-          const card = document.createElement('div');
-          card.className = 'mini-card';
-          const title = document.createElement('div');
-          title.className = 'mini-title';
-          title.textContent = label;
-          const cv = document.createElement('canvas');
-          cv.width = 300;
-          cv.height = 120;
-          card.appendChild(title);
-          card.appendChild(cv);
-          container.appendChild(card);
-          const color = remainingColor(n) || '#22c55e';
-          const chart = new Chart(cv, {
-            type: 'bar',
-            data: { labels: ['Days'], datasets: [{ data: [n], backgroundColor: [color] }] },
-            options: { responsive: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-          });
-          miniCharts.push(chart);
-        });
-      }
     }
-    function hasGroupValue(row, group){
-      const keys = GROUP_KEYS[group] || [];
-      return keys.some(k => {
-        const v = row[k];
-        if (!isNumericOnly(v)) return false;
-        const num = Number(v);
-        return Number.isFinite(num) && num > 0;
-      });
-    }
-    function applyFilters(){
+    function applyFilters() {
       const campVal = selCamp.value || 'All';
       const locVal = selLocation.value || 'All';
       const typeVal = selType.value || 'All';
       const filtered = ALL_ROWS.filter(r => {
-        if (campVal !== 'All' && String(r['CAMP']).trim() !== campVal) return false;
-        if (locVal !== 'All' && String(r['LOCATION']).trim() !== locVal) return false;
+        if (campVal !== 'All' && String(r.camp).trim() !== campVal) return false;
+        if (locVal !== 'All' && String(r.location).trim() !== locVal) return false;
         if (typeVal !== 'All' && !hasGroupValue(r, typeVal)) return false;
         return true;
       });
       renderRows(filtered);
       renderStats(filtered);
-      
-      // Show toast notifications for WOs with 0 < remaining days < 30
       try {
         filtered.forEach(r => {
-          const days = remainingDays(r['END DATE']);
-          const wo = String(r['WO NO.'] ?? '').trim();
-          if (wo && Number.isFinite(days) && days < 30 && days > 0){
-            if (!NOTIFIED_WO.has(wo)){
-              const camp = String(r['CAMP'] ?? '').trim();
-              const loc = String(r['LOCATION'] ?? '').trim();
-              const msg = `⚠️ : ${wo} امر العمل  بمعسكر: ${camp} الموقع: ${loc} متبقي  ${days}  يوم لانتهاء امر العمل`;
-              showToast(msg, 6000);
-              NOTIFIED_WO.add(wo);
-            }
+          const days = remainingDays(r.end_date);
+          const wo = String(r.wo_no ?? '').trim();
+          if (wo && Number.isFinite(days) && days < 30 && days > 0 && !NOTIFIED_WO.has(wo)) {
+            const msg = `⚠️ : ${wo} امر العمل  بمعسكر: ${r.camp} الموقع: ${r.location} متبقي  ${days}  يوم لانتهاء امر العمل`;
+            showToast(msg, 6000);
+            NOTIFIED_WO.add(wo);
           }
         });
-      } catch (e) { console.warn('Toast notification error:', e); }
-      
+      } catch (e) { console.warn('Toast error:', e); }
       setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows.`);
     }
-    function setControlsVisible(v){
-      fileInput.style.display = v ? '' : 'none';
-      btnLoad.style.display = v ? '' : 'none';
-    }
-    function loadFromFile(){
-      if (!fileInput.files || fileInput.files.length === 0){
-        alert('Please select an Excel file first.');
-        return;
-      }
-      setStatus('Loading local Excel…');
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const data = new Uint8Array(e.target.result);
-        const wb = XLSX.read(data, { type: 'array' });
-        const sheetName = wb.SheetNames[0];
-        const sheet = wb.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-        ALL_ROWS = rows;
-        if (!selCamp.options.length) initFilters();
-        applyFilters();
-        setStatus(`Loaded ${rows.length} rows from local file.`);
-      };
-      reader.readAsArrayBuffer(fileInput.files[0]);
-    }
-    async function loadFromServer(){
-      try {
-        setStatus('Loading data from server…');
-        const res = await fetch('WO.xlsx?ts=' + Date.now(), { cache: 'no-store' });
-        if (!res.ok) throw new Error('Fetch failed: ' + res.status + ' ' + res.statusText);
-        const buf = await res.arrayBuffer();
-        const data = new Uint8Array(buf);
-        const wb = XLSX.read(data, { type: 'array' });
-        const sheetName = wb.SheetNames[0];
-        const sheet = wb.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-        ALL_ROWS = rows;
-        initFilters();
-        applyFilters();
-        setStatus(`Online: loaded ${rows.length} rows from server.`);
-        setControlsVisible(false);
-      } catch (e){
-        console.warn('Server load failed, falling back to local file:', e);
-       
-        setControlsVisible(true);
-      }
-    }
-    btnLoad.addEventListener('click', loadFromFile);
-    const printBtn = document.getElementById('printBtn');
-    if (printBtn) {
-      printBtn.addEventListener('click', () => window.print());
-    }
-    // Check server availability by attempting a HEAD request to the workbook
-    async function checkServerAvailability(){
-      try{
-        if (!navigator.onLine) return false;
-        const res = await fetch('WO.xlsx?ts=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
-        return !!(res && res.ok);
-      }catch(e){ return false; }
-    }
-
+    // =============================
+    // Supabase Data Loader
+    // =============================
+    async function loadFromSupabase() {
+  setStatus('Loading data from database...');
+  try {
+    const { data, error } = await supabaseClient.from('WO').select('*');
+    if (error) throw error;
+    
+    ALL_ROWS = sortByWoNo(data); // ✅ SORT HERE
+    initFilters();
+    applyFilters();
+    setStatus(`Loaded ${data.length} rows from database.`);
+  } catch (err) {
+    console.error('Supabase error:', err);
+    setStatus('❌ Failed to load data from database.', true);
+  }
+}
+    // =============================
+    // DOM Ready
+    // =============================
     document.addEventListener('DOMContentLoaded', async () => {
       await loadRemotePdfMap();
-
-      // Decide whether to show file controls based on network + server availability
-      const serverOk = await checkServerAvailability();
-      if (serverOk){
-        setControlsVisible(false);
-        // Load data from server (fire-and-forget)
-        loadFromServer();
-      } else {
-        setControlsVisible(true);
+      loadFromSupabase();
+      if (printBtn) {
+        printBtn.addEventListener('click', () => window.print());
       }
-
-      // Listen for connectivity changes and update controls accordingly
-      window.addEventListener('online', async () => {
-        setStatus('Network online — checking server...');
-        const ok = await checkServerAvailability();
-        if (ok){ 
-          setControlsVisible(false); 
-          loadFromServer(); 
-        } else {
-          setControlsVisible(true);
-          setStatus('Server unavailable. Use local file to load data.', true);
-        }
-      });
-      window.addEventListener('offline', () => {
-        setControlsVisible(true);
-        setStatus('Offline — please use local file to load data.', true);
-      });
     });
-    // PDF viewer helpers
-    function openPdfViewer(url, title){
-      const overlay = document.getElementById('pdfOverlay');
-      const frame = document.getElementById('pdfFrame');
-      const titleEl = document.getElementById('pdfTitle');
-      if (!overlay || !frame) return true;
-      frame.src = url;
-      if (titleEl) titleEl.textContent = title || 'PDF';
-      overlay.style.display = 'flex';
-      overlay.setAttribute('aria-hidden','false');
-      return false; // prevent default link navigation
-    }
-    (function setupPdfOverlay(){
-      const overlay = document.getElementById('pdfOverlay');
-      const frame = document.getElementById('pdfFrame');
-      const btn = document.getElementById('pdfClose');
-      if (!overlay || !btn) return;
-      btn.addEventListener('click', () => {
-        overlay.style.display = 'none';
-        overlay.setAttribute('aria-hidden','true');
-        if (frame) frame.src = 'about:blank';
-      });
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay){
-          overlay.style.display = 'none';
-          overlay.setAttribute('aria-hidden','true');
-          if (frame) frame.src = 'about:blank';
-        }
-      });
-    })();
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
