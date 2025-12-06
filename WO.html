@@ -378,6 +378,36 @@
 .card:nth-child(6) .cost-sub {
   color: #000000;
 }
+.custom-tooltip {
+  position: fixed;
+  z-index: 100000;
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  max-width: 300px;
+  white-space: nowrap;
+  text-align: left;
+}
+.custom-tooltip {
+  position: fixed;
+  z-index: 100000;
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  max-width: 1000px;
+  white-space: nowrap;
+  text-align: left;
+}
   </style>
 </head>
 <body>
@@ -1050,9 +1080,51 @@
     // =============================
     function renderRows(rows) {
       const tbody = document.querySelector('#dataTable tbody');
-      tbody.innerHTML = '';
-      rows.forEach((row, idx) => {
-        const tr = document.createElement('tr');
+  const tooltip = document.getElementById('customTooltip');
+  tbody.innerHTML = '';
+
+  rows.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+
+    // 👇 Set data attributes for tooltip
+    const woNo = row.wo_no || 'N/A';
+    const camp = row.camp || 'N/A';
+    const location = row.location || 'N/A';
+    tr.dataset.woNo = woNo;
+    tr.dataset.camp = camp;
+    tr.dataset.location = location;
+
+    // 👇 Mouse events for custom tooltip
+    tr.addEventListener('mouseenter', (e) => {
+      if (tooltip) {
+        tooltip.textContent = ` ${woNo} • Camp: ${camp} • Location: ${location}`;
+        tooltip.style.display = 'block';
+      }
+    });
+
+    tr.addEventListener('mouseleave', () => {
+      if (tooltip) {
+        tooltip.style.display = 'none';
+      }
+    });
+
+    tr.addEventListener('mousemove', (e) => {
+  if (tooltip) {
+    const tooltipWidth = tooltip.offsetWidth;
+    const tooltipHeight = tooltip.offsetHeight;
+
+    // Position tooltip to the LEFT of cursor
+    const left = e.pageX - tooltipWidth - 10; // 10px gap
+    const top = e.pageY ;  // vertically centered on cursor
+
+    // Optional: prevent tooltip from going off the left edge of the screen
+    const safeLeft = Math.max(0, left);
+
+  tooltip.position = 'absolute';
+  tooltip.style.left = `${safeLeft}px`;
+  tooltip.style.top = `${top}px`;
+  }
+});
         HEADERS.forEach(h => {
           const td = document.createElement('td');
           let handled = false;
@@ -1422,5 +1494,6 @@
       }
     });
   </script>
+  <div id="customTooltip" class="custom-tooltip" style="display: none;"></div>
 </body>
 </html>
