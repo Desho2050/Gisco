@@ -368,6 +368,16 @@
     min-width: auto;
   }
 }
+.cost-sub {
+  font-size: 11px;
+  color: #ffffff;
+  margin-top: 4px;
+  opacity: 0.9;
+}
+/* Override for Cooler (black text on cyan) */
+.card:nth-child(6) .cost-sub {
+  color: #000000;
+}
   </style>
 </head>
 <body>
@@ -406,38 +416,47 @@
         <div class="card" style="background-color: var(--col-split); color: #fff;">
           <div class="title" style="color: #eaf4ff;">Total Splits</div>
           <div id="statTotalSplit" class="value"style="color: #eaf4ff;">0</div>
+           <div id="statCostSplit" class="cost-sub"></div>
         </div>
         <div class="card" style="background-color: var(--col-package); color: #fff;">
           <div class="title" style="color: #eaf4ff;">Total Packages</div>
           <div id="statTotalPackage" class="value" style="color: #eaf4ff;">0</div>
+           <div id="statCostPackage" class="cost-sub"></div>
         </div>
         <div class="card" style="background-color:#6b778c; color: #fff;">
           <div class="title" style="color: #fafafa;">Total Free Stand</div>
           <div id="statTotalFreestand" class="value" style="color: #ffffff;">0</div>
+           <div id="statCostFreestand" class="cost-sub"></div>
         </div>
         <div class="card" style="background-color: var(--col-window); color: #fff;">
           <div class="title" style="color: #eaf4ff;">Total Window</div>
           <div id="statTotalWindow" class="value" style="color: #eaf4ff;">0</div>
+           <div id="statCostWindow" class="cost-sub"></div>
         </div>
         <div class="card" style="background-color: var(--col-used); color: #fff;">
           <div class="title" style="color: #eaf4ff;">Total Used AC</div>
           <div id="statTotalUsed" class="value" style="color: #eaf4ff;">0</div>
+           <div id="statCostUsed" class="cost-sub"></div>
         </div>
         <div class="card" style="background-color:cyan; color: #fff;">
           <div class="title" style="color: #000000;">Total Cooler</div>
           <div id="statTotalCooler" class="value" style="color: #000000;">0</div>
+           <div id="statCostCooler" class="cost-sub"></div>
         </div>
         <div class="card" style="background-color: var(--col-fridge); color: #fff;">
           <div class="title" style="color: #eaf4ff;">Total Fridge</div>
           <div id="statTotalFridge" class="value" style="color: #eaf4ff;">0</div>
+           <div id="statCostFridge" class="cost-sub"></div>
         </div>
         <div class="card" style="background-color: var(--col-freezer); color: #fff;">
           <div class="title" style="color: #eaf4ff;">Total Freezer</div>
           <div id="statTotalFreezer" class="value"style="color: #eaf4ff;">0</div>
+           <div id="statCostFreezer" class="cost-sub"></div>
         </div>
         <div class="card" style="background-color:#172b4d; color: #fff;">
           <div class="title" style="color: #fcfcfc;">Total Cost Without VAT</div>
           <div id="statTotalCostNoVat" class="value" style="color: #ffffff; ">0</div>
+           <div id="statCostNoVat" class="cost-sub"></div>
         </div>
       </div>
       <!-- PDF viewer overlay -->
@@ -1175,27 +1194,58 @@
       return total;
     }
     function computeCounts(rows) {
-      const counts = {
-        split: { split_1_5: 0, split_2: 0, split_2_5: 0, split_3: 0, total: 0 },
-        window: { window_2: 0, total: 0 },
-        package: { pkg_8: 0, pkg_10: 0, pkg_12: 0, pkg_15: 0, pkg_20: 0, pkg_25: 0, total: 0 },
-        freestand: { free_5ton: 0, free_8ton: 0, total: 0 },
-        used: { used_ac: 0, total: 0 },
-        fridge: { fridge: 0, total: 0 },
-        cooler: { cooler: 0, total: 0 },
-        freezer: { freezer: 0, total: 0 }
-      };
-      Object.keys(counts).forEach(group => {
-        const keys = GROUP_KEYS[group];
-        keys.forEach(k => {
-          let sum = 0;
-          rows.forEach(r => { if (isNumericOnly(r[k])) sum += Number(r[k]); });
-          counts[group][k] = sum;
-        });
-        counts[group].total = sumValues(rows, keys);
-      });
-      return counts;
+  const counts = {
+    split: { split_1_5: 0, split_2: 0, split_2_5: 0, split_3: 0, total: 0, cost: 0 },
+    window: { window_2: 0, total: 0, cost: 0 },
+    package: { pkg_8: 0, pkg_10: 0, pkg_12: 0, pkg_15: 0, pkg_20: 0, pkg_25: 0, total: 0, cost: 0 },
+    freestand: { free_5ton: 0, free_8ton: 0, total: 0, cost: 0 },
+    used: { used_ac: 0, total: 0, cost: 0 },
+    fridge: { fridge: 0, total: 0, cost: 0 },
+    cooler: { cooler: 0, total: 0, cost: 0 },
+    freezer: { freezer: 0, total: 0, cost: 0 }
+  };
+
+  // Map group → keys (same as before)
+  const GROUP_KEYS = {
+    split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
+    window: ['window_2'],
+    package: ['pkg_8', 'pkg_10', 'pkg_12', 'pkg_15', 'pkg_20', 'pkg_25'],
+    used: ['used_ac'],
+    fridge: ['fridge'],
+    cooler: ['cooler'],
+    freezer: ['freezer'],
+    freestand: ['free_5ton', 'free_8ton']
+  };
+
+  rows.forEach(row => {
+    const rowCost = isNumericOnly(row.cost) ? Number(row.cost) : 0;
+    // Total cost across all rows (already done elsewhere)
+
+    for (const [group, keys] of Object.entries(GROUP_KEYS)) {
+      let groupHasValue = false;
+      let groupQty = 0;
+
+      for (const key of keys) {
+        const val = row[key];
+        if (isNumericOnly(val)) {
+          const num = Number(val);
+          if (num > 0) {
+            groupHasValue = true;
+            groupQty += num;
+            counts[group][key] += num;
+          }
+        }
+      }
+
+      if (groupHasValue) {
+        counts[group].total += groupQty;
+        counts[group].cost += rowCost; // 🔥 assign full row cost to each group it belongs to
+      }
     }
+  });
+
+  return counts;
+}
     function hasGroupValue(row, group) {
       const keys = GROUP_KEYS[group] || [];
       return keys.some(k => {
@@ -1281,27 +1331,42 @@
       ctxProgress.parentNode.querySelector('.progress-value').textContent = `${avg}%`;
     }
     function renderStats(rows) {
-      const c = computeCounts(rows);
-      let totalCostNoVat = 0;
-      rows.forEach(r => {
-        const v = r.cost;
-        if (isNumericOnly(v)) totalCostNoVat += Number(v);
-      });
-      const byId = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = String(val);
-      };
-      byId('statTotalSplit', c.split.total);
-      byId('statTotalPackage', c.package.total);
-      byId('statTotalFreestand', c.freestand.total);
-      byId('statTotalWindow', c.window.total);
-      byId('statTotalUsed', c.used.total);
-      byId('statTotalCooler', c.cooler.total);
-      byId('statTotalFridge', c.fridge.total);
-      byId('statTotalFreezer', c.freezer.total);
-      byId('statTotalCostNoVat', formatAED(totalCostNoVat));
-      renderCharts(c);
-    }
+  const c = computeCounts(rows);
+  let totalCostNoVat = 0;
+  rows.forEach(r => {
+    const v = r.cost;
+    if (isNumericOnly(v)) totalCostNoVat += Number(v);
+  });
+
+  // Helper
+  const byId = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(val);
+  };
+
+  // Counts
+  byId('statTotalSplit', c.split.total);
+  byId('statTotalPackage', c.package.total);
+  byId('statTotalFreestand', c.freestand.total);
+  byId('statTotalWindow', c.window.total);
+  byId('statTotalUsed', c.used.total);
+  byId('statTotalCooler', c.cooler.total);
+  byId('statTotalFridge', c.fridge.total);
+  byId('statTotalFreezer', c.freezer.total);
+  byId('statTotalCostNoVat', formatAED(totalCostNoVat));
+
+  // ✅ COST PER GROUP
+  byId('statCostSplit', `Cost: ${formatAED(c.split.cost)}`);
+  byId('statCostPackage', `Cost: ${formatAED(c.package.cost)}`);
+  byId('statCostFreestand', `Cost: ${formatAED(c.freestand.cost)}`);
+  byId('statCostWindow', `Cost: ${formatAED(c.window.cost)}`);
+  byId('statCostUsed', `Cost: ${formatAED(c.used.cost)}`);
+  byId('statCostCooler', `Cost: ${formatAED(c.cooler.cost)}`);
+  byId('statCostFridge', `Cost: ${formatAED(c.fridge.cost)}`);
+  byId('statCostFreezer', `Cost: ${formatAED(c.freezer.cost)}`);
+
+  renderCharts(c);
+}
     function applyFilters() {
       const campVal = selCamp.value || 'All';
       const locVal = selLocation.value || 'All';
