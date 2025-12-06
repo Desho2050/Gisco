@@ -328,6 +328,46 @@
     display: none !important;
   }
 }
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px; /* ensures consistent width */
+}
+
+.filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  text-align: center;
+}
+
+.filter-select {
+  width: 100%;
+  text-align: center;
+  color: #000 !important;
+  font-size: large !important;
+  background-color: rgb(209, 250, 107) !important;
+}
+
+#filterLocation {
+  background-color: rgb(243, 245, 179) !important;
+}
+
+#filterType {
+  background-color: rgb(129, 246, 176) !important;
+}
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-group {
+    min-width: auto;
+  }
+}
   </style>
 </head>
 <body>
@@ -337,14 +377,28 @@
   </header>
   <main class="container">
     <section class="controls">
-      <button class="btn add-row-btn" id="addRowBtn" style="background-color: yellow;">➕ Add New Work Order</button>
-      <button class="btn print-btn" id="printBtn" title="Print this page" style="background-color: turquoise;">🖨️ Print</button>
-      <select class="btn" id="filterCamp" title="Filter By Camp" style="color: #000000; font-size: large; background-color: var(--accent);">
-        <option value="">Filter By Camp</option>
-      </select>
-      <select class="btn" id="filterLocation" title="Filter by Location" style="color: #000000; font-size: large; background-color: var(--accent);"></select>
-      <select class="btn" id="filterType" title="Filter by Type" style="color: #000000; font-size: large; background-color: var(--accent);"></select>
-    </section>
+  <button class="btn add-row-btn" id="addRowBtn" style="background-color: yellow;">➕ Add New Work Order</button>
+  <button class="btn print-btn" id="printBtn" title="Print this page" style="background-color: turquoise;">🖨️ Print</button>
+
+  <div class="filter-group">
+    <label class="filter-label">Filter By Camp</label>
+    <select class="btn filter-select" id="filterCamp">
+      <option value="">All Camps</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label class="filter-label">Filter By Location</label>
+    <select class="btn filter-select" id="filterLocation">
+      <option value="">All Locations</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label class="filter-label">Filter By Unit Type</label>
+    <select class="btn filter-select" id="filterType">
+      <option value="">All Types</option>
+    </select>
+  </div>
+</section>
     <div id="statusBar" class="status"></div>
     <section id="statsPanel" class="stats">
       <div class="cards">
@@ -1285,7 +1339,7 @@
         ALL_ROWS = sortByWoNo(data);
         initFilters();
         applyFilters();
-        setStatus(`Loaded ${data.length} rows from database.`);
+        setStatus(`Work Orders Loaded: ${data.length} nos.`);
       } catch (err) {
         console.error('Supabase error:', err);
         setStatus('❌ Failed to load data from database.', true);
