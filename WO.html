@@ -310,6 +310,24 @@
       #dataTable col.col-location { width: clamp(180px, 60vw, 280px); }
       thead th, tbody td { padding: 2px; }
     }
+    @media print {
+  .topbar,
+  .controls {
+    display: none !important;
+  }
+}
+@media print {
+  /* Hide Actions column (last column) */
+  td.action-cell,
+  tr.print-header-row td:last-child {
+    display: none !important;
+  }
+
+  /* Also hide the Actions header if you kept the thead (just in case) */
+  th:last-child {
+    display: none !important;
+  }
+}
   </style>
 </head>
 <body>
