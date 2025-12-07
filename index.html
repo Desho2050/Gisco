@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -366,8 +367,8 @@
     <div class="theme-controls">
       <select class="theme-select" id="themeSelect">
         <option value="modern" style="color: black;">Modern</option>
-        <option value="colorful"style="color: black;" >Colorful</option>
-        <option value="business"style="color: black;">Business</option>
+        <option value="colorful" style="color: black;">Colorful</option>
+        <option value="business" style="color: black;">Business</option>
         <option value="classic" style="color: black;">Classic</option>
         <option value="professional" style="color: black;">Professional</option>
       </select>
@@ -442,6 +443,16 @@
         <a class="btn primary" href="vehicles.html" data-i18n="open_vehicles">Open Vehicle Tracker</a>
       </div>
       <div class="meta"><span data-i18n="data_label">Data:</span> <span id="vehiclesCount">loading…</span></div>
+    </section>
+
+    <!-- ✅ NEW CARD: Timesheet -->
+    <section class="card">
+      <h3><span data-i18n="card_timesheet_title">Employee Timesheet</span><span class="badge" data-i18n="new_badge">New</span></h3>
+      <p data-i18n="card_timesheet_desc">Manage and track employee attendance and working hours.</p>
+      <div class="actions">
+        <a class="btn primary" href="timesheet.html" data-i18n="open_timesheet">Open Timesheet</a>
+      </div>
+      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="timesheetCount">loading…</span></div>
     </section>
   </div>
 
@@ -578,8 +589,10 @@
         file_not_found: 'file not found',
         card_vehicles_title: 'Vehicle Usage Tracker',
         card_vehicles_desc: 'Track vehicle odometer readings and daily usage.',
-        open_vehicles: 'Open Vehicle Tracker'
-      
+        open_vehicles: 'Open Vehicle Tracker',
+        card_timesheet_title: 'Employee Timesheet',
+        card_timesheet_desc: 'Manage and track employee attendance and working hours.',
+        open_timesheet: 'Open Timesheet'
       },
       ar: {
         brand_title: 'شركة الخليج للخدمات الصناعية',
@@ -606,7 +619,10 @@
         file_not_found: 'الملف غير موجود',
         card_vehicles_title: 'متابعة استخدام المركبات',
         card_vehicles_desc: 'تتبع قراءات عداد الكيلومترات والاستخدام اليومي للمركبة.',
-        open_vehicles: 'افتح تتبع المركبة'
+        open_vehicles: 'افتح تتبع المركبة',
+        card_timesheet_title: 'جدول حضور الموظفين',
+        card_timesheet_desc: 'إدارة وتتبع حضور الموظفين وساعات العمل.',
+        open_timesheet: 'افتح جدول الحضور'
       }
     };
     
@@ -636,7 +652,8 @@
         'Requests.xlsx': 340,
         'sh.xlsx': 210,
         'WO.xlsx': 175,
-        'EMP.xlsx': 85
+        'EMP.xlsx': 85,
+        'Timesheet.xlsx': 200
       };
       return Promise.resolve(mockCounts[path] || 0);
     }
@@ -662,8 +679,47 @@
       setCount('purchaseCount', 210);
       setCount('woCount', 175);
       setCount('empcount', 85);
+      setCount('vehiclesCount', 50);
+      setCount('timesheetCount', 200); // Added for Timesheet
     });
   </script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
 </body>
 </html>
-
