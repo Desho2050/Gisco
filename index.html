@@ -18,7 +18,7 @@
       --muted: #64748b;
       --border: #e2e8f0;
       --card-bg: #ffffff;
-      --hover: #10b804;
+      --hover: #f8fafc;
       --topbar-shadow: 0 10px 30px rgba(0,0,0,0.15);
       --card-shadow: 0 10px 25px rgba(0,0,0,0.08);
       --btn-primary-bg: linear-gradient(135deg, var(--brand), #8b5cf6);
@@ -37,7 +37,7 @@
       --muted: #64748b;
       --border: #e2e8f0;
       --card-bg: #ffffff;
-      --hover: #10b804;
+      --hover: #f8fafc;
       --topbar-shadow: 0 10px 30px rgba(0,0,0,0.15);
       --card-shadow: 0 10px 25px rgba(0,0,0,0.08);
       --btn-primary-bg: linear-gradient(135deg, var(--brand), #8b5cf6);
@@ -56,7 +56,7 @@
       --muted: #636e72;
       --border: #dfe6e9;
       --card-bg: #ffffff;
-      --hover: #10b804;
+      --hover: #fff;
       --topbar-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
       --card-shadow: 0 10px 25px rgba(78, 205, 196, 0.2);
       --btn-primary-bg: linear-gradient(135deg, var(--brand), #ff8e8e);
@@ -75,7 +75,7 @@
       --muted: #475569;
       --border: #cbd5e1;
       --card-bg: #ffffff;
-      --hover: #10b804;
+      --hover: #f1f5f9;
       --topbar-shadow: 0 10px 30px rgba(37, 99, 235, 0.2);
       --card-shadow: 0 10px 25px rgba(5, 150, 105, 0.1);
       --btn-primary-bg: linear-gradient(135deg, var(--brand), #3b82f6);
@@ -94,7 +94,7 @@
       --muted: #5b21b6;
       --border: #e9d5ff;
       --card-bg: #ffffff;
-      --hover: #10b804;
+      --hover: #f5f3ff;
       --topbar-shadow: 0 10px 30px rgba(124, 58, 237, 0.25);
       --card-shadow: 0 10px 25px rgba(217, 70, 239, 0.15);
       --btn-primary-bg: linear-gradient(135deg, var(--brand), #8b5cf6);
@@ -113,7 +113,7 @@
       --muted: #475569;
       --border: #cbd5e1;
       --card-bg: #ffffff;
-      --hover: #10b804;
+      --hover: #f8fafc;
       --topbar-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
       --card-shadow: 0 10px 25px rgba(30, 41, 59, 0.1);
       --btn-primary-bg: linear-gradient(135deg, var(--brand), var(--accent));
@@ -378,77 +378,75 @@
     </div>
   </header>
 
-  <main class="container">
-    <div class="grid">
-      <section class="card">
-        <h3 data-i18n="card_oracle_title">Oracle Materials ( البحث في الاوراكل)</h3>
-        <p data-i18n="card_oracle_desc">Enhanced search across Oracle.xlsx with multi-input filtering.</p>
-        <div class="actions">
-          <a class="btn primary" href="oracle.html" data-i18n="open_oracle">Open Oracle Page</a>
-        </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="oracleCount">loading…</span></div>
-      </section>
+ <main class="container">
+  <div class="grid">
+    <section class="card">
+      <h3 data-i18n="card_oracle_title">Oracle Materials ( البحث في الاوراكل)</h3>
+      <p data-i18n="card_oracle_desc">Enhanced search across Oracle.xlsx with multi-input filtering.</p>
+      <div class="actions">
+        <a class="btn primary" href="oracle.html" data-i18n="open_oracle">Open Oracle Page</a>
+      </div>
+      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="oracleCount">loading…</span></div>
+    </section>
 
-      <section class="card">
-        <h3 data-i18n="card_materials_title">Received Materials (البحث في المواد المستلمة)</h3>
-        <p data-i18n="card_materials_desc">Same design, powered by Materials.xlsx with totals and search.</p>
-        <div class="actions">
-          <a class="btn primary" href="materials.html" data-i18n="open_materials">Open Materials Page</a>
-        </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="materialsCount">loading…</span></div>
-      </section>
+    <section class="card">
+      <h3 data-i18n="card_materials_title">Received Materials (البحث في المواد المستلمة)</h3>
+      <p data-i18n="card_materials_desc">Same design, powered by Materials.xlsx with totals and search.</p>
+      <div class="actions">
+        <a class="btn primary" href="materials.html" data-i18n="open_materials">Open Materials Page</a>
+      </div>
+      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="materialsCount">loading…</span></div>
+    </section>
 
-      <section class="card">
-        <h3 data-i18n="card_requests_title">Requests Summary (البحث في ملخص الطلبات)</h3>
-        <p data-i18n="card_requests_desc">Open the requests summary with search and filters.</p>
-        <div class="actions">
-          <a class="btn primary" href="Requests.html" data-i18n="open_requests">Open Requests Page</a>
-        </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="requestsCount">loading…</span></div>
-      </section>
+    <section class="card">
+      <h3 data-i18n="card_requests_title">Requests Summary (البحث في ملخص الطلبات)</h3>
+      <p data-i18n="card_requests_desc">Open the requests summary with search and filters.</p>
+      <div class="actions">
+        <a class="btn primary" href="Requests.html" data-i18n="open_requests">Open Requests Page</a>
+      </div>
+      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="requestsCount">loading…</span></div>
+    </section>
 
-      <section class="card">
-        <h3 data-i18n="card_sh_title">Al-Shuhrah Compressors (البحث في مواد محل الشهرة)</h3>
-        <p data-i18n="card_sh_desc">Editable table with totals, export to Excel/PDF.</p>
-        <div class="actions">
-          <a class="btn primary" href="Shuhrah.html" data-i18n="open_sh">Open Al-Shuhrah Compressors</a>
-        </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="purchaseCount">loading…</span></div>
-      </section>
+    <section class="card">
+      <h3 data-i18n="card_sh_title">Al-Shuhrah Compressors (البحث في مواد محل الشهرة)</h3>
+      <p data-i18n="card_sh_desc">Editable table with totals, export to Excel/PDF.</p>
+      <div class="actions">
+        <a class="btn primary" href="Shuhrah.html" data-i18n="open_sh">Open Al-Shuhrah Compressors</a>
+      </div>
+      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="purchaseCount">loading…</span></div>
+    </section>
 
-      <section class="card">
-        <h3><span data-i18n="card_wo_title">4378M Work Orders Summary</span><span class="badge" data-i18n="new_badge">New</span></h3>
-        <p data-i18n="card_wo_desc">Open the 4378M work orders summary.</p>
-        <div class="actions">
-          <a class="btn primary" href="WO.html" data-i18n="open_wo">Open Work Orders Page</a>
-        </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="woCount">loading…</span></div>
-      </section>
+    <section class="card">
+      <h3><span data-i18n="card_wo_title">4378M Work Orders Summary</span><span class="badge" data-i18n="new_badge">New</span></h3>
+      <p data-i18n="card_wo_desc">Open the 4378M work orders summary.</p>
+      <div class="actions">
+        <a class="btn primary" href="WO.html" data-i18n="open_wo">Open Work Orders Page</a>
+      </div>
+      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="woCount">loading…</span></div>
+    </section>
 
-      <section class="card">
-        <h3><span data-i18n="EMP_Card">4378M Staff Management</span><span class="badge" data-i18n="new_badge">New</span></h3>
-        <p data-i18n="EMP_Card_Desc">Open 4378M Staff Management.</p>
-        <div class="actions">
-          <a class="btn primary" href="emp2.html" data-i18n="EMP_Card_Desc">Open 4378M Staff Management</a>
-        </div>
-        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="empcount">loading…</span></div>
-      </section>
+    <section class="card">
+      <h3><span data-i18n="EMP_Card">4378M Staff Management</span><span class="badge" data-i18n="new_badge">New</span></h3>
+      <p data-i18n="EMP_Card_Desc">Open 4378M Staff Management.</p>
+      <div class="actions">
+        <a class="btn primary" href="emp2.html" data-i18n="EMP_Card_Desc">Open 4378M Staff Management</a>
+      </div>
+      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="empcount">loading…</span></div>
+    </section>
 
-
-<section class="card">
-  <h3><span data-i18n="card_timesheet_title">Timesheet Generator</span><span class="badge" data-i18n="new_badge">New</span></h3>
-  <p data-i18n="card_timesheet_desc">Generate professional timesheets with Excel export.</p>
-  <div class="actions">
-    <a class="btn primary" href="timesheet.html" data-i18n="open_timesheet">Open Timesheet Generator</a>
+    <!-- ✅ NEW CARD: Vehicle Usage Tracker -->
+    <section class="card">
+      <h3><span data-i18n="card_vehicles_title">Vehicle Usage Tracker</span><span class="badge" data-i18n="new_badge">New</span></h3>
+      <p data-i18n="card_vehicles_desc">Track vehicle odometer readings and daily usage.</p>
+      <div class="actions">
+        <a class="btn primary" href="vehicles.html" data-i18n="open_vehicles">Open Vehicle Tracker</a>
+      </div>
+      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="vehiclesCount">loading…</span></div>
+    </section>
   </div>
-  <div class="meta"><span data-i18n="data_label">Tool:</span> <span>Ready</span></div>
-</section>
 
-    </div>
-
-    <div class="credit">Programmed By Mostafa Al-Najar<br>تصميم وبرمجة م: مصطفي النجار</div>
-  </main>
-
+  <div class="credit">Programmed By Mostafa Al-Najar<br>تصميم وبرمجة م: مصطفي النجار</div>
+</main>
   <script>
     // Global variable to track current language
     let currentLang = 'ar';
@@ -578,9 +576,9 @@
         data_label: 'Data:',
         rows_suffix: ' rows',
         file_not_found: 'file not found',
-        card_timesheet_title: 'Timesheet Generator',
-card_timesheet_desc: 'Generate professional timesheets with Excel export.',
-open_timesheet: 'Open Timesheet Generator'
+        card_vehicles_title: 'Vehicle Usage Tracker',
+        card_vehicles_desc: 'Track vehicle odometer readings and daily usage.',
+        open_vehicles: 'Open Vehicle Tracker'
       
       },
       ar: {
@@ -606,9 +604,9 @@ open_timesheet: 'Open Timesheet Generator'
         data_label: 'تم العثور على:',
         rows_suffix: ' نتيجة ',
         file_not_found: 'الملف غير موجود',
-card_timesheet_title: 'التايم شيت',
-card_timesheet_desc: 'أنشئ تايم شيت احترافي وصدّرها إلى Excel.',
-open_timesheet: 'التايم شيت'
+        card_vehicles_title: 'متابعة استخدام المركبات',
+        card_vehicles_desc: 'تتبع قراءات عداد الكيلومترات والاستخدام اليومي للمركبة.',
+        open_vehicles: 'افتح تتبع المركبة'
       }
     };
     
