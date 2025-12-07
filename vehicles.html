@@ -13,23 +13,33 @@
       max-width: 100%; margin: auto; background: white; padding: 20px;
       border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    h1 { text-align: center; margin-bottom: 20px; color: #2c3e50; }
+    h1 { text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.5rem; }
     .info-header {
       display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;
       background: #eef2f7; border-radius: 8px; margin-bottom: 20px; font-weight: bold;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    .info-header div { flex: 1; text-align: center; }
-    .month-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .info-header div { flex: 1; text-align: center; min-width: 120px; }
+    .month-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
     .month-selector label { font-weight: bold; }
-    .month-selector select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .month-selector select, 
+    .month-selector button { 
+      padding: 8px; 
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+      flex: 1; 
+      min-width: 120px;
+    }
 
     /* Table Styling */
     .log-table {
       width: 100%; border-collapse: collapse; margin-top: 20px;
       border: 1px solid #ddd;
+      font-size: 0.85rem;
     }
     .log-table th, .log-table td {
-      padding: 8px; text-align: left; border: 1px solid #ddd;
+      padding: 6px; text-align: left; border: 1px solid #ddd;
     }
     .log-table th {
       background-color: #f2f2f2; font-weight: bold;
@@ -38,6 +48,8 @@
 
     button {
       background: #3498db; color: white; border: none; padding: 10px 15px; margin-top: 10px; border-radius: 6px; cursor: pointer; font-size: 14px;
+      flex: 1;
+      min-width: 100px;
     }
     button:hover { background: #2980b9; }
     #langToggle { background: #9b59b6; margin-top: 0; }
@@ -45,18 +57,108 @@
     #status { margin-top: 10px; text-align: center; font-style: italic; color: #7f8c8d; }
 
     /* Modal Styles */
-    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
-    .modal-content { background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
-    .close { float: right; font-size: 24px; font-weight: bold; cursor: pointer; color: #e74c3c; }
-    .modal-title { margin-top: 0; }
-    
+    .modal { 
+      display: none; 
+      position: fixed; 
+      z-index: 100; 
+      left: 0; 
+      top: 0; 
+      width: 100%; 
+      height: 100%; 
+      background-color: rgba(0,0,0,0.6); 
+      overflow: auto;
+    }
+    .modal-content { 
+      background-color: white; 
+      margin: 5% auto; 
+      padding: 15px; 
+      border-radius: 10px; 
+      width: 95%; 
+      max-width: 500px; 
+      max-height: 90vh; 
+      overflow-y: auto; 
+      box-sizing: border-box;
+    }
+    .close { 
+      float: right; 
+      font-size: 24px; 
+      font-weight: bold; 
+      cursor: pointer; 
+      color: #e74c3c; 
+    }
+    .modal-title { margin-top: 0; text-align: center; }
+
     /* Form styling */
-    #entryForm { display: flex; flex-direction: column; gap: 10px; }
-    #entryForm label { font-weight: bold; margin-top: 5px; }
-    #entryForm input, #entryForm textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    #entryForm { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 12px; 
+      width: 100%;
+    }
+    #entryForm label { 
+      font-weight: bold; 
+      margin-top: 5px; 
+      display: block;
+    }
+    #entryForm input, 
+    #entryForm textarea,
+    #entryForm select { 
+      padding: 10px; 
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+      width: 100%;
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+    #entryForm button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+    }
 
     /* Small text for (KM) */
     small { color: #777; font-size: 0.85em; }
+
+    /* Mobile Responsive */
+    @media (max-width: 480px) {
+      body { padding: 8px; }
+      .container { padding: 12px; }
+      h1 { font-size: 1.3rem; margin-bottom: 15px; }
+      
+      .info-header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px;
+        gap: 8px;
+      }
+      
+      .month-selector {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      
+      .month-selector label {
+        align-self: flex-start;
+      }
+      
+      .log-table {
+        font-size: 0.75rem;
+        min-width: 600px;
+        overflow-x: auto;
+        display: block;
+      }
+      
+      .modal-content {
+        width: 95%;
+        margin: 10px auto;
+        padding: 12px;
+      }
+      
+      button {
+        padding: 12px;
+        font-size: 16px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -132,7 +234,7 @@
           <textarea id="remarksInput" rows="3" placeholder="Any additional notes..."></textarea>
 
           <button type="submit" id="btnSave">Save</button>
-          <button type="button" id="cancelBtn" style="background:#95a5a6; margin-top:10px;">Cancel</button>
+          <button type="button" id="cancelBtn" style="background:#95a5a6;">Cancel</button>
         </form>
       </div>
     </div>
@@ -296,9 +398,9 @@
     }
 
     // ==============================
-    // 🔑 Supabase Setup
+    // 🔑 Supabase Setup - FIXED TRAILING SPACES!
     // ==============================
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co'; // ✅ No spaces
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -652,7 +754,7 @@
           .single();
 
         if (error?.code === 'PGRST116') {
-          const { data: newVehicle, error: createError } = await supabaseClient
+          const {  newVehicle, error: createError } = await supabaseClient
             .from('vehicles')
             .insert({ 
               project_number: PROJECT_NUMBER, 
