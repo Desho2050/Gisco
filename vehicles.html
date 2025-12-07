@@ -116,7 +116,7 @@
 
           <div id="startGroup">
             <label id="lblStartKm">Start (KM):</label>
-            <input type="number" id="startKmInput" min="0" step="0.01" />
+            <input type="number" id="startKmInput" min="0" step="5" />
             <label id="lblStartTime">Start Time:</label>
             <input type="time" id="startTimeInput" />
           </div>
@@ -182,7 +182,7 @@
         statusSuccess: "✓ Successfully saved",
         statusLoadError: "⚠ Failed to load records",
         statusDbError: "⚠ Database connection error",
-        alertLessKm: "❌ End reading cannot be less than start!",
+        alertLessKm: "❌ End KM must be greater than Start KM!",
         alertFutureDate: "❌ Cannot enter a future date!",
         alertSaveFail: "❌ Save failed. Check connection and try again.",
         noDataCurrent: "No data for this month.",
@@ -223,7 +223,7 @@
         statusSuccess: "✓ تم الحفظ بنجاح",
         statusLoadError: "⚠ فشل تحميل السجلات",
         statusDbError: "⚠ خطأ في الاتصال بقاعدة البيانات",
-        alertLessKm: "❌ لا يمكن أن تكون قراءة النهاية أقل من البداية!",
+        alertLessKm: "❌ يجب أن تكون قراءة النهاية أكبر من القراءة الابتدائية!",
         alertFutureDate: "❌ لا يمكن إدخال تاريخ مستقبلي!",
         alertSaveFail: "❌ فشل الحفظ. تحقق من الاتصال وحاول لاحقًا.",
         noDataCurrent: "لا توجد بيانات لهذا الشهر.",
@@ -458,6 +458,7 @@
       const startTimeInput = document.getElementById('startTimeInput');
       const endKmInput = document.getElementById('endKmInput');
       const endTimeInput = document.getElementById('endTimeInput');
+      const locationInput = document.getElementById('locationInput');
       const modalTitle = document.getElementById('modalTitle');
 
       let mode = 'newTrip';
@@ -480,6 +481,15 @@
         // Remove required from START (hidden)
         startKmInput.removeAttribute('required');
         startTimeInput.removeAttribute('required');
+        
+        // Auto-fill location from open trip
+        if (lastEntry && lastEntry.location) {
+          locationInput.value = lastEntry.location;
+        }
+        
+        // Set end time to current time
+        endTimeInput.value = currentTime;
+        
       } else {
         modalTitle.textContent = translations[currentLang].modalTitle;
         startGroup.style.display = 'block';
@@ -493,7 +503,29 @@
         endKmInput.removeAttribute('required');
         endTimeInput.removeAttribute('required');
 
+        // ✅ SET START TIME TO CURRENT TIME
         startTimeInput.value = currentTime;
+
+        // ✅ SET START KM TO PREVIOUS TRIP'S END KM
+        const lastClosedTrip = entries
+          .filter(e => e.start_km != null && e.end_km != null)
+          .sort((a, b) => {
+            const dateA = new Date(a.entry_date + 'T' + a.start_time);
+            const dateB = new Date(b.entry_date + 'T' + b.start_time);
+            return dateB - dateA;
+          })[0];
+
+        if (lastClosedTrip) {
+          startKmInput.value = lastClosedTrip.end_km;
+          // ✅ LOAD PREVIOUS LOCATION AS DEFAULT
+          if (lastClosedTrip.location) {
+            locationInput.value = lastClosedTrip.location;
+          }
+        } else {
+          // Optional: Set initial values if no previous trip
+          startKmInput.value = 0;
+          locationInput.value = ''; // Or set to a default location
+        }
       }
 
       document.getElementById('entryModal').style.display = 'block';
@@ -561,6 +593,7 @@
         // Closing previous trip
         const endKmInput = document.getElementById('endKmInput').value.trim();
         const endTimeInput = document.getElementById('endTimeInput').value.trim();
+        const location = document.getElementById('locationInput').value.trim(); // ✅ Use same location
         const lastEntry = getLastEntry();
 
         if (!lastEntry || lastEntry.end_km != null) {
@@ -576,14 +609,19 @@
         const endKm = parseFloat(endKmInput);
         const endTime = endTimeInput;
 
-        if (endKm < lastEntry.start_km) {
-          alert(t.alertLessKm);
+        // ✅ STRICT VALIDATION: End KM MUST be > Start KM
+        if (endKm <= lastEntry.start_km) {
+          alert(t.alertLessKm); // Updated message
           return;
         }
 
         const { error } = await supabaseClient
           .from('meter_entries')
-          .update({ end_km: endKm, end_time: endTime })
+          .update({ 
+            end_km: endKm, 
+            end_time: endTime,
+            location: location || null // ✅ Update location if changed
+          })
           .eq('id', lastEntry.id);
 
         if (error) {
