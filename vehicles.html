@@ -175,7 +175,7 @@
       <select id="monthSelect">
         <option value="">Select Month...</option>
       </select>
-      <button id="addEntryBtn">Add New Entry</button>
+      <button id="addEntryBtn">Start Trip</button>
       <button id="langToggle">العربية / English</button>
     </div>
 
@@ -218,14 +218,14 @@
 
           <div id="startGroup">
             <label id="lblStartKm">Start (KM):</label>
-            <input type="number" id="startKmInput" min="0" step="5" />
+            <input type="number" id="startKmInput" min="0" step="1" />
             <label id="lblStartTime">Start Time:</label>
             <input type="time" id="startTimeInput" />
           </div>
 
           <div id="endGroup" style="display:none;">
             <label id="lblEndKm">End (KM):</label>
-            <input type="number" id="endKmInput" min="0" step="0.01" />
+            <input type="number" id="endKmInput" min="0" step="1" />
             <label id="lblEndTime">End Time:</label>
             <input type="time" id="endTimeInput" />
           </div>
@@ -233,7 +233,7 @@
           <label id="lblRemarks">Remarks:</label>
           <textarea id="remarksInput" rows="3" placeholder="Any additional notes..."></textarea>
 
-          <button type="submit" id="btnSave">Save</button>
+          <button type="submit" id="btnSave">Start Trip</button>
           <button type="button" id="cancelBtn" style="background:#95a5a6;">Cancel</button>
         </form>
       </div>
@@ -256,11 +256,12 @@
     const translations = {
       en: {
         appTitle: "Vehicle Usage Tracker",
-        lblMonth: "MONTH ( )",
+        lbl_month: "MONTH ( )",
         lblVehicle: "VEHICLE NO (68054)",
         lblDriver: "DRIVER NAME : Mohammed Ashfaq Hameed Ahmed",
         lblSelectMonth: "View Month:",
-        addEntryBtn: "Add New Entry",
+        startTripBtn: "Start Trip",
+        endTripBtn: "End Trip",
         langToggle: "العربية / English",
         thSN: "SN",
         thLocation: "LOCATION",
@@ -297,11 +298,12 @@
       },
       ar: {
         appTitle: "متابعة استخدام سيارة المشروع",
-        lblMonth: "الشهر ( )",
+        lbl_month: "الشهر ( )",
         lblVehicle: "رقم المركبة (68054)",
         lblDriver: "اسم السائق : محمد أشفاق حميد أحمد",
         lblSelectMonth: "عرض الشهر:",
-        addEntryBtn: "إدخال جديد",
+        startTripBtn: "بدء الرحلة",
+        endTripBtn: "إنهاء الرحلة",
         langToggle: "English / العربية",
         thSN: "ر.ت",
         thLocation: "الموقع",
@@ -359,9 +361,11 @@
       document.getElementById('lblVehicle').textContent = t.lblVehicle;
       document.getElementById('lblDriver').textContent = t.lblDriver;
       document.getElementById('lblSelectMonth').textContent = t.lblSelectMonth;
-      document.getElementById('addEntryBtn').textContent = t.addEntryBtn;
+      
+      // Update dynamic buttons
+      updateTripButtons();
+      
       document.getElementById('langToggle').textContent = t.langToggle;
-
       document.getElementById('thSN').textContent = t.thSN;
       document.getElementById('thLocation').textContent = t.thLocation;
       document.getElementById('thDate').textContent = t.thDate;
@@ -371,7 +375,6 @@
       document.getElementById('thUsage').textContent = t.thUsage;
       document.getElementById('thEndTime').textContent = t.thEndTime;
       document.getElementById('thRemarks').textContent = t.thRemarks;
-
       document.getElementById('modalTitle').textContent = t.modalTitle;
       document.getElementById('lblDate').textContent = t.lblDate;
       document.getElementById('lblLocation').textContent = t.lblLocation;
@@ -380,7 +383,6 @@
       document.getElementById('lblEndKm').textContent = t.lblEndKm;
       document.getElementById('lblEndTime').textContent = t.lblEndTime;
       document.getElementById('lblRemarks').textContent = t.lblRemarks;
-      document.getElementById('btnSave').textContent = t.btnSave;
       document.getElementById('cancelBtn').textContent = t.btnCancel;
       document.getElementById('locationInput').placeholder = t.locationPlaceholder;
 
@@ -400,7 +402,7 @@
     // ==============================
     // 🔑 Supabase Setup - FIXED TRAILING SPACES!
     // ==============================
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co'; // ✅ No spaces
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -464,6 +466,7 @@
       populateMonths();
       displayCurrentMonthData();
       updateLocationDatalist();
+      updateTripButtons();
     }
 
     function displayCurrentMonthData() {
@@ -544,6 +547,27 @@
       return sorted[0];
     }
 
+    // ✅ NEW: Update button text based on trip state
+    function updateTripButtons() {
+      const lastEntry = getLastEntry();
+      const hasOpenTrip = lastEntry && 
+        lastEntry.start_km != null && 
+        lastEntry.start_time && 
+        (lastEntry.end_km == null || lastEntry.end_time == null);
+      
+      const t = translations[currentLang];
+      const addBtn = document.getElementById('addEntryBtn');
+      const saveBtn = document.getElementById('btnSave');
+      
+      if (hasOpenTrip) {
+        addBtn.textContent = t.endTripBtn;
+        saveBtn.textContent = t.endTripBtn;
+      } else {
+        addBtn.textContent = t.startTripBtn;
+        saveBtn.textContent = t.startTripBtn;
+      }
+    }
+
     function openEntryModal() {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
@@ -562,6 +586,7 @@
       const endTimeInput = document.getElementById('endTimeInput');
       const locationInput = document.getElementById('locationInput');
       const modalTitle = document.getElementById('modalTitle');
+      const saveBtn = document.getElementById('btnSave');
 
       let mode = 'newTrip';
 
@@ -575,6 +600,7 @@
         modalTitle.textContent = translations[currentLang].modalTitleClose;
         startGroup.style.display = 'none';
         endGroup.style.display = 'block';
+        saveBtn.textContent = translations[currentLang].endTripBtn;
         
         // Make END fields required
         endKmInput.setAttribute('required', 'required');
@@ -596,6 +622,7 @@
         modalTitle.textContent = translations[currentLang].modalTitle;
         startGroup.style.display = 'block';
         endGroup.style.display = 'none';
+        saveBtn.textContent = translations[currentLang].startTripBtn;
         
         // Make START required
         startKmInput.setAttribute('required', 'required');
@@ -608,25 +635,21 @@
         // ✅ SET START TIME TO CURRENT TIME
         startTimeInput.value = currentTime;
 
-        // ✅ SET START KM TO PREVIOUS TRIP'S END KM
-        const lastClosedTrip = entries
-          .filter(e => e.start_km != null && e.end_km != null)
-          .sort((a, b) => {
-            const dateA = new Date(a.entry_date + 'T' + a.start_time);
-            const dateB = new Date(b.entry_date + 'T' + b.start_time);
-            return dateB - dateA;
-          })[0];
-
-        if (lastClosedTrip) {
-          startKmInput.value = lastClosedTrip.end_km;
-          // ✅ LOAD PREVIOUS LOCATION AS DEFAULT
-          if (lastClosedTrip.location) {
-            locationInput.value = lastClosedTrip.location;
-          }
-        } else {
-          // Optional: Set initial values if no previous trip
+        // ✅ FIRST TRIP vs SUBSEQUENT TRIP LOGIC
+        const closedTrips = entries.filter(e => e.start_km != null && e.end_km != null);
+        if (closedTrips.length === 0) {
+          // First trip ever
           startKmInput.value = 0;
-          locationInput.value = ''; // Or set to a default location
+          locationInput.value = '';
+        } else {
+          // Find most recent closed trip
+          const lastClosedTrip = closedTrips.reduce((prev, current) => {
+            const prevTime = new Date(prev.entry_date + 'T' + prev.start_time);
+            const currTime = new Date(current.entry_date + 'T' + current.start_time);
+            return (currTime > prevTime) ? current : prev;
+          });
+          startKmInput.value = lastClosedTrip.end_km;
+          locationInput.value = lastClosedTrip.location || '';
         }
       }
 
@@ -658,18 +681,19 @@
           return;
         }
 
-        // ✅ VALIDATION: Start KM >= previous End KM
-        const lastClosedTrip = entries
-          .filter(e => e.start_km != null && e.end_km != null)
-          .sort((a, b) => {
-            const dateA = new Date(a.entry_date + 'T' + a.start_time);
-            const dateB = new Date(b.entry_date + 'T' + b.start_time);
-            return dateB - dateA;
-          })[0];
-
-        if (lastClosedTrip && startKm < lastClosedTrip.end_km) {
-          alert(t.alertLessKm);
-          return;
+        // ✅ VALIDATION: For first trip, no validation needed
+        // For subsequent trips, Start KM must >= previous End KM
+        const closedTrips = entries.filter(e => e.start_km != null && e.end_km != null);
+        if (closedTrips.length > 0) {
+          const lastClosedTrip = closedTrips.reduce((prev, current) => {
+            const prevTime = new Date(prev.entry_date + 'T' + prev.start_time);
+            const currTime = new Date(current.entry_date + 'T' + current.start_time);
+            return (currTime > prevTime) ? current : prev;
+          });
+          if (startKm < lastClosedTrip.end_km) {
+            alert(t.alertLessKm);
+            return;
+          }
         }
 
         const { error } = await supabaseClient
@@ -695,7 +719,7 @@
         // Closing previous trip
         const endKmInput = document.getElementById('endKmInput').value.trim();
         const endTimeInput = document.getElementById('endTimeInput').value.trim();
-        const location = document.getElementById('locationInput').value.trim(); // ✅ Use same location
+        const location = document.getElementById('locationInput').value.trim();
         const lastEntry = getLastEntry();
 
         if (!lastEntry || lastEntry.end_km != null) {
@@ -713,7 +737,7 @@
 
         // ✅ STRICT VALIDATION: End KM MUST be > Start KM
         if (endKm <= lastEntry.start_km) {
-          alert(t.alertLessKm); // Updated message
+          alert(t.alertLessKm);
           return;
         }
 
@@ -722,7 +746,7 @@
           .update({ 
             end_km: endKm, 
             end_time: endTime,
-            location: location || null // ✅ Update location if changed
+            location: location || null
           })
           .eq('id', lastEntry.id);
 
@@ -754,7 +778,7 @@
           .single();
 
         if (error?.code === 'PGRST116') {
-          const {  newVehicle, error: createError } = await supabaseClient
+          const { newVehicle, error: createError } = await supabaseClient
             .from('vehicles')
             .insert({ 
               project_number: PROJECT_NUMBER, 
