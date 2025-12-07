@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vehicle Usage Tracker</title>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- Chart.js REMOVED TEMPORARILY -->
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { margin: 0; padding: 16px; background: #f5f7fa; color: #333; transition: direction 0.3s; }
+    .container {
+      max-width: 600px; margin: auto; background: white; padding: 20px;
+      border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { text-align: center; margin-bottom: 20px; color: #2c3e50; }
+    .info { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 12px; background: #eef2f7; border-radius: 8px; }
+    .info div { flex: 1; min-width: 150px; }
+    label { display: block; margin-top: 12px; font-weight: bold; }
+    input, select { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ccc; border-radius: 6px; }
+    button { background: #3498db; color: white; border: none; padding: 12px; width: 100%; margin-top: 20px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #2980b9; }
+    #langToggle { background: #9b59b6; margin-top: 0; }
+    #langToggle:hover { background: #8e44ad; }
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
+    .modal-content { background-color: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+    .close { float: left; font-size: 24px; font-weight: bold; cursor: pointer; color: #e74c3c; }
+    .entry { border-bottom: 1px solid #eee; padding: 10px 0; }
+    .entry:last-child { border-bottom: none; }
+    #status { margin-top: 10px; text-align: center; font-style: italic; color: #7f8c8d; }
+    #currentMonthEntries { margin-top: 20px; }
+    .section-title { margin-top: 25px; margin-bottom: 10px; color: #2c3e50; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="appTitle">Vehicle Usage Tracker</h1>
+
+    <div class="info">
+      <div><strong id="lblProject">Project Number:</strong> <span id="projectNumber">PRJ-2025-001</span></div>
+      <div><strong id="lblVehicle">Vehicle No:</strong> <span id="vehicleNumber">68054</span></div>
+      <div><strong id="lblDriver">Driver Name:</strong> <span id="driverName">Mohammed Ashfaq</span></div>
+      <div><strong id="lblToday">Today:</strong> <span id="todayDate"></span></div>
+    </div>
+
+    <button id="addEntryBtn">Add New Entry</button>
+    <button id="langToggle">العربية / English</button>
+    <div id="status"></div>
+
+    <form id="entryForm" style="display:none; margin-top: 20px;">
+      <label id="lblKm">Current Odometer Reading (km):</label>
+      <input type="number" id="kmInput" min="0" step="1" required />
+      <label id="lblDate">Entry Date:</label>
+      <input type="date" id="dateInput" required />
+      <label id="lblTime">Entry Time:</label>
+      <input type="time" id="timeInput" required />
+      <button type="submit" id="btnSave">Save</button>
+      <button type="button" id="cancelBtn" style="background:#95a5a6; margin-top:10px;">Cancel</button>
+    </form>
+
+    <h3 class="section-title" id="sectionUsage">📊 Vehicle Usage This Month</h3>
+
+    <!-- CHART REMOVED -->
+    <!-- <div id="chartContainer">
+      <canvas id="usageChart" height="200"></canvas>
+    </div> -->
+
+    <div id="currentMonthEntries">
+      <!-- Entries will appear here -->
+    </div>
+
+    <label id="lblMonthSelect" style="margin-top: 30px;">View Month:</label>
+    <select id="monthSelect">
+      <option value="">Select Month...</option>
+    </select>
+  </div>
+
+  <!-- Modal for past months -->
+  <div id="dataModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3 id="modalTitle">Monthly Data</h3>
+      <div id="modalEntries"></div>
+    </div>
+  </div>
+
+  <script>
+    // ==============================
+    // 🔤 Translation System
+    // ==============================
+    const translations = {
+      en: {
+        appTitle: "Vehicle Usage Tracker",
+        lblProject: "Project Number:",
+        lblVehicle: "Vehicle No:",
+        lblDriver: "Driver Name:",
+        lblToday: "Today:",
+        addEntryBtn: "Add New Entry",
+        langToggle: "العربية / English",
+        lblKm: "Current Odometer Reading (km):",
+        lblDate: "Entry Date:",
+        lblTime: "Entry Time:",
+        btnSave: "Save",
+        btnCancel: "Cancel",
+        sectionUsage: "📊 Vehicle Usage This Month",
+        lblMonthSelect: "View Month:",
+        selectMonth: "Select Month...",
+        noDataCurrent: "No readings for this month yet.",
+        noDataModal: "No data for this month.",
+        statusSuccess: "✓ Successfully saved",
+        statusLoadError: "⚠️ Failed to load records",
+        statusDbError: "⚠️ Database connection error",
+        alertLessKm: "❌ Reading cannot be less than previous!",
+        alertFutureDate: "❌ Cannot enter a future date!",
+        alertSaveFail: "❌ Save failed. Check connection and try again.",
+        modalTitle: "Monthly Data"
+      },
+      ar: {
+        appTitle: "متابعة استخدام سيارة المشروع",
+        lblProject: "رقم المشروع:",
+        lblVehicle: "رقم المركبة:",
+        lblDriver: "اسم السائق:",
+        lblToday: "تاريخ اليوم:",
+        addEntryBtn: "إدخال جديد",
+        langToggle: "English / العربية",
+        lblKm: "قراءة عداد الكيلومترات الحالية (كم):",
+        lblDate: "تاريخ الإدخال:",
+        lblTime: "وقت الإدخال:",
+        btnSave: "حفظ",
+        btnCancel: "إلغاء",
+        sectionUsage: "📊 استخدام المركبة هذا الشهر",
+        lblMonthSelect: "عرض بيانات شهر:",
+        selectMonth: "اختر شهرًا...",
+        noDataCurrent: "لا توجد قراءات لهذا الشهر بعد.",
+        noDataModal: "لا توجد بيانات لهذا الشهر.",
+        statusSuccess: "✓ تم الحفظ بنجاح",
+        statusLoadError: "⚠️ فشل تحميل السجلات",
+        statusDbError: "⚠️ خطأ في الاتصال بقاعدة البيانات",
+        alertLessKm: "❌ لا يمكن أن تكون القراءة أقل من السابقة!",
+        alertFutureDate: "❌ لا يمكن إدخال تاريخ مستقبلي!",
+        alertSaveFail: "❌ فشل الحفظ. تحقق من الاتصال وحاول لاحقًا.",
+        modalTitle: "بيانات الشهر"
+      }
+    };
+
+    // ==============================
+    // 🌍 Language Management
+    // ==============================
+    let currentLang = localStorage.getItem('userLang') || 'en';
+    const dirMap = { en: 'ltr', ar: 'rtl' };
+    const localeMap = { en: 'en-US', ar: 'ar-SA' };
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('userLang', lang);
+      document.documentElement.lang = lang;
+      document.documentElement.dir = dirMap[lang];
+      applyTranslations();
+    }
+
+    function applyTranslations() {
+      const t = translations[currentLang];
+      document.getElementById('appTitle').textContent = t.appTitle;
+      document.getElementById('lblProject').textContent = t.lblProject;
+      document.getElementById('lblVehicle').textContent = t.lblVehicle;
+      document.getElementById('lblDriver').textContent = t.lblDriver;
+      document.getElementById('lblToday').textContent = t.lblToday;
+      document.getElementById('addEntryBtn').textContent = t.addEntryBtn;
+      document.getElementById('langToggle').textContent = t.langToggle;
+      document.getElementById('lblKm').textContent = t.lblKm;
+      document.getElementById('lblDate').textContent = t.lblDate;
+      document.getElementById('lblTime').textContent = t.lblTime;
+      document.getElementById('btnSave').textContent = t.btnSave;
+      document.getElementById('cancelBtn').textContent = t.btnCancel;
+      document.getElementById('sectionUsage').textContent = t.sectionUsage;
+      document.getElementById('lblMonthSelect').textContent = t.lblMonthSelect;
+      document.getElementById('monthSelect').children[0].textContent = t.selectMonth;
+      document.getElementById('modalTitle').textContent = t.modalTitle;
+      if (entries.length > 0) displayCurrentMonthData();
+    }
+
+    // ==============================
+    // 🔑 Supabase Setup (TRIMMED!)
+    // ==============================
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ==============================
+    // 📅 Date & State
+    // ==============================
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const currentMonthKey = todayStr.substring(0, 7);
+    const PROJECT_NUMBER = "PRJ-2025-001";
+    let vehicleId = null;
+    let entries = [];
+
+    function updateTodayDate() {
+      document.getElementById('todayDate').textContent = today.toLocaleDateString(localeMap[currentLang]);
+    }
+
+    // ==============================
+    // 📥 Data Loading & Display (WITHOUT CHART)
+    // ==============================
+    async function loadEntries() {
+      if (!vehicleId) return;
+      const { data, error } = await supabaseClient
+        .from('meter_entries')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .order('entry_date', { ascending: true })
+        .order('entry_time', { ascending: true });
+
+      if (error) {
+        console.error('Load error:', error);
+        document.getElementById('status').textContent = translations[currentLang].statusLoadError;
+        return;
+      }
+
+      entries = data || [];
+      populateMonths();
+      displayCurrentMonthData();
+    }
+
+    function displayCurrentMonthData() {
+      const currentMonthEntries = entries.filter(e => e.entry_date.startsWith(currentMonthKey));
+      const container = document.getElementById('currentMonthEntries');
+      const t = translations[currentLang];
+      container.innerHTML = `<h4>${t.sectionUsage.replace('📊 ', '')}</h4>`;
+
+      if (currentMonthEntries.length === 0) {
+        container.innerHTML += `<p>${t.noDataCurrent}</p>`;
+        return; // ✅ No chart call
+      }
+
+      currentMonthEntries.sort((a, b) => new Date(a.entry_date) - new Date(b.entry_date));
+      const usageData = currentMonthEntries.map((e, i) => {
+        const prev = i > 0 ? currentMonthEntries[i - 1].meter_km : e.meter_km;
+        return {
+          date: e.entry_date,
+          km: e.meter_km,
+          usage: i === 0 ? 0 : e.meter_km - prev
+        };
+      });
+
+      let html = '<div style="max-height:200px; overflow-y:auto;">';
+      usageData.forEach(item => {
+        const dateStr = new Date(item.date).toLocaleDateString(localeMap[currentLang]);
+        html += `
+          <div class="entry">
+            <strong>${dateStr}</strong><br>
+            Odometer: ${item.km} km | Usage: ${item.usage} km
+          </div>
+        `;
+      });
+      html += '</div>';
+      if (currentLang === 'ar') {
+        html = html.replace(/Odometer:/g, 'العداد:').replace(/Usage:/g, 'الاستخدام:');
+        html = html.replace(/km/g, 'كم');
+      }
+      container.innerHTML += html;
+      // ✅ Chart rendering REMOVED
+    }
+
+    function populateMonths() {
+      const select = document.getElementById('monthSelect');
+      select.innerHTML = `<option value="">${translations[currentLang].selectMonth}</option>`;
+      const monthsSet = new Set();
+      entries.forEach(e => {
+        const monthYear = new Date(e.entry_date).toLocaleDateString(localeMap[currentLang], { month: 'long', year: 'numeric' });
+        monthsSet.add(monthYear);
+      });
+      Array.from(monthsSet).sort().forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        select.appendChild(opt);
+      });
+    }
+
+    // ==============================
+    // 🔄 Initialize App
+    // ==============================
+    async function initializeVehicle() {
+      try {
+        let { data, error } = await supabaseClient
+          .from('vehicles')
+          .select('id')
+          .eq('project_number', PROJECT_NUMBER)
+          .single();
+
+        if (error && error.code !== 'PGRST116') throw error;
+
+        if (data) {
+          vehicleId = data.id;
+        } else {
+          const { data: newVehicle, error: createError } = await supabaseClient
+            .from('vehicles')
+            .insert({ project_number: PROJECT_NUMBER, driver_name: "Mohammed Ashfaq" })
+            .select('id')
+            .single();
+          if (createError) throw createError;
+          vehicleId = newVehicle.id;
+        }
+        await loadEntries();
+      } catch (err) {
+        console.error('DB error:', err);
+        document.getElementById('status').textContent = translations[currentLang].statusDbError;
+      }
+    }
+
+    // ==============================
+    // 🖱️ Event Listeners
+    // ==============================
+    document.getElementById('langToggle').addEventListener('click', () => {
+      const newLang = currentLang === 'en' ? 'ar' : 'en';
+      setLanguage(newLang);
+      updateTodayDate();
+    });
+
+    document.getElementById('addEntryBtn').addEventListener('click', () => {
+      const lastEntry = entries.length > 0 ? entries[entries.length - 1] : null;
+      const minKm = lastEntry ? lastEntry.meter_km : 0;
+      document.getElementById('kmInput').value = '';
+      document.getElementById('kmInput').min = minKm;
+      document.getElementById('dateInput').value = todayStr;
+      document.getElementById('timeInput').value = today.toTimeString().slice(0, 5);
+      const dateInput = document.getElementById('dateInput');
+      const timeInput = document.getElementById('timeInput');
+      if (lastEntry && lastEntry.entry_date === todayStr) {
+        dateInput.disabled = false;
+        timeInput.disabled = false;
+      } else {
+        dateInput.disabled = true;
+        timeInput.disabled = true;
+      }
+      document.getElementById('entryForm').style.display = 'block';
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      document.getElementById('entryForm').style.display = 'none';
+    });
+
+    document.getElementById('entryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const km = parseInt(document.getElementById('kmInput').value, 10);
+      const date = document.getElementById('dateInput').value;
+      const time = document.getElementById('timeInput').value;
+      const lastEntry = entries[entries.length - 1];
+      const t = translations[currentLang];
+
+      if (lastEntry && km < lastEntry.meter_km) {
+        alert(t.alertLessKm);
+        return;
+      }
+      if (date > todayStr) {
+        alert(t.alertFutureDate);
+        return;
+      }
+
+      try {
+        const { error } = await supabaseClient
+          .from('meter_entries')
+          .insert({ vehicle_id: vehicleId, meter_km: km, entry_date: date, entry_time: time });
+        if (error) throw error;
+        document.getElementById('entryForm').style.display = 'none';
+        document.getElementById('status').textContent = t.statusSuccess;
+        setTimeout(() => document.getElementById('status').textContent = '', 2500);
+        await loadEntries();
+      } catch (err) {
+        console.error('Save error:', err);
+        alert(t.alertSaveFail);
+      }
+    });
+
+    document.getElementById('monthSelect').addEventListener('change', function () {
+      const selected = this.value;
+      if (!selected) return;
+      const modal = document.getElementById('dataModal');
+      const content = document.getElementById('modalEntries');
+      const t = translations[currentLang];
+      document.getElementById('modalTitle').textContent = `${t.modalTitle}: ${selected}`;
+      content.innerHTML = '';
+
+      const monthEntries = entries.filter(e => {
+        const eMonth = new Date(e.entry_date).toLocaleDateString(localeMap[currentLang], { month: 'long', year: 'numeric' });
+        return eMonth === selected;
+      });
+
+      if (monthEntries.length === 0) {
+        content.innerHTML = `<p>${t.noDataModal}</p>`;
+      } else {
+        monthEntries.forEach(entry => {
+          const dateStr = new Date(entry.entry_date).toLocaleDateString(localeMap[currentLang]);
+          let html = `
+            <strong>Odometer:</strong> ${entry.meter_km} km<br>
+            <strong>Date:</strong> ${dateStr}<br>
+            <strong>Time:</strong> ${entry.entry_time}
+          `;
+          if (currentLang === 'ar') {
+            html = html
+              .replace(/Odometer:/, 'الكيلومترات:')
+              .replace(/Date:/, 'التاريخ:')
+              .replace(/Time:/, 'الوقت:')
+              .replace(/km/g, 'كم');
+          }
+          const div = document.createElement('div');
+          div.className = 'entry';
+          div.innerHTML = html;
+          content.appendChild(div);
+        });
+      }
+      modal.style.display = 'block';
+    });
+
+    document.querySelector('.close').onclick = () => {
+      document.getElementById('dataModal').style.display = 'none';
+    };
+    window.onclick = (e) => {
+      if (e.target === document.getElementById('dataModal')) {
+        document.getElementById('dataModal').style.display = 'none';
+      }
+    };
+
+    // ==============================
+    // 🚀 Start App
+    // ==============================
+    setLanguage(currentLang);
+    updateTodayDate();
+    initializeVehicle();
+  </script>
+</body>
+</html>
