@@ -64,7 +64,6 @@
     <h1 id="appTitle">Vehicle Usage Tracker</h1>
 
     <div class="info-header">
-      <div><span id="lblMonth">MONTH ( )</span></div>
       <div><span id="lblVehicle">VEHICLE NO (68054)</span></div>
       <div><span id="lblDriver">DRIVER NAME : Mohammed Ashfaq Hameed Ahmed</span></div>
     </div>
@@ -87,13 +86,11 @@
           <th id="thSN">SN</th>
           <th id="thLocation">LOCATION</th>
           <th id="thDate">DATE</th>
-<th id="thStartTime">TIME</th>
-          <th id="thStartKm">START DUTY (KM)</th>
-          
-          <th id="thEndKm">END DUTY (KM)</th>
-<th id="thEndTime">TIME</th>
+          <th id="thStartTime">START TIME</th>
+          <th id="thStartKm">START (KM)</th>
+          <th id="thEndKm">END (KM)</th>
+          <th id="thEndTime">END TIME</th>
           <th id="thUsage">USAGE (KM)</th>
-          
           <th id="thRemarks">REMARKS</th>
         </tr>
       </thead>
@@ -112,16 +109,19 @@
           <input type="date" id="dateInput" required />
 
           <label id="lblLocation">Location:</label>
-          <input type="text" id="locationInput" placeholder="Enter location" />
+          <input type="text" id="locationInput" list="locationList" placeholder="Start typing or select..." />
+          <datalist id="locationList">
+            <!-- Dynamically populated -->
+          </datalist>
 
-          <div id="startGroup" >
+          <div id="startGroup">
             <label id="lblStartKm">Start (KM):</label>
-            <input type="number" id="startKmInput" min="0" step="0.01"  />
+            <input type="number" id="startKmInput" min="0" step="0.01" />
             <label id="lblStartTime">Start Time:</label>
-            <input type="time" id="startTimeInput"  />
+            <input type="time" id="startTimeInput" />
           </div>
 
-          <div id="endGroup" >
+          <div id="endGroup" style="display:none;">
             <label id="lblEndKm">End (KM):</label>
             <input type="number" id="endKmInput" min="0" step="0.01" />
             <label id="lblEndTime">End Time:</label>
@@ -190,6 +190,8 @@
         selectMonth: "Select Month...",
         modalTitleView: "Monthly Data",
         modalTitleClose: "Close Previous Trip",
+        locationPlaceholder: "Start typing or select...",
+        alertEndRequired: "End KM and End Time are required to close the trip."
       },
       ar: {
         appTitle: "متابعة استخدام سيارة المشروع",
@@ -203,10 +205,10 @@
         thLocation: "الموقع",
         thDate: "التاريخ",
         thStartKm: "بداية (كم)",
-        thStartTime: "الوقت",
+        thStartTime: "وقت البدء",
         thEndKm: "نهاية (كم)",
         thUsage: "الاستخدام (كم)",
-        thEndTime: "الوقت",
+        thEndTime: "وقت النهاية",
         thRemarks: "ملاحظات",
         modalTitle: "إدخال جديد",
         lblDate: "التاريخ:",
@@ -228,7 +230,9 @@
         noDataModal: "لا توجد بيانات لهذا الشهر.",
         selectMonth: "اختر شهرًا...",
         modalTitleView: "بيانات الشهر",
-        modalTitleClose: "إغلاق الرحلة السابقة"
+        modalTitleClose: "إغلاق الرحلة السابقة",
+        locationPlaceholder: "ابدأ الكتابة أو اختر...",
+        alertEndRequired: "قراءة النهاية ووقت النهاية مطلوبان لإغلاق الرحلة."
       }
     };
 
@@ -250,7 +254,6 @@
     function applyTranslations() {
       const t = translations[currentLang];
       document.getElementById('appTitle').textContent = t.appTitle;
-      document.getElementById('lblMonth').textContent = t.lblMonth;
       document.getElementById('lblVehicle').textContent = t.lblVehicle;
       document.getElementById('lblDriver').textContent = t.lblDriver;
       document.getElementById('lblSelectMonth').textContent = t.lblSelectMonth;
@@ -277,6 +280,7 @@
       document.getElementById('lblRemarks').textContent = t.lblRemarks;
       document.getElementById('btnSave').textContent = t.btnSave;
       document.getElementById('cancelBtn').textContent = t.btnCancel;
+      document.getElementById('locationInput').placeholder = t.locationPlaceholder;
 
       document.getElementById('monthSelect').children[0].textContent = t.selectMonth;
       document.getElementById('modalTitleView').textContent = t.modalTitleView;
@@ -292,9 +296,9 @@
     }
 
     // ==============================
-    // 🔑 Supabase Setup — FIXED TRAILING SPACES!
+    // 🔑 Supabase Setup
     // ==============================
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co'; // ✅ No spaces
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -304,14 +308,33 @@
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     const PROJECT_NUMBER = "PRJ-2025-001";
+    const INITIAL_LOCATIONS = [
+      "Seh Albanah", "Fujirah", "Thoban", "Manama", "Manama Training",
+      "Al-Hail", "Fujairah airport", "Dubai", "Abu Dhabi", "Azan", "Dubai Airport"
+    ];
     let vehicleId = null;
     let entries = [];
 
     // ==============================
-    // ✅ Essential Modal Function (GLOBAL SCOPE)
+    // ✅ Essential Functions
     // ==============================
     function closeEntryModal() {
       document.getElementById('entryModal').style.display = 'none';
+    }
+
+    function updateLocationDatalist() {
+      const datalist = document.getElementById('locationList');
+      if (!datalist) return;
+
+      const entryLocations = [...new Set(entries.map(e => e.location).filter(Boolean))];
+      const allLocations = [...new Set([...INITIAL_LOCATIONS, ...entryLocations])];
+
+      datalist.innerHTML = '';
+      allLocations.forEach(loc => {
+        const option = document.createElement('option');
+        option.value = loc;
+        datalist.appendChild(option);
+      });
     }
 
     // ==============================
@@ -338,6 +361,7 @@
       entries = data || [];
       populateMonths();
       displayCurrentMonthData();
+      updateLocationDatalist();
     }
 
     function displayCurrentMonthData() {
@@ -376,15 +400,12 @@
             <td>${sn}</td>
             <td>${entry.location || ''}</td>
             <td>${dateStr}</td>
- <td>${entry.start_time}</td>
+            <td>${entry.start_time}</td>
             <td>${entry.start_km} <small>(KM)</small></td>
-            
-            
             <td>${entry.end_km || ''} ${entry.end_km ? '<small>(KM)</small>' : ''}</td>
             <td>${entry.end_time || ''}</td>
             <td>${usage}</td>
             <td>${entry.remarks || ''}</td>
-           
           </tr>
         `;
       });
@@ -433,7 +454,10 @@
       const lastEntry = getLastEntry();
       const startGroup = document.getElementById('startGroup');
       const endGroup = document.getElementById('endGroup');
+      const startKmInput = document.getElementById('startKmInput');
       const startTimeInput = document.getElementById('startTimeInput');
+      const endKmInput = document.getElementById('endKmInput');
+      const endTimeInput = document.getElementById('endTimeInput');
       const modalTitle = document.getElementById('modalTitle');
 
       let mode = 'newTrip';
@@ -448,10 +472,27 @@
         modalTitle.textContent = translations[currentLang].modalTitleClose;
         startGroup.style.display = 'none';
         endGroup.style.display = 'block';
+        
+        // Make END fields required
+        endKmInput.setAttribute('required', 'required');
+        endTimeInput.setAttribute('required', 'required');
+        
+        // Remove required from START (hidden)
+        startKmInput.removeAttribute('required');
+        startTimeInput.removeAttribute('required');
       } else {
         modalTitle.textContent = translations[currentLang].modalTitle;
         startGroup.style.display = 'block';
         endGroup.style.display = 'none';
+        
+        // Make START required
+        startKmInput.setAttribute('required', 'required');
+        startTimeInput.setAttribute('required', 'required');
+        
+        // Remove required from END
+        endKmInput.removeAttribute('required');
+        endTimeInput.removeAttribute('required');
+
         startTimeInput.value = currentTime;
       }
 
@@ -459,99 +500,108 @@
     }
 
     async function saveEntry(event) {
-  event.preventDefault();
-  const t = translations[currentLang];
-  
-  if (!vehicleId || typeof vehicleId !== 'string' || vehicleId.length < 10) {
-    alert('Vehicle not properly initialized. Please refresh the page.');
-    return;
-  }
+      event.preventDefault();
+      const t = translations[currentLang];
+      
+      if (!vehicleId || typeof vehicleId !== 'string' || vehicleId.length < 10) {
+        alert('Vehicle not properly initialized. Please refresh the page.');
+        return;
+      }
 
-  const startGroupVisible = document.getElementById('startGroup').style.display !== 'none';
-  const endGroupVisible = document.getElementById('endGroup').style.display === 'block';
+      const startGroupVisible = document.getElementById('startGroup').style.display !== 'none';
+      const endGroupVisible = document.getElementById('endGroup').style.display === 'block';
 
-  if (startGroupVisible && !endGroupVisible) {
-    // New Trip
-    const date = document.getElementById('dateInput').value;
-    const location = document.getElementById('locationInput').value.trim();
-    const startKm = parseFloat(document.getElementById('startKmInput').value);
-    const startTime = document.getElementById('startTimeInput').value;
-    const remarks = document.getElementById('remarksInput').value.trim();
+      if (startGroupVisible && !endGroupVisible) {
+        // New Trip
+        const date = document.getElementById('dateInput').value;
+        const location = document.getElementById('locationInput').value.trim();
+        const startKm = parseFloat(document.getElementById('startKmInput').value);
+        const startTime = document.getElementById('startTimeInput').value;
+        const remarks = document.getElementById('remarksInput').value.trim();
 
-    if (new Date(date) > new Date()) {
-      alert(t.alertFutureDate);
-      return;
+        if (new Date(date) > new Date()) {
+          alert(t.alertFutureDate);
+          return;
+        }
+
+        // ✅ VALIDATION: Start KM >= previous End KM
+        const lastClosedTrip = entries
+          .filter(e => e.start_km != null && e.end_km != null)
+          .sort((a, b) => {
+            const dateA = new Date(a.entry_date + 'T' + a.start_time);
+            const dateB = new Date(b.entry_date + 'T' + b.start_time);
+            return dateB - dateA;
+          })[0];
+
+        if (lastClosedTrip && startKm < lastClosedTrip.end_km) {
+          alert(t.alertLessKm);
+          return;
+        }
+
+        const { error } = await supabaseClient
+          .from('meter_entries')
+          .insert([{
+            vehicle_id: vehicleId,
+            entry_date: date,
+            location: location || null,
+            start_km: startKm,
+            start_time: startTime,
+            end_km: null,
+            end_time: null,
+            remarks: remarks || null
+          }]);
+
+        if (error) {
+          console.error('Insert error:', error);
+          alert(t.alertSaveFail);
+          return;
+        }
+
+      } else if (!startGroupVisible && endGroupVisible) {
+        // Closing previous trip
+        const endKmInput = document.getElementById('endKmInput').value.trim();
+        const endTimeInput = document.getElementById('endTimeInput').value.trim();
+        const lastEntry = getLastEntry();
+
+        if (!lastEntry || lastEntry.end_km != null) {
+          alert("No open trip to close!");
+          return;
+        }
+
+        if (!endKmInput || !endTimeInput) {
+          alert(t.alertEndRequired);
+          return;
+        }
+
+        const endKm = parseFloat(endKmInput);
+        const endTime = endTimeInput;
+
+        if (endKm < lastEntry.start_km) {
+          alert(t.alertLessKm);
+          return;
+        }
+
+        const { error } = await supabaseClient
+          .from('meter_entries')
+          .update({ end_km: endKm, end_time: endTime })
+          .eq('id', lastEntry.id);
+
+        if (error) {
+          console.error('Update error:', error);
+          alert(t.alertSaveFail);
+          return;
+        }
+      } else {
+        alert("Invalid form state.");
+        return;
+      }
+
+      document.getElementById('status').textContent = t.statusSuccess;
+      closeEntryModal();
+      await loadEntries();
+      setTimeout(() => document.getElementById('status').textContent = '', 3000);
     }
 
-    // ✅ VALIDATION: Start KM >= previous End KM
-    const lastClosedTrip = entries
-      .filter(e => e.start_km != null && e.end_km != null)
-      .sort((a, b) => {
-        const dateA = new Date(a.entry_date + 'T' + a.start_time);
-        const dateB = new Date(b.entry_date + 'T' + b.start_time);
-        return dateB - dateA;
-      })[0];
-
-    if (lastClosedTrip && startKm < lastClosedTrip.end_km) {
-      alert(t.alertLessKm); // or use a new message
-      return;
-    }
-
-    const { error } = await supabaseClient
-      .from('meter_entries')
-      .insert([{
-        vehicle_id: vehicleId,
-        entry_date: date,
-        location: location || null,
-        start_km: startKm,
-        start_time: startTime,
-        end_km: null,
-        end_time: null,
-        remarks: remarks || null
-      }]);
-
-    if (error) {
-      console.error('Insert error:', error);
-      alert(t.alertSaveFail);
-      return;
-    }
-
-  } else if (!startGroupVisible && endGroupVisible) {
-    // Closing previous trip
-    const endKm = parseFloat(document.getElementById('endKmInput').value);
-    const endTime = document.getElementById('endTimeInput').value;
-    const lastEntry = getLastEntry();
-
-    if (!lastEntry || lastEntry.end_km != null) {
-      alert("No open trip to close!");
-      return;
-    }
-
-    if (endKm < lastEntry.start_km) {
-      alert(t.alertLessKm);
-      return;
-    }
-
-    const { error } = await supabaseClient
-      .from('meter_entries')
-      .update({ end_km: endKm, end_time: endTime })
-      .eq('id', lastEntry.id);
-
-    if (error) {
-      console.error('Update error:', error);
-      alert(t.alertSaveFail);
-      return;
-    }
-  } else {
-    alert("Invalid form state.");
-    return;
-  }
-
-  document.getElementById('status').textContent = t.statusSuccess;
-  closeEntryModal();
-  await loadEntries();
-  setTimeout(() => document.getElementById('status').textContent = '', 3000);
-}
     // ==============================
     // 🔄 Initialize App
     // ==============================
