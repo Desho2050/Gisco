@@ -376,7 +376,6 @@
 
   <main class="container">
     <div class="grid">
-      <!-- Cards remain exactly as in your original -->
       <section class="card">
         <h3 data-i18n="card_oracle_title">Oracle Materials ( البحث في الاوراكل)</h3>
         <p data-i18n="card_oracle_desc">Enhanced search across Oracle.xlsx with multi-input filtering.</p>
@@ -467,10 +466,9 @@
 
   <!-- Load Supabase SDK first -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <script>
     // ===== CLOCK & LANGUAGE =====
-    let currentLang = 'ar';
+    let currentLang = localStorage.getItem('selectedLanguage') || 'ar';
 
     function updateClock() {
       const now = new Date();
@@ -507,7 +505,7 @@
 
     setInterval(updateClock, 1000);
     updateClock();
- 
+
     // ===== I18N DICTIONARY =====
     const I18N = {
       en: {
@@ -588,12 +586,12 @@
         if (dict[key]) el.textContent = dict[key];
       });
       currentLang = lang;
+      localStorage.setItem('selectedLanguage', lang);
       updateClock();
     };
 
     // ===== THEME & INIT =====
     document.addEventListener('DOMContentLoaded', () => {
-      // Theme
       const themeSelect = document.getElementById('themeSelect');
       const savedTheme = localStorage.getItem('selectedTheme') || 'modern';
       themeSelect.value = savedTheme;
@@ -603,13 +601,11 @@
         localStorage.setItem('selectedTheme', e.target.value);
       });
 
-      // Language
       applyLang(currentLang);
       document.querySelectorAll('[data-lang]').forEach(btn =>
         btn.addEventListener('click', () => applyLang(btn.dataset.lang))
       );
 
-      // Mock counts
       const setCount = (id, n) => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -617,6 +613,7 @@
         el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
       };
 
+      // Mock counts
       setCount('oracleCount', 58009);
       setCount('materialsCount', 890);
       setCount('requestsCount', 340);
@@ -628,105 +625,142 @@
     });
 
     // ===== SUPABASE LOGIC =====
-   document.addEventListener('DOMContentLoaded', async () => {
-  const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+    document.addEventListener('DOMContentLoaded', async () => {
+      const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
 
-  const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+      const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
 
-  function showAlert(message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.style.cssText = `
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      background: #fef3c7; color: #92400e; padding: 16px 24px;
-      border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      z-index: 1000; font-weight: 600; border: 2px solid #fdba74;
-      max-width: 90%; text-align: center; white-space: pre-wrap;`;
-    alertDiv.textContent = message;
-    document.body.appendChild(alertDiv);
-    setTimeout(() => {
-      alertDiv.style.opacity = '0';
-      alertDiv.style.transition = 'opacity 0.5s';
-      setTimeout(() => document.body.removeChild(alertDiv), 500);
-    }, 10000); // Show longer for detailed message
-  }
+      function showAlert(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.style.cssText = `
+          position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+          background: #fef3c7; color: #92400e; padding: 16px 24px;
+          border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          z-index: 1000; font-weight: 600; border: 2px solid #fdba74;
+          max-width: 90%; text-align: center; white-space: pre-wrap;`;
+        alertDiv.textContent = message;
+        document.body.appendChild(alertDiv);
+        setTimeout(() => {
+          alertDiv.style.opacity = '0';
+          alertDiv.style.transition = 'opacity 0.5s';
+          setTimeout(() => document.body.removeChild(alertDiv), 500);
+        }, 10000);
+      }
 
-  try {
-    const { data, error } = await supabaseClient
-      .from('employee_passports')
-      .select('file_no,name,name_ar,gatepass_exp_date,passport_exp_date');
+      const today = new Date();
+      const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000;
 
-    if (error) throw error;
+      try {
+        const { data, error } = await supabaseClient
+          .from('employee_passports')
+          .select('file_no,name,name_ar,gatepass_exp_date,passport_exp_date');
 
-    const today = new Date();
-    const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000;
-    const expiringEntries = [];
+        if (error) throw error;
 
-    for (const row of data) {
-      let isExpiring = false;
-      const details = {
-        file_no: row.file_no || '—',
-        name: currentLang === 'ar' ? (row.name_ar || row.name || 'غير معروف') : (row.name || row.name_ar || 'Unknown')
-      };
+        const expiringEntries = [];
 
-      let gatepassExp = null;
-      let passportExp = null;
+        for (const row of data) {
+          let isExpiring = false;
+          const fileNo = row.file_no || '—';
+          const name = currentLang === 'ar'
+            ? (row.name_ar || row.name || 'غير معروف')
+            : (row.name || row.name_ar || 'Unknown');
 
-      if (row.gatepass_exp_date) {
-        const gatepassDate = new Date(row.gatepass_exp_date);
-        if (gatepassDate >= today && gatepassDate - today < sixtyDaysMs) {
-          isExpiring = true;
-          gatepassExp = gatepassDate.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US');
+          let gatepassDateObj = null;
+          let passportDateObj = null;
+
+          if (row.gatepass_exp_date) {
+            const date = new Date(row.gatepass_exp_date);
+            if (date >= today && date - today < sixtyDaysMs) {
+              isExpiring = true;
+              gatepassDateObj = date;
+            }
+          }
+
+          if (row.passport_exp_date) {
+            const date = new Date(row.passport_exp_date);
+            if (date >= today && date - today < sixtyDaysMs) {
+              isExpiring = true;
+              passportDateObj = date;
+            }
+          }
+
+          if (isExpiring) {
+            expiringEntries.push({
+              file_no: fileNo,
+              name,
+              gatepassDate: row.gatepass_exp_date ? new Date(row.gatepass_exp_date) : null,
+              passportDate: row.passport_exp_date ? new Date(row.passport_exp_date) : null,
+            });
+          }
         }
-      }
 
-      if (row.passport_exp_date) {
-        const passportDate = new Date(row.passport_exp_date);
-        if (passportDate >= today && passportDate - today < sixtyDaysMs) {
-          isExpiring = true;
-          passportExp = passportDate.toLocaleDateString(currentLang === 'ar' + 'ar-EG' + 'en-US');
+        const setCount = (id, n) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const dict = I18N[currentLang] || I18N.ar;
+          el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
+        };
+        setCount('gatepassCount', data.length);
+
+        function getRemainingDays(date) {
+          if (!date || isNaN(date.getTime())) return null;
+          return Math.floor((date - today) / (24 * 60 * 60 * 1000));
         }
+
+        if (expiringEntries.length > 0) {
+          const dict = I18N[currentLang] || I18N.ar;
+          let messageLines = [dict.expiry_warning + '\n'];
+
+          if (currentLang === 'ar') {
+            expiringEntries.forEach(entry => {
+              let line = `رقم الملف: ${entry.file_no} | الاسم: ${entry.name}`;
+              if (entry.gatepassDate) {
+                const days = getRemainingDays(entry.gatepassDate);
+                if (days !== null) {
+                  const formattedDate = entry.gatepassDate.toLocaleDateString('ar-EG');
+                  line += ` | تاريخ انتهاء تصريح الدخول: ${formattedDate} الايام المتبقية: (${days}) يوم`;
+                }
+              }
+              if (entry.passportDate) {
+                const days = getRemainingDays(entry.passportDate);
+                if (days !== null) {
+                  const formattedDate = entry.passportDate.toLocaleDateString('ar-EG');
+                  line += ` | تاريخ انتهاء جواز السفر: ${formattedDate} الايام المتبقية: (${days}) يوم`;
+                }
+              }
+              messageLines.push(line);
+            });
+          } else {
+            expiringEntries.forEach(entry => {
+              let line = `File No: ${entry.file_no} | Name: ${entry.name}`;
+              if (entry.gatepassDate) {
+                const days = getRemainingDays(entry.gatepassDate);
+                if (days !== null) {
+                  const formattedDate = entry.gatepassDate.toLocaleDateString('en-US');
+                  line += ` | GatePass Exp.: ${formattedDate} Remaining Days: (${days}) Days`;
+                }
+              }
+              if (entry.passportDate) {
+                const days = getRemainingDays(entry.passportDate);
+                if (days !== null) {
+                  const formattedDate = entry.passportDate.toLocaleDateString('en-US');
+                  line += ` | Passport Exp.: ${formattedDate} Remaining Days: (${days}) Days`;
+                }
+              }
+              messageLines.push(line);
+            });
+          }
+
+          showAlert(messageLines.join('\n'));
+        }
+
+      } catch (err) {
+        console.error('Supabase fetch error:', err);
+        document.getElementById('gatepassCount').textContent = 'error';
       }
-
-      if (isExpiring) {
-        expiringEntries.push({
-          ...details,
-          gatepass_exp_date: gatepassExp,
-          passport_exp_date: passportExp
-        });
-      }
-    }
-
-    // Update count
-    const setCount = (id, n) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const dict = I18N[currentLang] || I18N.ar;
-      el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
-    };
-    setCount('gatepassCount', data.length);
-
-    // Show detailed warning if any
-    if (expiringEntries.length > 0) {
-      const dict = I18N[currentLang] || I18N.ar;
-      let messageLines = [dict.expiry_warning + '\n'];
-
-      expiringEntries.forEach(entry => {
-        let line = `File: ${entry.file_no} | Name: ${entry.name}`;
-        if (entry.gatepass_exp_date) line += ` | GatePass: ${entry.gatepass_exp_date}`;
-        if (entry.passport_exp_date) line += ` | Passport: ${entry.passport_exp_date}`;
-        messageLines.push(line);
-      });
-
-      showAlert(messageLines.join('\n'));
-    }
-
-  } catch (err) {
-    console.error('Supabase fetch error:', err);
-    document.getElementById('gatepassCount').textContent = 'error';
-  }
-});
-
+    });
   </script>
 </body>
 </html>
