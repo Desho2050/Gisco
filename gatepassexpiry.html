@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en" id="html-root">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name=".viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Passport & GatePass Manager</title>
   <!-- Suppress Tailwind CDN warning -->
   <script>
@@ -16,11 +15,8 @@
     };
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FIXED: Load jsPDF with Unicode support -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-  <!-- FIXED: Add Arabic font for PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/polyfills.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -48,7 +44,6 @@
   <div id="app" class="max-w-7xl mx-auto">
 
     <div class="flex flex-wrap justify-between items-center mb-6 gap-3 no-print">
-      <!-- FIXED: Added back button -->
       <div class="flex items-center gap-3">
         <button id="btn-back" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
           ← Back to Home
@@ -128,12 +123,12 @@
 
   <script>
     // ======================
-    // CONFIG — CLEANED URLS
+    // CONFIG — CLEANED (NO TRAILING SPACES!)
     // ======================
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co'; // ✅ no spaces
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow'; // ✅ clean
 
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
 
     // ======================
     // UTILS
@@ -151,7 +146,6 @@
       return new Date(passport) < new Date(gatepass);
     }
 
-    // Color gradient helper
     function getRedToGreenColor(value, min = -30, max = 180) {
       if (value === null) return 'transparent';
       const clamped = Math.max(min, Math.min(max, value));
@@ -179,7 +173,7 @@
     function setLanguage(lang) {
       currentLang = lang;
       document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-      localStorage.setItem('lang', lang);
+      localStorage.setItem('selectedLanguage', lang);
       updateUI();
     }
 
@@ -248,17 +242,8 @@
     };
 
     function updateUI() {
-      const applyLang = (lang) => {
-  document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-  const dict = I18N[lang] || I18N.ar;
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (dict[key]) el.textContent = dict[key];
-  });
-  currentLang = lang;
-  localStorage.setItem('selectedLanguage', lang); // 👈 SAVE LANGUAGE
-  updateClock();
-};
+      const t = translations[currentLang]; // ✅ FIXED: define `t`
+      
       document.getElementById('page-title').textContent = t.title;
       document.getElementById('search-input').placeholder = t.search;
       document.getElementById('btn-add').textContent = t.addNew;
@@ -300,7 +285,7 @@
 
       if (error) {
         console.error('Supabase error:', error);
-        alert('Failed to load data. Check console.');
+        alert('Failed to load data: ' + error.message);
       } else {
         allData = data || [];
         sortData();
@@ -460,7 +445,6 @@
         ];
       });
 
-      // FIXED: Add UTF-8 BOM for proper Arabic encoding
       const BOM = '\uFEFF';
       const csvContent = "data:text/csv;charset=utf-8," + 
         BOM + [headers, ...rows].map(e => e.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -477,8 +461,6 @@
       const { jsPDF } = window.jspdf;
       const t = translations[currentLang];
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
-      // FIXED: Use Arabic-compatible font
       doc.setFont('Helvetica', 'normal');
 
       const headers = [[
@@ -510,7 +492,6 @@
         theme: 'striped',
         styles: { font: "helvetica", fontSize: 9, cellPadding: 2 },
         headStyles: { fillColor: [66, 133, 244] },
-        // FIXED: Handle RTL for Arabic
         didParseCell: (data) => {
           if (currentLang === 'ar' && data.section === 'body') {
             data.cell.styles.textAlign = 'right';
@@ -552,6 +533,10 @@
     fetchData();
   </script>
 </body>
-<footer style="display: flex;align-items: center;">Desinged & Programmed By: Mostafa Al-Najar </footer>
-<footer style="display: flex;align-items: center;">تصميم وبرمجة : مصطفي النجار </footer>
+<footer style="display: flex; align-items: center; justify-content: center; margin-top: 20px; padding: 10px; font-size: 14px;">
+  Designed & Programmed By: Mostafa Al-Najar
+</footer>
+<footer style="display: flex; align-items: center; justify-content: center; margin-top: 5px; padding: 10px; font-size: 14px; direction: rtl;">
+  تصميم وبرمجة : مصطفي النجار
+</footer>
 </html>
