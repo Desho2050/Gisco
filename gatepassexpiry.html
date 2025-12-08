@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Passport & GatePass Manager</title>
+  <!-- Suppress Tailwind CDN warning -->
+  <script>
+    const originalWarn = console.warn;
+    console.warn = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) {
+        return;
+      }
+      originalWarn.apply(console, args);
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FIXED: Load jsPDF with Unicode support -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <!-- FIXED: Add Arabic font for PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/polyfills.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .hidden { display: none; }
+    @media print {
+      .no-print { display: none !important; }
+      .print-area { width: 100%; }
+      table { font-size: 12px; }
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: { 800: '#1f2937', 700: '#374151', 600: '#4b5563', 500: '#6b7280' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 p-4" id="body-root">
+  <div id="app" class="max-w-7xl mx-auto">
+
+    <div class="flex flex-wrap justify-between items-center mb-6 gap-3 no-print">
+      <!-- FIXED: Added back button -->
+      <div class="flex items-center gap-3">
+        <button id="btn-back" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
+          ← Back to Home
+        </button>
+        <h1 id="page-title" class="text-2xl font-bold">Passport & GatePass Management</h1>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button id="theme-toggle" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
+          🌙 Dark Mode
+        </button>
+        <button id="lang-toggle" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">العربية</button>
+        <button id="btn-add" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New</button>
+        <button id="btn-export-csv" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Export CSV</button>
+        <button id="btn-export-pdf" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Export PDF</button>
+        <button id="btn-print" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Print</button>
+      </div>
+    </div>
+
+    <div class="mb-4 no-print">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Search any text..."
+        class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+      />
+    </div>
+
+    <div id="loading" class="text-center py-4 hidden">Loading...</div>
+
+    <div class="overflow-x-auto shadow rounded print-area">
+      <table class="min-w-full bg-white dark:bg-gray-800" id="data-table">
+        <thead class="bg-gray-100 dark:bg-gray-700">
+          <tr>
+            <th class="py-2 px-4 text-left">SN</th>
+            <th class="py-2 px-4 text-left">File No</th>
+            <th class="py-2 px-4 text-left">Name</th>
+            <th class="py-2 px-4 text-left">Name (Arabic)</th>
+            <th class="py-2 px-4 text-left">GatePass Exp.</th>
+            <th class="py-2 px-4 text-left">Passport Exp.</th>
+            <th class="py-2 px-4 text-left">GatePass Remaining</th>
+            <th class="py-2 px-4 text-left">Passport Remaining</th>
+            <th class="py-2 px-4 text-left">Passport Exp. Before GatePass?</th>
+            <th class="py-2 px-4 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body" class="divide-y divide-gray-200 dark:divide-gray-700">
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-2xl">
+        <h2 id="modal-title" class="text-xl mb-4">Add New Record</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium mb-1">SN</label>
+            <input type="number" id="sn" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+          <div><label class="block text-sm font-medium mb-1">File No</label>
+            <input type="text" id="file_no" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+          <div><label class="block text-sm font-medium mb-1">Name (English)</label>
+            <input type="text" id="name" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+          <div><label class="block text-sm font-medium mb-1">Name (Arabic)</label>
+            <input type="text" id="name_ar" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+          <div><label class="block text-sm font-medium mb-1">GatePass Exp. Date</label>
+            <input type="date" id="gatepass_exp_date" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+          <div><label class="block text-sm font-medium mb-1">Passport Exp. Date</label>
+            <input type="date" id="passport_exp_date" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2">
+          <button id="modal-cancel" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded">Cancel</button>
+          <button id="modal-save" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ======================
+    // CONFIG — CLEANED URLS
+    // ======================
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ======================
+    // UTILS
+    // ======================
+    function calculateDaysRemaining(dateStr) {
+      if (!dateStr) return null;
+      const expDate = new Date(dateStr);
+      const today = new Date();
+      const diffTime = expDate - today;
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function isPassportBeforeGatepass(gatepass, passport) {
+      if (!gatepass || !passport) return false;
+      return new Date(passport) < new Date(gatepass);
+    }
+
+    // Color gradient helper
+    function getRedToGreenColor(value, min = -30, max = 180) {
+      if (value === null) return 'transparent';
+      const clamped = Math.max(min, Math.min(max, value));
+      const ratio = (clamped - min) / (max - min);
+      const hue = ratio * 120;
+      return `hsl(${hue}, 70%, 45%)`;
+    }
+
+    // ======================
+    // THEME & LANGUAGE
+    // ======================
+    let isDarkMode = localStorage.getItem('darkMode') === 'true';
+    let currentLang = localStorage.getItem('lang') || 'en';
+
+    if (isDarkMode) document.documentElement.classList.add('dark');
+    if (currentLang === 'ar') document.documentElement.dir = 'rtl';
+
+    function toggleTheme() {
+      isDarkMode = !isDarkMode;
+      document.documentElement.classList.toggle('dark', isDarkMode);
+      localStorage.setItem('darkMode', isDarkMode);
+      updateUI();
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      localStorage.setItem('lang', lang);
+      updateUI();
+    }
+
+    // ======================
+    // TRANSLATIONS
+    // ======================
+    const translations = {
+      en: {
+        title: "Passport & GatePass Management",
+        search: "Search any text...",
+        addNew: "Add New",
+        edit: "Edit",
+        delete: "Delete",
+        print: "Print",
+        exportCSV: "Export CSV",
+        exportPDF: "Export PDF",
+        sn: "SN",
+        fileNo: "File No",
+        name: "Name",
+        nameAr: "Name (Arabic)",
+        gatepassExp: "GatePass Exp.",
+        passportExp: "Passport Exp.",
+        gatepassRemaining: "GatePass Remaining",
+        passportRemaining: "Passport Remaining",
+        passportBeforeGatepass: "Passport Exp. Before GatePass?",
+        yes: "Yes",
+        no: "No",
+        actions: "Actions",
+        save: "Save",
+        cancel: "Cancel",
+        confirmDelete: "Are you sure you want to delete this record?",
+        langToggle: "العربية",
+        darkMode: "🌙 Dark Mode",
+        lightMode: "☀️ Light Mode",
+        backToHome: "← Back to Home"
+      },
+      ar: {
+        title: "إدارة جوازات السفر وتصاريح الدخول",
+        search: "بحث بأي نص...",
+        addNew: "إضافة جديد",
+        edit: "تعديل",
+        delete: "حذف",
+        print: "طباعة",
+        exportCSV: "تصدير CSV",
+        exportPDF: "تصدير PDF",
+        sn: "الرقم",
+        fileNo: "رقم الملف",
+        name: "الاسم (إنجليزي)",
+        nameAr: "الاسم (عربي)",
+        gatepassExp: "انتهاء تصريح الدخول",
+        passportExp: "انتهاء جواز السفر",
+        gatepassRemaining: "أيام متبقية (تصريح)",
+        passportRemaining: "أيام متبقية (جواز)",
+        passportBeforeGatepass: "هل ينتهي الجواز قبل التصريح؟",
+        yes: "نعم",
+        no: "لا",
+        actions: "إجراءات",
+        save: "حفظ",
+        cancel: "إلغاء",
+        confirmDelete: "هل أنت متأكد من حذف هذا السجل؟",
+        langToggle: "English",
+        darkMode: "🌙 الوضع الليلي",
+        lightMode: "☀️ الوضع النهاري",
+        backToHome: "← العودة للرئيسية"
+      }
+    };
+
+    function updateUI() {
+      const t = translations[currentLang];
+      document.getElementById('page-title').textContent = t.title;
+      document.getElementById('search-input').placeholder = t.search;
+      document.getElementById('btn-add').textContent = t.addNew;
+      document.getElementById('btn-export-csv').textContent = t.exportCSV;
+      document.getElementById('btn-export-pdf').textContent = t.exportPDF;
+      document.getElementById('btn-print').textContent = t.print;
+      document.getElementById('lang-toggle').textContent = t.langToggle;
+      document.getElementById('theme-toggle').textContent = isDarkMode ? t.lightMode : t.darkMode;
+      document.getElementById('btn-back').textContent = t.backToHome;
+
+      const headers = document.querySelectorAll('thead th');
+      const texts = [
+        t.sn, t.fileNo, t.name, t.nameAr, t.gatepassExp, t.passportExp,
+        t.gatepassRemaining, t.passportRemaining, t.passportBeforeGatepass, t.actions
+      ];
+      texts.forEach((txt, i) => headers[i] && (headers[i].textContent = txt));
+    }
+
+    // ======================
+    // DATA + SORTING
+    // ======================
+    let allData = [];
+
+    function sortData() {
+      allData.sort((a, b) => {
+        const daysA = calculateDaysRemaining(a.gatepass_exp_date);
+        const daysB = calculateDaysRemaining(b.gatepass_exp_date);
+        const valA = daysA === null ? Infinity : daysA;
+        const valB = daysB === null ? Infinity : daysB;
+        return valA - valB;
+      });
+    }
+
+    async function fetchData() {
+      document.getElementById('loading').classList.remove('hidden');
+      const { data, error } = await supabaseClient
+        .from('employee_passports')
+        .select('*');
+
+      if (error) {
+        console.error('Supabase error:', error);
+        alert('Failed to load data. Check console.');
+      } else {
+        allData = data || [];
+        sortData();
+        renderTable();
+      }
+      document.getElementById('loading').classList.add('hidden');
+    }
+
+    function renderTable(searchTerm = '') {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      let filtered = allData;
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filtered = allData.filter(row => {
+          const text = `${row.sn || ''} ${row.file_no || ''} ${row.name || ''} ${row.name_ar || ''} ${row.gatepass_exp_date || ''} ${row.passport_exp_date || ''}`;
+          return text.toLowerCase().includes(term);
+        });
+      }
+
+      const t = translations[currentLang];
+      filtered.forEach(row => {
+        const gpDays = calculateDaysRemaining(row.gatepass_exp_date);
+        const ppDays = calculateDaysRemaining(row.passport_exp_date);
+        const before = isPassportBeforeGatepass(row.gatepass_exp_date, row.passport_exp_date);
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-700';
+        tr.innerHTML = `
+          <td class="py-2 px-4">${row.sn || ''}</td>
+          <td class="py-2 px-4">${row.file_no || ''}</td>
+          <td class="py-2 px-4">${row.name || ''}</td>
+          <td class="py-2 px-4">${row.name_ar || ''}</td>
+          <td class="py-2 px-4">${row.gatepass_exp_date || ''}</td>
+          <td class="py-2 px-4">${row.passport_exp_date || ''}</td>
+          <td class="py-2 px-4 font-medium text-center"
+              style="background: ${getRedToGreenColor(gpDays)}; color: white; border-radius: 4px;">
+            ${gpDays !== null ? gpDays : '—'}
+          </td>
+          <td class="py-2 px-4 font-medium text-center"
+              style="background: ${getRedToGreenColor(ppDays)}; color: white; border-radius: 4px;">
+            ${ppDays !== null ? ppDays : '—'}
+          </td>
+          <td class="py-2 px-4">${before ? `<span class="text-red-500 dark:text-red-400 font-bold">${t.yes}</span>` : `<span class="text-green-500 dark:text-green-400">${t.no}</span>`}</td>
+          <td class="py-2 px-4">
+            <button class="edit-btn text-blue-600 dark:text-blue-400 hover:underline mx-1">${t.edit}</button>
+            <button class="delete-btn text-red-600 dark:text-red-400 hover:underline mx-1">${t.delete}</button>
+          </td>
+        `;
+        tr.querySelector('.edit-btn').onclick = () => openModal(row.id);
+        tr.querySelector('.delete-btn').onclick = () => deleteRecord(row.id);
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ======================
+    // CRUD
+    // ======================
+    let editingId = null;
+    const modal = document.getElementById('modal');
+
+    function openModal(id = null) {
+      editingId = id;
+      const t = translations[currentLang];
+      document.getElementById('modal-title').textContent = id ? t.edit : t.addNew;
+
+      if (id) {
+        const row = allData.find(r => r.id == id);
+        document.getElementById('sn').value = row.sn || '';
+        document.getElementById('file_no').value = row.file_no || '';
+        document.getElementById('name').value = row.name || '';
+        document.getElementById('name_ar').value = row.name_ar || '';
+        document.getElementById('gatepass_exp_date').value = row.gatepass_exp_date || '';
+        document.getElementById('passport_exp_date').value = row.passport_exp_date || '';
+      } else {
+        ['sn','file_no','name','name_ar','gatepass_exp_date','passport_exp_date'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      modal.classList.add('hidden');
+    }
+
+    async function saveRecord() {
+      const formData = {
+        sn: parseInt(document.getElementById('sn').value) || null,
+        file_no: document.getElementById('file_no').value.trim(),
+        name: document.getElementById('name').value.trim(),
+        name_ar: document.getElementById('name_ar').value.trim(),
+        gatepass_exp_date: document.getElementById('gatepass_exp_date').value,
+        passport_exp_date: document.getElementById('passport_exp_date').value
+      };
+
+      if (!formData.file_no || !formData.name) {
+        alert('File No and Name are required.');
+        return;
+      }
+
+      try {
+        if (editingId) {
+          const { error } = await supabaseClient
+            .from('employee_passports')
+            .update(formData)
+            .eq('id', editingId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabaseClient
+            .from('employee_passports')
+            .insert([formData]);
+          if (error) throw error;
+        }
+        closeModal();
+        await fetchData();
+      } catch (err) {
+        alert('Save failed: ' + (err.message || 'Unknown error'));
+      }
+    }
+
+    async function deleteRecord(id) {
+      const t = translations[currentLang];
+      if (confirm(t.confirmDelete)) {
+        await supabaseClient.from('employee_passports').delete().eq('id', id);
+        await fetchData();
+      }
+    }
+
+    // ======================
+    // EXPORTS
+    // ======================
+    function exportToCSV() {
+      const t = translations[currentLang];
+      const headers = [
+        t.sn, t.fileNo, t.name, t.nameAr,
+        t.gatepassExp, t.passportExp,
+        t.gatepassRemaining, t.passportRemaining,
+        t.passportBeforeGatepass
+      ];
+
+      const rows = allData.map(row => {
+        const gpDays = calculateDaysRemaining(row.gatepass_exp_date);
+        const ppDays = calculateDaysRemaining(row.passport_exp_date);
+        const before = isPassportBeforeGatepass(row.gatepass_exp_date, row.passport_exp_date);
+        return [
+          row.sn || '',
+          row.file_no || '',
+          row.name || '',
+          row.name_ar || '',
+          row.gatepass_exp_date || '',
+          row.passport_exp_date || '',
+          gpDays !== null ? gpDays : '—',
+          ppDays !== null ? ppDays : '—',
+          before ? t.yes : t.no
+        ];
+      });
+
+      // FIXED: Add UTF-8 BOM for proper Arabic encoding
+      const BOM = '\uFEFF';
+      const csvContent = "data:text/csv;charset=utf-8," + 
+        BOM + [headers, ...rows].map(e => e.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+      
+      const link = document.createElement("a");
+      link.href = encodeURI(csvContent);
+      link.download = "passport_data.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const t = translations[currentLang];
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+      // FIXED: Use Arabic-compatible font
+      doc.setFont('Helvetica', 'normal');
+
+      const headers = [[
+        t.sn, t.fileNo, t.name, t.nameAr, t.gatepassExp, t.passportExp,
+        t.gatepassRemaining, t.passportRemaining, t.passportBeforeGatepass
+      ]];
+
+      const data = allData.map(row => {
+        const gpDays = calculateDaysRemaining(row.gatepass_exp_date);
+        const ppDays = calculateDaysRemaining(row.passport_exp_date);
+        const before = isPassportBeforeGatepass(row.gatepass_exp_date, row.passport_exp_date);
+        return [
+          row.sn || '',
+          row.file_no || '',
+          row.name || '',
+          row.name_ar || '',
+          row.gatepass_exp_date || '',
+          row.passport_exp_date || '',
+          gpDays !== null ? gpDays : '—',
+          ppDays !== null ? ppDays : '—',
+          before ? t.yes : t.no
+        ];
+      });
+
+      doc.autoTable({
+        head: headers,
+        body: data,
+        startY: 20,
+        theme: 'striped',
+        styles: { font: "helvetica", fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [66, 133, 244] },
+        // FIXED: Handle RTL for Arabic
+        didParseCell: (data) => {
+          if (currentLang === 'ar' && data.section === 'body') {
+            data.cell.styles.textAlign = 'right';
+          }
+        }
+      });
+
+      doc.save('passport_data.pdf');
+    }
+
+    // ======================
+    // EVENTS
+    // ======================
+    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+    document.getElementById('lang-toggle').addEventListener('click', () => {
+      setLanguage(currentLang === 'en' ? 'ar' : 'en');
+    });
+    document.getElementById('btn-back').addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+    document.getElementById('btn-add').addEventListener('click', () => openModal());
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('modal-save').addEventListener('click', saveRecord);
+    document.getElementById('btn-export-csv').addEventListener('click', exportToCSV);
+    document.getElementById('btn-export-pdf').addEventListener('click', exportToPDF);
+    document.getElementById('btn-print').addEventListener('click', () => window.print());
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      renderTable(e.target.value);
+    });
+
+    window.onclick = (e) => {
+      if (e.target === modal) closeModal();
+    };
+
+    // ======================
+    // INIT
+    // ======================
+    updateUI();
+    fetchData();
+  </script>
+</body>
+<footer style="display: flex;align-items: center;">Desinged & Programmed By: Mostafa Al-Najar </footer>
+<footer style="display: flex;align-items: center;">تصميم وبرمجة : مصطفي النجار </footer>
+</html>
