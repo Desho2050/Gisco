@@ -1,6 +1,5 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
   <style>
     /* Default Theme - Modern */
     :root {
@@ -350,27 +350,22 @@
       align-items: center;
     }
   </style>
-  <!-- Arabic font for better Arabic text rendering -->
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body class="theme-modern">
   <header class="topbar">
     <img src="Logo.bmp" alt="GISCO logo" class="logo">
-    
     <div class="title">شركة الخليج للخدمات الصناعية<br>Gulf Industrial Service Company</div>
-    
     <div class="clock-container">
       <div class="time" id="time">--:--:--</div>
       <div class="date" id="date"></div>
     </div>
-
     <div class="theme-controls">
       <select class="theme-select" id="themeSelect">
-        <option value="modern" style="color: black;">Modern</option>
-        <option value="colorful" style="color: black;">Colorful</option>
-        <option value="business" style="color: black;">Business</option>
-        <option value="classic" style="color: black;">Classic</option>
-        <option value="professional" style="color: black;">Professional</option>
+        <option value="modern">Modern</option>
+        <option value="colorful">Colorful</option>
+        <option value="business">Business</option>
+        <option value="classic">Classic</option>
+        <option value="professional">Professional</option>
       </select>
       <div class="lang-switch" aria-label="Language Switch">
         <button class="btn small" data-lang="ar">عربي</button>
@@ -379,190 +374,141 @@
     </div>
   </header>
 
- <main class="container">
-  <div class="grid">
-    <section class="card">
-      <h3 data-i18n="card_oracle_title">Oracle Materials ( البحث في الاوراكل)</h3>
-      <p data-i18n="card_oracle_desc">Enhanced search across Oracle.xlsx with multi-input filtering.</p>
-      <div class="actions">
-        <a class="btn primary" href="oracle.html" data-i18n="open_oracle">Open Oracle Page</a>
-      </div>
-      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="oracleCount">loading…</span></div>
-    </section>
+  <main class="container">
+    <div class="grid">
+      <!-- Cards remain exactly as in your original -->
+      <section class="card">
+        <h3 data-i18n="card_oracle_title">Oracle Materials ( البحث في الاوراكل)</h3>
+        <p data-i18n="card_oracle_desc">Enhanced search across Oracle.xlsx with multi-input filtering.</p>
+        <div class="actions">
+          <a class="btn primary" href="oracle.html" data-i18n="open_oracle">Open Oracle Page</a>
+        </div>
+        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="oracleCount">loading…</span></div>
+      </section>
 
-    <section class="card">
-      <h3 data-i18n="card_materials_title">Received Materials (البحث في المواد المستلمة)</h3>
-      <p data-i18n="card_materials_desc">Same design, powered by Materials.xlsx with totals and search.</p>
-      <div class="actions">
-        <a class="btn primary" href="materials.html" data-i18n="open_materials">Open Materials Page</a>
-      </div>
-      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="materialsCount">loading…</span></div>
-    </section>
+      <section class="card">
+        <h3 data-i18n="card_materials_title">Received Materials (البحث في المواد المستلمة)</h3>
+        <p data-i18n="card_materials_desc">Same design, powered by Materials.xlsx with totals and search.</p>
+        <div class="actions">
+          <a class="btn primary" href="materials.html" data-i18n="open_materials">Open Materials Page</a>
+        </div>
+        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="materialsCount">loading…</span></div>
+      </section>
 
-    <section class="card">
-      <h3 data-i18n="card_requests_title">Requests Summary (البحث في ملخص الطلبات)</h3>
-      <p data-i18n="card_requests_desc">Open the requests summary with search and filters.</p>
-      <div class="actions">
-        <a class="btn primary" href="Requests.html" data-i18n="open_requests">Open Requests Page</a>
-      </div>
-      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="requestsCount">loading…</span></div>
-    </section>
+      <section class="card">
+        <h3 data-i18n="card_requests_title">Requests Summary (البحث في ملخص الطلبات)</h3>
+        <p data-i18n="card_requests_desc">Open the requests summary with search and filters.</p>
+        <div class="actions">
+          <a class="btn primary" href="Requests.html" data-i18n="open_requests">Open Requests Page</a>
+        </div>
+        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="requestsCount">loading…</span></div>
+      </section>
 
-    <section class="card">
-      <h3 data-i18n="card_sh_title">Al-Shuhrah Compressors (البحث في مواد محل الشهرة)</h3>
-      <p data-i18n="card_sh_desc">Editable table with totals, export to Excel/PDF.</p>
-      <div class="actions">
-        <a class="btn primary" href="Shuhrah.html" data-i18n="open_sh">Open Al-Shuhrah Compressors</a>
-      </div>
-      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="purchaseCount">loading…</span></div>
-    </section>
+      <section class="card">
+        <h3 data-i18n="card_sh_title">Al-Shuhrah Compressors (البحث في مواد محل الشهرة)</h3>
+        <p data-i18n="card_sh_desc">Editable table with totals, export to Excel/PDF.</p>
+        <div class="actions">
+          <a class="btn primary" href="Shuhrah.html" data-i18n="open_sh">Open Al-Shuhrah Compressors</a>
+        </div>
+        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="purchaseCount">loading…</span></div>
+      </section>
 
-    <section class="card">
-      <h3><span data-i18n="card_wo_title">4378M Work Orders Summary</span><span class="badge" data-i18n="new_badge">New</span></h3>
-      <p data-i18n="card_wo_desc">Open the 4378M work orders summary.</p>
-      <div class="actions">
-        <a class="btn primary" href="WO.html" data-i18n="open_wo">Open Work Orders Page</a>
-      </div>
-      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="woCount">loading…</span></div>
-    </section>
+      <section class="card">
+        <h3><span data-i18n="card_wo_title">4378M Work Orders Summary</span><span class="badge" data-i18n="new_badge">New</span></h3>
+        <p data-i18n="card_wo_desc">Open the 4378M work orders summary.</p>
+        <div class="actions">
+          <a class="btn primary" href="WO.html" data-i18n="open_wo">Open Work Orders Page</a>
+        </div>
+        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="woCount">loading…</span></div>
+      </section>
 
-    <section class="card">
-      <h3><span data-i18n="EMP_Card">4378M Staff Management</span><span class="badge" data-i18n="new_badge">New</span></h3>
-      <p data-i18n="EMP_Card_Desc">Open 4378M Staff Management.</p>
-      <div class="actions">
-        <a class="btn primary" href="emp2.html" data-i18n="EMP_Card_Desc">Open 4378M Staff Management</a>
-      </div>
-      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="empcount">loading…</span></div>
-    </section>
+      <section class="card">
+        <h3><span data-i18n="EMP_Card">4378M Staff Management</span><span class="badge" data-i18n="new_badge">New</span></h3>
+        <p data-i18n="EMP_Card_Desc">Open 4378M Staff Management.</p>
+        <div class="actions">
+          <a class="btn primary" href="emp2.html" data-i18n="EMP_Card_Desc">Open 4378M Staff Management</a>
+        </div>
+        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="empcount">loading…</span></div>
+      </section>
 
-    <!-- ✅ NEW CARD: Vehicle Usage Tracker -->
-    <section class="card">
-      <h3><span data-i18n="card_vehicles_title">Vehicle Usage Tracker</span><span class="badge" data-i18n="new_badge">New</span></h3>
-      <p data-i18n="card_vehicles_desc">Track vehicle odometer readings and daily usage.</p>
-      <div class="actions">
-        <a class="btn primary" href="vehicles.html" data-i18n="open_vehicles">Open Vehicle Tracker</a>
-      </div>
-      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="vehiclesCount">loading…</span></div>
-    </section>
+      <section class="card">
+        <h3><span data-i18n="card_vehicles_title">Vehicle Usage Tracker</span><span class="badge" data-i18n="new_badge">New</span></h3>
+        <p data-i18n="card_vehicles_desc">Track vehicle odometer readings and daily usage.</p>
+        <div class="actions">
+          <a class="btn primary" href="vehicles.html" data-i18n="open_vehicles">Open Vehicle Tracker</a>
+        </div>
+        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="vehiclesCount">loading…</span></div>
+      </section>
 
-    <!-- ✅ NEW CARD: Timesheet -->
-    <section class="card">
-      <h3><span data-i18n="card_timesheet_title">Employee Timesheet</span><span class="badge" data-i18n="new_badge">New</span></h3>
-      <p data-i18n="card_timesheet_desc">Manage and track employee attendance and working hours.</p>
-      <div class="actions">
-        <a class="btn primary" href="timesheet.html" data-i18n="open_timesheet">Open Timesheet</a>
-      </div>
-      <div class="meta"><span data-i18n="data_label">Data:</span> <span id="timesheetCount">loading…</span></div>
-    </section>
-  </div>
+      <section class="card">
+        <h3><span data-i18n="card_timesheet_title">Employee Timesheet</span><span class="badge" data-i18n="new_badge">New</span></h3>
+        <p data-i18n="card_timesheet_desc">Manage and track employee attendance and working hours.</p>
+        <div class="actions">
+          <a class="btn primary" href="timesheet.html" data-i18n="open_timesheet">Open Timesheet</a>
+        </div>
+        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="timesheetCount">loading…</span></div>
+      </section>
 
-  <div class="credit">Programmed By Mostafa Al-Najar<br>تصميم وبرمجة م: مصطفي النجار</div>
-</main>
+      <section class="card">
+        <h3>
+          <span data-i18n="card_gatepass_title">Passport & GatePass Manager</span>
+          <span class="badge" data-i18n="new_badge">New</span>
+        </h3>
+        <p data-i18n="card_gatepass_desc">Manage employee passport and gatepass expiry dates.</p>
+        <div class="actions">
+          <a class="btn primary" href="gatepassexpiry.html" data-i18n="open_gatepass">Open Passport & GatePass</a>
+        </div>
+        <div class="meta"><span data-i18n="data_label">Data:</span> <span id="gatepassCount">loading…</span></div>
+      </section>
+    </div>
+
+    <div class="credit">Programmed By Mostafa Al-Najar<br>تصميم وبرمجة م: مصطفي النجار</div>
+  </main>
+
+  <!-- Load Supabase SDK first -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-    // Global variable to track current language
+    // ===== CLOCK & LANGUAGE =====
     let currentLang = 'ar';
-    
+
     function updateClock() {
       const now = new Date();
-      
-      // Time formatting (same for both languages)
       const time = now.toLocaleTimeString('en-US', { hour12: false });
       document.getElementById('time').textContent = time;
-      
-      // Date formatting based on language
+
       if (currentLang === 'ar') {
-        // Arabic date format with Arabic numerals
-        const options = { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric',
-          calendar: 'gregory'
-        };
-        
-        // Get date parts in English first
         const day = now.toLocaleDateString('en-US', { day: 'numeric' });
         const month = now.toLocaleDateString('en-US', { month: 'long' });
         const year = now.toLocaleDateString('en-US', { year: 'numeric' });
         const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
-        
-        // Arabic translations
+
         const arabicWeekdays = {
-          'Sunday': 'الأحد',
-          'Monday': 'الاثنين',
-          'Tuesday': 'الثلاثاء',
-          'Wednesday': 'الأربعاء',
-          'Thursday': 'الخميس',
-          'Friday': 'الجمعة',
-          'Saturday': 'السبت'
+          'Sunday': 'الأحد', 'Monday': 'الاثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
+          'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'
         };
-        
         const arabicMonths = {
-          'January': 'يناير',
-          'February': 'فبراير',
-          'March': 'مارس',
-          'April': 'أبريل',
-          'May': 'مايو',
-          'June': 'يونيو',
-          'July': 'يوليو',
-          'August': 'أغسطس',
-          'September': 'سبتمبر',
-          'October': 'أكتوبر',
-          'November': 'نوفمبر',
-          'December': 'ديسمبر'
+          'January': 'يناير', 'February': 'فبراير', 'March': 'مارس', 'April': 'أبريل',
+          'May': 'مايو', 'June': 'يونيو', 'July': 'يوليو', 'August': 'أغسطس',
+          'September': 'سبتمبر', 'October': 'أكتوبر', 'November': 'نوفمبر', 'December': 'ديسمبر'
         };
-        
-        // Convert numbers to Arabic-Indic digits
-        const arabicNumerals = {
-          '0': '٠', '1': '١', '2': '٢', '3': '٣', '4': '٤',
-          '5': '٥', '6': '٦', '7': '٧', '8': '٨', '9': '٩'
-        };
-        
-        const convertToArabicNumerals = (numStr) => {
-          return numStr.replace(/\d/g, d => arabicNumerals[d]);
-        };
-        
+        const arabicNumerals = { '0': '٠', '1': '١', '2': '٢', '3': '٣', '4': '٤', '5': '٥', '6': '٦', '7': '٧', '8': '٨', '9': '٩' };
+        const convertToArabicNumerals = (numStr) => numStr.replace(/\d/g, d => arabicNumerals[d]);
+
         const arabicDate = `${arabicWeekdays[weekday]}, ${convertToArabicNumerals(day)} ${arabicMonths[month]} ${convertToArabicNumerals(year)}`;
         document.getElementById('date').textContent = arabicDate;
         document.getElementById('date').className = 'date arabic-clock';
       } else {
-        // English date format
-        const date = now.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
+        const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         document.getElementById('date').textContent = date;
         document.getElementById('date').className = 'date';
       }
     }
 
-    // Initialize and update clock every second
     setInterval(updateClock, 1000);
-    updateClock(); // initial call
-  </script>
-
-  <script>
-    // Theme switching functionality
-    document.addEventListener('DOMContentLoaded', function() {
-      const themeSelect = document.getElementById('themeSelect');
-      const body = document.body;
-      
-      // Load saved theme from localStorage or default to modern
-      const savedTheme = localStorage.getItem('selectedTheme') || 'modern';
-      themeSelect.value = savedTheme;
-      body.className = `theme-${savedTheme}`;
-      
-      // Theme change handler
-      themeSelect.addEventListener('change', function() {
-        const selectedTheme = this.value;
-        body.className = `theme-${selectedTheme}`;
-        localStorage.setItem('selectedTheme', selectedTheme);
-      });
-    });
-
-    // Simple i18n dictionary and language persistence
+    updateClock();
+ 
+    // ===== I18N DICTIONARY =====
     const I18N = {
       en: {
         brand_title: 'Gulf Industrial Service Company',
@@ -592,41 +538,48 @@
         open_vehicles: 'Open Vehicle Tracker',
         card_timesheet_title: 'Employee Timesheet',
         card_timesheet_desc: 'Manage and track employee attendance and working hours.',
-        open_timesheet: 'Open Timesheet'
+        open_timesheet: 'Open Timesheet',
+        card_gatepass_title: 'Passport & GatePass Manager',
+        card_gatepass_desc: 'Manage employee passport and gatepass expiry dates.',
+        open_gatepass: 'Open Passport & GatePass',
+        expiry_warning: '⚠️ Warning: Some passports or gatepasses expire in less than 60 days.'
       },
       ar: {
         brand_title: 'شركة الخليج للخدمات الصناعية',
         card_oracle_title: 'مواد الاوراكل ( البحث في الاوراكل )',
         card_oracle_desc: 'بحث محسّن عبر Oracle.xlsx مع تصفية متعددة المدخلات.',
-        open_oracle: '  الاوراكل',
+        open_oracle: 'اذهب للاوراكل',
         card_materials_title: 'المواد المستلمة ( البحث في المواد المستلمة )',
         card_materials_desc: 'نفس التصميم باستخدام Materials.xlsx مع المجاميع والبحث.',
-        open_materials: '   المواد',
+        open_materials: 'اذهب للمواد',
         card_requests_title: 'ملخص الطلبات ( البحث في ملخص الطلبات )',
-        card_requests_desc: 'ا  ملخص الطلبات مع البحث والمرشحات.',
-        open_requests: '   الطلبات ',
+        card_requests_desc: 'افتح ملخص الطلبات مع البحث والمرشحات.',
+        open_requests: 'اذهب للطلبات',
         card_sh_title: 'كومبيرسورز الشهرة ( البحث في مواد محل الشهرة )',
         card_sh_desc: 'جدول قابل للتعديل مع المجاميع والتصدير إلى Excel/PDF.',
-        open_sh: '  محل الشهرة للكمبريسورز',
+        open_sh: 'افتح محل الشهرة',
         card_wo_title: 'ملخص أوامر العمل 4378M',
-        card_wo_desc: 'ا  ملخص أوامر العمل 4378M.',
-        open_wo: '   أوامر العمل',
-        new_badge: '  جديد ',
-        EMP_Card: 'ادارة الموظفين ',
-        EMP_Card_Desc: '  ادارة الموظفين.',
+        card_wo_desc: 'افتح ملخص أوامر العمل 4378M.',
+        open_wo: 'اذهب لأوامر العمل',
+        new_badge: 'جديد',
+        EMP_Card: 'ادارة الموظفين',
+        EMP_Card_Desc: 'افتح ادارة الموظفين.',
         data_label: 'تم العثور على:',
-        rows_suffix: ' نتيجة ',
+        rows_suffix: ' نتيجة',
         file_not_found: 'الملف غير موجود',
         card_vehicles_title: 'متابعة استخدام المركبات',
         card_vehicles_desc: 'تتبع قراءات عداد الكيلومترات والاستخدام اليومي للمركبة.',
         open_vehicles: 'افتح تتبع المركبة',
         card_timesheet_title: 'جدول حضور الموظفين',
-        card_timesheet_desc: 'إدارة وتتبع حضور الموظفين وساعات العمل.',
-        open_timesheet: 'افتح جدول الحضور'
+        card_timesheet_desc: 'إدارة وتسجيل ساعات حضور الموظفين.',
+        open_timesheet: 'افتح جدول الحضور',
+        card_gatepass_title: 'إدارة جوازات السفر وتصاريح الدخول',
+        card_gatepass_desc: 'إدارة تواريخ انتهاء جوازات السفر وتصاريح الدخول للموظفين.',
+        open_gatepass: 'افتح إدارة التصاريح',
+        expiry_warning: '⚠️ تحذير: بعض جوازات السفر أو التصاريح تنتهي خلال أقل من 60 يومًا.'
       }
     };
-    
-    const getLang = () => currentLang;
+
     const applyLang = (lang) => {
       document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
       const dict = I18N[lang] || I18N.ar;
@@ -634,92 +587,146 @@
         const key = el.getAttribute('data-i18n');
         if (dict[key]) el.textContent = dict[key];
       });
-      
-      // Update global language variable and refresh clock
       currentLang = lang;
       updateClock();
     };
-    const setLang = (lang) => { 
-      currentLang = lang;
-      applyLang(lang); 
-    };
-    
-    function countRows(path){
-      // Mock implementation since we can't access files in this environment
-      const mockCounts = {
-        'Oracle.xlsx': 1250,
-        'Materials.xlsx': 890,
-        'Requests.xlsx': 340,
-        'sh.xlsx': 210,
-        'WO.xlsx': 175,
-        'EMP.xlsx': 85,
-        'Timesheet.xlsx': 200
-      };
-      return Promise.resolve(mockCounts[path] || 0);
-    }
-    
-    function setCount(id, n){
-      const el = document.getElementById(id);
-      if (!el) return;
-      const dict = I18N[getLang()] || I18N.ar;
-      el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
-    }
-    
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Apply language and wire toggle
-      applyLang(getLang());
-      document.querySelectorAll('[data-lang]').forEach(btn => 
-        btn.addEventListener('click', () => setLang(btn.dataset.lang))
+
+    // ===== THEME & INIT =====
+    document.addEventListener('DOMContentLoaded', () => {
+      // Theme
+      const themeSelect = document.getElementById('themeSelect');
+      const savedTheme = localStorage.getItem('selectedTheme') || 'modern';
+      themeSelect.value = savedTheme;
+      document.body.className = `theme-${savedTheme}`;
+      themeSelect.addEventListener('change', (e) => {
+        document.body.className = `theme-${e.target.value}`;
+        localStorage.setItem('selectedTheme', e.target.value);
+      });
+
+      // Language
+      applyLang(currentLang);
+      document.querySelectorAll('[data-lang]').forEach(btn =>
+        btn.addEventListener('click', () => applyLang(btn.dataset.lang))
       );
-      
-      // Mock data counts for demonstration
+
+      // Mock counts
+      const setCount = (id, n) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const dict = I18N[currentLang] || I18N.ar;
+        el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
+      };
+
       setCount('oracleCount', 58009);
       setCount('materialsCount', 890);
       setCount('requestsCount', 340);
       setCount('purchaseCount', 210);
       setCount('woCount', 175);
       setCount('empcount', 85);
-      setCount('vehiclesCount', 50);
-      setCount('timesheetCount', 200); // Added for Timesheet
+      setCount('vehiclesCount', 120);
+      setCount('timesheetCount', 95);
     });
+
+    // ===== SUPABASE LOGIC =====
+   document.addEventListener('DOMContentLoaded', async () => {
+  const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+
+  const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+
+  function showAlert(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.style.cssText = `
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: #fef3c7; color: #92400e; padding: 16px 24px;
+      border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      z-index: 1000; font-weight: 600; border: 2px solid #fdba74;
+      max-width: 90%; text-align: center; white-space: pre-wrap;`;
+    alertDiv.textContent = message;
+    document.body.appendChild(alertDiv);
+    setTimeout(() => {
+      alertDiv.style.opacity = '0';
+      alertDiv.style.transition = 'opacity 0.5s';
+      setTimeout(() => document.body.removeChild(alertDiv), 500);
+    }, 10000); // Show longer for detailed message
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('employee_passports')
+      .select('file_no,name,name_ar,gatepass_exp_date,passport_exp_date');
+
+    if (error) throw error;
+
+    const today = new Date();
+    const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000;
+    const expiringEntries = [];
+
+    for (const row of data) {
+      let isExpiring = false;
+      const details = {
+        file_no: row.file_no || '—',
+        name: currentLang === 'ar' ? (row.name_ar || row.name || 'غير معروف') : (row.name || row.name_ar || 'Unknown')
+      };
+
+      let gatepassExp = null;
+      let passportExp = null;
+
+      if (row.gatepass_exp_date) {
+        const gatepassDate = new Date(row.gatepass_exp_date);
+        if (gatepassDate >= today && gatepassDate - today < sixtyDaysMs) {
+          isExpiring = true;
+          gatepassExp = gatepassDate.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US');
+        }
+      }
+
+      if (row.passport_exp_date) {
+        const passportDate = new Date(row.passport_exp_date);
+        if (passportDate >= today && passportDate - today < sixtyDaysMs) {
+          isExpiring = true;
+          passportExp = passportDate.toLocaleDateString(currentLang === 'ar' + 'ar-EG' + 'en-US');
+        }
+      }
+
+      if (isExpiring) {
+        expiringEntries.push({
+          ...details,
+          gatepass_exp_date: gatepassExp,
+          passport_exp_date: passportExp
+        });
+      }
+    }
+
+    // Update count
+    const setCount = (id, n) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const dict = I18N[currentLang] || I18N.ar;
+      el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
+    };
+    setCount('gatepassCount', data.length);
+
+    // Show detailed warning if any
+    if (expiringEntries.length > 0) {
+      const dict = I18N[currentLang] || I18N.ar;
+      let messageLines = [dict.expiry_warning + '\n'];
+
+      expiringEntries.forEach(entry => {
+        let line = `File: ${entry.file_no} | Name: ${entry.name}`;
+        if (entry.gatepass_exp_date) line += ` | GatePass: ${entry.gatepass_exp_date}`;
+        if (entry.passport_exp_date) line += ` | Passport: ${entry.passport_exp_date}`;
+        messageLines.push(line);
+      });
+
+      showAlert(messageLines.join('\n'));
+    }
+
+  } catch (err) {
+    console.error('Supabase fetch error:', err);
+    document.getElementById('gatepassCount').textContent = 'error';
+  }
+});
+
   </script>
-<!-- Code injected by live-server -->
-<script>
-	// <![CDATA[  <-- For SVG support
-	if ('WebSocket' in window) {
-		(function () {
-			function refreshCSS() {
-				var sheets = [].slice.call(document.getElementsByTagName("link"));
-				var head = document.getElementsByTagName("head")[0];
-				for (var i = 0; i < sheets.length; ++i) {
-					var elem = sheets[i];
-					var parent = elem.parentElement || head;
-					parent.removeChild(elem);
-					var rel = elem.rel;
-					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
-						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
-						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
-					}
-					parent.appendChild(elem);
-				}
-			}
-			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
-			var address = protocol + window.location.host + window.location.pathname + '/ws';
-			var socket = new WebSocket(address);
-			socket.onmessage = function (msg) {
-				if (msg.data == 'reload') window.location.reload();
-				else if (msg.data == 'refreshcss') refreshCSS();
-			};
-			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
-				console.log('Live reload enabled.');
-				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
-			}
-		})();
-	}
-	else {
-		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
-	}
-	// ]]>
-</script>
 </body>
 </html>
