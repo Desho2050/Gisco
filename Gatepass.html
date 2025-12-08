@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced PDF Image Extractor</title>
+    <!-- PDF.js (Core + Worker) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- jsPDF for export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Docx.js for Word export -->
+    <script src="https://unpkg.com/docx@7.4.1/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            padding: 20px 0;
+            color: white;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .upload-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            flex: 1;
+            min-width: 300px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .controls-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            flex: 1;
+            min-width: 300px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .preview-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            flex: 2;
+            min-width: 300px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .section-title {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        .upload-area:hover {
+            background: #e3f2fd;
+            border-color: #2980b9;
+        }
+        .upload-area i {
+            font-size: 3rem;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        .upload-text {
+            margin: 10px 0;
+            font-size: 1.1rem;
+            color: #2c3e50;
+        }
+        .file-input {
+            display: none;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-export {
+            background: #2ecc71;
+        }
+        .btn-export:hover {
+            background: #27ae60;
+        }
+        .btn-word {
+            background: #3498db;
+        }
+        .btn-word:hover {
+            background: #2980b9;
+        }
+        .btn-primary {
+            background: #9b59b6;
+        }
+        .btn-primary:hover {
+            background: #8e44ad;
+        }
+        .btn-import {
+            background: #f39c12;
+        }
+        .btn-import:hover {
+            background: #e67e22;
+        }
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .photo-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            aspect-ratio: 1/1;
+        }
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .remove-btn:hover {
+            opacity: 1;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .control-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .pdf-preview-container {
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            min-height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+        }
+        .pdf-preview {
+            background: white;
+            position: relative;
+            width: 297mm;
+            height: 210mm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            transform: scale(0.4);
+            transform-origin: top left;
+        }
+        .loading {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(52, 152, 219, 0.3);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            color: #2980b9;
+        }
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .pdf-preview {
+                transform: scale(0.3);
+            }
+        }
+        /* PDF Viewer Styles */
+        .pdf-viewer {
+            width: 100%;
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .pdf-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .pdf-toolbar h2 {
+            font-size: 1.2rem;
+            color: #2c3e50;
+        }
+        .pdf-toolbar-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .pdf-toolbar .btn {
+            background: #3498db;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pdf-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            overflow: auto;
+            max-height: 500px;
+            padding: 10px;
+            background: #e0e0e0;
+            border-radius: 8px;
+        }
+        .pdf-page {
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 0 auto;
+            display: block;
+            max-width: 100%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .pdf-page:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .drag-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.2);
+            z-index: 1000;
+            cursor: crosshair;
+        }
+        .selection-box {
+            position: absolute;
+            border: 2px dashed #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+            pointer-events: none;
+        }
+        .screenshot-instructions {
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: none;
+        }
+        .page-nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .page-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .page-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .pdf-info {
+            text-align: center;
+            margin: 10px 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .status-message {
+            background: #2ecc71;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+        .image-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .image-actions .btn {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .export-buttons .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Advanced PDF Image Extractor</h1>
+            <p class="subtitle">Extract from PDFs • Import images • Paste from clipboard • Export to PDF or Word</p>
+        </header>
+        <div class="main-content">
+            <div class="upload-section">
+                <h2 class="section-title">Upload Content</h2>
+                <div class="upload-area" id="dropArea">
+                    <i>📄</i>
+                    <p class="upload-text">Drag & drop PDF file here</p>
+                    <p>or</p>
+                    <button class="btn" id="browseBtn">
+                        <span>📁</span> Browse PDF
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" accept=".pdf">
+                </div>
+                <div class="instructions">
+                    <p>✓ Extract images from PDFs</p>
+                    <p>✓ Import existing images directly</p>
+                    <p>✓ Paste images from clipboard</p>
+                    <p>✓ Export to PDF or Word format</p>
+                </div>
+                <h3 class="section-title" style="margin-top: 25px;">Extracted & Imported Images</h3>
+                <div class="photos-grid" id="photosGrid"></div>
+                <div class="image-actions">
+                    <button class="btn btn-import" id="importImagesBtn">
+                        <span>🖼️</span> Import Images
+                    </button>
+                    <button class="btn" id="pasteBtn">
+                        <span>📋</span> Paste from Clipboard
+                    </button>
+                    <button class="btn" id="clearAllBtn">Clear All</button>
+                </div>
+                <input type="file" id="imageInput" class="file-input" accept="image/*" multiple>
+            </div>
+            <div class="controls-section">
+                <h2 class="section-title">Layout Controls</h2>
+                <div class="control-group">
+                    <label class="control-label">Columns</label>
+                    <input type="range" id="columnsSlider" class="control-input" min="1" max="10" value="4">
+                    <span id="columnsValue">4 columns</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Spacing (mm)</label>
+                    <input type="range" id="spacingSlider" class="control-input" min="0" max="20" value="5">
+                    <span id="spacingValue">5 mm</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Image Quality</label>
+                    <select id="qualitySelect" class="control-input">
+                        <option value="0.8">High (80%)</option>
+                        <option value="0.6" selected>Medium (60%)</option>
+                        <option value="0.4">Low (40%)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Margin (mm)</label>
+                    <input type="range" id="marginSlider" class="control-input" min="0" max="30" value="10">
+                    <span id="marginValue">10 mm</span>
+                </div>
+                <div class="export-buttons">
+                    <button class="btn btn-export" id="exportPdfBtn" disabled>
+                        <span>📄</span> Export as PDF
+                    </button>
+                    <button class="btn btn-word" id="exportWordBtn" disabled>
+                        <span>📝</span> Export as Word
+                    </button>
+                </div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <div class="preview-section">
+                <h2 class="section-title">Landscape Preview</h2>
+                <div class="pdf-preview-container">
+                    <div class="pdf-preview" id="pdfPreview"></div>
+                </div>
+                <p style="text-align: center; margin-top: 15px; color: #666; font-size: 0.9rem;">
+                    A4 landscape layout (297×210 mm)
+                </p>
+            </div>
+        </div>
+        <!-- PDF Viewer Section -->
+        <div class="pdf-viewer" id="pdfViewer" style="display: none;">
+            <div class="pdf-toolbar">
+                <h2>PDF Viewer</h2>
+                <div class="pdf-toolbar-buttons">
+                    <button class="btn btn-primary" id="copyImageBtn">
+                        <span>📋</span> Copy Image
+                    </button>
+                    <button class="btn" id="closePdfBtn">
+                        <span>❌</span> Close PDF
+                    </button>
+                </div>
+            </div>
+            <div class="screenshot-instructions" id="instructions">
+                Click and drag on the PDF to select an area to copy to clipboard
+            </div>
+            <div class="status-message" id="statusMessage"></div>
+            <div class="pdf-info" id="pdfInfo"></div>
+            <div class="pdf-container" id="pdfContainer"></div>
+            <div class="page-nav">
+                <button class="page-btn" id="prevPageBtn" disabled>Previous</button>
+                <span id="pageCounter">Page 1 of 1</span>
+                <button class="page-btn" id="nextPageBtn" disabled>Next</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Initialize PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        // DOM Elements
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const browseBtn = document.getElementById('browseBtn');
+        const photosGrid = document.getElementById('photosGrid');
+        const pdfPreview = document.getElementById('pdfPreview');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const exportWordBtn = document.getElementById('exportWordBtn');
+        const loading = document.getElementById('loading');
+        const pdfViewer = document.getElementById('pdfViewer');
+        const pdfContainer = document.getElementById('pdfContainer');
+        const copyImageBtn = document.getElementById('copyImageBtn');
+        const closePdfBtn = document.getElementById('closePdfBtn');
+        const instructions = document.getElementById('instructions');
+        const statusMessage = document.getElementById('statusMessage');
+        const pdfInfo = document.getElementById('pdfInfo');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const pageCounter = document.getElementById('pageCounter');
+        const importImagesBtn = document.getElementById('importImagesBtn');
+        const imageInput = document.getElementById('imageInput');
+        const pasteBtn = document.getElementById('pasteBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        // Control elements
+        const columnsSlider = document.getElementById('columnsSlider');
+        const columnsValue = document.getElementById('columnsValue');
+        const spacingSlider = document.getElementById('spacingSlider');
+        const spacingValue = document.getElementById('spacingValue');
+        const qualitySelect = document.getElementById('qualitySelect');
+        const marginSlider = document.getElementById('marginSlider');
+        const marginValue = document.getElementById('marginValue');
+        // Photo storage
+        let photos = [];
+        let pdfDoc = null;
+        let currentPage = 1;
+        let isCopying = false;
+        let dragOverlay = null;
+        let selectionBox = null;
+        let startX, startY;
+        let pdfCanvas = null; // Store reference to PDF canvas
+        // Initialize controls
+        columnsSlider.addEventListener('input', updatePreview);
+        spacingSlider.addEventListener('input', updatePreview);
+        qualitySelect.addEventListener('change', updatePreview);
+        marginSlider.addEventListener('input', updatePreview);
+        // Update control value displays
+        columnsSlider.addEventListener('input', () => {
+            columnsValue.textContent = `${columnsSlider.value} columns`;
+        });
+        spacingSlider.addEventListener('input', () => {
+            spacingValue.textContent = `${spacingSlider.value} mm`;
+        });
+        marginSlider.addEventListener('input', () => {
+            marginValue.textContent = `${marginSlider.value} mm`;
+        });
+        // Event Listeners
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+        dropArea.addEventListener('dragover', handleDragOver);
+        dropArea.addEventListener('drop', handleDrop);
+        exportPdfBtn.addEventListener('click', exportToPDF);
+        exportWordBtn.addEventListener('click', exportToWord);
+        copyImageBtn.addEventListener('click', startCopyMode);
+        closePdfBtn.addEventListener('click', closePdfViewer);
+        prevPageBtn.addEventListener('click', loadPreviousPage);
+        nextPageBtn.addEventListener('click', loadNextPage);
+        importImagesBtn.addEventListener('click', () => imageInput.click());
+        imageInput.addEventListener('change', handleImageImport);
+        pasteBtn.addEventListener('click', pasteFromClipboard);
+        clearAllBtn.addEventListener('click', clearAllImages);
+        // Handle file selection
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/pdf') {
+                    loadPdfFile(file);
+                } else {
+                    alert('Please select a PDF file');
+                }
+            }
+            fileInput.value = '';
+        }
+        // Handle drag over
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropArea.style.borderColor = '#2ecc71';
+            dropArea.style.backgroundColor = '#d5f5e3';
+        }
+        // Handle drop
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropArea.style.borderColor = '#3498db';
+            dropArea.style.backgroundColor = '#f8f9fa';
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/pdf') {
+                    loadPdfFile(file);
+                } else {
+                    alert('Only PDF files are supported');
+                }
+            }
+        }
+        // Load PDF file
+        async function loadPdfFile(file) {
+            loading.style.display = 'flex';
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                // Fixed: Use 'data' property instead of 'arrayBuffer'
+                pdfDoc = await pdfjsLib.getDocument({  arrayBuffer }).promise;
+                currentPage = 1;
+                await renderPdfPage(currentPage);
+                pdfInfo.textContent = `PDF: ${file.name} • ${pdfDoc.numPages} pages`;
+                pageCounter.textContent = `Page ${currentPage} of ${pdfDoc.numPages}`;
+                prevPageBtn.disabled = currentPage === 1;
+                nextPageBtn.disabled = currentPage === pdfDoc.numPages;
+                pdfViewer.style.display = 'block';
+                copyImageBtn.disabled = false;
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Failed to load PDF. Please try another file.');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        // Render a specific PDF page
+        async function renderPdfPage(pageNum) {
+            if (!pdfDoc) return;
+            try {
+                const page = await pdfDoc.getPage(pageNum);
+                const scale = 1.5;
+                const viewport = page.getViewport({ scale });
+                // Clear container
+                pdfContainer.innerHTML = '';
+                pdfCanvas = document.createElement('canvas');
+                const context = pdfCanvas.getContext('2d');
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                await page.render(renderContext).promise;
+                pdfCanvas.className = 'pdf-page';
+                pdfContainer.appendChild(pdfCanvas);
+            } catch (error) {
+                console.error('Error rendering PDF page:', error);
+                pdfContainer.innerHTML = '<div style="padding:20px;color:red;">Error loading PDF page</div>';
+                pdfCanvas = null;
+            }
+        }
+        // Load previous page
+        async function loadPreviousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                await renderPdfPage(currentPage);
+                pageCounter.textContent = `Page ${currentPage} of ${pdfDoc.numPages}`;
+                prevPageBtn.disabled = currentPage === 1;
+                nextPageBtn.disabled = false;
+            }
+        }
+        // Load next page
+        async function loadNextPage() {
+            if (currentPage < pdfDoc.numPages) {
+                currentPage++;
+                await renderPdfPage(currentPage);
+                pageCounter.textContent = `Page ${currentPage} of ${pdfDoc.numPages}`;
+                prevPageBtn.disabled = false;
+                nextPageBtn.disabled = currentPage === pdfDoc.numPages;
+            }
+        }
+        // Start copy mode
+        function startCopyMode() {
+            if (!pdfDoc || !pdfCanvas) return;
+            // Show instructions
+            instructions.style.display = 'block';
+            copyImageBtn.disabled = true;
+            // Create drag overlay
+            dragOverlay = document.createElement('div');
+            dragOverlay.className = 'drag-overlay';
+            document.body.appendChild(dragOverlay);
+            isCopying = true;
+            dragOverlay.addEventListener('mousedown', startSelection);
+            dragOverlay.addEventListener('mouseup', endSelection);
+        }
+        // Start selection
+        function startSelection(e) {
+            if (!isCopying) return;
+            // Get position relative to the PDF canvas (not container)
+            const rect = pdfCanvas.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+            // Create selection box
+            selectionBox = document.createElement('div');
+            selectionBox.className = 'selection-box';
+            selectionBox.style.left = (rect.left + startX) + 'px';
+            selectionBox.style.top = (rect.top + startY) + 'px';
+            selectionBox.style.width = '0px';
+            selectionBox.style.height = '0px';
+            document.body.appendChild(selectionBox);
+            dragOverlay.addEventListener('mousemove', drawSelection);
+        }
+        // Draw selection
+        function drawSelection(e) {
+            if (!selectionBox) return;
+            const rect = pdfCanvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            const width = Math.abs(currentX - startX);
+            const height = Math.abs(currentY - startY);
+            const left = Math.min(startX, currentX);
+            const top = Math.min(startY, currentY);
+            // Position relative to viewport, but dimensions relative to canvas
+            selectionBox.style.left = (rect.left + left) + 'px';
+            selectionBox.style.top = (rect.top + top) + 'px';
+            selectionBox.style.width = width + 'px';
+            selectionBox.style.height = height + 'px';
+        }
+        // End selection
+        async function endSelection(e) {
+            if (!isCopying) return;
+            // Remove event listeners
+            dragOverlay.removeEventListener('mousemove', drawSelection);
+            dragOverlay.removeEventListener('mousedown', startSelection);
+            dragOverlay.removeEventListener('mouseup', endSelection);
+            // Get selection coordinates relative to PDF canvas
+            const rect = pdfCanvas.getBoundingClientRect();
+            const selectionRect = selectionBox.getBoundingClientRect();
+            // Calculate coordinates relative to canvas
+            const x = selectionRect.left - rect.left;
+            const y = selectionRect.top - rect.top;
+            const width = selectionRect.width;
+            const height = selectionRect.height;
+            // Clean up
+            if (selectionBox) {
+                document.body.removeChild(selectionBox);
+                selectionBox = null;
+            }
+            if (dragOverlay) {
+                document.body.removeChild(dragOverlay);
+                dragOverlay = null;
+            }
+            // Hide instructions
+            instructions.style.display = 'none';
+            isCopying = false;
+            copyImageBtn.disabled = false;
+            // Only copy if selection is valid
+            if (width > 10 && height > 10 && x >= 0 && y >= 0) {
+                try {
+                    // Validate coordinates are within canvas bounds
+                    const canvasWidth = pdfCanvas.width;
+                    const canvasHeight = pdfCanvas.height;
+                    if (x + width > canvasWidth) width = canvasWidth - x;
+                    if (y + height > canvasHeight) height = canvasHeight - y;
+                    if (width <= 0 || height <= 0) {
+                        showStatus('Selection outside PDF area. Please try again.', true);
+                        return;
+                    }
+                    // Create a temporary canvas for the selection
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = width;
+                    tempCanvas.height = height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    // Draw the selected portion from the PDF canvas
+                    tempCtx.drawImage(
+                        pdfCanvas,
+                        x, y, width, height,
+                        0, 0, width, height
+                    );
+                    // Convert to data URL
+                    const imageData = tempCanvas.toDataURL('image/png');
+                    // Copy to clipboard and add to photos
+                    await copyImageToClipboard(tempCanvas);
+                    addImageToGrid(imageData);
+                } catch (error) {
+                    console.error('Copy image failed:', error);
+                    showStatus('Failed to copy image. Please try again.', true);
+                }
+            } else {
+                showStatus('Selection too small or invalid. Please select a larger area.', true);
+            }
+        }
+        // Copy image to clipboard
+        async function copyImageToClipboard(canvas) {
+            try {
+                // Modern browsers support Clipboard API
+                if (navigator.clipboard && window.ClipboardItem) {
+                    canvas.toBlob(async (blob) => {
+                        try {
+                            await navigator.clipboard.write([
+                                new ClipboardItem({ 'image/png': blob })
+                            ]);
+                            showStatus('Image copied to clipboard!', false);
+                        } catch (err) {
+                            console.error('Clipboard write failed:', err);
+                            showStatus('Failed to copy to clipboard. Please try again.', true);
+                        }
+                    }, 'image/png');
+                } else {
+                    // Fallback: Create a temporary image and select it
+                    const img = document.createElement('img');
+                    img.src = canvas.toDataURL('image/png');
+                    img.style.position = 'absolute';
+                    img.style.left = '-9999px';
+                    document.body.appendChild(img);
+                    const range = document.createRange();
+                    range.selectNode(img);
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+                    let success = false;
+                    try {
+                        success = document.execCommand('copy');
+                    } catch (err) {
+                        console.error('ExecCommand copy failed:', err);
+                    }
+                    document.body.removeChild(img);
+                    if (success) {
+                        showStatus('Image copied to clipboard!', false);
+                    } else {
+                        showStatus('Your browser doesn\'t support clipboard access. Image added to grid.', true);
+                    }
+                }
+            } catch (error) {
+                console.error('Copy to clipboard failed:', error);
+                showStatus('Failed to copy to clipboard. Image added to grid.', true);
+            }
+        }
+        // Show status message
+        function showStatus(message, isError) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+            statusMessage.style.background = isError ? '#e74c3c' : '#2ecc71';
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 3000);
+        }
+        // Add image to grid
+        function addImageToGrid(imageData) {
+            // Create a new photo object
+            const newPhoto = {
+                id: Date.now(),
+                src: imageData,
+                originalWidth: 0,
+                originalHeight: 0
+            };
+            // Add to photos array
+            photos.push(newPhoto);
+            // Update UI
+            renderPhotosGrid();
+            updatePreview();
+            exportPdfBtn.disabled = false;
+            exportWordBtn.disabled = false;
+        }
+        // Handle image import
+        function handleImageImport(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function() {
+                        addImageToGrid(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            imageInput.value = '';
+        }
+        // Paste from clipboard
+        async function pasteFromClipboard() {
+            try {
+                const clipboardItems = await navigator.clipboard.read();
+                for (const clipboardItem of clipboardItems) {
+                    for (const type of clipboardItem.types) {
+                        if (type.startsWith('image/')) {
+                            const blob = await clipboardItem.getType(type);
+                            const reader = new FileReader();
+                            reader.onload = function() {
+                                addImageToGrid(reader.result);
+                            };
+                            reader.readAsDataURL(blob);
+                            return;
+                        }
+                    }
+                }
+                showStatus('No image found in clipboard', true);
+            } catch (err) {
+                console.error('Failed to read clipboard:', err);
+                showStatus('Failed to read clipboard. Please copy an image first.', true);
+            }
+        }
+        // Clear all images
+        function clearAllImages() {
+            if (confirm('Are you sure you want to remove all images?')) {
+                photos = [];
+                renderPhotosGrid();
+                updatePreview();
+                exportPdfBtn.disabled = true;
+                exportWordBtn.disabled = true;
+            }
+        }
+        // Close PDF Viewer
+        function closePdfViewer() {
+            pdfViewer.style.display = 'none';
+            pdfContainer.innerHTML = '';
+            pdfDoc = null;
+            currentPage = 1;
+            pdfCanvas = null;
+        }
+        // Render photos grid
+        function renderPhotosGrid() {
+            photosGrid.innerHTML = '';
+            photos.forEach(photo => {
+                const photoItem = document.createElement('div');
+                photoItem.className = 'photo-item';
+                photoItem.draggable = true;
+                photoItem.dataset.id = photo.id;
+                photoItem.innerHTML = `
+                    <img src="${photo.src}" alt="Image" loading="lazy">
+                    <div class="remove-btn" onclick="removePhoto(${photo.id})">×</div>
+                `;
+                // Add drag events
+                photoItem.addEventListener('dragstart', handleDragStart);
+                photoItem.addEventListener('dragover', handleDragOverItem);
+                photoItem.addEventListener('drop', handleDropItem);
+                photosGrid.appendChild(photoItem);
+            });
+        }
+        // Photo removal
+        function removePhoto(id) {
+            photos = photos.filter(photo => photo.id !== id);
+            renderPhotosGrid();
+            updatePreview();
+            exportPdfBtn.disabled = photos.length === 0;
+            exportWordBtn.disabled = photos.length === 0;
+        }
+        // Drag and drop reordering
+        let dragSource = null;
+        function handleDragStart(e) {
+            dragSource = e.target;
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        function handleDragOverItem(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+        function handleDropItem(e) {
+            e.stopPropagation();
+            if (dragSource !== e.target) {
+                const sourceId = dragSource.dataset.id;
+                const targetId = e.target.dataset.id;
+                const sourceIndex = photos.findIndex(p => p.id == sourceId);
+                const targetIndex = photos.findIndex(p => p.id == targetId);
+                if (sourceIndex !== -1 && targetIndex !== -1) {
+                    const [movedItem] = photos.splice(sourceIndex, 1);
+                    photos.splice(targetIndex, 0, movedItem);
+                    renderPhotosGrid();
+                    updatePreview();
+                }
+            }
+            return false;
+        }
+        // Update preview based on controls
+        function updatePreview() {
+            if (photos.length === 0) {
+                pdfPreview.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#999;">No images to preview</div>';
+                return;
+            }
+            pdfPreview.innerHTML = '';
+            const columns = parseInt(columnsSlider.value);
+            const spacing = parseInt(spacingSlider.value);
+            const margin = parseInt(marginSlider.value);
+            const pageWidth = 297;  // A4 landscape width (mm)
+            const pageHeight = 210; // A4 landscape height (mm)
+            const availableWidth = pageWidth - 2 * margin - (columns - 1) * spacing;
+            const imageWidth = availableWidth / columns;
+            const rows = Math.ceil(photos.length / columns);
+            const imageHeight = (pageHeight - 2 * margin) / rows;
+            photos.forEach((photo, i) => {
+                const row = Math.floor(i / columns);
+                const col = i % columns;
+                const posX = margin + col * (imageWidth + spacing);
+                const posY = margin + row * imageHeight;
+                const img = document.createElement('img');
+                img.src = photo.src;
+                img.style.position = 'absolute';
+                img.style.left = `${posX}mm`;
+                img.style.top = `${posY}mm`;
+                img.style.width = `${imageWidth}mm`;
+                img.style.height = `${imageHeight}mm`;
+                img.style.objectFit = 'cover';
+                img.style.border = '1px solid #eee';
+                pdfPreview.appendChild(img);
+            });
+        }
+        // Export to PDF
+        async function exportToPDF() {
+            if (photos.length === 0) return;
+            loading.style.display = 'flex';
+            exportPdfBtn.disabled = true;
+            try {
+                const columns = parseInt(columnsSlider.value);
+                const spacing = parseInt(spacingSlider.value);
+                const margin = parseInt(marginSlider.value);
+                // Create landscape PDF (A4: 297x210 mm)
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const availableWidth = pageWidth - 2 * margin - (columns - 1) * spacing;
+                const imageWidth = availableWidth / columns;
+                const rows = Math.ceil(photos.length / columns);
+                const imageHeight = (pageHeight - 2 * margin) / rows;
+                // Add images
+                for (let i = 0; i < photos.length; i++) {
+                    const row = Math.floor(i / columns);
+                    const col = i % columns;
+                    const x = margin + col * (imageWidth + spacing);
+                    const y = margin + row * imageHeight;
+                    const img = new Image();
+                    img.src = photos[i].src;
+                    await new Promise(resolve => {
+                        img.onload = () => resolve();
+                        img.onerror = () => {
+                            console.warn('Image failed to load, skipping:', photos[i].src);
+                            resolve();
+                        };
+                    });
+                    pdf.addImage(
+                        img,
+                        'PNG',
+                        x,
+                        y,
+                        imageWidth,
+                        imageHeight
+                    );
+                }
+                pdf.save('combined-images-landscape.pdf');
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert('PDF export failed. Please try again.');
+            } finally {
+                loading.style.display = 'none';
+                exportPdfBtn.disabled = false;
+            }
+        }
+        // Export to Word
+        async function exportToWord() {
+            if (photos.length === 0) return;
+            loading.style.display = 'column';
+            exportWordBtn.disabled = true;
+            try {
+                const { Document, Paragraph, ImageRun, TextRun, HeadingLevel, AlignmentType } = docx;
+                
+                // Create image array for Docx
+                const imagePromises = photos.map(photo => {
+                    // Convert data URL to blob
+                    const arr = photo.src.split(',');
+                    const mime = arr[0].match(/:(.*?);/)[1];
+                    const bstr = atob(arr[1]);
+                    let n = bstr.length;
+                    const u8arr = new Uint8Array(n);
+                    while(n--){
+                        u8arr[n] = bstr.charCodeAt(n);
+                    }
+                    return new Blob([u8arr], {type:mime});
+                });
+                
+                // Wait for all blobs to be created
+                const imageBlobs = await Promise.all(imagePromises);
+                
+                // Create paragraphs for each image
+                const columns = parseInt(columnsSlider.value);
+                const children = [];
+                
+                // Add title
+                children.push(
+                    new Paragraph({
+                      
+                      
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 300 }
+                        
+                    })
+                );
+                
+                // Add images in rows
+                for (let i = 0; i < photos.length; i += columns) {
+                    const rowImages = photos.slice(i, i + columns);
+                    const rowBlobs = imageBlobs.slice(i, i + columns);
+                    
+                    // Create a paragraph for this row
+                    const rowParagraph = new Paragraph({
+                        children: rowBlobs.map((blob, idx) => {
+                            return new ImageRun({
+                                data: blob,
+                                transformation: {
+                                    width: 600 / columns, // Adjust width based on columns
+                                    height: 300
+                                }
+                            });
+                        }),
+                        spacing: { after: 200 }
+                    });
+                    
+                    children.push(rowParagraph);
+                }
+                
+                // Create the document
+                const doc = new Document({
+                    sections: [{
+                        properties: {},
+                        children: children
+                    }]
+                });
+                
+                // Generate and download
+                const blob = await docx.Packer.toBlob(doc);
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'extracted-images.docx';
+                link.click();
+            } catch (error) {
+                console.error('Word export failed:', error);
+                alert('Word export failed. Please try again.');
+            } finally {
+                loading.style.display = 'none';
+                exportWordBtn.disabled = false;
+            }
+        }
+        // Expose to global scope
+        window.removePhoto = removePhoto;
+    </script>
+</body>
+</html>
+
