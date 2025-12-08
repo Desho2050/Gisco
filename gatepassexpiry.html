@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" id="html-root">
 <head>
@@ -163,7 +164,7 @@
     // THEME & LANGUAGE
     // ======================
     let isDarkMode = localStorage.getItem('darkMode') === 'true';
-    let currentLang = localStorage.getItem('lang') || 'en';
+    let currentLang = localStorage.getItem('selectedLanguage') || 'ar';
 
     if (isDarkMode) document.documentElement.classList.add('dark');
     if (currentLang === 'ar') document.documentElement.dir = 'rtl';
@@ -247,7 +248,17 @@
     };
 
     function updateUI() {
-      const t = translations[currentLang];
+      const applyLang = (lang) => {
+  document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+  const dict = I18N[lang] || I18N.ar;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) el.textContent = dict[key];
+  });
+  currentLang = lang;
+  localStorage.setItem('selectedLanguage', lang); // 👈 SAVE LANGUAGE
+  updateClock();
+};
       document.getElementById('page-title').textContent = t.title;
       document.getElementById('search-input').placeholder = t.search;
       document.getElementById('btn-add').textContent = t.addNew;
