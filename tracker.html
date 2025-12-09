@@ -177,19 +177,20 @@
     <div id="status"></div>
 
     <table class="log-table" id="logTable">
-      <thead>
-        <tr>
-          <th id="thSN">SN</th>
-          <th id="thLocation">LOCATION</th>
-          <th id="thDate">DATE</th>
-          <th id="thStartTime">START TIME</th>
-          <th id="thStartKm">START (KM)</th>
-          <th id="thEndKm">END (KM)</th>
-          <th id="thEndTime">END TIME</th>
-          <th id="thUsage">USAGE (KM)</th>
-          <th id="thRemarks">REMARKS</th>
-        </tr>
-      </thead>
+     <thead>
+  <tr>
+    <th id="thSN">SN</th>
+    <th id="thLocation">LOCATION</th>
+    <th id="thDate">DATE</th>
+    <th id="thStartTime">START TIME</th>
+    <th id="thStartKm">START (KM)</th>
+    <th id="thEndKm">END (KM)</th>
+    <th id="thEndTime">END TIME</th>
+    <th id="thUsage">USAGE (KM)</th>
+    <th id="thDuration">DURATION</th> <!-- NEW -->
+    <th id="thRemarks">REMARKS</th>
+  </tr>
+</thead>
       <tbody id="logBody">
       </tbody>
     </table>
@@ -230,524 +231,676 @@
     </div>
   </div>
 
-  <script>
-    // ==============================
-    // 🔑 DRIVER CONFIGURATION
-    // ==============================
-    const DRIVERS = {
-      1234: { name: "Mohammad Akbar Mohammad Wasi", vehicleNo: "43572" },
-      5678: { name: "Muhammad Asnaf Muhammad Siddique", vehicleNo: "43571" },
-      91011: { name: "Gurlal Singh Desa Singh", vehicleNo: "68034" },
-      1213: { name: "Muhammad Ashfaq Hameed Ahmed", vehicleNo: "68054" },
-      1415: { name: "RAJASEAKARAN", vehicleNo: "68046" },
-      1617: { name: "Atif Ullah Tahir Shah", vehicleNo: "68047" },
-      1819: { name: "KUMAR MuTHASAMY", vehicleNo: "68042" },
-      2021: { name: "Mohammed Safullah", vehicleNo: "68045" }
-    };
+<script>
+  // ==============================
+  // 🔑 DRIVER CONFIGURATION
+  // ==============================
+  const DRIVERS = {
+    1234: { name: "Mohammad Akbar Mohammad Wasi", vehicleNo: "43572" },
+    5678: { name: "Muhammad Asnaf Muhammad Siddique", vehicleNo: "43571" },
+    91011: { name: "Gurlal Singh Desa Singh", vehicleNo: "68034" },
+    1213: { name: "Muhammad Ashfaq Hameed Ahmed", vehicleNo: "68054" },
+    1415: { name: "RAJASEAKARAN", vehicleNo: "68046" },
+    1617: { name: "Atif Ullah Tahir Shah", vehicleNo: "68047" },
+    1819: { name: "KUMAR MuTHASAMY", vehicleNo: "68042" },
+    2021: { name: "Mohammed Safullah", vehicleNo: "68045" }
+  };
 
-    // ==============================
-    // 🔤 TRANSLATIONS
-    // ==============================
-    const translations = {
-      en: {
-        appTitle: "Vehicle Usage Tracker",
-        lblSelectMonth: "View Month:",
-        startTripBtn: "Start Trip",
-        endTripBtn: "End Trip",
-        langToggle: "العربية / English",
-        thSN: "SN",
-        thLocation: "LOCATION",
-        thDate: "DATE",
-        thStartKm: "START (KM)",
-        thStartTime: "START TIME",
-        thEndKm: "END (KM)",
-        thUsage: "USAGE (KM)",
-        thEndTime: "END TIME",
-        thRemarks: "REMARKS",
-        modalTitle: "Add New Entry",
-        lblDate: "Date:",
-        lblLocation: "Location:",
-        lblStartKm: "Start (KM):",
-        lblStartTime: "Start Time:",
-        lblEndKm: "End (KM):",
-        lblEndTime: "End Time:",
-        lblRemarks: "Remarks:",
-        btnSave: "Save",
-        btnCancel: "Cancel",
-        statusSuccess: "✓ Successfully saved",
-        statusLoadError: "⚠ Failed to load records",
-        statusDbError: "⚠ Database connection error",
-        alertLessKm: "❌ End KM must be greater than Start KM!",
-        alertFutureDate: "❌ Cannot enter a future date!",
-        alertSaveFail: "❌ Save failed. Check connection and try again.",
-        alertCooldown: "Please wait {SECONDS} more second{PLURAL} before starting a new action.",
-        noDataCurrent: "No data for this month.",
-        selectMonth: "Select Month...",
-        modalTitleClose: "Close Previous Trip",
-        locationPlaceholder: "Start typing or select...",
-        alertEndRequired: "End KM and End Time are required to close the trip.",
-        alertOpenTripExists: "You already have an open trip! Please end it first."
-      },
-      ar: {
-        appTitle: "متابعة استخدام سيارة المشروع",
-        lblSelectMonth: "عرض الشهر:",
-        startTripBtn: "بدء الرحلة",
-        endTripBtn: "إنهاء الرحلة",
-        langToggle: "English / العربية",
-        thSN: "ر.ت",
-        thLocation: "الموقع",
-        thDate: "التاريخ",
-        thStartKm: "بداية (كم)",
-        thStartTime: "وقت البدء",
-        thEndKm: "نهاية (كم)",
-        thUsage: "الاستخدام (كم)",
-        thEndTime: "وقت النهاية",
-        thRemarks: "ملاحظات",
-        modalTitle: "إدخال جديد",
-        lblDate: "التاريخ:",
-        lblLocation: "الموقع:",
-        lblStartKm: "قراءة بداية الخدمة (كم):",
-        lblStartTime: "وقت البدء:",
-        lblEndKm: "قراءة نهاية الخدمة (كم):",
-        lblEndTime: "وقت النهاية:",
-        lblRemarks: "ملاحظات:",
-        btnSave: "حفظ",
-        btnCancel: "إلغاء",
-        statusSuccess: "✓ تم الحفظ بنجاح",
-        statusLoadError: "⚠ فشل تحميل السجلات",
-        statusDbError: "⚠ خطأ في الاتصال بقاعدة البيانات",
-        alertLessKm: "❌ يجب أن تكون قراءة النهاية أكبر من القراءة الابتدائية!",
-        alertFutureDate: "❌ لا يمكن إدخال تاريخ مستقبلي!",
-        alertSaveFail: "❌ فشل الحفظ. تحقق من الاتصال وحاول لاحقًا.",
-        alertCooldown: "يرجى الانتظار {SECONDS} ثانية{PLURAL} إضافية قبل تنفيذ أي إجراء.",
-        noDataCurrent: "لا توجد بيانات لهذا الشهر.",
-        selectMonth: "اختر شهرًا...",
-        modalTitleClose: "إغلاق الرحلة السابقة",
-        locationPlaceholder: "ابدأ الكتابة أو اختر...",
-        alertEndRequired: "قراءة النهاية ووقت النهاية مطلوبان لإغلاق الرحلة.",
-        alertOpenTripExists: "لديك رحلة مفتوحة بالفعل! يرجى إنهاؤها أولاً."
-      }
-    };
-
-    // ==============================
-    // 🌍 LANGUAGE
-    // ==============================
-    let currentLang = localStorage.getItem('userLang') || 'en';
-    const dirMap = { en: 'ltr', ar: 'rtl' };
-    const localeMap = { en: 'en-US', ar: 'ar-SA' };
-
-    function setLanguage(lang) {
-      currentLang = lang;
-      localStorage.setItem('userLang', lang);
-      document.documentElement.lang = lang;
-      document.documentElement.dir = dirMap[lang];
-      applyTranslations();
+  // ==============================
+  // 🔤 TRANSLATIONS
+  // ==============================
+  const translations = {
+    en: {
+      appTitle: "Vehicle Usage Tracker",
+      lblSelectMonth: "View Month:",
+      startTripBtn: "Start Trip",
+      endTripBtn: "End Trip",
+      langToggle: "العربية / English",
+      thSN: "SN",
+      thLocation: "LOCATION",
+      thDate: "DATE",
+      thStartKm: "START (KM)",
+      thStartTime: "START TIME",
+      thEndKm: "END (KM)",
+      thUsage: "USAGE (KM)",
+      thEndTime: "END TIME",
+      thDuration: "DURATION",
+      thRemarks: "REMARKS",
+      modalTitle: "Add New Entry",
+      lblDate: "Date:",
+      lblLocation: "Location:",
+      lblStartKm: "Start (KM):",
+      lblStartTime: "Start Time:",
+      lblEndKm: "End (KM):",
+      lblEndTime: "End Time:",
+      lblDuration: "Duration:",
+      lblRemarks: "Remarks:",
+      btnSave: "Save",
+      btnCancel: "Cancel",
+      statusSuccess: "✓ Successfully saved",
+      statusLoadError: "⚠ Failed to load records",
+      statusDbError: "⚠ Database connection error",
+      alertLessKm: "❌ End KM must be greater than Start KM!",
+      alertFutureDate: "❌ Cannot enter a future date!",
+      alertSaveFail: "❌ Save failed. Check connection and try again.",
+      alertCooldown: "Please wait {SECONDS} more second{PLURAL} before starting a new action.",
+      noDataCurrent: "No data for this month.",
+      selectMonth: "Select Month...",
+      modalTitleClose: "Close Previous Trip",
+      locationPlaceholder: "Start typing or select...",
+      alertEndRequired: "End KM and End Time are required to close the trip.",
+      alertOpenTripExists: "You already have an open trip! Please end it first.",
+      alertNonInteger: "KM values must be whole numbers (integers)."
+    },
+    ar: {
+      appTitle: "متابعة استخدام سيارة المشروع",
+      lblSelectMonth: "عرض الشهر:",
+      startTripBtn: "بدء الرحلة",
+      endTripBtn: "إنهاء الرحلة",
+      langToggle: "English / العربية",
+      thSN: "ر.ت",
+      thLocation: "الموقع",
+      thDate: "التاريخ",
+      thStartKm: "بداية (كم)",
+      thStartTime: "وقت البدء",
+      thEndKm: "نهاية (كم)",
+      thUsage: "الاستخدام (كم)",
+      thEndTime: "وقت النهاية",
+      thDuration: "المدة",
+      thRemarks: "ملاحظات",
+      modalTitle: "إدخال جديد",
+      lblDate: "التاريخ:",
+      lblLocation: "الموقع:",
+      lblStartKm: "قراءة بداية الخدمة (كم):",
+      lblStartTime: "وقت البدء:",
+      lblEndKm: "قراءة نهاية الخدمة (كم):",
+      lblEndTime: "وقت النهاية:",
+      lblDuration: "المدة الزمنية:",
+      lblRemarks: "ملاحظات:",
+      btnSave: "حفظ",
+      btnCancel: "إلغاء",
+      statusSuccess: "✓ تم الحفظ بنجاح",
+      statusLoadError: "⚠ فشل تحميل السجلات",
+      statusDbError: "⚠ خطأ في الاتصال بقاعدة البيانات",
+      alertLessKm: "❌ يجب أن تكون قراءة النهاية أكبر من القراءة الابتدائية!",
+      alertFutureDate: "❌ لا يمكن إدخال تاريخ مستقبلي!",
+      alertSaveFail: "❌ فشل الحفظ. تحقق من الاتصال وحاول لاحقًا.",
+      alertCooldown: "يرجى الانتظار {SECONDS} ثانية{PLURAL} إضافية قبل تنفيذ أي إجراء.",
+      noDataCurrent: "لا توجد بيانات لهذا الشهر.",
+      selectMonth: "اختر شهرًا...",
+      modalTitleClose: "إغلاق الرحلة السابقة",
+      locationPlaceholder: "ابدأ الكتابة أو اختر...",
+      alertEndRequired: "قراءة النهاية ووقت النهاية مطلوبان لإغلاق الرحلة.",
+      alertOpenTripExists: "لديك رحلة مفتوحة بالفعل! يرجى إنهاؤها أولاً.",
+      alertNonInteger: "يجب أن تكون قيم الكيلومترات أرقامًا صحيحة (بدون فواصل عشرية)."
     }
+  };
 
-    function applyTranslations() {
-      const t = translations[currentLang];
-      document.getElementById('appTitle').textContent = t.appTitle;
-      document.getElementById('lblSelectMonth').textContent = t.lblSelectMonth;
-      document.getElementById('langToggle').textContent = t.langToggle;
-      document.getElementById('thSN').textContent = t.thSN;
-      document.getElementById('thLocation').textContent = t.thLocation;
-      document.getElementById('thDate').textContent = t.thDate;
-      document.getElementById('thStartKm').textContent = t.thStartKm;
-      document.getElementById('thStartTime').textContent = t.thStartTime;
-      document.getElementById('thEndKm').textContent = t.thEndKm;
-      document.getElementById('thUsage').textContent = t.thUsage;
-      document.getElementById('thEndTime').textContent = t.thEndTime;
-      document.getElementById('thRemarks').textContent = t.thRemarks;
-      document.getElementById('modalTitle').textContent = t.modalTitle;
-      document.getElementById('lblDate').textContent = t.lblDate;
-      document.getElementById('lblLocation').textContent = t.lblLocation;
-      document.getElementById('lblStartKm').textContent = t.lblStartKm;
-      document.getElementById('lblStartTime').textContent = t.lblStartTime;
-      document.getElementById('lblEndKm').textContent = t.lblEndKm;
-      document.getElementById('lblEndTime').textContent = t.lblEndTime;
-      document.getElementById('lblRemarks').textContent = t.lblRemarks;
-      document.getElementById('cancelBtn').textContent = t.btnCancel;
-      document.getElementById('locationInput').placeholder = t.locationPlaceholder;
-      document.getElementById('monthSelect').children[0].textContent = t.selectMonth;
+  // ==============================
+  // 🌍 LANGUAGE
+  // ==============================
+  let currentLang = localStorage.getItem('userLang') || 'en';
+  const dirMap = { en: 'ltr', ar: 'rtl' };
+  const localeMap = { en: 'en-US', ar: 'ar-SA' };
 
-      updateTripButtons();
+  function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('userLang', lang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = dirMap[lang];
+    applyTranslations();
+  }
+
+  function applyTranslations() {
+    const t = translations[currentLang];
+    document.getElementById('appTitle').textContent = t.appTitle;
+    document.getElementById('lblSelectMonth').textContent = t.lblSelectMonth;
+    document.getElementById('langToggle').textContent = t.langToggle;
+    document.getElementById('thSN').textContent = t.thSN;
+    document.getElementById('thLocation').textContent = t.thLocation;
+    document.getElementById('thDate').textContent = t.thDate;
+    document.getElementById('thStartKm').textContent = t.thStartKm;
+    document.getElementById('thStartTime').textContent = t.thStartTime;
+    document.getElementById('thEndKm').textContent = t.thEndKm;
+    document.getElementById('thUsage').textContent = t.thUsage;
+    document.getElementById('thEndTime').textContent = t.thEndTime;
+    document.getElementById('thDuration').textContent = t.thDuration;
+    document.getElementById('thRemarks').textContent = t.thRemarks;
+    document.getElementById('modalTitle').textContent = t.modalTitle;
+    document.getElementById('lblDate').textContent = t.lblDate;
+    document.getElementById('lblLocation').textContent = t.lblLocation;
+    document.getElementById('lblStartKm').textContent = t.lblStartKm;
+    document.getElementById('lblStartTime').textContent = t.lblStartTime;
+    document.getElementById('lblEndKm').textContent = t.lblEndKm;
+    document.getElementById('lblEndTime').textContent = t.lblEndTime;
+    document.getElementById('lblRemarks').textContent = t.lblRemarks;
+    document.getElementById('cancelBtn').textContent = t.btnCancel;
+    document.getElementById('locationInput').placeholder = t.locationPlaceholder;
+    document.getElementById('monthSelect').children[0].textContent = t.selectMonth;
+
+    updateTripButtons();
+  }
+
+  // ==============================
+  // 🔌 SUPABASE SETUP
+  // ==============================
+  const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+  const supabase = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+
+  // ==============================
+  // 📅 GLOBAL STATE
+  // ==============================
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const PROJECT_NUMBER = "3478M";
+  const INITIAL_LOCATIONS = [
+    "Seh Albanah", "Fujirah", "Thoban", "Manama", "Manama Training",
+    "Al-Hail", "Fujairah airport", "Dubai", "Abu Dhabi", "Azan", "Dubai Airport"
+  ];
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const driverId = parseInt(urlParams.get('driver')) || 4;
+  if (!DRIVERS[driverId]) {
+    window.location.search = '?driver=4';
+  }
+  const driverConfig = DRIVERS[driverId];
+  let vehicleId = null;
+  let entries = [];
+  let currentOpenTrip = null;
+  let realtimeSubscription = null;
+
+  // ==============================
+  // ✅ HELPER FUNCTIONS
+  // ==============================
+  function isValidValue(val) {
+    return val != null && val !== '' && val !== undefined;
+  }
+
+  function isOpenTrip(entry) {
+    const hasStart = isValidValue(entry.start_km) && isValidValue(entry.start_time);
+    const hasEnd = isValidValue(entry.end_km) && isValidValue(entry.end_time);
+    return hasStart && !hasEnd;
+  }
+
+  function getEntryTimestamp(entry) {
+    const timePart = (isValidValue(entry.end_km) && isValidValue(entry.end_time))
+      ? entry.end_time
+      : entry.start_time;
+    return new Date(entry.entry_date + 'T' + timePart);
+  }
+
+  function getLastClosedTrip() {
+    const closed = entries.filter(e => isValidValue(e.end_km) && isValidValue(e.end_time));
+    if (closed.length === 0) return null;
+    return closed.reduce((a, b) => getEntryTimestamp(a) > getEntryTimestamp(b) ? a : b);
+  }
+
+  function calculateDuration(startTime, endTime, date) {
+    if (!startTime || !endTime) return '–';
+    const start = new Date(`${date}T${startTime}`);
+    const end = new Date(`${date}T${endTime}`);
+    if (end < start) end.setDate(end.getDate() + 1); // Handle overnight
+    const diffMs = end - start;
+    const h = Math.floor(diffMs / 3600000);
+    const m = Math.floor((diffMs % 3600000) / 60000);
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  }
+
+  function updateTripButtons() {
+    const t = translations[currentLang];
+    const hasOpen = entries.some(isOpenTrip);
+    const btn = document.getElementById('addEntryBtn');
+    const saveBtn = document.getElementById('btnSave');
+    if (hasOpen) {
+      btn.textContent = t.endTripBtn;
+      if (saveBtn) saveBtn.textContent = t.endTripBtn;
+    } else {
+      btn.textContent = t.startTripBtn;
+      if (saveBtn) saveBtn.textContent = t.startTripBtn;
     }
+  }
 
-    // ==============================
-    // 🔌 SUPABASE SETUP (FAST + REUSABLE)
-    // ==============================
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-    const supabase = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+  function closeEntryModal() {
+    document.getElementById('entryModal').style.display = 'none';
+    document.getElementById('status').textContent = '';
+  }
 
-    // ==============================
-    // 📅 GLOBAL STATE
-    // ==============================
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    const PROJECT_NUMBER = "3478M";
-    const INITIAL_LOCATIONS = [
-      "Seh Albanah", "Fujirah", "Thoban", "Manama", "Manama Training",
-      "Al-Hail", "Fujairah airport", "Dubai", "Abu Dhabi", "Azan", "Dubai Airport"
-    ];
+  function updateLocationDatalist() {
+    const datalist = document.getElementById('locationList');
+    if (!datalist) return;
+    const entryLocs = [...new Set(entries.map(e => e.location).filter(isValidValue))];
+    const allLocs = [...new Set([...INITIAL_LOCATIONS, ...entryLocs])];
+    datalist.innerHTML = '';
+    allLocs.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc;
+      datalist.appendChild(opt);
+    });
+  }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const driverId = parseInt(urlParams.get('driver')) || 4;
-    if (!DRIVERS[driverId]) {
-      window.location.search = '?driver=4';
-    }
-    const driverConfig = DRIVERS[driverId];
-    let vehicleId = null;
-    let entries = [];
-    let currentOpenTrip = null;
+  // ==============================
+  // 💾 OFFLINE SUPPORT: localStorage fallback
+  // ==============================
+  const OFFLINE_KEY = `offline_entries_${driverConfig.vehicleNo}`;
 
-    // ==============================
-    // ✅ HELPER FUNCTIONS
-    // ==============================
-    function isValidValue(val) {
-      return val != null && val !== '' && val !== undefined;
-    }
+  function saveOffline(entry) {
+    let offline = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
+    offline.push(entry);
+    localStorage.setItem(OFFLINE_KEY, JSON.stringify(offline));
+  }
 
-    function isOpenTrip(entry) {
-      const hasStart = isValidValue(entry.start_km) && isValidValue(entry.start_time);
-      const hasEnd = isValidValue(entry.end_km) && isValidValue(entry.end_time);
-      return hasStart && !hasEnd;
-    }
+  async function processOfflineQueue() {
+    if (!vehicleId) return;
+    const offline = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
+    if (offline.length === 0) return;
 
-    function getEntryTimestamp(entry) {
-      const timePart = (isValidValue(entry.end_km) && isValidValue(entry.end_time))
-        ? entry.end_time
-        : entry.start_time;
-      return new Date(entry.entry_date + 'T' + timePart);
-    }
-
-    function getLastClosedTrip() {
-      const closed = entries.filter(e => isValidValue(e.end_km) && isValidValue(e.end_time));
-      if (closed.length === 0) return null;
-      return closed.reduce((a, b) => getEntryTimestamp(a) > getEntryTimestamp(b) ? a : b);
-    }
-
-    function updateTripButtons() {
-      const t = translations[currentLang];
-      const hasOpen = entries.some(isOpenTrip);
-      const btn = document.getElementById('addEntryBtn');
-      const saveBtn = document.getElementById('btnSave');
-      if (hasOpen) {
-        btn.textContent = t.endTripBtn;
-        if (saveBtn) saveBtn.textContent = t.endTripBtn;
-      } else {
-        btn.textContent = t.startTripBtn;
-        if (saveBtn) saveBtn.textContent = t.startTripBtn;
-      }
-    }
-
-    function closeEntryModal() {
-      document.getElementById('entryModal').style.display = 'none';
-      document.getElementById('status').textContent = '';
-    }
-
-    function updateLocationDatalist() {
-      const datalist = document.getElementById('locationList');
-      if (!datalist) return;
-      const entryLocs = [...new Set(entries.map(e => e.location).filter(isValidValue))];
-      const allLocs = [...new Set([...INITIAL_LOCATIONS, ...entryLocs])];
-      datalist.innerHTML = '';
-      allLocs.forEach(loc => {
-        const opt = document.createElement('option');
-        opt.value = loc;
-        datalist.appendChild(opt);
-      });
-    }
-
-    // ==============================
-    // 🚀 FAST DATA LOADING (INDEXED)
-    // ==============================
-    async function loadEntries() {
-      if (!vehicleId) return;
-
+    for (let entry of offline) {
       try {
-        const { data, error } = await supabase
-          .from('meter_entries')
-          .select('*')
-          .eq('vehicle_id', vehicleId)
-          .order('entry_date', { ascending: true })
-          .order('start_time', { ascending: true });
-
-        if (error) throw error;
-        entries = data || [];
-        currentOpenTrip = entries.find(isOpenTrip) || null;
-        populateMonths();
-        displayCurrentMonthData();
-        updateLocationDatalist();
-        updateTripButtons();
-      } catch (err) {
-        console.error('DB Load Error:', err);
-        document.getElementById('status').textContent = translations[currentLang].statusLoadError;
-      }
-    }
-
-    function displayCurrentMonthData() {
-      const container = document.getElementById('logBody');
-      const t = translations[currentLang];
-      const selectedMonth = document.getElementById('monthSelect').value;
-      const filtered = selectedMonth
-        ? entries.filter(e => e.entry_date.startsWith(selectedMonth))
-        : entries;
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<tr><td colspan="9" style="text-align:center;">${t.noDataCurrent}</td></tr>`;
-        return;
-      }
-
-      filtered.sort((a, b) => getEntryTimestamp(a) - getEntryTimestamp(b));
-      let html = '';
-      filtered.forEach((e, i) => {
-        const dateStr = new Date(e.entry_date).toLocaleDateString(localeMap[currentLang]);
-        const usage = isValidValue(e.end_km) && isValidValue(e.start_km)
-          ? (parseFloat(e.end_km) - parseFloat(e.start_km)).toFixed(2)
-          : '–';
-        html += `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${e.location || ''}</td>
-            <td>${dateStr}</td>
-            <td>${e.start_time}</td>
-            <td>${e.start_km || ''} ${e.start_km ? '<small>(KM)</small>' : ''}</td>
-            <td>${e.end_km || ''} ${e.end_km ? '<small>(KM)</small>' : ''}</td>
-            <td>${e.end_time || ''}</td>
-            <td>${usage}</td>
-            <td>${e.remarks || ''}</td>
-          </tr>
-        `;
-      });
-      container.innerHTML = html;
-    }
-
-    function populateMonths() {
-      const select = document.getElementById('monthSelect');
-      select.innerHTML = `<option value="">${translations[currentLang].selectMonth}</option>`;
-      const months = [...new Set(entries.map(e => e.entry_date.substring(0, 7)))].sort().reverse();
-      months.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = new Date(m + '-01').toLocaleDateString(localeMap[currentLang], { month: 'long', year: 'numeric' });
-        select.appendChild(opt);
-      });
-    }
-
-    // ==============================
-    // 🎯 MODAL & SAVE LOGIC
-    // ==============================
-    function openEntryModal() {
-      const now = new Date();
-      const timeStr = now.toTimeString().slice(0, 5);
-      document.getElementById('entryForm').reset();
-      document.getElementById('dateInput').value = todayStr;
-
-      const t = translations[currentLang];
-      const startGroup = document.getElementById('startGroup');
-      const endGroup = document.getElementById('endGroup');
-      const modalTitle = document.getElementById('modalTitle');
-      const saveBtn = document.getElementById('btnSave');
-
-      if (currentOpenTrip) {
-        // END TRIP MODE
-        modalTitle.textContent = t.modalTitleClose;
-        startGroup.style.display = 'none';
-        endGroup.style.display = 'block';
-        saveBtn.textContent = t.endTripBtn;
-        document.getElementById('locationInput').value = currentOpenTrip.location || '';
-        document.getElementById('endTimeInput').value = timeStr;
-      } else {
-        // START TRIP MODE
-        modalTitle.textContent = t.modalTitle;
-        startGroup.style.display = 'block';
-        endGroup.style.display = 'none';
-        saveBtn.textContent = t.startTripBtn;
-        document.getElementById('startTimeInput').value = timeStr;
-
-        const lastClosed = getLastClosedTrip();
-        if (lastClosed) {
-          document.getElementById('startKmInput').value = lastClosed.end_km;
-          document.getElementById('locationInput').value = lastClosed.location || '';
-        } else {
-          document.getElementById('startKmInput').value = 0;
-        }
-      }
-
-      document.getElementById('entryModal').style.display = 'block';
-    }
-
-    async function saveEntry(e) {
-      e.preventDefault();
-      const t = translations[currentLang];
-
-      if (!vehicleId) {
-        alert('Vehicle not initialized');
-        return;
-      }
-
-      try {
-        if (currentOpenTrip) {
-          // END TRIP
-          const endKm = document.getElementById('endKmInput').value.trim();
-          const endTime = document.getElementById('endTimeInput').value.trim();
-          const location = document.getElementById('locationInput').value.trim();
-
-          if (!endKm || !endTime) {
-            alert(t.alertEndRequired);
-            return;
-          }
-
-          const endKmNum = parseFloat(endKm);
-          if (endKmNum <= parseFloat(currentOpenTrip.start_km)) {
-            alert(t.alertLessKm);
-            return;
-          }
-
+        if (entry.type === 'start') {
           const { error } = await supabase
-            .from('meter_entries')
-            .update({
-              end_km: endKmNum,
-              end_time: endTime,
-              location: location || null,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', currentOpenTrip.id);
-
-          if (error) throw error;
-
-          // Update local state immediately
-          currentOpenTrip.end_km = endKmNum;
-          currentOpenTrip.end_time = endTime;
-          currentOpenTrip.location = location || currentOpenTrip.location;
-          currentOpenTrip = null;
-
-        } else {
-          // START TRIP
-          const date = document.getElementById('dateInput').value;
-          const location = document.getElementById('locationInput').value.trim();
-          const startKm = parseFloat(document.getElementById('startKmInput').value);
-          const startTime = document.getElementById('startTimeInput').value;
-          const remarks = document.getElementById('remarksInput').value.trim();
-
-          if (new Date(date) > today) {
-            alert(t.alertFutureDate);
-            return;
-          }
-
-          const lastClosed = getLastClosedTrip();
-          if (lastClosed && startKm < parseFloat(lastClosed.end_km)) {
-            alert(t.alertLessKm);
-            return;
-          }
-
-          if (entries.some(isOpenTrip)) {
-            alert(t.alertOpenTripExists);
-            return;
-          }
-
-          const { data, error } = await supabase
             .from('meter_entries')
             .insert([{
               vehicle_id: vehicleId,
-              entry_date: date,
-              location: location || null,
-              start_km: startKm,
-              start_time: startTime,
-              remarks: remarks || null,
+              entry_date: entry.date,
+              location: entry.location || null,
+              start_km: entry.startKm,
+              start_time: entry.startTime,
+              remarks: entry.remarks || null,
               created_at: new Date().toISOString()
-            }])
-            .select()
-            .single();
-
+            }]);
           if (error) throw error;
-
-          // Update local state
-          entries.push(data);
-          currentOpenTrip = data;
+        } else if (entry.type === 'end') {
+          const { error } = await supabase
+            .from('meter_entries')
+            .update({
+              end_km: entry.endKm,
+              end_time: entry.endTime,
+              location: entry.location || null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', entry.id);
+          if (error) throw error;
         }
-
-        // Success
-        document.getElementById('status').textContent = t.statusSuccess;
-        closeEntryModal();
-        displayCurrentMonthData();
-        updateTripButtons();
-
-        setTimeout(() => document.getElementById('status').textContent = '', 3000);
-
       } catch (err) {
-        console.error('Save Error:', err);
-        alert(t.alertSaveFail);
+        console.warn('Failed to sync offline entry, keeping in queue:', entry);
+        return; // Stop on first failure
+      }
+    }
+    localStorage.removeItem(OFFLINE_KEY);
+    await loadEntries();
+  }
+
+  // ==============================
+  // 🔁 REALTIME SYNC
+  // ==============================
+  function setupRealtime() {
+    if (realtimeSubscription) {
+      realtimeSubscription.unsubscribe();
+    }
+    if (!vehicleId) return;
+
+    realtimeSubscription = supabase
+      .channel(`vehicle_${vehicleId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'meter_entries',
+          filter: `vehicle_id=eq.${vehicleId}`
+        },
+        (payload) => {
+          console.log('Realtime change:', payload);
+          loadEntries(); // Refresh on change
+        }
+      )
+      .subscribe();
+  }
+
+  // ==============================
+  // 🚀 FAST DATA LOADING
+  // ==============================
+  async function loadEntries() {
+    if (!vehicleId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('meter_entries')
+        .select('*')
+        .eq('vehicle_id', vehicleId)
+        .order('entry_date', { ascending: true })
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+      entries = data || [];
+      currentOpenTrip = entries.find(isOpenTrip) || null;
+      populateMonths();
+      displayCurrentMonthData();
+      updateLocationDatalist();
+      updateTripButtons();
+    } catch (err) {
+      console.error('DB Load Error:', err);
+      document.getElementById('status').textContent = translations[currentLang].statusLoadError;
+    }
+  }
+
+  function displayCurrentMonthData() {
+    const container = document.getElementById('logBody');
+    const t = translations[currentLang];
+    const selectedMonth = document.getElementById('monthSelect').value;
+    const filtered = selectedMonth
+      ? entries.filter(e => e.entry_date.startsWith(selectedMonth))
+      : entries;
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<tr><td colspan="10" style="text-align:center;">${t.noDataCurrent}</td></tr>`;
+      return;
+    }
+
+    filtered.sort((a, b) => getEntryTimestamp(a) - getEntryTimestamp(b));
+    let html = '';
+    filtered.forEach((e, i) => {
+      const dateStr = new Date(e.entry_date).toLocaleDateString(localeMap[currentLang]);
+      const usage = isValidValue(e.end_km) && isValidValue(e.start_km)
+        ? (parseFloat(e.end_km) - parseFloat(e.start_km)).toFixed(0)
+        : '–';
+      const duration = calculateDuration(e.start_time, e.end_time, e.entry_date);
+      html += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${e.location || ''}</td>
+          <td>${dateStr}</td>
+          <td>${e.start_time}</td>
+          <td>${e.start_km || ''} ${e.start_km ? '<small>(KM)</small>' : ''}</td>
+          <td>${e.end_km || ''} ${e.end_km ? '<small>(KM)</small>' : ''}</td>
+          <td>${e.end_time || ''}</td>
+          <td>${usage}</td>
+          <td>${duration}</td>
+          <td>${e.remarks || ''}</td>
+        </tr>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  function populateMonths() {
+    const select = document.getElementById('monthSelect');
+    select.innerHTML = `<option value="">${translations[currentLang].selectMonth}</option>`;
+    const months = [...new Set(entries.map(e => e.entry_date.substring(0, 7)))].sort().reverse();
+    months.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = new Date(m + '-01').toLocaleDateString(localeMap[currentLang], { month: 'long', year: 'numeric' });
+      select.appendChild(opt);
+    });
+  }
+
+  // ==============================
+  // 🎯 MODAL & SAVE LOGIC
+  // ==============================
+  function openEntryModal() {
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
+    document.getElementById('entryForm').reset();
+    document.getElementById('dateInput').value = todayStr;
+
+    const t = translations[currentLang];
+    const startGroup = document.getElementById('startGroup');
+    const endGroup = document.getElementById('endGroup');
+    const modalTitle = document.getElementById('modalTitle');
+    const saveBtn = document.getElementById('btnSave');
+
+    // 🔥 CRITICAL FIX: Check currentOpenTrip from state, not entries
+    if (currentOpenTrip) {
+      // END TRIP MODE
+      modalTitle.textContent = t.modalTitleClose;
+      startGroup.style.display = 'none';
+      endGroup.style.display = 'block';
+      saveBtn.textContent = t.endTripBtn;
+      document.getElementById('locationInput').value = currentOpenTrip.location || '';
+      document.getElementById('endTimeInput').value = timeStr;
+    } else {
+      // START TRIP MODE
+      modalTitle.textContent = t.modalTitle;
+      startGroup.style.display = 'block';
+      endGroup.style.display = 'none';
+      saveBtn.textContent = t.startTripBtn;
+      document.getElementById('startTimeInput').value = timeStr;
+
+      const lastClosed = getLastClosedTrip();
+      if (lastClosed) {
+        document.getElementById('startKmInput').value = lastClosed.end_km;
+        document.getElementById('locationInput').value = lastClosed.location || '';
+      } else {
+        document.getElementById('startKmInput').value = 0;
       }
     }
 
-    // ==============================
-    // 🔐 VEHICLE INIT (FAST + DEDUPLICATED)
-    // ==============================
-    async function initializeVehicle() {
-      try {
-        document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
-        document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
+    document.getElementById('entryModal').style.display = 'block';
+  }
 
-        let { data, error } = await supabase
-          .from('vehicles')
-          .select('id')
-          .eq('vehicle_number', driverConfig.vehicleNo)
+  function isInteger(value) {
+    return Number.isInteger(parseFloat(value)) && !isNaN(value);
+  }
+
+  async function saveEntry(e) {
+    e.preventDefault();
+    const t = translations[currentLang];
+
+    if (!vehicleId) {
+      alert('Vehicle not initialized');
+      return;
+    }
+
+    try {
+      if (currentOpenTrip) {
+        // END TRIP
+        let endKm = document.getElementById('endKmInput').value.trim();
+        const endTime = document.getElementById('endTimeInput').value.trim();
+        const location = document.getElementById('locationInput').value.trim();
+
+        if (!endKm || !endTime) {
+          alert(t.alertEndRequired);
+          return;
+        }
+
+        if (!isInteger(endKm)) {
+          alert(t.alertNonInteger);
+          return;
+        }
+
+        const endKmNum = parseInt(endKm, 10);
+        if (endKmNum <= parseInt(currentOpenTrip.start_km, 10)) {
+          alert(t.alertLessKm);
+          return;
+        }
+
+        const updateData = {
+          end_km: endKmNum,
+          end_time: endTime,
+          location: location || null,
+          updated_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase
+          .from('meter_entries')
+          .update(updateData)
+          .eq('id', currentOpenTrip.id);
+
+        if (error) throw error;
+
+        // Update local state
+        currentOpenTrip.end_km = endKmNum;
+        currentOpenTrip.end_time = endTime;
+        currentOpenTrip.location = location || currentOpenTrip.location;
+        currentOpenTrip = null;
+
+      } else {
+        // START TRIP
+        const date = document.getElementById('dateInput').value;
+        const location = document.getElementById('locationInput').value.trim();
+        let startKm = document.getElementById('startKmInput').value;
+        const startTime = document.getElementById('startTimeInput').value;
+        const remarks = document.getElementById('remarksInput').value.trim();
+
+        if (new Date(date) > today) {
+          alert(t.alertFutureDate);
+          return;
+        }
+
+        if (!isInteger(startKm)) {
+          alert(t.alertNonInteger);
+          return;
+        }
+
+        const startKmNum = parseInt(startKm, 10);
+
+        const lastClosed = getLastClosedTrip();
+        if (lastClosed && startKmNum < parseInt(lastClosed.end_km, 10)) {
+          alert(t.alertLessKm);
+          return;
+        }
+
+        if (entries.some(isOpenTrip)) {
+          alert(t.alertOpenTripExists);
+          return;
+        }
+
+        const insertData = {
+          vehicle_id: vehicleId,
+          entry_date: date,
+          location: location || null,
+          start_km: startKmNum,
+          start_time: startTime,
+          remarks: remarks || null,
+          created_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+          .from('meter_entries')
+          .insert([insertData])
+          .select()
           .single();
 
-        if (error?.code === 'PGRST116') {
-          const { data: newV, error: insErr } = await supabase
-            .from('vehicles')
-            .insert({
-              project_number: PROJECT_NUMBER,
-              vehicle_number: driverConfig.vehicleNo,
-              driver_name: driverConfig.name
-            })
-            .select('id')
-            .single();
-          if (insErr) throw insErr;
-          vehicleId = newV.id;
-        } else if (error) {
-          throw error;
-        } else {
-          vehicleId = data.id;
-        }
+        if (error) throw error;
 
-        await loadEntries();
-      } catch (err) {
-        console.error('Vehicle Init Error:', err);
-        document.getElementById('status').textContent = translations[currentLang].statusDbError;
+        entries.push(data);
+        currentOpenTrip = data;
       }
+
+      document.getElementById('status').textContent = t.statusSuccess;
+      closeEntryModal();
+      displayCurrentMonthData();
+      updateTripButtons();
+      setTimeout(() => document.getElementById('status').textContent = '', 3000);
+
+    } catch (err) {
+      console.error('Save Error:', err);
+      // Save to offline queue
+      if (currentOpenTrip) {
+        saveOffline({
+          type: 'end',
+          id: currentOpenTrip.id,
+          endKm: document.getElementById('endKmInput').value.trim(),
+          endTime: document.getElementById('endTimeInput').value.trim(),
+          location: document.getElementById('locationInput').value.trim()
+        });
+      } else {
+        saveOffline({
+          type: 'start',
+          date: document.getElementById('dateInput').value,
+          location: document.getElementById('locationInput').value.trim(),
+          startKm: document.getElementById('startKmInput').value,
+          startTime: document.getElementById('startTimeInput').value,
+          remarks: document.getElementById('remarksInput').value.trim()
+        });
+      }
+      alert(translations[currentLang].alertSaveFail + " Saved offline.");
     }
+  }
 
-    // ==============================
-    // 🎮 EVENT LISTENERS
-    // ==============================
-    document.addEventListener('DOMContentLoaded', () => {
-      setLanguage(currentLang);
-      initializeVehicle();
+  // ==============================
+  // 🔐 VEHICLE INIT
+  // ==============================
+  async function initializeVehicle() {
+    try {
+      document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
+      document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
 
-      document.getElementById('langToggle').addEventListener('click', () =>
-        setLanguage(currentLang === 'en' ? 'ar' : 'en')
-      );
+      let { data, error } = await supabase
+        .from('vehicles')
+        .select('id')
+        .eq('vehicle_number', driverConfig.vehicleNo)
+        .single();
 
-      document.getElementById('addEntryBtn').addEventListener('click', openEntryModal);
-      document.getElementById('entryForm').addEventListener('submit', saveEntry);
-      document.getElementById('cancelBtn').addEventListener('click', closeEntryModal);
+      if (error?.code === 'PGRST116') {
+        const { data: newV, error: insErr } = await supabase
+          .from('vehicles')
+          .insert({
+            project_number: PROJECT_NUMBER,
+            vehicle_number: driverConfig.vehicleNo,
+            driver_name: driverConfig.name
+          })
+          .select('id')
+          .single();
+        if (insErr) throw insErr;
+        vehicleId = newV.id;
+      } else if (error) {
+        throw error;
+      } else {
+        vehicleId = data.id;
+      }
 
-      document.querySelectorAll('.close').forEach(btn =>
-        btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none')
-      );
+      await loadEntries();
+      setupRealtime();
+      await processOfflineQueue();
+    } catch (err) {
+      console.error('Vehicle Init Error:', err);
+      document.getElementById('status').textContent = translations[currentLang].statusDbError;
+    }
+  }
 
-      document.querySelectorAll('.modal').forEach(modal =>
-        modal.addEventListener('click', e => {
-          if (e.target === modal) modal.style.display = 'none';
-        })
-      );
+  // ==============================
+  // 🎮 EVENT LISTENERS
+  // ==============================
+  document.addEventListener('DOMContentLoaded', () => {
+    setLanguage(currentLang);
+    initializeVehicle();
 
-      document.getElementById('monthSelect').addEventListener('change', displayCurrentMonthData);
+    document.getElementById('langToggle').addEventListener('click', () =>
+      setLanguage(currentLang === 'en' ? 'ar' : 'en')
+    );
+
+    document.getElementById('addEntryBtn').addEventListener('click', openEntryModal);
+    document.getElementById('entryForm').addEventListener('submit', saveEntry);
+    document.getElementById('cancelBtn').addEventListener('click', closeEntryModal);
+
+    document.querySelectorAll('.close').forEach(btn =>
+      btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none')
+    );
+
+    document.querySelectorAll('.modal').forEach(modal =>
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.style.display = 'none';
+      })
+    );
+
+    document.getElementById('monthSelect').addEventListener('change', displayCurrentMonthData);
+
+    // Enforce integer input on KM fields
+    ['startKmInput', 'endKmInput'].forEach(id => {
+      const input = document.getElementById(id);
+      input.addEventListener('input', () => {
+        let value = input.value;
+        if (value === '') return;
+        const num = parseFloat(value);
+        if (!isNaN(num) && !Number.isInteger(num)) {
+          input.value = Math.floor(num);
+        }
+      });
     });
-  </script>
+  });
+</script>
 </body>
 </html>
