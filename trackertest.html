@@ -849,44 +849,51 @@
   // ==============================
   // 🔐 VEHICLE INIT
   // ==============================
-  async function initializeVehicle() {
-    try {
-      document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
-      document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
+ async function initializeVehicle() {
+  try {
+    // Set header info immediately (even before DB)
+    document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
+    document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
 
-      let { data, error } = await supabase
+    let { data, error } = await supabase
+      .from('vehicles')
+      .select('id')
+      .eq('vehicle_number', driverConfig.vehicleNo)
+      .single();
+
+    if (error?.code === 'PGRST116') {
+      // Vehicle not found → create it
+      const { data: newV, error: insErr } = await supabase  // ✅ FIXED: "data: newV"
         .from('vehicles')
+        .insert({
+          project_number: PROJECT_NUMBER,
+          vehicle_number: driverConfig.vehicleNo,
+          driver_name: driverConfig.name
+        })
         .select('id')
-        .eq('vehicle_number', driverConfig.vehicleNo)
         .single();
-
-      if (error?.code === 'PGRST116') {
-        const { data: newV, error: insErr } = await supabase
-          .from('vehicles')
-          .insert({
-            project_number: PROJECT_NUMBER,
-            vehicle_number: driverConfig.vehicleNo,
-            driver_name: driverConfig.name
-          })
-          .select('id')
-          .single();
-        if (insErr) throw insErr;
-        vehicleId = newV.id;
-      } else if (error) {
-        throw error;
-      } else {
-        vehicleId = data.id;
-      }
-
-      await loadEntries();
-      setupRealtime();
-      await processOfflineQueue();
-    } catch (err) {
-      console.error('Vehicle Init Error:', err);
-      document.getElementById('status').textContent = translations[currentLang].statusDbError;
+      
+      if (insErr) throw insErr;
+      vehicleId = newV.id;  // ✅ Now newV is defined!
+    } else if (error) {
+      throw error;
+    } else {
+      vehicleId = data.id;
     }
-  }
 
+    console.log('✅ Vehicle initialized with ID:', vehicleId);
+    
+    // Now load data
+    await loadEntries();
+    setupRealtime();
+    await processOfflineQueue();
+  } catch (err) {
+    console.error('🔥 Vehicle Init FAILED:', err);
+    document.getElementById('status').textContent = translations[currentLang].statusDbError;
+    // Show error in UI
+    alert('Failed to initialize vehicle. Check console for details.');
+  }
+}
   // ==============================
   // 🎮 EVENT LISTENERS
   // ==============================
