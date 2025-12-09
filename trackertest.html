@@ -197,6 +197,8 @@
           <th id="thEndKm">END (KM)</th>
           <th id="thEndTime">END TIME</th>
           <th id="thUsage">USAGE (KM)</th>
+          <th id="thDuration">DURATION</th>
+          <th id="thDutyType">DUTY TYPE</th>
           <th id="thRemarks">REMARKS</th>
         </tr>
       </thead>
@@ -283,6 +285,8 @@
       thEndKm: "END (KM)",
       thUsage: "USAGE (KM)",
       thEndTime: "END TIME",
+      thDuration: "DURATION",
+      thDutyType: "DUTY TYPE",
       thRemarks: "REMARKS",
       modalTitle: "Add New Entry",
       lblDate: "Date:",
@@ -325,6 +329,8 @@
       thEndKm: "نهاية (كم)",
       thUsage: "الاستخدام (كم)",
       thEndTime: "وقت النهاية",
+      thDuration: "المدة",
+      thDutyType: "نوع الواجب",
       thRemarks: "ملاحظات",
       modalTitle: "إدخال جديد",
       lblDate: "التاريخ:",
@@ -383,6 +389,8 @@
     document.getElementById('thEndKm').textContent = t.thEndKm;
     document.getElementById('thUsage').textContent = t.thUsage;
     document.getElementById('thEndTime').textContent = t.thEndTime;
+    document.getElementById('thDuration').textContent = t.thDuration;
+    document.getElementById('thDutyType').textContent = t.thDutyType;
     document.getElementById('thRemarks').textContent = t.thRemarks;
     document.getElementById('modalTitle').textContent = t.modalTitle;
     document.getElementById('lblDate').textContent = t.lblDate;
@@ -642,6 +650,35 @@
     }
   }
 
+  // ==============================
+  // 🕐 DURATION & DUTY TYPE CALCULATIONS
+  // ==============================
+  function calculateDuration(startTime, endTime) {
+    if (!startTime || !endTime) return '–';
+    
+    const start = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+    
+    if (end < start) {
+      // Handle overnight trips
+      end.setDate(end.getDate() + 1);
+    }
+    
+    const diffMs = end - start;
+    const diffMins = Math.floor(diffMs / 60000);
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    
+    return `${hours}h ${mins}m`;
+  }
+
+  function getDutyType(startTime) {
+    if (!startTime) return '–';
+    
+    const startHour = parseInt(startTime.split(':')[0]);
+    return startHour < 15 ? 'Duty' : 'Overtime'; // Before 3 PM is Duty, after is Overtime
+  }
+
   function displayCurrentMonthData() {
     const container = document.getElementById('logBody');
     const t = translations[currentLang];
@@ -651,7 +688,7 @@
       : entries;
 
     if (filtered.length === 0) {
-      container.innerHTML = `<tr><td colspan="9" style="text-align:center;">${t.noDataCurrent}</td></tr>`;
+      container.innerHTML = `<tr><td colspan="11" style="text-align:center;">${t.noDataCurrent}</td></tr>`;
       return;
     }
 
@@ -662,6 +699,12 @@
       const dateStr = new Date(e.entry_date).toLocaleDateString(localeMap[currentLang]);
       const usage = isValidValue(e.end_km) && isValidValue(e.start_km)
         ? (parseInt(e.end_km) - parseInt(e.start_km)).toString()
+        : '–';
+      const duration = isValidValue(e.end_time) && isValidValue(e.start_time)
+        ? calculateDuration(e.start_time, e.end_time)
+        : '–';
+      const dutyType = isValidValue(e.start_time)
+        ? getDutyType(e.start_time)
         : '–';
       const isRowOpen = e.id === openTripId;
       html += `
@@ -674,6 +717,8 @@
           <td>${e.end_km || ''} ${e.end_km ? '<small>(KM)</small>' : ''}</td>
           <td>${e.end_time || ''}</td>
           <td>${usage}</td>
+          <td>${duration}</td>
+          <td>${dutyType}</td>
           <td>${e.remarks || ''}</td>
         </tr>
       `;
