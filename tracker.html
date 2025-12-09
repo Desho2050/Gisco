@@ -675,58 +675,59 @@
     // 🔐 INIT VEHICLE & DRIVER
     // ==============================
     const initializeApp = async () => {
-      // Parse driver ID safely
-      const urlParams = new URLSearchParams(window.location.search);
-      const driverIdParam = urlParams.get('driver');
-      const validIds = Object.keys(DRIVERS).map(Number);
-      let driverId = 1213; // default
+  // Parse driver ID safely
+  const urlParams = new URLSearchParams(window.location.search);
+  const driverIdParam = urlParams.get('driver');
+  const validIds = Object.keys(DRIVERS).map(Number);
+  let driverId = 1213; // default
 
-      if (driverIdParam) {
-        const parsed = parseInt(driverIdParam, 10);
-        if (!isNaN(parsed) && DRIVERS[parsed]) driverId = parsed;
-      }
+  if (driverIdParam) {
+    const parsed = parseInt(driverIdParam, 10);
+    if (!isNaN(parsed) && DRIVERS[parsed]) driverId = parsed;
+  }
 
-      driverConfig = DRIVERS[driverId];
-      OFFLINE_KEY = `offline_entries_${driverConfig.vehicleNo}`;
+  driverConfig = DRIVERS[driverId];
+  OFFLINE_KEY = `offline_entries_${driverConfig.vehicleNo}`;
 
-      // Update UI immediately (even before DB)
-      document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
-      document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
+  // ✅ FIX: Update UI IMMEDIATELY (no await, no DB dependency)
+  document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
+  document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
 
-      // Initialize vehicle in DB
-      try {
-        let { data, error } = await supabase
-          .from('vehicles')
-          .select('id')
-          .eq('vehicle_number', driverConfig.vehicleNo)
-          .single();
+  // Now proceed with async DB init
+  try {
+    let { data, error } = await supabase
+      .from('vehicles')
+      .select('id')
+      .eq('vehicle_number', driverConfig.vehicleNo)
+      .single();
 
-        if (error?.code === 'PGRST116') {
-          const { data: newV, error: insErr } = await supabase
-            .from('vehicles')
-            .insert({
-              project_number: PROJECT_NUMBER,
-              vehicle_number: driverConfig.vehicleNo,
-              driver_name: driverConfig.name
-            })
-            .select('id')
-            .single();
-          if (insErr) throw insErr;
-          vehicleId = newV.id;
-        } else if (error) {
-          throw error;
-        } else {
-          vehicleId = data.id;
-        }
+    if (error?.code === 'PGRST116') {
+      const { data: newV, error: insErr } = await supabase
+        .from('vehicles')
+        .insert({
+          project_number: PROJECT_NUMBER,
+          vehicle_number: driverConfig.vehicleNo,
+          driver_name: driverConfig.name
+        })
+        .select('id')
+        .single();
+      if (insErr) throw insErr;
+      vehicleId = newV.id;
+    } else if (error) {
+      throw error;
+    } else {
+      vehicleId = data.id;
+    }
 
-        await loadEntries();
-        setupRealtime();
-        await processOfflineQueue();
-      } catch (err) {
-        console.error('Init error:', err);
-        document.getElementById('status').textContent = translations[currentLang].statusDbError;
-      }
-    };
+    await loadEntries();
+    setupRealtime();
+    await processOfflineQueue();
+  } catch (err) {
+    console.error('Init error:', err);
+    document.getElementById('status').textContent = translations[currentLang].statusDbError;
+    // ❗ But driver info is already shown above — so user isn't left in the dark
+  }
+};
 
     // ==============================
     // 🎮 EVENT LISTENERS
