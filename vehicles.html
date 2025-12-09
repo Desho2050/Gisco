@@ -3,254 +3,751 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin - Vehicle Usage Overview</title>
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Vehicle Usage Tracker</title>
+  <!-- Supabase v2 (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva,Verdana, sans-serif; }
-    body { margin: 0; padding: 16px; background: #f5f7fa; color: #333; }
-    .container { max-width: 100%; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h1 { text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.6rem; }
-    .actions { text-align: center; margin: 15px 0; }
-    .actions button { padding: 8px 16px; margin: 0 6px; border: none; border-radius: 4px; background: #3498db; color: white; cursor: pointer; font-size: 14px; }
-    .actions button:hover { background: #2980b9; }
-    .chart-container { margin: 25px 0; height: 300px; }
-    .log-table { width: 100%; border-collapse: collapse; margin-top: 20px; border: 1px solid #ddd; font-size: 0.85rem; }
-    .log-table th, .log-table td { padding: 8px; text-align: left; border: 1px solid #ddd; }
-    .log-table th { background-color: #f2f2f2; font-weight: bold; }
-    .log-table tr:nth-child(even) { background-color: #fafafa; }
-    #status { margin-top: 10px; text-align: center; font-style: italic; color: #7f8c8d; }
-    .vehicle-section { margin-top: 30px; page-break-inside: avoid; }
-    .vehicle-header { background: #eef2f7; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; }
-    
-    @media print {
-      body { background: white; padding: 0; }
-      .container { box-shadow: none; border-radius: 0; padding: 10px; }
-      .actions { display: none; }
-      .chart-container canvas { display: none; }
-      .print-only { display: block !important; }
-      .no-print { display: none !important; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { margin: 0; padding: 16px; background: #f5f7fa; color: #333; transition: direction 0.3s; }
+    .container {
+      max-width: 100%; margin: auto; background: white; padding: 20px;
+      border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    .print-only { display: none; }
-    .print-header { text-align: center; margin-bottom: 20px; }
-    .print-header h2 { margin: 5px 0; }
+    h1 { text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.5rem; }
+    .info-header {
+      display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;
+      background: #eef2f7; border-radius: 8px; margin-bottom: 20px; font-weight: bold;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .info-header div { flex: 1; text-align: center; min-width: 120px; }
+    .month-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .month-selector label { font-weight: bold; }
+    .month-selector select, 
+    .month-selector button { 
+      padding: 8px; 
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+      flex: 1; 
+      min-width: 120px;
+    }
+
+    .log-table {
+      width: 100%; border-collapse: collapse; margin-top: 20px;
+      border: 1px solid #ddd;
+      font-size: 0.85rem;
+    }
+    .log-table th, .log-table td {
+      padding: 6px; text-align: left; border: 1px solid #ddd;
+    }
+    .log-table th {
+      background-color: #f2f2f2; font-weight: bold;
+    }
+    .log-table tr:nth-child(even) { background-color: #fafafa; }
+
+    button {
+      background: #3498db; color: white; border: none; padding: 10px 15px; margin-top: 10px; border-radius: 6px; cursor: pointer; font-size: 14px;
+      flex: 1;
+      min-width: 100px;
+    }
+    button:hover { background: #2980b9; }
+    #langToggle { background: #9b59b6; margin-top: 0; }
+    #langToggle:hover { background: #8e44ad; }
+    #status { margin-top: 10px; text-align: center; font-style: italic; color: #7f8c8d; }
+
+    .modal { 
+      display: none; 
+      position: fixed; 
+      z-index: 100; 
+      left: 0; 
+      top: 0; 
+      width: 100%; 
+      height: 100%; 
+      background-color: rgba(0,0,0,0.6); 
+      overflow: auto;
+    }
+    .modal-content { 
+      background-color: white; 
+      margin: 5% auto; 
+      padding: 15px; 
+      border-radius: 10px; 
+      width: 95%; 
+      max-width: 500px; 
+      max-height: 90vh; 
+      overflow-y: auto; 
+      box-sizing: border-box;
+    }
+    .close { 
+      float: right; 
+      font-size: 24px; 
+      font-weight: bold; 
+      cursor: pointer; 
+      color: #e74c3c; 
+    }
+    .modal-title { margin-top: 0; text-align: center; }
+
+    #entryForm { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 12px; 
+      width: 100%;
+    }
+    #entryForm label { 
+      font-weight: bold; 
+      margin-top: 5px; 
+      display: block;
+    }
+    #entryForm input, 
+    #entryForm textarea,
+    #entryForm select { 
+      padding: 10px; 
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+      width: 100%;
+      font-size: 16px;
+    }
+    #entryForm button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+    }
+
+    small { color: #777; font-size: 0.85em; }
+
+    @media (max-width: 480px) {
+      body { padding: 8px; }
+      .container { padding: 12px; }
+      h1 { font-size: 1.3rem; margin-bottom: 15px; }
+      
+      .info-header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px;
+        gap: 8px;
+      }
+      
+      .month-selector {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      
+      .month-selector label {
+        align-self: flex-start;
+      }
+      
+      .log-table {
+        font-size: 0.75rem;
+        min-width: 600px;
+        overflow-x: auto;
+        display: block;
+      }
+      
+      .modal-content {
+        width: 95%;
+        margin: 10px auto;
+        padding: 12px;
+      }
+      
+      button {
+        padding: 12px;
+        font-size: 16px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Admin – All Vehicle Trips</h1>
-    
-    <div class="actions no-print">
-      <button id="printBtn">🖨️ Print Report</button>
+    <h1 id="appTitle">Vehicle Usage Tracker</h1>
+
+    <div class="info-header">
+      <div><span id="lblVehicle">VEHICLE NO</span></div>
+      <div><span id="lblDriver">DRIVER NAME</span></div>
     </div>
 
-    <div id="status">Loading...</div>
-
-    <!-- Charts (hidden on print) -->
-    <div class="chart-container no-print">
-      <canvas id="usageChart"></canvas>
-    </div>
-    <div class="chart-container no-print">
-      <canvas id="vehicleCountChart"></canvas>
-    </div>
-
-    <!-- Printable header (only shows when printing) -->
-    <div class="print-only print-header">
-      <h2>Vehicle Usage Report</h2>
-      <p>Generated on: <span id="printDate"></span></p>
+    <div class="month-selector">
+      <label id="lblSelectMonth">View Month:</label>
+      <select id="monthSelect">
+        <option value="">Select Month...</option>
+      </select>
+      <button id="addEntryBtn">Start Trip</button>
+      <button id="langToggle">العربية / English</button>
     </div>
 
-    <!-- Trips grouped by vehicle -->
-    <div id="tripsContainer"></div>
+    <div id="status"></div>
+
+    <table class="log-table" id="logTable">
+      <thead>
+        <tr>
+          <th id="thSN">SN</th>
+          <th id="thLocation">LOCATION</th>
+          <th id="thDate">DATE</th>
+          <th id="thStartTime">START TIME</th>
+          <th id="thStartKm">START (KM)</th>
+          <th id="thEndKm">END (KM)</th>
+          <th id="thEndTime">END TIME</th>
+          <th id="thUsage">USAGE (KM)</th>
+          <th id="thRemarks">REMARKS</th>
+        </tr>
+      </thead>
+      <tbody id="logBody">
+      </tbody>
+    </table>
+
+    <div id="entryModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3 id="modalTitle">Add New Entry</h3>
+        <form id="entryForm">
+          <label id="lblDate">Date:</label>
+          <input type="date" id="dateInput" required />
+
+          <label id="lblLocation">Location:</label>
+          <input type="text" id="locationInput" list="locationList" placeholder="Start typing or select..." />
+          <datalist id="locationList"></datalist>
+
+          <div id="startGroup">
+            <label id="lblStartKm">Start (KM):</label>
+            <input type="number" id="startKmInput" min="0" step="1" required />
+            <label id="lblStartTime">Start Time:</label>
+            <input type="time" id="startTimeInput" required />
+          </div>
+
+          <div id="endGroup" style="display:none;">
+            <label id="lblEndKm">End (KM):</label>
+            <input type="number" id="endKmInput" min="0" step="1" required />
+            <label id="lblEndTime">End Time:</label>
+            <input type="time" id="endTimeInput" required />
+          </div>
+
+          <label id="lblRemarks">Remarks:</label>
+          <textarea id="remarksInput" rows="3" placeholder="Any additional notes..."></textarea>
+
+          <button type="submit" id="btnSave">Start Trip</button>
+          <button type="button" id="cancelBtn" style="background:#95a5a6;">Cancel</button>
+        </form>
+      </div>
+    </div>
   </div>
 
   <script>
-    // Supabase config
+    // ==============================
+    // 🔑 DRIVER CONFIGURATION
+    // ==============================
+    const DRIVERS = {
+      1234: { name: "Mohammad Akbar Mohammad Wasi", vehicleNo: "43572" },
+      5678: { name: "Muhammad Asnaf Muhammad Siddique", vehicleNo: "43571" },
+      91011: { name: "Gurlal Singh Desa Singh", vehicleNo: "68034" },
+      1213: { name: "Muhammad Ashfaq Hameed Ahmed", vehicleNo: "68054" },
+      1415: { name: "RAJASEAKARAN", vehicleNo: "68046" },
+      1617: { name: "Atif Ullah Tahir Shah", vehicleNo: "68047" },
+      1819: { name: "KUMAR MuTHASAMY", vehicleNo: "68042" },
+      2021: { name: "Mohammed Safullah", vehicleNo: "68045" }
+    };
+
+    // ==============================
+    // 🔤 TRANSLATIONS
+    // ==============================
+    const translations = {
+      en: {
+        appTitle: "Vehicle Usage Tracker",
+        lblSelectMonth: "View Month:",
+        startTripBtn: "Start Trip",
+        endTripBtn: "End Trip",
+        langToggle: "العربية / English",
+        thSN: "SN",
+        thLocation: "LOCATION",
+        thDate: "DATE",
+        thStartKm: "START (KM)",
+        thStartTime: "START TIME",
+        thEndKm: "END (KM)",
+        thUsage: "USAGE (KM)",
+        thEndTime: "END TIME",
+        thRemarks: "REMARKS",
+        modalTitle: "Add New Entry",
+        lblDate: "Date:",
+        lblLocation: "Location:",
+        lblStartKm: "Start (KM):",
+        lblStartTime: "Start Time:",
+        lblEndKm: "End (KM):",
+        lblEndTime: "End Time:",
+        lblRemarks: "Remarks:",
+        btnSave: "Save",
+        btnCancel: "Cancel",
+        statusSuccess: "✓ Successfully saved",
+        statusLoadError: "⚠ Failed to load records",
+        statusDbError: "⚠ Database connection error",
+        alertLessKm: "❌ End KM must be greater than Start KM!",
+        alertFutureDate: "❌ Cannot enter a future date!",
+        alertSaveFail: "❌ Save failed. Check connection and try again.",
+        alertCooldown: "Please wait {SECONDS} more second{PLURAL} before starting a new action.",
+        noDataCurrent: "No data for this month.",
+        selectMonth: "Select Month...",
+        modalTitleClose: "Close Previous Trip",
+        locationPlaceholder: "Start typing or select...",
+        alertEndRequired: "End KM and End Time are required to close the trip.",
+        alertOpenTripExists: "You already have an open trip! Please end it first."
+      },
+      ar: {
+        appTitle: "متابعة استخدام سيارة المشروع",
+        lblSelectMonth: "عرض الشهر:",
+        startTripBtn: "بدء الرحلة",
+        endTripBtn: "إنهاء الرحلة",
+        langToggle: "English / العربية",
+        thSN: "ر.ت",
+        thLocation: "الموقع",
+        thDate: "التاريخ",
+        thStartKm: "بداية (كم)",
+        thStartTime: "وقت البدء",
+        thEndKm: "نهاية (كم)",
+        thUsage: "الاستخدام (كم)",
+        thEndTime: "وقت النهاية",
+        thRemarks: "ملاحظات",
+        modalTitle: "إدخال جديد",
+        lblDate: "التاريخ:",
+        lblLocation: "الموقع:",
+        lblStartKm: "قراءة بداية الخدمة (كم):",
+        lblStartTime: "وقت البدء:",
+        lblEndKm: "قراءة نهاية الخدمة (كم):",
+        lblEndTime: "وقت النهاية:",
+        lblRemarks: "ملاحظات:",
+        btnSave: "حفظ",
+        btnCancel: "إلغاء",
+        statusSuccess: "✓ تم الحفظ بنجاح",
+        statusLoadError: "⚠ فشل تحميل السجلات",
+        statusDbError: "⚠ خطأ في الاتصال بقاعدة البيانات",
+        alertLessKm: "❌ يجب أن تكون قراءة النهاية أكبر من القراءة الابتدائية!",
+        alertFutureDate: "❌ لا يمكن إدخال تاريخ مستقبلي!",
+        alertSaveFail: "❌ فشل الحفظ. تحقق من الاتصال وحاول لاحقًا.",
+        alertCooldown: "يرجى الانتظار {SECONDS} ثانية{PLURAL} إضافية قبل تنفيذ أي إجراء.",
+        noDataCurrent: "لا توجد بيانات لهذا الشهر.",
+        selectMonth: "اختر شهرًا...",
+        modalTitleClose: "إغلاق الرحلة السابقة",
+        locationPlaceholder: "ابدأ الكتابة أو اختر...",
+        alertEndRequired: "قراءة النهاية ووقت النهاية مطلوبان لإغلاق الرحلة.",
+        alertOpenTripExists: "لديك رحلة مفتوحة بالفعل! يرجى إنهاؤها أولاً."
+      }
+    };
+
+    // ==============================
+    // 🌍 LANGUAGE
+    // ==============================
+    let currentLang = localStorage.getItem('userLang') || 'en';
+    const dirMap = { en: 'ltr', ar: 'rtl' };
+    const localeMap = { en: 'en-US', ar: 'ar-SA' };
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('userLang', lang);
+      document.documentElement.lang = lang;
+      document.documentElement.dir = dirMap[lang];
+      applyTranslations();
+    }
+
+    function applyTranslations() {
+      const t = translations[currentLang];
+      document.getElementById('appTitle').textContent = t.appTitle;
+      document.getElementById('lblSelectMonth').textContent = t.lblSelectMonth;
+      document.getElementById('langToggle').textContent = t.langToggle;
+      document.getElementById('thSN').textContent = t.thSN;
+      document.getElementById('thLocation').textContent = t.thLocation;
+      document.getElementById('thDate').textContent = t.thDate;
+      document.getElementById('thStartKm').textContent = t.thStartKm;
+      document.getElementById('thStartTime').textContent = t.thStartTime;
+      document.getElementById('thEndKm').textContent = t.thEndKm;
+      document.getElementById('thUsage').textContent = t.thUsage;
+      document.getElementById('thEndTime').textContent = t.thEndTime;
+      document.getElementById('thRemarks').textContent = t.thRemarks;
+      document.getElementById('modalTitle').textContent = t.modalTitle;
+      document.getElementById('lblDate').textContent = t.lblDate;
+      document.getElementById('lblLocation').textContent = t.lblLocation;
+      document.getElementById('lblStartKm').textContent = t.lblStartKm;
+      document.getElementById('lblStartTime').textContent = t.lblStartTime;
+      document.getElementById('lblEndKm').textContent = t.lblEndKm;
+      document.getElementById('lblEndTime').textContent = t.lblEndTime;
+      document.getElementById('lblRemarks').textContent = t.lblRemarks;
+      document.getElementById('cancelBtn').textContent = t.btnCancel;
+      document.getElementById('locationInput').placeholder = t.locationPlaceholder;
+      document.getElementById('monthSelect').children[0].textContent = t.selectMonth;
+
+      updateTripButtons();
+    }
+
+    // ==============================
+    // 🔌 SUPABASE SETUP (FAST + REUSABLE)
+    // ==============================
     const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
 
-    let allEntries = [];
-    let vehicles = {};
+    // ==============================
+    // 📅 GLOBAL STATE
+    // ==============================
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const PROJECT_NUMBER = "3478M";
+    const INITIAL_LOCATIONS = [
+      "Seh Albanah", "Fujirah", "Thoban", "Manama", "Manama Training",
+      "Al-Hail", "Fujairah airport", "Dubai", "Abu Dhabi", "Azan", "Dubai Airport"
+    ];
 
-    const tripsContainer = document.getElementById('tripsContainer');
-    const statusEl = document.getElementById('status');
+    const urlParams = new URLSearchParams(window.location.search);
+    const driverId = parseInt(urlParams.get('driver')) || 4;
+    if (!DRIVERS[driverId]) {
+      window.location.search = '?driver=4';
+    }
+    const driverConfig = DRIVERS[driverId];
+    let vehicleId = null;
+    let entries = [];
+    let currentOpenTrip = null;
 
-    async function loadAllData() {
-      try {
-        // Fetch vehicles
-        const { data: vehData, error: vehError } = await supabaseClient
-          .from('vehicles')
-          .select('id, vehicle_number, driver_name');
+    // ==============================
+    // ✅ HELPER FUNCTIONS
+    // ==============================
+    function isValidValue(val) {
+      return val != null && val !== '' && val !== undefined;
+    }
 
-        if (vehError) throw vehError;
+    function isOpenTrip(entry) {
+      const hasStart = isValidValue(entry.start_km) && isValidValue(entry.start_time);
+      const hasEnd = isValidValue(entry.end_km) && isValidValue(entry.end_time);
+      return hasStart && !hasEnd;
+    }
 
-        const vehicleMap = {};
-        vehData.forEach(v => {
-          vehicleMap[v.id] = {
-            vehicle_number: v.vehicle_number,
-            driver_name: v.driver_name
-          };
-        });
+    function getEntryTimestamp(entry) {
+      const timePart = (isValidValue(entry.end_km) && isValidValue(entry.end_time))
+        ? entry.end_time
+        : entry.start_time;
+      return new Date(entry.entry_date + 'T' + timePart);
+    }
 
-        // Fetch all meter entries
-        const { data: entries, error: entryError } = await supabaseClient
-          .from('meter_entries')
-          .select('*')
-          .order('entry_date', { ascending: true })
-          .order('start_time', { ascending: true });
+    function getLastClosedTrip() {
+      const closed = entries.filter(e => isValidValue(e.end_km) && isValidValue(e.end_time));
+      if (closed.length === 0) return null;
+      return closed.reduce((a, b) => getEntryTimestamp(a) > getEntryTimestamp(b) ? a : b);
+    }
 
-        if (entryError) throw entryError;
-
-        const enriched = entries.map(e => ({
-          ...e,
-          vehicle_number: vehicleMap[e.vehicle_id]?.vehicle_number || 'Unknown',
-          driver_name: vehicleMap[e.vehicle_id]?.driver_name || 'Unknown'
-        }));
-
-        // Group by vehicle
-        const grouped = {};
-        enriched.forEach(e => {
-          const key = e.vehicle_number;
-          if (!grouped[key]) grouped[key] = [];
-          grouped[key].push(e);
-        });
-
-        // Sort vehicle numbers
-        const sortedVehicles = Object.keys(grouped).sort((a, b) => {
-          const aNum = parseFloat(a);
-          const bNum = parseFloat(b);
-          if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
-          return a.localeCompare(b);
-        });
-
-        allEntries = enriched;
-        vehicles = grouped;
-
-        renderCharts(enriched, sortedVehicles);
-        renderTrips(grouped, sortedVehicles);
-        statusEl.textContent = '';
-      } catch (err) {
-        console.error('Load error:', err);
-        statusEl.textContent = '⚠ Failed to load admin data.';
+    function updateTripButtons() {
+      const t = translations[currentLang];
+      const hasOpen = entries.some(isOpenTrip);
+      const btn = document.getElementById('addEntryBtn');
+      const saveBtn = document.getElementById('btnSave');
+      if (hasOpen) {
+        btn.textContent = t.endTripBtn;
+        if (saveBtn) saveBtn.textContent = t.endTripBtn;
+      } else {
+        btn.textContent = t.startTripBtn;
+        if (saveBtn) saveBtn.textContent = t.startTripBtn;
       }
     }
 
-    function renderCharts(entries, vehicleKeys) {
-      // === Bar Chart: Total KM per Vehicle ===
-      const kmByVehicle = {};
-      entries.forEach(e => {
-        if (e.start_km != null && e.end_km != null) {
-          const usage = parseFloat(e.end_km) - parseFloat(e.start_km);
-          kmByVehicle[e.vehicle_number] = (kmByVehicle[e.vehicle_number] || 0) + usage;
-        }
-      });
+    function closeEntryModal() {
+      document.getElementById('entryModal').style.display = 'none';
+      document.getElementById('status').textContent = '';
+    }
 
-      const ctx1 = document.getElementById('usageChart').getContext('2d');
-      new Chart(ctx1, {
-        type: 'bar',
-        data: {
-          labels: vehicleKeys,
-          datasets: [{
-            label: 'Total Usage (KM)',
-            data: vehicleKeys.map(v => Math.round(kmByVehicle[v] || 0)),
-            backgroundColor: '#3498db'
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-
-      // === Pie Chart: Trip Count per Vehicle ===
-      const tripsByVehicle = {};
-      entries.forEach(e => {
-        tripsByVehicle[e.vehicle_number] = (tripsByVehicle[e.vehicle_number] || 0) + 1;
-      });
-
-      const ctx2 = document.getElementById('vehicleCountChart').getContext('2d');
-      new Chart(ctx2, {
-        type: 'pie',
-        data: {  // ✅ Fixed: added "data:" property
-          labels: vehicleKeys,
-          datasets: [{
-            data: vehicleKeys.map(v => tripsByVehicle[v] || 0),
-            backgroundColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-              '#9966FF', '#FF9F40', '#C9CBCF', '#4D5360'
-            ]
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: 'bottom' } }
-        }
+    function updateLocationDatalist() {
+      const datalist = document.getElementById('locationList');
+      if (!datalist) return;
+      const entryLocs = [...new Set(entries.map(e => e.location).filter(isValidValue))];
+      const allLocs = [...new Set([...INITIAL_LOCATIONS, ...entryLocs])];
+      datalist.innerHTML = '';
+      allLocs.forEach(loc => {
+        const opt = document.createElement('option');
+        opt.value = loc;
+        datalist.appendChild(opt);
       });
     }
 
-    function renderTrips(grouped, sortedVehicles) {
-      tripsContainer.innerHTML = '';
-      sortedVehicles.forEach(vNum => {
-        const entries = grouped[vNum];
-        const section = document.createElement('div');
-        section.className = 'vehicle-section';
+    // ==============================
+    // 🚀 FAST DATA LOADING (INDEXED)
+    // ==============================
+    async function loadEntries() {
+      if (!vehicleId) return;
 
-        const header = document.createElement('div');
-        header.className = 'vehicle-header';
-        header.innerHTML = `VEHICLE NO: ${vNum} &nbsp; | &nbsp; DRIVER: ${entries[0].driver_name || '–'}`;
-        section.appendChild(header);
+      try {
+        const { data, error } = await supabase
+          .from('meter_entries')
+          .select('*')
+          .eq('vehicle_id', vehicleId)
+          .order('entry_date', { ascending: true })
+          .order('start_time', { ascending: true });
 
-        const table = document.createElement('table');
-        table.className = 'log-table';
-        table.innerHTML = `
-          <thead>
-            <tr>
-              <th>DATE</th>
-              <th>LOCATION</th>
-              <th>START (KM)</th>
-              <th>END (KM)</th>
-              <th>USAGE (KM)</th>
-              <th>REMARKS</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-${vNum}"></tbody>
-        `;
-        const tbody = table.querySelector(`#tbody-${vNum}`);
-        entries.forEach(e => {
-          const usage = (e.end_km !== null && e.start_km !== null)
-            ? (parseFloat(e.end_km) - parseFloat(e.start_km)).toFixed(2)
-            : '–';
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${e.entry_date || ''}</td>
+        if (error) throw error;
+        entries = data || [];
+        currentOpenTrip = entries.find(isOpenTrip) || null;
+        populateMonths();
+        displayCurrentMonthData();
+        updateLocationDatalist();
+        updateTripButtons();
+      } catch (err) {
+        console.error('DB Load Error:', err);
+        document.getElementById('status').textContent = translations[currentLang].statusLoadError;
+      }
+    }
+
+    function displayCurrentMonthData() {
+      const container = document.getElementById('logBody');
+      const t = translations[currentLang];
+      const selectedMonth = document.getElementById('monthSelect').value;
+      const filtered = selectedMonth
+        ? entries.filter(e => e.entry_date.startsWith(selectedMonth))
+        : entries;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<tr><td colspan="9" style="text-align:center;">${t.noDataCurrent}</td></tr>`;
+        return;
+      }
+
+      filtered.sort((a, b) => getEntryTimestamp(a) - getEntryTimestamp(b));
+      let html = '';
+      filtered.forEach((e, i) => {
+        const dateStr = new Date(e.entry_date).toLocaleDateString(localeMap[currentLang]);
+        const usage = isValidValue(e.end_km) && isValidValue(e.start_km)
+          ? (parseFloat(e.end_km) - parseFloat(e.start_km)).toFixed(2)
+          : '–';
+        html += `
+          <tr>
+            <td>${i + 1}</td>
             <td>${e.location || ''}</td>
-            <td>${e.start_km || ''}</td>
-            <td>${e.end_km || ''}</td>
+            <td>${dateStr}</td>
+            <td>${e.start_time}</td>
+            <td>${e.start_km || ''} ${e.start_km ? '<small>(KM)</small>' : ''}</td>
+            <td>${e.end_km || ''} ${e.end_km ? '<small>(KM)</small>' : ''}</td>
+            <td>${e.end_time || ''}</td>
             <td>${usage}</td>
             <td>${e.remarks || ''}</td>
-          `;
-          tbody.appendChild(row);
-        });
-        section.appendChild(table);
-        tripsContainer.appendChild(section);
+          </tr>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function populateMonths() {
+      const select = document.getElementById('monthSelect');
+      select.innerHTML = `<option value="">${translations[currentLang].selectMonth}</option>`;
+      const months = [...new Set(entries.map(e => e.entry_date.substring(0, 7)))].sort().reverse();
+      months.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = new Date(m + '-01').toLocaleDateString(localeMap[currentLang], { month: 'long', year: 'numeric' });
+        select.appendChild(opt);
       });
     }
 
-    // === Print Functionality ===
-    function printReport() {
-      document.getElementById('printDate').textContent = new Date().toLocaleString();
-      window.print();
+    // ==============================
+    // 🎯 MODAL & SAVE LOGIC
+    // ==============================
+    function openEntryModal() {
+      const now = new Date();
+      const timeStr = now.toTimeString().slice(0, 5);
+      document.getElementById('entryForm').reset();
+      document.getElementById('dateInput').value = todayStr;
+
+      const t = translations[currentLang];
+      const startGroup = document.getElementById('startGroup');
+      const endGroup = document.getElementById('endGroup');
+      const modalTitle = document.getElementById('modalTitle');
+      const saveBtn = document.getElementById('btnSave');
+
+      if (currentOpenTrip) {
+        // END TRIP MODE
+        modalTitle.textContent = t.modalTitleClose;
+        startGroup.style.display = 'none';
+        endGroup.style.display = 'block';
+        saveBtn.textContent = t.endTripBtn;
+        document.getElementById('locationInput').value = currentOpenTrip.location || '';
+        document.getElementById('endTimeInput').value = timeStr;
+      } else {
+        // START TRIP MODE
+        modalTitle.textContent = t.modalTitle;
+        startGroup.style.display = 'block';
+        endGroup.style.display = 'none';
+        saveBtn.textContent = t.startTripBtn;
+        document.getElementById('startTimeInput').value = timeStr;
+
+        const lastClosed = getLastClosedTrip();
+        if (lastClosed) {
+          document.getElementById('startKmInput').value = lastClosed.end_km;
+          document.getElementById('locationInput').value = lastClosed.location || '';
+        } else {
+          document.getElementById('startKmInput').value = 0;
+        }
+      }
+
+      document.getElementById('entryModal').style.display = 'block';
     }
 
-    // === Event Listeners ===
-    document.getElementById('printBtn').addEventListener('click', printReport);
+    async function saveEntry(e) {
+      e.preventDefault();
+      const t = translations[currentLang];
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', loadAllData);
+      if (!vehicleId) {
+        alert('Vehicle not initialized');
+        return;
+      }
+
+      try {
+        if (currentOpenTrip) {
+          // END TRIP
+          const endKm = document.getElementById('endKmInput').value.trim();
+          const endTime = document.getElementById('endTimeInput').value.trim();
+          const location = document.getElementById('locationInput').value.trim();
+
+          if (!endKm || !endTime) {
+            alert(t.alertEndRequired);
+            return;
+          }
+
+          const endKmNum = parseFloat(endKm);
+          if (endKmNum <= parseFloat(currentOpenTrip.start_km)) {
+            alert(t.alertLessKm);
+            return;
+          }
+
+          const { error } = await supabase
+            .from('meter_entries')
+            .update({
+              end_km: endKmNum,
+              end_time: endTime,
+              location: location || null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', currentOpenTrip.id);
+
+          if (error) throw error;
+
+          // Update local state immediately
+          currentOpenTrip.end_km = endKmNum;
+          currentOpenTrip.end_time = endTime;
+          currentOpenTrip.location = location || currentOpenTrip.location;
+          currentOpenTrip = null;
+
+        } else {
+          // START TRIP
+          const date = document.getElementById('dateInput').value;
+          const location = document.getElementById('locationInput').value.trim();
+          const startKm = parseFloat(document.getElementById('startKmInput').value);
+          const startTime = document.getElementById('startTimeInput').value;
+          const remarks = document.getElementById('remarksInput').value.trim();
+
+          if (new Date(date) > today) {
+            alert(t.alertFutureDate);
+            return;
+          }
+
+          const lastClosed = getLastClosedTrip();
+          if (lastClosed && startKm < parseFloat(lastClosed.end_km)) {
+            alert(t.alertLessKm);
+            return;
+          }
+
+          if (entries.some(isOpenTrip)) {
+            alert(t.alertOpenTripExists);
+            return;
+          }
+
+          const { data, error } = await supabase
+            .from('meter_entries')
+            .insert([{
+              vehicle_id: vehicleId,
+              entry_date: date,
+              location: location || null,
+              start_km: startKm,
+              start_time: startTime,
+              remarks: remarks || null,
+              created_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          // Update local state
+          entries.push(data);
+          currentOpenTrip = data;
+        }
+
+        // Success
+        document.getElementById('status').textContent = t.statusSuccess;
+        closeEntryModal();
+        displayCurrentMonthData();
+        updateTripButtons();
+
+        setTimeout(() => document.getElementById('status').textContent = '', 3000);
+
+      } catch (err) {
+        console.error('Save Error:', err);
+        alert(t.alertSaveFail);
+      }
+    }
+
+    // ==============================
+    // 🔐 VEHICLE INIT (FAST + DEDUPLICATED)
+    // ==============================
+    async function initializeVehicle() {
+      try {
+        document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
+        document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
+
+        let { data, error } = await supabase
+          .from('vehicles')
+          .select('id')
+          .eq('vehicle_number', driverConfig.vehicleNo)
+          .single();
+
+        if (error?.code === 'PGRST116') {
+          const { data: newV, error: insErr } = await supabase
+            .from('vehicles')
+            .insert({
+              project_number: PROJECT_NUMBER,
+              vehicle_number: driverConfig.vehicleNo,
+              driver_name: driverConfig.name
+            })
+            .select('id')
+            .single();
+          if (insErr) throw insErr;
+          vehicleId = newV.id;
+        } else if (error) {
+          throw error;
+        } else {
+          vehicleId = data.id;
+        }
+
+        await loadEntries();
+      } catch (err) {
+        console.error('Vehicle Init Error:', err);
+        document.getElementById('status').textContent = translations[currentLang].statusDbError;
+      }
+    }
+
+    // ==============================
+    // 🎮 EVENT LISTENERS
+    // ==============================
+    document.addEventListener('DOMContentLoaded', () => {
+      setLanguage(currentLang);
+      initializeVehicle();
+
+      document.getElementById('langToggle').addEventListener('click', () =>
+        setLanguage(currentLang === 'en' ? 'ar' : 'en')
+      );
+
+      document.getElementById('addEntryBtn').addEventListener('click', openEntryModal);
+      document.getElementById('entryForm').addEventListener('submit', saveEntry);
+      document.getElementById('cancelBtn').addEventListener('click', closeEntryModal);
+
+      document.querySelectorAll('.close').forEach(btn =>
+        btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none')
+      );
+
+      document.querySelectorAll('.modal').forEach(modal =>
+        modal.addEventListener('click', e => {
+          if (e.target === modal) modal.style.display = 'none';
+        })
+      );
+
+      document.getElementById('monthSelect').addEventListener('change', displayCurrentMonthData);
+    });
   </script>
 </body>
 </html>
