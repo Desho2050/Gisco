@@ -214,6 +214,7 @@
 
           <label id="lblLocation">Location:</label>
           <input type="text" id="locationInput" list="locationList" placeholder="Start typing or select..." />
+
           <datalist id="locationList"></datalist>
 
           <div id="startGroup">
@@ -225,9 +226,9 @@
 
           <div id="endGroup" style="display:none;">
             <label id="lblEndKm">End (KM):</label>
-            <input type="number" id="endKmInput" min="0" step="1" required inputmode="numeric" pattern="\d*" />
+            <input type="number" id="endKmInput" min="0" step="1" inputmode="numeric" pattern="\d*" />
             <label id="lblEndTime">End Time:</label>
-            <input type="time" id="endTimeInput" required />
+            <input type="time" id="endTimeInput" />
           </div>
 
           <label id="lblRemarks">Remarks:</label>
