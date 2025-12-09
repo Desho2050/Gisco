@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Vehicle Usage Tracker</title>
-  <!-- Supabase v2 -->
+  <!-- Supabase v2 - REMOVED TRAILING SPACES -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <style>
     /* Your existing CSS remains unchanged */
@@ -403,11 +403,19 @@
   // ==============================
   // 🔌 SUPABASE SETUP (Now inside initSupabase)
   // ==============================
+  // REMOVED TRAILING SPACES FROM URL
   const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
 
   function initSupabase() {
-    supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Check if Supabase library loaded properly
+    if (typeof supabase === 'undefined' || !window.supabase) {
+      console.error("Supabase library not loaded");
+      return;
+    }
+    
+    // Use the global supabase object to create client
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
   // ==============================
