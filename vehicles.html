@@ -8,22 +8,93 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- html2canvas -->
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <!-- xlsx -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva,Verdana, sans-serif; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { margin: 0; padding: 16px; background: #f5f7fa; color: #333; }
     .container { max-width: 100%; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     h1 { text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.6rem; }
+    h2 { margin: 20px 0 10px; color: #2c3e50; font-size: 1.2rem; }
+    .summary-metrics {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #eaeaea;
+    }
+    .metric-card {
+      text-align: center;
+      padding: 10px;
+      min-width: 120px;
+    }
+    .metric-value {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #2980b9;
+    }
+    .metric-label {
+      font-size: 0.85rem;
+      color: #7f8c8d;
+    }
     .actions { text-align: center; margin: 15px 0; }
-    .actions button { padding: 8px 16px; margin: 0 6px; border: none; border-radius: 4px; background: #3498db; color: white; cursor: pointer; font-size: 14px; }
+    .actions button { 
+      padding: 8px 16px; 
+      margin: 0 6px; 
+      border: none; 
+      border-radius: 4px; 
+      background: #3498db; 
+      color: white; 
+      cursor: pointer; 
+      font-size: 14px; 
+    }
     .actions button:hover { background: #2980b9; }
     .chart-container { margin: 25px 0; height: 300px; }
-    .log-table { width: 100%; border-collapse: collapse; margin-top: 20px; border: 1px solid #ddd; font-size: 0.85rem; }
-    .log-table th, .log-table td { padding: 8px; text-align: left; border: 1px solid #ddd; }
-    .log-table th { background-color: #f2f2f2; font-weight: bold; }
-    .log-table tr:nth-child(even) { background-color: #fafafa; }
-    #status { margin-top: 10px; text-align: center; font-style: italic; color: #7f8c8d; }
-    .vehicle-section { margin-top: 30px; page-break-inside: avoid; }
-    .vehicle-header { background: #eef2f7; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; }
+    .log-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 20px; 
+      border: 1px solid #ddd; 
+      font-size: 0.85rem; 
+      page-break-inside: avoid;
+    }
+    .log-table th, .log-table td { 
+      padding: 8px; 
+      text-align: left; 
+      border: 1px solid #ddd; 
+    }
+    .log-table th { 
+      background-color: #f2f2f2; 
+      font-weight: bold; 
+    }
+    .log-table tr:nth-child(even) { 
+      background-color: #fafafa; 
+    }
+    #status { 
+      margin-top: 10px; 
+      text-align: center; 
+      font-style: italic; 
+      color: #7f8c8d; 
+    }
+    .vehicle-section { 
+      margin-top: 30px; 
+      page-break-inside: avoid; 
+    }
+    .vehicle-header { 
+      background: #eef2f7; 
+      padding: 10px; 
+      border-radius: 6px; 
+      margin-bottom: 10px; 
+      font-weight: bold; 
+    }
     
     @media print {
       body { background: white; padding: 0; }
@@ -32,6 +103,12 @@
       .chart-container canvas { display: none; }
       .print-only { display: block !important; }
       .no-print { display: none !important; }
+      .log-table { font-size: 0.75rem; }
+      .summary-metrics { 
+        font-size: 0.9rem; 
+        padding: 10px; 
+      }
+      .metric-value { font-size: 1.1rem; }
     }
     .print-only { display: none; }
     .print-header { text-align: center; margin-bottom: 20px; }
@@ -44,11 +121,31 @@
     
     <div class="actions no-print">
       <button id="printBtn">🖨️ Print Report</button>
+      <button id="exportExcelBtn">📊 Export to Excel</button>
+      <button id="exportPdfBtn">📄 Export to PDF</button>
     </div>
+
+    <!-- Top-level Summary Metrics -->
+    <div id="topSummary" class="summary-metrics no-print">
+      <div class="metric-card">
+        <div class="metric-value" id="totalDutyKm">–</div>
+        <div class="metric-label">Total Duty KM</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="totalOvertimeKm">–</div>
+        <div class="metric-label">Total Overtime KM</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="totalOvertimeHours">–</div>
+        <div class="metric-label">Total Overtime Hours</div>
+      </div>
+    </div>
+
+    <div id="printTopSummary" class="summary-metrics print-only"></div>
 
     <div id="status">Loading...</div>
 
-    <!-- Charts (hidden on print) -->
+    <!-- Charts -->
     <div class="chart-container no-print">
       <canvas id="usageChart"></canvas>
     </div>
@@ -56,7 +153,11 @@
       <canvas id="vehicleCountChart"></canvas>
     </div>
 
-    <!-- Printable header (only shows when printing) -->
+    <!-- Summary Pivot Table -->
+    <div id="summaryTableContainer" class="no-print"></div>
+    <div id="printSummaryTableContainer" class="print-only"></div>
+
+    <!-- Printable header -->
     <div class="print-only print-header">
       <h2>Vehicle Usage Report</h2>
       <p>Generated on: <span id="printDate"></span></p>
@@ -70,13 +171,48 @@
     // Supabase config
     const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
 
     let allEntries = [];
     let vehicles = {};
+    let summaryStats = {
+      totalDutyKm: 0,
+      totalOvertimeKm: 0,
+      totalOvertimeHours: 0
+    };
+
+    const WORK_START_MIN = 7 * 60;   // 07:00 → 420 minutes
+    const WORK_END_MIN = 15 * 60;    // 15:00 → 900 minutes
 
     const tripsContainer = document.getElementById('tripsContainer');
     const statusEl = document.getElementById('status');
+
+    // Helper: parse time string "HH:mm" to minutes since midnight
+    function timeToMinutes(timeStr) {
+      if (!timeStr || typeof timeStr !== 'string') return null;
+      const [h, m] = timeStr.split(':').map(Number);
+      if (isNaN(h) || isNaN(m)) return null;
+      return h * 60 + m;
+    }
+
+    // Helper: calculate hours between two time strings
+    function calculateHours(startTime, endTime) {
+      const start = timeToMinutes(startTime);
+      const end = timeToMinutes(endTime);
+      if (start === null || end === null) return 0;
+      const diff = end - start;
+      return diff > 0 ? diff / 60 : 0;
+    }
+
+    // Determine trip type based on start_time
+    function getTripType(startTime) {
+      const startMin = timeToMinutes(startTime);
+      if (startMin === null) return 'Unknown';
+      if (startMin >= WORK_START_MIN && startMin < WORK_END_MIN) {
+        return 'Duty';
+      }
+      return 'Over Time';
+    }
 
     async function loadAllData() {
       try {
@@ -104,11 +240,43 @@
 
         if (entryError) throw entryError;
 
-        const enriched = entries.map(e => ({
-          ...e,
-          vehicle_number: vehicleMap[e.vehicle_id]?.vehicle_number || 'Unknown',
-          driver_name: vehicleMap[e.vehicle_id]?.driver_name || 'Unknown'
-        }));
+        // Enrich entries with vehicle info and trip type
+        const enriched = entries.map(e => {
+          const tripType = getTripType(e.start_time);
+          const startKm = parseFloat(e.start_km);
+          const endKm = parseFloat(e.end_km);
+          const usageKm = (!isNaN(startKm) && !isNaN(endKm)) ? (endKm - startKm) : 0;
+          const durationHours = calculateHours(e.start_time, e.end_time);
+
+          return {
+            ...e,
+            vehicle_number: vehicleMap[e.vehicle_id]?.vehicle_number || 'Unknown',
+            driver_name: vehicleMap[e.vehicle_id]?.driver_name || 'Unknown',
+            trip_type: tripType,
+            usage_km: usageKm,
+            duration_hours: durationHours
+          };
+        });
+
+        // Compute global stats
+        let totalDutyKm = 0;
+        let totalOvertimeKm = 0;
+        let totalOvertimeHours = 0;
+
+        enriched.forEach(e => {
+          if (e.trip_type === 'Duty') {
+            totalDutyKm += e.usage_km;
+          } else if (e.trip_type === 'Over Time') {
+            totalOvertimeKm += e.usage_km;
+            totalOvertimeHours += e.duration_hours;
+          }
+        });
+
+        summaryStats = {
+          totalDutyKm: Math.round(totalDutyKm * 100) / 100,
+          totalOvertimeKm: Math.round(totalOvertimeKm * 100) / 100,
+          totalOvertimeHours: Math.round(totalOvertimeHours * 100) / 100
+        };
 
         // Group by vehicle
         const grouped = {};
@@ -129,7 +297,10 @@
         allEntries = enriched;
         vehicles = grouped;
 
+        // Render
+        renderTopSummary();
         renderCharts(enriched, sortedVehicles);
+        renderSummaryTable(sortedVehicles, grouped);
         renderTrips(grouped, sortedVehicles);
         statusEl.textContent = '';
       } catch (err) {
@@ -138,58 +309,142 @@
       }
     }
 
+    function renderTopSummary() {
+      document.getElementById('totalDutyKm').textContent = summaryStats.totalDutyKm;
+      document.getElementById('totalOvertimeKm').textContent = summaryStats.totalOvertimeKm;
+      document.getElementById('totalOvertimeHours').textContent = summaryStats.totalOvertimeHours;
+
+      const printDiv = document.getElementById('printTopSummary');
+      printDiv.innerHTML = `
+        <div class="metric-card">
+          <div class="metric-value">${summaryStats.totalDutyKm}</div>
+          <div class="metric-label">Total Duty KM</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">${summaryStats.totalOvertimeKm}</div>
+          <div class="metric-label">Total Overtime KM</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">${summaryStats.totalOvertimeHours}</div>
+          <div class="metric-label">Total Overtime Hours</div>
+        </div>
+      `;
+    }
+
     function renderCharts(entries, vehicleKeys) {
-      // === Bar Chart: Total KM per Vehicle ===
-      const kmByVehicle = {};
-      entries.forEach(e => {
-        if (e.start_km != null && e.end_km != null) {
-          const usage = parseFloat(e.end_km) - parseFloat(e.start_km);
-          kmByVehicle[e.vehicle_number] = (kmByVehicle[e.vehicle_number] || 0) + usage;
-        }
+  Chart.getChart('usageChart')?.destroy();
+  Chart.getChart('vehicleCountChart')?.destroy();
+
+  const kmByVehicle = {};
+  const tripsByVehicle = {};
+  entries.forEach(e => {
+    kmByVehicle[e.vehicle_number] = (kmByVehicle[e.vehicle_number] || 0) + e.usage_km;
+    tripsByVehicle[e.vehicle_number] = (tripsByVehicle[e.vehicle_number] || 0) + 1;
+  });
+
+  const ctx1 = document.getElementById('usageChart').getContext('2d');
+  new Chart(ctx1, {
+    type: 'bar',
+    data: {  // ✅ FIXED: added "data:"
+      labels: vehicleKeys,
+      datasets: [{
+        label: 'Total Usage (KM)',
+        data: vehicleKeys.map(v => Math.round(kmByVehicle[v] || 0)),
+        backgroundColor: '#3498db'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  const ctx2 = document.getElementById('vehicleCountChart').getContext('2d');
+  new Chart(ctx2, {
+    type: 'pie',
+    data: {  // ✅ FIXED: added "data:"
+      labels: vehicleKeys,
+      datasets: [{
+        data: vehicleKeys.map(v => tripsByVehicle[v] || 0),
+        backgroundColor: [
+          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+          '#9966FF', '#FF9F40', '#C9CBCF', '#4D5360'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+    function renderSummaryTable(vehicleKeys, groupedEntries) {
+      const summaryData = vehicleKeys.map(vNum => {
+        const entries = groupedEntries[vNum];
+        let totalTrips = entries.length;
+        let totalKM = 0;
+        let overtimeKM = 0;
+        let overtimeHours = 0;
+
+        entries.forEach(e => {
+          totalKM += e.usage_km;
+          if (e.trip_type === 'Over Time') {
+            overtimeKM += e.usage_km;
+            overtimeHours += e.duration_hours;
+          }
+        });
+
+        return {
+          vehicle: vNum,
+          driver: entries[0]?.driver_name || '–',
+          trips: totalTrips,
+          km: Math.round(totalKM * 100) / 100,
+          overtimeKm: Math.round(overtimeKM * 100) / 100,
+          overtimeHours: Math.round(overtimeHours * 100) / 100
+        };
       });
 
-      const ctx1 = document.getElementById('usageChart').getContext('2d');
-      new Chart(ctx1, {
-        type: 'bar',
-        data: {
-          labels: vehicleKeys,
-          datasets: [{
-            label: 'Total Usage (KM)',
-            data: vehicleKeys.map(v => Math.round(kmByVehicle[v] || 0)),
-            backgroundColor: '#3498db'
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true } }
-        }
-      });
+      function createSummaryTable(data, isPrint = false) {
+        const table = document.createElement('table');
+        table.className = 'log-table';
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Vehicle No</th>
+              <th>Driver</th>
+              <th>Total Trips</th>
+              <th>Total KM</th>
+              <th>Overtime KM</th>
+              <th>Overtime Hours</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+        const tbody = table.querySelector('tbody');
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${row.vehicle}</td>
+            <td>${row.driver}</td>
+            <td>${row.trips}</td>
+            <td>${row.km}</td>
+            <td>${row.overtimeKm}</td>
+            <td>${row.overtimeHours}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        return table;
+      }
 
-      // === Pie Chart: Trip Count per Vehicle ===
-      const tripsByVehicle = {};
-      entries.forEach(e => {
-        tripsByVehicle[e.vehicle_number] = (tripsByVehicle[e.vehicle_number] || 0) + 1;
-      });
+      const screenContainer = document.getElementById('summaryTableContainer');
+      screenContainer.innerHTML = '<h2>Summary by Vehicle</h2>';
+      screenContainer.appendChild(createSummaryTable(summaryData, false));
 
-      const ctx2 = document.getElementById('vehicleCountChart').getContext('2d');
-      new Chart(ctx2, {
-        type: 'pie',
-        data: {  // ✅ Fixed: added "data:" property
-          labels: vehicleKeys,
-          datasets: [{
-            data: vehicleKeys.map(v => tripsByVehicle[v] || 0),
-            backgroundColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-              '#9966FF', '#FF9F40', '#C9CBCF', '#4D5360'
-            ]
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: 'bottom' } }
-        }
-      });
+      const printContainer = document.getElementById('printSummaryTableContainer');
+      printContainer.innerHTML = '<h3>Summary by Vehicle</h3>';
+      printContainer.appendChild(createSummaryTable(summaryData, true));
     }
 
     function renderTrips(grouped, sortedVehicles) {
@@ -214,6 +469,9 @@
               <th>START (KM)</th>
               <th>END (KM)</th>
               <th>USAGE (KM)</th>
+              <th>START TIME</th>
+              <th>END TIME</th>
+              <th>TRIP TYPE</th>
               <th>REMARKS</th>
             </tr>
           </thead>
@@ -221,16 +479,16 @@
         `;
         const tbody = table.querySelector(`#tbody-${vNum}`);
         entries.forEach(e => {
-          const usage = (e.end_km !== null && e.start_km !== null)
-            ? (parseFloat(e.end_km) - parseFloat(e.start_km)).toFixed(2)
-            : '–';
           const row = document.createElement('tr');
           row.innerHTML = `
             <td>${e.entry_date || ''}</td>
             <td>${e.location || ''}</td>
             <td>${e.start_km || ''}</td>
             <td>${e.end_km || ''}</td>
-            <td>${usage}</td>
+            <td>${e.usage_km.toFixed(2)}</td>
+            <td>${e.start_time || ''}</td>
+            <td>${e.end_time || ''}</td>
+            <td>${e.trip_type}</td>
             <td>${e.remarks || ''}</td>
           `;
           tbody.appendChild(row);
@@ -240,7 +498,129 @@
       });
     }
 
-    // === Print Functionality ===
+    // === Export to Excel ===
+    function exportToExcel() {
+      const wb = XLSX.utils.book_new();
+      
+      // Overview sheet
+      const topSummary = [
+        ['Metric', 'Value'],
+        ['Total Duty KM', summaryStats.totalDutyKm],
+        ['Total Overtime KM', summaryStats.totalOvertimeKm],
+        ['Total Overtime Hours', summaryStats.totalOvertimeHours]
+      ];
+      const topWS = XLSX.utils.aoa_to_sheet(topSummary);
+      XLSX.utils.book_append_sheet(wb, topWS, 'Overview');
+
+      // Vehicle Summary
+      const summaryData = [];
+      document.querySelectorAll('#summaryTableContainer table tbody tr').forEach(row => {
+        const rowData = [];
+        row.querySelectorAll('td').forEach(cell => {
+          rowData.push(cell.innerText);
+        });
+        summaryData.push(rowData);
+      });
+      
+      const summaryWS = XLSX.utils.aoa_to_sheet([
+        ['Vehicle No', 'Driver', 'Total Trips', 'Total KM', 'Overtime KM', 'Overtime Hours'],
+        ...summaryData
+      ]);
+      XLSX.utils.book_append_sheet(wb, summaryWS, 'Vehicle Summary');
+
+      // Detailed Trips
+      const detailData = [];
+      detailData.push(['Vehicle No', 'Driver', 'Date', 'Location', 'Start KM', 'End KM', 'Usage KM', 'Start Time', 'End Time', 'Trip Type', 'Remarks']);
+      
+      Object.keys(vehicles).forEach(vNum => {
+        vehicles[vNum].forEach(entry => {
+          detailData.push([
+            entry.vehicle_number,
+            entry.driver_name,
+            entry.entry_date,
+            entry.location,
+            entry.start_km,
+            entry.end_km,
+            entry.usage_km.toFixed(2),
+            entry.start_time,
+            entry.end_time,
+            entry.trip_type,
+            entry.remarks
+          ]);
+        });
+      });
+      
+      const detailWS = XLSX.utils.aoa_to_sheet(detailData);
+      XLSX.utils.book_append_sheet(wb, detailWS, 'Detailed Trips');
+      
+      XLSX.writeFile(wb, `Vehicle_Usage_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // === Export to PDF ===
+    async function exportToPdf() {
+      statusEl.textContent = 'Generating PDF...';
+      
+      const printContainer = document.createElement('div');
+      printContainer.style.padding = '20px';
+      printContainer.style.width = '100%';
+      printContainer.style.maxWidth = '900px';
+      printContainer.style.margin = '0 auto';
+      printContainer.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+      
+      // Header
+      const header = document.createElement('div');
+      header.innerHTML = `<h2 style="text-align:center;margin:0;">Vehicle Usage Report</h2>
+                         <p style="text-align:center;margin:5px 0;">Generated on: ${new Date().toLocaleString()}</p>`;
+      printContainer.appendChild(header);
+      
+      // Top summary
+      printContainer.appendChild(document.getElementById('printTopSummary').cloneNode(true));
+      // Summary table
+      printContainer.appendChild(document.getElementById('printSummaryTableContainer').cloneNode(true));
+      // Detailed trips
+      const tripsClone = tripsContainer.cloneNode(true);
+      tripsClone.className = 'print-only';
+      printContainer.appendChild(tripsClone);
+      
+      document.body.appendChild(printContainer);
+      printContainer.style.position = 'fixed';
+      printContainer.style.left = '-10000px';
+      printContainer.style.top = '0';
+      
+      try {
+        const canvas = await html2canvas(printContainer, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true
+        });
+        
+        const imgWidth = 210;
+        const pageHeight = 297;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+        
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+        
+        pdf.save(`Vehicle_Usage_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+      } catch (err) {
+        console.error('PDF error:', err);
+        statusEl.textContent = '⚠ PDF export failed.';
+      } finally {
+        document.body.removeChild(printContainer);
+        statusEl.textContent = '';
+      }
+    }
+
     function printReport() {
       document.getElementById('printDate').textContent = new Date().toLocaleString();
       window.print();
@@ -248,8 +628,9 @@
 
     // === Event Listeners ===
     document.getElementById('printBtn').addEventListener('click', printReport);
+    document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
+    document.getElementById('exportPdfBtn').addEventListener('click', exportToPdf);
 
-    // Initialize
     document.addEventListener('DOMContentLoaded', loadAllData);
   </script>
 </body>
