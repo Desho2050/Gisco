@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Vehicle Usage Tracker</title>
-  <!-- Supabase v2 - REMOVED TRAILING SPACES -->
+  <!-- Supabase v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <style>
     /* Your existing CSS remains unchanged */
@@ -219,9 +219,9 @@
 
           <div id="startGroup">
             <label id="lblStartKm">Start (KM):</label>
-            <input type="number" id="startKmInput" min="0" step="1" inputmode="numeric" pattern="\d*" />
+            <input type="number" id="startKmInput" min="0" step="1" required inputmode="numeric" pattern="\d*" />
             <label id="lblStartTime">Start Time:</label>
-            <input type="time" id="startTimeInput" />
+            <input type="time" id="startTimeInput" required />
           </div>
 
           <div id="endGroup" style="display:none;">
@@ -404,7 +404,6 @@
   // ==============================
   // 🔌 SUPABASE SETUP (Now inside initSupabase)
   // ==============================
-  // REMOVED TRAILING SPACES FROM URL
   const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
 
@@ -717,6 +716,14 @@
       saveBtn.textContent = t.endTripBtn;
       document.getElementById('locationInput').value = openTrip.location || '';
       document.getElementById('endTimeInput').value = timeStr;
+      
+      // Remove required attribute from start fields when ending a trip
+      document.getElementById('startKmInput').removeAttribute('required');
+      document.getElementById('startTimeInput').removeAttribute('required');
+      
+      // Add required attribute to end fields when ending a trip
+      document.getElementById('endKmInput').setAttribute('required', '');
+      document.getElementById('endTimeInput').setAttribute('required', '');
     } else {
       modalTitle.textContent = t.modalTitle;
       startGroup.style.display = 'block';
@@ -731,6 +738,14 @@
       } else {
         document.getElementById('startKmInput').value = 0;
       }
+      
+      // Add required attribute to start fields when starting a trip
+      document.getElementById('startKmInput').setAttribute('required', '');
+      document.getElementById('startTimeInput').setAttribute('required', '');
+      
+      // Remove required attribute from end fields when starting a trip
+      document.getElementById('endKmInput').removeAttribute('required');
+      document.getElementById('endTimeInput').removeAttribute('required');
     }
 
     document.getElementById('entryModal').style.display = 'block';
@@ -885,7 +900,7 @@
         .single();
 
       if (error?.code === 'PGRST116') {
-        const { data: newV, error: insErr } = await supabase
+        const {  newV, error: insErr } = await supabase
           .from('vehicles')
           .insert({
             project_number: PROJECT_NUMBER,
