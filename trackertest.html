@@ -171,6 +171,15 @@
         gap: 10px;
       }
       
+       .month-selector2 {
+       display: flex;
+         grid-template-columns: 1fr 1fr;
+         gap: 10px;
+         border-radius: 10px;
+background-color: #2980b9;
+      }
+      
+
       .month-selector label {
         align-self: flex-start;
       }
@@ -208,21 +217,22 @@
   <div class="container">
     <h1 id="appTitle">Vehicle Usage Tracker</h1>
     <div id="connectionStatus"></div>
-
+    <div ><label id="lblSelectMonth">View Month:</label>
+      <select id="monthSelect" style="width: 150px; height: 30px; border-radius: 20px;margin-bottom: 20px;background-color: aqua;">
+        <option value="">Select Month...</option>
+        
+      </select>
+    </div>
+      <button id="langToggle">العربية / English</button>
     <div class="info-header">
       <div><span id="lblVehicle">VEHICLE NO</span></div>
       <div><span id="lblDriver">DRIVER NAME</span></div>
     </div>
-
-    <div class="month-selector">
-      <label id="lblSelectMonth">View Month:</label>
-      <select id="monthSelect">
-        <option value="">Select Month...</option>
-      </select>
-      <button id="addEntryBtn">Start Trip</button>
-      <button id="langToggle">العربية / English</button>
+    
+       <div style="display: flex; justify-content: center; width: 100%; margin-bottom: 20px;">
+      <button id="addEntryBtn" style="width: fit-content; font-weight: bold; font-size: 16px; padding: 10px 20px; margin-top: 10px; margin-bottom: 10px;">Start Trip</button>
     </div>
-
+    
     <div id="status"></div>
 
     <!-- Summary Section -->
