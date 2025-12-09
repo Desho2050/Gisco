@@ -123,6 +123,36 @@
 
     small { color: #777; font-size: 0.85em; }
 
+    .summary-container {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    
+    .summary-item {
+      text-align: center;
+      flex: 1;
+      min-width: 150px;
+    }
+    
+    .summary-label {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 5px;
+    }
+    
+    .summary-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
     @media (max-width: 480px) {
       body { padding: 8px; }
       .container { padding: 12px; }
@@ -143,6 +173,15 @@
       
       .month-selector label {
         align-self: flex-start;
+      }
+      
+      .summary-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .summary-item {
+        width: 100%;
       }
       
       .log-table {
@@ -185,6 +224,26 @@
     </div>
 
     <div id="status"></div>
+
+    <!-- Summary Section -->
+    <div class="summary-container">
+      <div class="summary-item">
+        <div class="summary-label" id="lblTotalTrips">TOTAL TRIPS</div>
+        <div class="summary-value" id="totalTrips">0</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label" id="lblTotalKm">TOTAL KM</div>
+        <div class="summary-value" id="totalKm">0</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label" id="lblTotalDuration">TOTAL DURATION</div>
+        <div class="summary-value" id="totalDuration">0h 0m</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label" id="lblTotalOvertime">TOTAL OVERTIME</div>
+        <div class="summary-value" id="totalOvertime">0h 0m</div>
+      </div>
+    </div>
 
     <table class="log-table" id="logTable">
       <thead>
@@ -288,6 +347,10 @@
       thDuration: "DURATION",
       thDutyType: "DUTY TYPE",
       thRemarks: "REMARKS",
+      lblTotalTrips: "TOTAL TRIPS",
+      lblTotalKm: "TOTAL KM",
+      lblTotalDuration: "TOTAL DURATION",
+      lblTotalOvertime: "TOTAL OVERTIME",
       modalTitle: "Add New Entry",
       lblDate: "Date:",
       lblLocation: "Location:",
@@ -332,6 +395,10 @@
       thDuration: "المدة",
       thDutyType: "نوع الواجب",
       thRemarks: "ملاحظات",
+      lblTotalTrips: "إجمالي الرحلات",
+      lblTotalKm: "إجمالي الكيلومترات",
+      lblTotalDuration: "إجمالي المدة",
+      lblTotalOvertime: "إجمالي العمل الإضافي",
       modalTitle: "إدخال جديد",
       lblDate: "التاريخ:",
       lblLocation: "الموقع:",
@@ -392,6 +459,10 @@
     document.getElementById('thDuration').textContent = t.thDuration;
     document.getElementById('thDutyType').textContent = t.thDutyType;
     document.getElementById('thRemarks').textContent = t.thRemarks;
+    document.getElementById('lblTotalTrips').textContent = t.lblTotalTrips;
+    document.getElementById('lblTotalKm').textContent = t.lblTotalKm;
+    document.getElementById('lblTotalDuration').textContent = t.lblTotalDuration;
+    document.getElementById('lblTotalOvertime').textContent = t.lblTotalOvertime;
     document.getElementById('modalTitle').textContent = t.modalTitle;
     document.getElementById('lblDate').textContent = t.lblDate;
     document.getElementById('lblLocation').textContent = t.lblLocation;
@@ -679,6 +750,71 @@
     return startHour < 15 ? 'Duty' : 'Overtime'; // Before 3 PM is Duty, after is Overtime
   }
 
+  // ==============================
+  // 📊 SUMMARY CALCULATIONS
+  // ==============================
+  function calculateSummaries() {
+    const selectedMonth = document.getElementById('monthSelect').value;
+    const filtered = selectedMonth
+      ? entries.filter(e => e.entry_date.startsWith(selectedMonth))
+      : entries;
+    
+    // Filter to only completed trips
+    const completedTrips = filtered.filter(e => isValidValue(e.end_km) && isValidValue(e.end_time));
+    
+    // Calculate total trips
+    const totalTrips = completedTrips.length;
+    
+    // Calculate total km
+    const totalKm = completedTrips.reduce((sum, e) => {
+      if (isValidValue(e.start_km) && isValidValue(e.end_km)) {
+        return sum + (parseInt(e.end_km) - parseInt(e.start_km));
+      }
+      return sum;
+    }, 0);
+    
+    // Calculate total duration and overtime
+    let totalDurationMins = 0;
+    let totalOvertimeMins = 0;
+    
+    completedTrips.forEach(e => {
+      if (isValidValue(e.start_time) && isValidValue(e.end_time)) {
+        const start = new Date(`2000-01-01T${e.start_time}`);
+        const end = new Date(`2000-01-01T${e.end_time}`);
+        
+        if (end < start) {
+          end.setDate(end.getDate() + 1);
+        }
+        
+        const diffMs = end - start;
+        const diffMins = Math.floor(diffMs / 60000);
+        totalDurationMins += diffMins;
+        
+        // Check if trip started after 3 PM (overtime)
+        const startHour = parseInt(e.start_time.split(':')[0]);
+        if (startHour >= 15) {
+          totalOvertimeMins += diffMins;
+        }
+      }
+    });
+    
+    // Format total duration
+    const totalDurationHours = Math.floor(totalDurationMins / 60);
+    const totalDurationRemainingMins = totalDurationMins % 60;
+    const totalDurationStr = `${totalDurationHours}h ${totalDurationRemainingMins}m`;
+    
+    // Format total overtime
+    const totalOvertimeHours = Math.floor(totalOvertimeMins / 60);
+    const totalOvertimeRemainingMins = totalOvertimeMins % 60;
+    const totalOvertimeStr = `${totalOvertimeHours}h ${totalOvertimeRemainingMins}m`;
+    
+    // Update summary elements
+    document.getElementById('totalTrips').textContent = totalTrips;
+    document.getElementById('totalKm').textContent = totalKm;
+    document.getElementById('totalDuration').textContent = totalDurationStr;
+    document.getElementById('totalOvertime').textContent = totalOvertimeStr;
+  }
+
   function displayCurrentMonthData() {
     const container = document.getElementById('logBody');
     const t = translations[currentLang];
@@ -689,6 +825,7 @@
 
     if (filtered.length === 0) {
       container.innerHTML = `<tr><td colspan="11" style="text-align:center;">${t.noDataCurrent}</td></tr>`;
+      calculateSummaries(); // Update summaries even when no data
       return;
     }
 
@@ -724,6 +861,9 @@
       `;
     });
     container.innerHTML = html;
+    
+    // Calculate and display summaries
+    calculateSummaries();
   }
 
   function populateMonths() {
