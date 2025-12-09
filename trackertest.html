@@ -7,6 +7,7 @@
   <!-- Supabase v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <style>
+    /* Your existing CSS remains unchanged */
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { margin: 0; padding: 16px; background: #f5f7fa; color: #333; transition: direction 0.3s; }
     .container {
@@ -241,6 +242,15 @@
 
 <script>
   // ==============================
+  // 🔧 GLOBAL VARIABLES
+  // ==============================
+  let supabase = null; // Initialize as null first
+  let vehicleId = null;
+  let entries = [];
+  let realtimeSubscription = null;
+  let isConnected = true;
+
+  // ==============================
   // 🔑 DRIVER CONFIGURATION
   // ==============================
   const DRIVERS = {
@@ -391,11 +401,14 @@
   }
 
   // ==============================
-  // 🔌 SUPABASE SETUP (Defined early)
+  // 🔌 SUPABASE SETUP (Now inside initSupabase)
   // ==============================
-  const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co'; // ✅ No trailing spaces
+  const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // ✅ Defined before any usage
+
+  function initSupabase() {
+    supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
 
   // ==============================
   // 📅 GLOBAL STATE
@@ -416,10 +429,6 @@
     window.location.search = '?driver=4';
   }
   const driverConfig = DRIVERS[driverId];
-  let vehicleId = null;
-  let entries = [];
-  let realtimeSubscription = null;
-  let isConnected = true;
 
   // ==============================
   // ✅ HELPER FUNCTIONS
@@ -503,7 +512,7 @@
   }
 
   async function processOfflineQueue() {
-    if (!vehicleId || !isConnected) return;
+    if (!vehicleId || !isConnected || !supabase) return;
     const offline = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
     if (offline.length === 0) return;
 
@@ -549,7 +558,7 @@
       realtimeSubscription.unsubscribe();
       realtimeSubscription = null;
     }
-    if (!vehicleId) return;
+    if (!vehicleId || !supabase) return;
 
     realtimeSubscription = supabase
       .channel(`vehicle_usage_${vehicleId}`)
@@ -600,7 +609,7 @@
   // 🚀 DATA LOADING
   // ==============================
   async function loadEntries() {
-    if (!vehicleId) return;
+    if (!vehicleId || !supabase) return;
 
     try {
       const result = await withRetry(async () => {
@@ -731,8 +740,8 @@
     saveBtn.disabled = true;
     saveBtn.textContent = t.saving || 'Saving...';
 
-    if (!vehicleId) {
-      alert('Vehicle not initialized');
+    if (!vehicleId || !supabase) {
+      alert('Vehicle not initialized or Supabase not ready');
       saveBtn.disabled = wasDisabled;
       return;
     }
@@ -850,6 +859,12 @@
   // 🔐 VEHICLE INIT
   // ==============================
   async function initializeVehicle() {
+    if (!supabase) {
+      console.error("Supabase client not initialized");
+      document.getElementById('status').textContent = translations[currentLang].statusDbError;
+      return;
+    }
+    
     try {
       document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
       document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
@@ -861,7 +876,6 @@
         .single();
 
       if (error?.code === 'PGRST116') {
-        // ✅ FIXED: Correct destructuring
         const { data: newV, error: insErr } = await supabase
           .from('vehicles')
           .insert({
@@ -892,13 +906,16 @@
   }
 
   // ==============================
-  // 🎮 EVENT LISTENERS (Set up AFTER supabase is ready)
+  // 🎮 EVENT LISTENERS
   // ==============================
   document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize Supabase client first
+    initSupabase();
+    
     setLanguage(currentLang);
-    await initializeVehicle(); // Ensure vehicle is ready
+    await initializeVehicle(); // Now safe to call since supabase is initialized
 
-    // NOW safe to set up online/offline listeners
+    // Setup online/offline listeners
     window.addEventListener('online', () => {
       updateConnectionStatus(true);
       if (vehicleId) processOfflineQueue();
