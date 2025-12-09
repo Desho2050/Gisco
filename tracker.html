@@ -36,7 +36,6 @@
       flex: 1; 
       min-width: 120px;
     }
-
     .log-table {
       width: 100%; border-collapse: collapse; margin-top: 20px;
       border: 1px solid #ddd;
@@ -50,7 +49,6 @@
     }
     .log-table tr:nth-child(even) { background-color: #fafafa; }
     .log-table tr.open-trip { background-color: #fff9db; border-left: 3px solid #f39c12; }
-
     button {
       background: #3498db; color: white; border: none; padding: 10px 15px; margin-top: 10px; border-radius: 6px; cursor: pointer; font-size: 14px;
       flex: 1;
@@ -63,7 +61,6 @@
     #langToggle { background: #9b59b6; margin-top: 0; }
     #langToggle:hover { background: #8e44ad; }
     #status { margin-top: 10px; text-align: center; font-style: italic; color: #7f8c8d; }
-
     .modal { 
       display: none; 
       position: fixed; 
@@ -94,7 +91,6 @@
       color: #e74c3c; 
     }
     .modal-title { margin-top: 0; text-align: center; }
-
     #entryForm { 
       display: flex; 
       flex-direction: column; 
@@ -120,9 +116,7 @@
       padding: 12px;
       margin-top: 5px;
     }
-
     small { color: #777; font-size: 0.85em; }
-
     .summary-container {
       display: flex;
       justify-content: space-between;
@@ -134,43 +128,36 @@
       flex-wrap: wrap;
       gap: 15px;
     }
-    
     .summary-item {
       text-align: center;
       flex: 1;
       min-width: 150px;
     }
-    
     .summary-label {
       font-size: 0.9rem;
       color: #6c757d;
       margin-bottom: 5px;
     }
-    
     .summary-value {
       font-size: 1.2rem;
       font-weight: bold;
       color: #2c3e50;
     }
-
     @media (max-width: 480px) {
       body { padding: 8px; }
       .container { padding: 12px; }
       h1 { font-size: 1.3rem; margin-bottom: 10px; }
-      
       .info-header {
         flex-direction: column;
         align-items: stretch;
         padding: 10px;
         gap: 8px;
       }
-      
       .month-selector {
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
       }
-      
        .month-selector2 {
        display: flex;
          grid-template-columns: 1fr 1fr;
@@ -178,34 +165,27 @@
          border-radius: 10px;
 background-color: #2980b9;
       }
-      
-
       .month-selector label {
         align-self: flex-start;
       }
-      
       .summary-container {
         flex-direction: column;
         align-items: center;
       }
-      
       .summary-item {
         width: 100%;
       }
-      
       .log-table {
         font-size: 0.75rem;
         min-width: 600px;
         overflow-x: auto;
         display: block;
       }
-      
       .modal-content {
         width: 95%;
         margin: 10px auto;
         padding: 12px;
       }
-      
       button {
         padding: 12px;
         font-size: 16px;
@@ -220,7 +200,6 @@ background-color: #2980b9;
     <div ><label id="lblSelectMonth">View Month:</label>
       <select id="monthSelect" style="width: 150px; height: 30px; border-radius: 20px;margin-bottom: 20px;background-color: aqua;">
         <option value="">Select Month...</option>
-        
       </select>
     </div>
       <button id="langToggle">العربية / English</button>
@@ -228,13 +207,10 @@ background-color: #2980b9;
       <div><span id="lblVehicle">VEHICLE NO</span></div>
       <div><span id="lblDriver">DRIVER NAME</span></div>
     </div>
-    
        <div style="display: flex; justify-content: center; width: 100%; margin-bottom: 20px;">
       <button id="addEntryBtn" style="width: fit-content; font-weight: bold; font-size: 16px; padding: 10px 20px; margin-top: 10px; margin-bottom: 10px;">Start Trip</button>
     </div>
-    
     <div id="status"></div>
-
     <!-- Summary Section -->
     <div class="summary-container">
       <div class="summary-item">
@@ -254,7 +230,6 @@ background-color: #2980b9;
         <div class="summary-value" id="totalOvertime">0h 0m</div>
       </div>
     </div>
-
     <table class="log-table" id="logTable">
       <thead>
         <tr>
@@ -274,7 +249,6 @@ background-color: #2980b9;
       <tbody id="logBody">
       </tbody>
     </table>
-
     <div id="entryModal" class="modal">
       <div class="modal-content">
         <span class="close">&times;</span>
@@ -282,36 +256,29 @@ background-color: #2980b9;
         <form id="entryForm">
           <label id="lblDate">Date:</label>
           <input type="date" id="dateInput" required />
-
           <label id="lblLocation">Location:</label>
           <input type="text" id="locationInput" list="locationList" placeholder="Start typing or select..." />
-
           <datalist id="locationList"></datalist>
-
           <div id="startGroup">
             <label id="lblStartKm">Start (KM):</label>
             <input type="number" id="startKmInput" min="0" step="1" required inputmode="numeric" pattern="\d*" />
             <label id="lblStartTime">Start Time:</label>
             <input type="time" id="startTimeInput" required />
           </div>
-
           <div id="endGroup" style="display:none;">
             <label id="lblEndKm">End (KM):</label>
             <input type="number" id="endKmInput" min="0" step="1" inputmode="numeric" pattern="\d*" />
             <label id="lblEndTime">End Time:</label>
             <input type="time" id="endTimeInput" />
           </div>
-
           <label id="lblRemarks">Remarks:</label>
           <textarea id="remarksInput" rows="3" placeholder="Any additional notes..."></textarea>
-
           <button type="submit" id="btnSave">Start Trip</button>
           <button type="button" id="cancelBtn" style="background:#95a5a6;">Cancel</button>
         </form>
       </div>
     </div>
   </div>
-
 <script>
   // ==============================
   // 🔧 GLOBAL VARIABLES
@@ -321,7 +288,6 @@ background-color: #2980b9;
   let entries = [];
   let realtimeSubscription = null;
   let isConnected = true;
-
   // ==============================
   // 🔑 DRIVER CONFIGURATION
   // ==============================
@@ -335,7 +301,6 @@ background-color: #2980b9;
     1819: { name: "KUMAR MuTHASAMY", vehicleNo: "68042" },
     2021: { name: "Mohammed Safullah", vehicleNo: "68045" }
   };
-
   // ==============================
   // 🔤 TRANSLATIONS
   // ==============================
@@ -386,15 +351,17 @@ background-color: #2980b9;
       alertNonInteger: "KM values must be whole numbers (integers).",
       saving: "Saving...",
       online: "● Online",
-      offline: "● Offline – changes saved locally"
+      offline: "● Offline – changes saved locally",
+      alertEndTimeTooLate: "❌ Trip started during duty hours. End time must be at or before 3:00 PM.\nTo log overtime, end this trip by 3:00 PM and start a new trip after 3:00 PM.",
+      alertEndTimeBeforeStart: "❌ End time must be after start time."
     },
     ar: {
-      appTitle: "متابعة استخدام سيارة المشروع",
+      appTitle: "متابعة استخدام سيارات المشروع",
       lblSelectMonth: "عرض الشهر:",
       startTripBtn: "بدء الرحلة",
       endTripBtn: "إنهاء الرحلة",
       langToggle: "English / العربية",
-      thSN: "ر.ت",
+      thSN: "مسلسل",
       thLocation: "الموقع",
       thDate: "التاريخ",
       thStartKm: "بداية (كم)",
@@ -403,7 +370,7 @@ background-color: #2980b9;
       thUsage: "الاستخدام (كم)",
       thEndTime: "وقت النهاية",
       thDuration: "المدة",
-      thDutyType: "نوع الواجب",
+      thDutyType: "نوع الرحلة",
       thRemarks: "ملاحظات",
       lblTotalTrips: "إجمالي الرحلات",
       lblTotalKm: "إجمالي الكيلومترات",
@@ -434,17 +401,17 @@ background-color: #2980b9;
       alertNonInteger: "يجب أن تكون قيم الكيلومترات أرقامًا صحيحة (بدون فواصل عشرية).",
       saving: "جارٍ الحفظ...",
       online: "● متصل",
-      offline: "● غير متصل – يتم حفظ التغييرات محليًا"
+      offline: "● غير متصل – يتم حفظ التغييرات محليًا",
+      alertEndTimeTooLate: "❌ الرحلة بدأت خلال ساعات الدوام. يجب أن يكون وقت النهاية قبل أو عند 3:00 عصرًا.\nلتسجيل العمل الإضافي، أنهِ هذه الرحلة عند 3:00 عصرًا وابدأ رحلة جديدة بعدها.",
+      alertEndTimeBeforeStart: "❌ يجب أن يكون وقت النهاية بعد وقت البدء."
     }
   };
-
   // ==============================
   // 🌍 LANGUAGE SETUP
   // ==============================
   let currentLang = localStorage.getItem('userLang') || 'en';
   const dirMap = { en: 'ltr', ar: 'rtl' };
   const localeMap = { en: 'en-US', ar: 'ar-SA' };
-
   function setLanguage(lang) {
     currentLang = lang;
     localStorage.setItem('userLang', lang);
@@ -452,7 +419,6 @@ background-color: #2980b9;
     document.documentElement.dir = dirMap[lang];
     applyTranslations();
   }
-
   function applyTranslations() {
     const t = translations[currentLang];
     document.getElementById('appTitle').textContent = t.appTitle;
@@ -485,28 +451,23 @@ background-color: #2980b9;
     document.getElementById('cancelBtn').textContent = t.btnCancel;
     document.getElementById('locationInput').placeholder = t.locationPlaceholder;
     document.getElementById('monthSelect').children[0].textContent = t.selectMonth;
-
     updateTripButtons();
     updateConnectionStatus(navigator.onLine);
   }
-
   // ==============================
   // 🔌 SUPABASE SETUP (Now inside initSupabase)
   // ==============================
   const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-
   function initSupabase() {
     // Check if Supabase library loaded properly
     if (typeof supabase === 'undefined' || !window.supabase) {
       console.error("Supabase library not loaded");
       return;
     }
-    
     // Use the global supabase object to create client
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
-
   // ==============================
   // 📅 GLOBAL STATE
   // ==============================
@@ -519,44 +480,39 @@ background-color: #2980b9;
     "Seh Albanah", "Fujirah", "Thoban", "Manama", "Manama Training",
     "Al-Hail", "Fujairah airport", "Dubai", "Abu Dhabi", "Azan", "Dubai Airport"
   ];
-
   const urlParams = new URLSearchParams(window.location.search);
   const driverId = parseInt(urlParams.get('driver')) || 4;
   if (!DRIVERS[driverId]) {
     window.location.search = '?driver=4';
   }
   const driverConfig = DRIVERS[driverId];
-
   // ==============================
   // ✅ HELPER FUNCTIONS
   // ==============================
   function isValidValue(val) {
     return val != null && val !== '' && val !== undefined;
   }
-
+const WORK_START_HOUR = 6;   // 06:00 AM
+const WORK_END_HOUR = 15;    // 03:00 PM
   function isOpenTrip(entry) {
     const hasStart = isValidValue(entry.start_km) && isValidValue(entry.start_time);
     const hasEnd = isValidValue(entry.end_km) && isValidValue(entry.end_time);
     return hasStart && !hasEnd;
   }
-
   function getCurrentOpenTrip() {
     return entries.find(isOpenTrip) || null;
   }
-
   function getEntryTimestamp(entry) {
     const timePart = (isValidValue(entry.end_km) && isValidValue(entry.end_time))
       ? entry.end_time
       : entry.start_time;
     return new Date(entry.entry_date + 'T' + timePart);
   }
-
   function getLastClosedTrip() {
     const closed = entries.filter(e => isValidValue(e.end_km) && isValidValue(e.end_time));
     if (closed.length === 0) return null;
     return closed.reduce((a, b) => getEntryTimestamp(a) > getEntryTimestamp(b) ? a : b);
   }
-
   function updateTripButtons() {
     const t = translations[currentLang];
     const hasOpen = entries.some(isOpenTrip);
@@ -570,12 +526,10 @@ background-color: #2980b9;
       if (saveBtn) saveBtn.textContent = t.startTripBtn;
     }
   }
-
   function closeEntryModal() {
     document.getElementById('entryModal').style.display = 'none';
     document.getElementById('status').textContent = '';
   }
-
   function updateLocationDatalist() {
     const datalist = document.getElementById('locationList');
     if (!datalist) return;
@@ -588,7 +542,6 @@ background-color: #2980b9;
       datalist.appendChild(opt);
     });
   }
-
   function updateConnectionStatus(online = true) {
     const statusEl = document.getElementById('connectionStatus');
     const t = translations[currentLang];
@@ -596,23 +549,19 @@ background-color: #2980b9;
     statusEl.textContent = online ? t.online : t.offline;
     statusEl.style.color = online ? '#27ae60' : '#e74c3c';
   }
-
   // ==============================
   // 💾 OFFLINE SUPPORT
   // ==============================
   const OFFLINE_KEY = `offline_entries_${driverConfig.vehicleNo}`;
-
   function saveOffline(entry) {
     let offline = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
     offline.push(entry);
     localStorage.setItem(OFFLINE_KEY, JSON.stringify(offline));
   }
-
   async function processOfflineQueue() {
     if (!vehicleId || !isConnected || !supabase) return;
     const offline = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
     if (offline.length === 0) return;
-
     for (let entry of offline) {
       try {
         if (entry.type === 'start') {
@@ -646,7 +595,6 @@ background-color: #2980b9;
     localStorage.removeItem(OFFLINE_KEY);
     await loadEntries();
   }
-
   // ==============================
   // 🔁 REALTIME SYNC
   // ==============================
@@ -656,7 +604,6 @@ background-color: #2980b9;
       realtimeSubscription = null;
     }
     if (!vehicleId || !supabase) return;
-
     realtimeSubscription = supabase
       .channel(`vehicle_usage_${vehicleId}`)
       .on(
@@ -680,7 +627,6 @@ background-color: #2980b9;
         }
       });
   }
-
   // ==============================
   // 🔄 RETRY HELPER
   // ==============================
@@ -701,13 +647,11 @@ background-color: #2980b9;
     }
     throw lastError;
   }
-
   // ==============================
   // 🚀 DATA LOADING
   // ==============================
   async function loadEntries() {
     if (!vehicleId || !supabase) return;
-
     try {
       const result = await withRetry(async () => {
         const { data, error } = await supabase
@@ -716,7 +660,6 @@ background-color: #2980b9;
           .eq('vehicle_id', vehicleId)
           .order('entry_date', { ascending: true })
           .order('start_time', { ascending: true });
-
         if (error) throw error;
         return data;
       });
@@ -730,36 +673,28 @@ background-color: #2980b9;
       document.getElementById('status').textContent = translations[currentLang].statusLoadError;
     }
   }
-
   // ==============================
   // 🕐 DURATION & DUTY TYPE CALCULATIONS
   // ==============================
   function calculateDuration(startTime, endTime) {
     if (!startTime || !endTime) return '–';
-    
     const start = new Date(`2000-01-01T${startTime}`);
     const end = new Date(`2000-01-01T${endTime}`);
-    
     if (end < start) {
       // Handle overnight trips
       end.setDate(end.getDate() + 1);
     }
-    
     const diffMs = end - start;
     const diffMins = Math.floor(diffMs / 60000);
     const hours = Math.floor(diffMins / 60);
     const mins = diffMins % 60;
-    
     return `${hours}h ${mins}m`;
   }
-
-  function getDutyType(startTime) {
-    if (!startTime) return '–';
-    
-    const startHour = parseInt(startTime.split(':')[0]);
-    return startHour < 15 ? 'Duty' : 'Overtime'; // Before 3 PM is Duty, after is Overtime
-  }
-
+  function getDuty00Type(startTime) {
+  if (!startTime) return '–';
+  const hour = parseInt(startTime.split(':')[0], 10);
+  return hour >= WORK_END_HOUR ? 'Overtime' : 'Duty';
+}
   // ==============================
   // 📊 SUMMARY CALCULATIONS
   // ==============================
@@ -768,13 +703,10 @@ background-color: #2980b9;
     const filtered = selectedMonth
       ? entries.filter(e => e.entry_date.startsWith(selectedMonth))
       : entries;
-    
     // Filter to only completed trips
     const completedTrips = filtered.filter(e => isValidValue(e.end_km) && isValidValue(e.end_time));
-    
     // Calculate total trips
     const totalTrips = completedTrips.length;
-    
     // Calculate total km
     const totalKm = completedTrips.reduce((sum, e) => {
       if (isValidValue(e.start_km) && isValidValue(e.end_km)) {
@@ -782,24 +714,19 @@ background-color: #2980b9;
       }
       return sum;
     }, 0);
-    
     // Calculate total duration and overtime
     let totalDurationMins = 0;
     let totalOvertimeMins = 0;
-    
     completedTrips.forEach(e => {
       if (isValidValue(e.start_time) && isValidValue(e.end_time)) {
         const start = new Date(`2000-01-01T${e.start_time}`);
         const end = new Date(`2000-01-01T${e.end_time}`);
-        
         if (end < start) {
           end.setDate(end.getDate() + 1);
         }
-        
         const diffMs = end - start;
         const diffMins = Math.floor(diffMs / 60000);
         totalDurationMins += diffMins;
-        
         // Check if trip started after 3 PM (overtime)
         const startHour = parseInt(e.start_time.split(':')[0]);
         if (startHour >= 15) {
@@ -807,24 +734,20 @@ background-color: #2980b9;
         }
       }
     });
-    
     // Format total duration
     const totalDurationHours = Math.floor(totalDurationMins / 60);
     const totalDurationRemainingMins = totalDurationMins % 60;
     const totalDurationStr = `${totalDurationHours}h ${totalDurationRemainingMins}m`;
-    
     // Format total overtime
     const totalOvertimeHours = Math.floor(totalOvertimeMins / 60);
     const totalOvertimeRemainingMins = totalOvertimeMins % 60;
     const totalOvertimeStr = `${totalOvertimeHours}h ${totalOvertimeRemainingMins}m`;
-    
     // Update summary elements
     document.getElementById('totalTrips').textContent = totalTrips;
     document.getElementById('totalKm').textContent = totalKm;
     document.getElementById('totalDuration').textContent = totalDurationStr;
     document.getElementById('totalOvertime').textContent = totalOvertimeStr;
   }
-
   function displayCurrentMonthData() {
     const container = document.getElementById('logBody');
     const t = translations[currentLang];
@@ -832,13 +755,11 @@ background-color: #2980b9;
     const filtered = selectedMonth
       ? entries.filter(e => e.entry_date.startsWith(selectedMonth))
       : entries;
-
     if (filtered.length === 0) {
       container.innerHTML = `<tr><td colspan="11" style="text-align:center;">${t.noDataCurrent}</td></tr>`;
       calculateSummaries(); // Update summaries even when no data
       return;
     }
-
     filtered.sort((a, b) => getEntryTimestamp(a) - getEntryTimestamp(b));
     let html = '';
     const openTripId = getCurrentOpenTrip()?.id;
@@ -850,9 +771,7 @@ background-color: #2980b9;
       const duration = isValidValue(e.end_time) && isValidValue(e.start_time)
         ? calculateDuration(e.start_time, e.end_time)
         : '–';
-      const dutyType = isValidValue(e.start_time)
-        ? getDutyType(e.start_time)
-        : '–';
+      const dutyType = isValidValue(e.start_time) ? getDuty00Type(e.start_time) : '–';
       const isRowOpen = e.id === openTripId;
       html += `
         <tr class="${isRowOpen ? 'open-trip' : ''}">
@@ -871,11 +790,9 @@ background-color: #2980b9;
       `;
     });
     container.innerHTML = html;
-    
     // Calculate and display summaries
     calculateSummaries();
   }
-
   function populateMonths() {
     const select = document.getElementById('monthSelect');
     select.innerHTML = `<option value="">${translations[currentLang].selectMonth}</option>`;
@@ -887,22 +804,18 @@ background-color: #2980b9;
       select.appendChild(opt);
     });
   }
-
   // ==============================
   // 🎯 MODAL & SAVE LOGIC
   // ==============================
   function openEntryModal() {
     const now = new Date();
-    const timeStr = now.toTimeString().slice(0, 5);
     document.getElementById('entryForm').reset();
     document.getElementById('dateInput').value = todayStr;
-
     const t = translations[currentLang];
     const startGroup = document.getElementById('startGroup');
     const endGroup = document.getElementById('endGroup');
     const modalTitle = document.getElementById('modalTitle');
     const saveBtn = document.getElementById('btnSave');
-
     const openTrip = getCurrentOpenTrip();
     if (openTrip) {
       modalTitle.textContent = t.modalTitleClose;
@@ -910,12 +823,11 @@ background-color: #2980b9;
       endGroup.style.display = 'block';
       saveBtn.textContent = t.endTripBtn;
       document.getElementById('locationInput').value = openTrip.location || '';
-      document.getElementById('endTimeInput').value = timeStr;
-      
+      // ✅ Default end time to 3:00 PM
+      document.getElementById('endTimeInput').value = "15:00";
       // Remove required attribute from start fields when ending a trip
       document.getElementById('startKmInput').removeAttribute('required');
       document.getElementById('startTimeInput').removeAttribute('required');
-      
       // Add required attribute to end fields when ending a trip
       document.getElementById('endKmInput').setAttribute('required', '');
       document.getElementById('endTimeInput').setAttribute('required', '');
@@ -924,8 +836,8 @@ background-color: #2980b9;
       startGroup.style.display = 'block';
       endGroup.style.display = 'none';
       saveBtn.textContent = t.startTripBtn;
-      document.getElementById('startTimeInput').value = timeStr;
-
+      // ✅ Default start time to 7:00 AM
+      document.getElementById('startTimeInput').value = "07:00";
       const lastClosed = getLastClosedTrip();
       if (lastClosed) {
         document.getElementById('startKmInput').value = lastClosed.end_km;
@@ -933,24 +845,19 @@ background-color: #2980b9;
       } else {
         document.getElementById('startKmInput').value = 0;
       }
-      
       // Add required attribute to start fields when starting a trip
       document.getElementById('startKmInput').setAttribute('required', '');
       document.getElementById('startTimeInput').setAttribute('required', '');
-      
       // Remove required attribute from end fields when starting a trip
       document.getElementById('endKmInput').removeAttribute('required');
       document.getElementById('endTimeInput').removeAttribute('required');
     }
-
     document.getElementById('entryModal').style.display = 'block';
   }
-
   function isInteger(value) {
     const num = parseFloat(value);
     return !isNaN(num) && Number.isInteger(num);
   }
-
   async function saveEntry(e) {
     e.preventDefault();
     const t = translations[currentLang];
@@ -958,69 +865,89 @@ background-color: #2980b9;
     const wasDisabled = saveBtn.disabled;
     saveBtn.disabled = true;
     saveBtn.textContent = t.saving || 'Saving...';
-
     if (!vehicleId || !supabase) {
       alert('Vehicle not initialized or Supabase not ready');
       saveBtn.disabled = wasDisabled;
       return;
     }
-
     try {
       const openTrip = getCurrentOpenTrip();
-      if (openTrip) {
-        let endKm = document.getElementById('endKmInput').value.trim();
-        const endTime = document.getElementById('endTimeInput').value.trim();
-        const location = document.getElementById('locationInput').value.trim();
+     if (openTrip) {
+  // ✅ Declare inputs FIRST
+  const endKmInput = document.getElementById('endKmInput');
+  const endTimeInput = document.getElementById('endTimeInput');
+  const locationInput = document.getElementById('locationInput');
+  const endKm = endKmInput.value.trim();
+  const endTime = endTimeInput.value.trim();
+  const location = locationInput.value.trim();
+  // ✅ Now validate
+  if (!endKm || !endTime) {
+    alert(t.alertEndRequired);
+    saveBtn.disabled = wasDisabled;
+    return;
+  }
+  if (!isInteger(endKm)) {
+    alert(t.alertNonInteger);
+    saveBtn.disabled = wasDisabled;
+    return;
+  }
+  const endKmNum = parseInt(endKm, 10);
+  if (endKmNum <= parseInt(openTrip.start_km, 10)) {
+    alert(t.alertLessKm);
+    saveBtn.disabled = wasDisabled;
+    return;
+  }
+  
+  // ✅ Validate end time > start time
+  const startParts = openTrip.start_time.split(':').map(Number);
+  const endParts = endTime.split(':').map(Number);
+  const startTotalMins = startParts[0] * 60 + startParts[1];
+  const endTotalMins = endParts[0] * 60 + endParts[1];
+  if (endTotalMins <= startTotalMins) {
+    alert(t.alertEndTimeBeforeStart || "❌ End time must be after start time.");
+    saveBtn.disabled = wasDisabled;
+    return;
+  }
 
-        if (!endKm || !endTime) {
-          alert(t.alertEndRequired);
-          saveBtn.disabled = wasDisabled;
-          return;
-        }
-
-        if (!isInteger(endKm)) {
-          alert(t.alertNonInteger);
-          saveBtn.disabled = wasDisabled;
-          return;
-        }
-
-        const endKmNum = parseInt(endKm, 10);
-        if (endKmNum <= parseInt(openTrip.start_km, 10)) {
-          alert(t.alertLessKm);
-          saveBtn.disabled = wasDisabled;
-          return;
-        }
-
-        const { error } = await supabase
-          .from('meter_entries')
-          .update({
-            end_km: endKmNum,
-            end_time: endTime,
-            location: location || null
-          })
-          .eq('id', openTrip.id);
-
-        if (error) throw error;
-
-      } else {
+  // ✅ Now apply your new validation: enforce end time ≤ 15:00 if started ≥ 06:00
+  const startHour = parseInt(openTrip.start_time.split(':')[0], 10);
+  const endHour = parseInt(endTime.split(':')[0], 10);
+  const endMinute = parseInt(endTime.split(':')[1], 10);
+  if (startHour >= WORK_START_HOUR) {
+    if (endHour > WORK_END_HOUR || (endHour === WORK_END_HOUR && endMinute > 0)) {
+      alert(translations[currentLang].alertEndTimeTooLate ||
+            "❌ Trip started during duty hours. End time must be at or before 3:00 PM.\n" +
+            "To log overtime, end this trip by 3:00 PM and start a new trip after 3:00 PM.");
+      saveBtn.disabled = wasDisabled;
+      return;
+    }
+  }
+  // ✅ Now save
+  const { error } = await supabase
+    .from('meter_entries')
+    .update({
+      end_km: endKmNum,
+      end_time: endTime,
+      location: location || null
+    })
+    .eq('id', openTrip.id);
+  if (error) throw error;
+} else {
         const date = document.getElementById('dateInput').value;
         const location = document.getElementById('locationInput').value.trim();
         let startKm = document.getElementById('startKmInput').value;
         const startTime = document.getElementById('startTimeInput').value;
         const remarks = document.getElementById('remarksInput').value.trim();
-
         if (date > todayStr) {
           alert(t.alertFutureDate);
           saveBtn.disabled = wasDisabled;
           return;
         }
-
         if (!isInteger(startKm)) {
           alert(t.alertNonInteger);
           saveBtn.disabled = wasDisabled;
           return;
         }
-
         const startKmNum = parseInt(startKm, 10);
         const lastClosed = getLastClosedTrip();
         if (lastClosed && startKmNum < parseInt(lastClosed.end_km, 10)) {
@@ -1028,13 +955,11 @@ background-color: #2980b9;
           saveBtn.disabled = wasDisabled;
           return;
         }
-
         if (entries.some(isOpenTrip)) {
           alert(t.alertOpenTripExists || "You already have an open trip!");
           saveBtn.disabled = wasDisabled;
           return;
         }
-
         const { error } = await supabase
           .from('meter_entries')
           .insert([{
@@ -1045,15 +970,12 @@ background-color: #2980b9;
             start_time: startTime,
             remarks: remarks || null
           }]);
-
         if (error) throw error;
       }
-
       document.getElementById('status').textContent = t.statusSuccess;
       closeEntryModal();
       await loadEntries();
       setTimeout(() => document.getElementById('status').textContent = '', 3000);
-
     } catch (err) {
       console.error('Save Error:', err);
       saveOffline({
@@ -1073,7 +995,6 @@ background-color: #2980b9;
       saveBtn.textContent = openTrip ? t.endTripBtn : t.startTripBtn;
     }
   }
-
   // ==============================
   // 🔐 VEHICLE INIT
   // ==============================
@@ -1083,17 +1004,14 @@ background-color: #2980b9;
       document.getElementById('status').textContent = translations[currentLang].statusDbError;
       return;
     }
-    
     try {
       document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
       document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
-
       let { data, error } = await supabase
         .from('vehicles')
         .select('id')
         .eq('vehicle_number', driverConfig.vehicleNo)
         .single();
-
       if (error?.code === 'PGRST116') {
         const {  newV, error: insErr } = await supabase
           .from('vehicles')
@@ -1104,7 +1022,6 @@ background-color: #2980b9;
           })
           .select('id')
           .single();
-          
         if (insErr) throw insErr;
         vehicleId = newV.id;
       } else if (error) {
@@ -1112,9 +1029,7 @@ background-color: #2980b9;
       } else {
         vehicleId = data.id;
       }
-
       console.log('✅ Vehicle initialized with ID:', vehicleId);
-      
       await loadEntries();
       setupRealtime();
       await processOfflineQueue();
@@ -1123,17 +1038,14 @@ background-color: #2980b9;
       document.getElementById('status').textContent = translations[currentLang].statusDbError;
     }
   }
-
   // ==============================
   // 🎮 EVENT LISTENERS
   // ==============================
   document.addEventListener('DOMContentLoaded', async () => {
     // Initialize Supabase client first
     initSupabase();
-    
     setLanguage(currentLang);
     await initializeVehicle(); // Now safe to call since supabase is initialized
-
     // Setup online/offline listeners
     window.addEventListener('online', () => {
       updateConnectionStatus(true);
@@ -1142,31 +1054,25 @@ background-color: #2980b9;
     window.addEventListener('offline', () => {
       updateConnectionStatus(false);
     });
-
     document.getElementById('langToggle').addEventListener('click', () =>
       setLanguage(currentLang === 'en' ? 'ar' : 'en')
     );
-
     document.getElementById('addEntryBtn').addEventListener('click', openEntryModal);
     document.getElementById('entryForm').addEventListener('submit', saveEntry);
     document.getElementById('cancelBtn').addEventListener('click', closeEntryModal);
-
     document.querySelectorAll('.close').forEach(btn =>
       btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none')
     );
-
     document.querySelectorAll('.modal').forEach(modal =>
       modal.addEventListener('click', e => {
         if (e.target === modal) modal.style.display = 'none';
       })
     );
-
     let monthDebounce;
     document.getElementById('monthSelect').addEventListener('change', () => {
       clearTimeout(monthDebounce);
       monthDebounce = setTimeout(displayCurrentMonthData, 150);
     });
-
     // Enforce integer input
     ['startKmInput', 'endKmInput'].forEach(id => {
       const input = document.getElementById(id);
