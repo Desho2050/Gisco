@@ -913,7 +913,7 @@ const WORK_END_HOUR = 15;    // 03:00 PM
   const startHour = parseInt(openTrip.start_time.split(':')[0], 10);
   const endHour = parseInt(endTime.split(':')[0], 10);
   const endMinute = parseInt(endTime.split(':')[1], 10);
-  if (startHour >= WORK_START_HOUR) {
+  if (startHour >= WORK_START_HOUR && startHour < WORK_END_HOUR) {
     if (endHour > WORK_END_HOUR || (endHour === WORK_END_HOUR && endMinute > 0)) {
       alert(translations[currentLang].alertEndTimeTooLate ||
             "❌ Trip started during duty hours. End time must be at or before 3:00 PM.\n" +
