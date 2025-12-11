@@ -97,23 +97,89 @@
       font-weight: bold; 
     }
     
-    @media print {
-      body { background: white; padding: 0; }
-      .container { box-shadow: none; border-radius: 0; padding: 10px; }
-      .actions { display: none; }
-      .chart-container canvas { display: none; }
-      .print-only { display: block !important; }
-      .no-print { display: none !important; }
-      .log-table { font-size: 0.75rem; }
-      .summary-metrics { 
-        font-size: 0.9rem; 
-        padding: 10px; 
-      }
-      .metric-value { font-size: 1.1rem; }
-    }
-    .print-only { display: none; }
-    .print-header { text-align: center; margin-bottom: 20px; }
-    .print-header h2 { margin: 5px 0; }
+   @media print {
+  body {
+    background: white;
+    padding: 0;
+    margin: 0;
+    font-size: 10pt; /* Slightly smaller base font */
+  }
+  .container {
+    box-shadow: none;
+    border-radius: 0;
+    padding: 8px; /* Reduced from 10px */
+    margin: 0;
+  }
+  h1, h2, h3 {
+    margin: 6px 0 4px !important; /* Tighter heading spacing */
+    line-height: 1.1;
+  }
+  .actions, .chart-container {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reduce table padding */
+  .log-table th,
+  .log-table td {
+    padding: 4px 5px; /* Reduced from 8px */
+    font-size: 9pt;
+  }
+  .log-table {
+    font-size: 9pt;
+    margin: 8px 0;
+  }
+
+  /* Compress summary metrics */
+  .summary-metrics {
+    padding: 6px;
+    gap: 8px;
+    font-size: 9pt;
+  }
+  .metric-card {
+    min-width: auto;
+    padding: 4px 6px;
+  }
+  .metric-value {
+    font-size: 1rem;
+  }
+  .metric-label {
+    font-size: 8pt;
+  }
+
+  /* Compact vehicle sections */
+  .vehicle-section {
+    margin: 10px 0 !important;
+    page-break-inside: avoid;
+  }
+  .vehicle-header {
+    padding: 5px;
+    font-size: 9.5pt;
+    margin-bottom: 4px;
+  }
+
+  /* Prevent page breaks inside vehicle blocks */
+  .vehicle-section {
+    page-break-inside: avoid;
+  }
+  .log-table {
+    page-break-inside: auto; /* Allow table to split if needed */
+  }
+
+  /* Print header compact */
+  .print-header {
+    margin-bottom: 10px;
+  }
+  .print-header p {
+    margin: 2px 0;
+    font-size: 9pt;
+  }
+}
   </style>
 </head>
 <body>
@@ -331,17 +397,19 @@ const enriched = entries.map(e => {
 
       const printDiv = document.getElementById('printTopSummary');
       printDiv.innerHTML = `
-        <div class="metric-card">
+      <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px;">
+        <div class="metric-card" style="display: inline-block;">
           <div class="metric-value">${summaryStats.totalDutyKm}</div>
           <div class="metric-label">Total Duty KM</div>
         </div>
-        <div class="metric-card">
+        <div class="metric-card" style="display: inline-block;">
           <div class="metric-value">${summaryStats.totalOvertimeKm}</div>
           <div class="metric-label">Total Overtime KM</div>
         </div>
-        <div class="metric-card">
+        <div class="metric-card" style="display: inline-block;">
           <div class="metric-value">${summaryStats.totalOvertimeHours}</div>
           <div class="metric-label">Total Overtime Hours</div>
+        </div>
         </div>
       `;
     }
@@ -584,8 +652,9 @@ const enriched = entries.map(e => {
       
       // Header
       const header = document.createElement('div');
-      header.innerHTML = `<h2 style="text-align:center;margin:0;">Vehicle Usage Report</h2>
-                         <p style="text-align:center;margin:5px 0;">Generated on: ${new Date().toLocaleString()}</p>`;
+      header.innerHTML = `<h2 style="text-align:center;margin:0;">Vehicle Usage Report</h2>`;
+             
+                       
       printContainer.appendChild(header);
       
       // Top summary
