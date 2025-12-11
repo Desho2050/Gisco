@@ -225,6 +225,7 @@
     .save-btn { background:#2f36f4; color:white; }
     .cancel-btn { background: var(--muted); }
     .delete-btn { background: var(--col-used); }
+    .color-btn { background: #fbbf24; color: #000; font-weight: bold; }
     .modal {
       position: fixed;
       top: 0;
@@ -362,7 +363,6 @@
       white-space: nowrap;
       text-align: left;
     }
-    /* 👇 New: Hide button style */
     .hide-btn {
       font-size: 9px !important;
       padding: 2px 4px !important;
@@ -370,7 +370,6 @@
       min-width: 32px;
       background-color: #c022c5;
     }
-    /* 👇 Checkbox styling */
     .row-selector {
       margin-right: 4px;
       transform: scale(0.9);
@@ -412,6 +411,7 @@
     <div id="statusBar" class="status"></div>
     <div id="selectedCostSum">Selected Cost Total: AED 0.00</div>
     <section id="statsPanel" class="stats">
+      <!-- Stats cards unchanged -->
       <div class="cards">
         <div class="card" style="background-color: var(--col-split); color: #fff;">
           <div class="title" style="color: #eaf4ff;">Total Splits</div>
@@ -459,6 +459,7 @@
            <div id="statCostNoVat" class="cost-sub"></div>
         </div>
       </div>
+      <!-- PDF & Modals unchanged -->
       <div id="pdfOverlay" class="pdf-overlay" aria-hidden="true">
         <div class="pdf-dialog" role="dialog" aria-modal="true" aria-label="PDF viewer">
           <div class="pdf-header">
@@ -593,11 +594,13 @@
     const PDF_CACHE_KEY = 'pdf_url_cache_v3';
     let PDF_URL_CACHE = JSON.parse(localStorage.getItem(PDF_CACHE_KEY) || '{}');
     const CACHE_TTL = 60 * 60 * 1000;
-    const HIDDEN_ROWS_KEY = 'hidden_work_orders_v1'; // ✅ For hide persistence
+    const HIDDEN_ROWS_KEY = 'hidden_work_orders_v1';
+    const ROW_COLORS_KEY = 'row_colors_v1';
 
-    // ✅ NEW: Track selected rows
+    // ✅ Track selected rows
     const selectedWoNos = new Set();
 
+    // --- Helper Functions ---
     function isCacheValid(ts) {
       return Date.now() - ts < CACHE_TTL;
     }
@@ -624,49 +627,6 @@
       const googleUrl = `https://docs.google.com/gview?url=${encodeURIComponent(ghPagesUrl)}&embedded=true`;
       setCachedPdfUrls(file, ghPagesUrl, googleUrl);
       return { direct: ghPagesUrl, google: googleUrl };
-    }
-    const HEADERS = [
-      { label: 'WO NO.', key: 'wo_no' },
-      { label: 'CAMP', key: 'camp' },
-      { label: 'LOCATION', key: 'location' },
-      { label: 'Split 1.5TON', key: 'split_1_5', group: 'split' },
-      { label: 'Split 2TON', key: 'split_2', group: 'split' },
-      { label: 'Split 2.5TON', key: 'split_2_5', group: 'split' },
-      { label: 'Split 3TON', key: 'split_3', group: 'split' },
-      { label: 'Window 2TON', key: 'window_2', group: 'window' },
-      { label: 'COOLER', key: 'cooler', group: 'cooler' },
-      { label: 'used AC', key: 'used_ac', group: 'used' },
-      { label: 'FRIDGE', key: 'fridge', group: 'fridge' },
-      { label: 'FREEZER', key: 'freezer', group: 'freezer' },
-      { label: 'Package 8TON', key: 'pkg_8', group: 'package' },
-      { label: 'Package 10TON', key: 'pkg_10', group: 'package' },
-      { label: 'Package 12 TON', key: 'pkg_12', group: 'package' },
-      { label: 'Package 15TON', key: 'pkg_15', group: 'package' },
-      { label: 'Package 20TON', key: 'pkg_20', group: 'package' },
-      { label: 'Package 25TON', key: 'pkg_25', group: 'package' },
-      { label: 'FREE STAND 5TON', key: 'free_5ton', group: 'freestand' },
-      { label: 'FREE STAND 8TON', key: 'free_8ton', group: 'freestand' },
-      { label: 'WORK ORDER AMOUNT', key: 'amount' },
-      { label: 'START DATE', key: 'start_date' },
-      { label: 'END DATE', key: 'end_date' },
-      { label: 'REMAINING DAYS', key: null, group: 'remain' },
-      { label: 'WO PERCENTAGE', key: 'wo_percentage' },
-      { label: 'LPO', key: 'lpo' },
-      { label: 'DO', key: 'do_doc' },
-      { label: 'WO', key: 'wo_pdf' },
-      { label: 'Spilt Cost without VAT', key: 'cost' }
-    ];
-    function sortByWoNo(rows) {
-      return [...rows].sort((a, b) => {
-        const woA = String(a.wo_no || '').trim();
-        const woB = String(b.wo_no || '').trim();
-        const numA = parseFloat(woA);
-        const numB = parseFloat(woB);
-        if (!isNaN(numA) && !isNaN(numB)) {
-          return numA - numB;
-        }
-        return woA.localeCompare(woB, undefined, { numeric: true, sensitivity: 'base' });
-      });
     }
     function isNumericOnly(val) {
       if (val === null || val === undefined) return false;
@@ -737,6 +697,43 @@
       const n = Number(value);
       return Number.isFinite(n) ? AED_FORMATTER.format(n) : 'AED 0.00';
     }
+    function sortByWoNo(rows) {
+      return [...rows].sort((a, b) => {
+        const woA = String(a.wo_no || '').trim();
+        const woB = String(b.wo_no || '').trim();
+        const numA = parseFloat(woA);
+        const numB = parseFloat(woB);
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return numA - numB;
+        }
+        return woA.localeCompare(woB, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    }
+
+    // ✅ Row Color Helpers
+    function saveRowColor(woNo, color) {
+      const colors = JSON.parse(localStorage.getItem(ROW_COLORS_KEY) || '{}');
+      colors[String(woNo).trim()] = color;
+      localStorage.setItem(ROW_COLORS_KEY, JSON.stringify(colors));
+    }
+    function getStoredRowColor(woNo) {
+      const colors = JSON.parse(localStorage.getItem(ROW_COLORS_KEY) || '{}');
+      return colors[String(woNo).trim()] || null;
+    }
+
+    // ✅ Selection Sum
+    function updateSelectedCostSum() {
+      let total = 0;
+      selectedWoNos.forEach(woNo => {
+        const row = ALL_ROWS.find(r => String(r.wo_no).trim() === woNo);
+        if (row && isNumericOnly(row.cost)) {
+          total += Number(row.cost);
+        }
+      });
+      document.getElementById('selectedCostSum').textContent = `Selected Cost Total: ${formatAED(total)}`;
+    }
+
+    // --- UI Elements ---
     const statusEl = document.getElementById('statusBar');
     const selCamp = document.getElementById('filterCamp');
     const selLocation = document.getElementById('filterLocation');
@@ -755,18 +752,7 @@
     let NOTIFIED_WO = new Set();
     let currentPdfDirectUrl = '';
 
-    // ✅ NEW: Update selected cost sum
-    function updateSelectedCostSum() {
-      let total = 0;
-      selectedWoNos.forEach(woNo => {
-        const row = ALL_ROWS.find(r => String(r.wo_no).trim() === woNo);
-        if (row && isNumericOnly(row.cost)) {
-          total += Number(row.cost);
-        }
-      });
-      document.getElementById('selectedCostSum').textContent = `Selected Cost Total: ${formatAED(total)}`;
-    }
-
+    // --- Toast & Status ---
     function showToast(message, duration = 20000) {
       let container = document.getElementById('toastContainer');
       if (!container) {
@@ -791,6 +777,8 @@
         statusEl.style.color = isError ? '#b00020' : 'var(--muted)';
       }
     }
+
+    // --- PDF Viewer (unchanged) ---
     async function loadRemotePdfMap() {
       try {
         const res = await fetch('attachs-remote.json?ts=' + Date.now(), { cache: 'no-store' });
@@ -851,23 +839,79 @@
         });
       }
     })();
+
+    // ✅ Render Actions Cell (with Color button)
     function renderActionCell(rowData, rowId) {
       const td = document.createElement('td');
       td.className = 'action-cell';
+
       const editBtn = document.createElement('button');
       editBtn.className = 'action-btn edit-btn';
       editBtn.textContent = 'Edit';
       editBtn.onclick = () => openEditModal(rowData);
+
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'action-btn delete-btn';
       deleteBtn.textContent = 'Del';
       deleteBtn.onclick = () => confirmDelete(rowData.wo_no);
+
+      const colorBtn = document.createElement('button');
+      colorBtn.className = 'action-btn color-btn';
+      colorBtn.textContent = '🎨';
+      colorBtn.title = 'Set row background color';
+      colorBtn.style.fontSize = '10px';
+      colorBtn.style.padding = '2px 4px';
+      colorBtn.onclick = (e) => {
+        e.stopPropagation();
+        const current = getStoredRowColor(rowData.wo_no) || '#ffeb3b';
+        const color = prompt("Enter a color (name, hex, or rgba):", current);
+        if (color && color.trim()) {
+          saveRowColor(rowData.wo_no, color.trim());
+          const tr = Array.from(document.querySelectorAll('#dataTable tbody tr'))
+            .find(el => el.dataset.woNo === String(rowData.wo_no));
+          if (tr) tr.style.backgroundColor = color.trim();
+        }
+      };
+
       td.appendChild(editBtn);
       td.appendChild(deleteBtn);
+      td.appendChild(colorBtn);
       return td;
     }
+
+    // --- Form & Edit Logic (unchanged) ---
     function buildEditForm(rowData) {
       editForm.innerHTML = '';
+      const HEADERS = [
+        { label: 'WO NO.', key: 'wo_no' },
+        { label: 'CAMP', key: 'camp' },
+        { label: 'LOCATION', key: 'location' },
+        { label: 'Split 1.5TON', key: 'split_1_5' },
+        { label: 'Split 2TON', key: 'split_2' },
+        { label: 'Split 2.5TON', key: 'split_2_5' },
+        { label: 'Split 3TON', key: 'split_3' },
+        { label: 'Window 2TON', key: 'window_2' },
+        { label: 'COOLER', key: 'cooler' },
+        { label: 'used AC', key: 'used_ac' },
+        { label: 'FRIDGE', key: 'fridge' },
+        { label: 'FREEZER', key: 'freezer' },
+        { label: 'Package 8TON', key: 'pkg_8' },
+        { label: 'Package 10TON', key: 'pkg_10' },
+        { label: 'Package 12 TON', key: 'pkg_12' },
+        { label: 'Package 15TON', key: 'pkg_15' },
+        { label: 'Package 20TON', key: 'pkg_20' },
+        { label: 'Package 25TON', key: 'pkg_25' },
+        { label: 'FREE STAND 5TON', key: 'free_5ton' },
+        { label: 'FREE STAND 8TON', key: 'free_8ton' },
+        { label: 'WORK ORDER AMOUNT', key: 'amount' },
+        { label: 'START DATE', key: 'start_date' },
+        { label: 'END DATE', key: 'end_date' },
+        { label: 'WO PERCENTAGE', key: 'wo_percentage' },
+        { label: 'LPO', key: 'lpo' },
+        { label: 'DO', key: 'do_doc' },
+        { label: 'WO', key: 'wo_pdf' },
+        { label: 'Spilt Cost without VAT', key: 'cost' }
+      ];
       HEADERS.forEach(h => {
         if (h.key === null) return;
         const label = document.createElement('label');
@@ -936,6 +980,36 @@
     });
     function buildAddForm() {
       addForm.innerHTML = '';
+      const HEADERS = [
+        { label: 'WO NO.', key: 'wo_no' },
+        { label: 'CAMP', key: 'camp' },
+        { label: 'LOCATION', key: 'location' },
+        { label: 'Split 1.5TON', key: 'split_1_5' },
+        { label: 'Split 2TON', key: 'split_2' },
+        { label: 'Split 2.5TON', key: 'split_2_5' },
+        { label: 'Split 3TON', key: 'split_3' },
+        { label: 'Window 2TON', key: 'window_2' },
+        { label: 'COOLER', key: 'cooler' },
+        { label: 'used AC', key: 'used_ac' },
+        { label: 'FRIDGE', key: 'fridge' },
+        { label: 'FREEZER', key: 'freezer' },
+        { label: 'Package 8TON', key: 'pkg_8' },
+        { label: 'Package 10TON', key: 'pkg_10' },
+        { label: 'Package 12 TON', key: 'pkg_12' },
+        { label: 'Package 15TON', key: 'pkg_15' },
+        { label: 'Package 20TON', key: 'pkg_20' },
+        { label: 'Package 25TON', key: 'pkg_25' },
+        { label: 'FREE STAND 5TON', key: 'free_5ton' },
+        { label: 'FREE STAND 8TON', key: 'free_8ton' },
+        { label: 'WORK ORDER AMOUNT', key: 'amount' },
+        { label: 'START DATE', key: 'start_date' },
+        { label: 'END DATE', key: 'end_date' },
+        { label: 'WO PERCENTAGE', key: 'wo_percentage' },
+        { label: 'LPO', key: 'lpo' },
+        { label: 'DO', key: 'do_doc' },
+        { label: 'WO', key: 'wo_pdf' },
+        { label: 'Spilt Cost without VAT', key: 'cost' }
+      ];
       HEADERS.forEach(h => {
         if (h.key === null) return;
         const label = document.createElement('label');
@@ -1008,7 +1082,7 @@
       }
     }
 
-    // ✅ Updated: Show All + clear selection
+    // ✅ Show All (clears selection, keeps colors & hidden list)
     showAllBtn.addEventListener('click', () => {
       document.querySelectorAll('#dataTable tbody tr').forEach(tr => {
         tr.style.display = '';
@@ -1020,6 +1094,7 @@
       setStatus('All rows restored.');
     });
 
+    // ✅ Render Rows (with checkbox, hide, color support)
     function renderRows(rows) {
       const tbody = document.querySelector('#dataTable tbody');
       const tooltip = document.getElementById('customTooltip');
@@ -1033,6 +1108,12 @@
         tr.dataset.woNo = woNo;
         tr.dataset.camp = camp;
         tr.dataset.location = location;
+
+        // Apply stored color
+        const savedColor = getStoredRowColor(woNo);
+        if (savedColor) {
+          tr.style.backgroundColor = savedColor;
+        }
 
         tr.addEventListener('dblclick', (e) => {
           if (tooltip) {
@@ -1048,6 +1129,38 @@
             }, 3000);
           }
         });
+
+        const HEADERS = [
+          { label: 'WO NO.', key: 'wo_no' },
+          { label: 'CAMP', key: 'camp' },
+          { label: 'LOCATION', key: 'location' },
+          { label: 'Split 1.5TON', key: 'split_1_5', group: 'split' },
+          { label: 'Split 2TON', key: 'split_2', group: 'split' },
+          { label: 'Split 2.5TON', key: 'split_2_5', group: 'split' },
+          { label: 'Split 3TON', key: 'split_3', group: 'split' },
+          { label: 'Window 2TON', key: 'window_2', group: 'window' },
+          { label: 'COOLER', key: 'cooler', group: 'cooler' },
+          { label: 'used AC', key: 'used_ac', group: 'used' },
+          { label: 'FRIDGE', key: 'fridge', group: 'fridge' },
+          { label: 'FREEZER', key: 'freezer', group: 'freezer' },
+          { label: 'Package 8TON', key: 'pkg_8', group: 'package' },
+          { label: 'Package 10TON', key: 'pkg_10', group: 'package' },
+          { label: 'Package 12 TON', key: 'pkg_12', group: 'package' },
+          { label: 'Package 15TON', key: 'pkg_15', group: 'package' },
+          { label: 'Package 20TON', key: 'pkg_20', group: 'package' },
+          { label: 'Package 25TON', key: 'pkg_25', group: 'package' },
+          { label: 'FREE STAND 5TON', key: 'free_5ton', group: 'freestand' },
+          { label: 'FREE STAND 8TON', key: 'free_8ton', group: 'freestand' },
+          { label: 'WORK ORDER AMOUNT', key: 'amount' },
+          { label: 'START DATE', key: 'start_date' },
+          { label: 'END DATE', key: 'end_date' },
+          { label: 'REMAINING DAYS', key: null, group: 'remain' },
+          { label: 'WO PERCENTAGE', key: 'wo_percentage' },
+          { label: 'LPO', key: 'lpo' },
+          { label: 'DO', key: 'do_doc' },
+          { label: 'WO', key: 'wo_pdf' },
+          { label: 'Spilt Cost without VAT', key: 'cost' }
+        ];
 
         HEADERS.forEach(h => {
           const td = document.createElement('td');
@@ -1082,7 +1195,6 @@
               e.stopPropagation();
               tr.style.display = 'none';
               tr.dataset.hidden = 'true';
-
               const wo = String(row.wo_no || '').trim();
               if (wo) {
                 let hiddenSet = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
@@ -1091,7 +1203,6 @@
               }
             };
 
-            // Assemble WO cell
             const span = document.createElement('span');
             span.textContent = woVal;
             td.appendChild(checkbox);
@@ -1199,7 +1310,7 @@
         tbody.appendChild(tr);
       });
 
-      // ✅ Restore hidden state from localStorage
+      // ✅ Restore hidden rows
       const savedHidden = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
       rows.forEach((row, idx) => {
         const wo = String(row.wo_no || '').trim();
@@ -1213,11 +1324,22 @@
       });
     }
 
+    // --- Filter & Stats (unchanged logic) ---
     function uniqueSorted(values) {
       const set = new Set(values.filter(v => v !== '' && v !== null && v !== undefined).map(v => String(v).trim()).filter(Boolean));
       return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
     }
     const TYPE_OPTIONS = ['All', 'split', 'window', 'package', 'used', 'fridge', 'cooler', 'freezer', 'freestand'];
+    const GROUP_KEYS = {
+      split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
+      window: ['window_2'],
+      package: ['pkg_8', 'pkg_10', 'pkg_12', 'pkg_15', 'pkg_20', 'pkg_25'],
+      used: ['used_ac'],
+      fridge: ['fridge'],
+      cooler: ['cooler'],
+      freezer: ['freezer'],
+      freestand: ['free_5ton', 'free_8ton']
+    };
     function initFilters() {
       const camps = uniqueSorted(ALL_ROWS.map(r => r.camp));
       const locs = uniqueSorted(ALL_ROWS.map(r => r.location));
@@ -1231,16 +1353,6 @@
       selLocation.addEventListener('change', applyFilters);
       selType.addEventListener('change', applyFilters);
     }
-    const GROUP_KEYS = {
-      split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
-      window: ['window_2'],
-      package: ['pkg_8', 'pkg_10', 'pkg_12', 'pkg_15', 'pkg_20', 'pkg_25'],
-      used: ['used_ac'],
-      fridge: ['fridge'],
-      cooler: ['cooler'],
-      freezer: ['freezer'],
-      freestand: ['free_5ton', 'free_8ton']
-    };
     function sumValues(rows, keys) {
       let total = 0;
       rows.forEach(r => {
@@ -1261,16 +1373,6 @@
         fridge: { fridge: 0, total: 0, cost: 0 },
         cooler: { cooler: 0, total: 0, cost: 0 },
         freezer: { freezer: 0, total: 0, cost: 0 }
-      };
-      const GROUP_KEYS = {
-        split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
-        window: ['window_2'],
-        package: ['pkg_8', 'pkg_10', 'pkg_12', 'pkg_15', 'pkg_20', 'pkg_25'],
-        used: ['used_ac'],
-        fridge: ['fridge'],
-        cooler: ['cooler'],
-        freezer: ['freezer'],
-        freestand: ['free_5ton', 'free_8ton']
       };
       rows.forEach(row => {
         const rowCost = isNumericOnly(row.cost) ? Number(row.cost) : 0;
@@ -1306,7 +1408,6 @@
       });
     }
     let charts = { split: null, pkg: null, groups: null, progress: null };
-    let miniCharts = [];
     function renderCharts(counts) {
       const splitLabels = ['1.5 TON', '2 TON', '2.5 TON', '3TON'];
       const splitData = [counts.split.split_1_5, counts.split.split_2, counts.split.split_2_5, counts.split.split_3];
@@ -1456,7 +1557,6 @@
         printBtn.addEventListener('click', () => window.print());
       }
     });
-    // Hide tooltip on any page click
     document.addEventListener('click', (e) => {
       const tooltip = document.getElementById('customTooltip');
       if (tooltip && tooltip.style.display === 'block') {
