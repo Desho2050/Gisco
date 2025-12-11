@@ -31,14 +31,12 @@
       --col-package: #60a5fa;
       --col-freestand: #94a3b8;
       --grid: #000000;
-      --row-hover: #2bf50c; /* very light blue for current row */
-      /* progress bar special color */
-      --progress-zero: #eef2f7; /* light grey for 0% */
-      /* remaining days colors */
-      --rd-zero: #2f36f4;      /* exact 0 */
-      --rd-high: #06da53;      /* big values */
-      --rd-mid: #faf615;       /* medium values */
-      --rd-low: #f5610b;       /* small values */
+      --row-hover: #2bf50c;
+      --progress-zero: #eef2f7;
+      --rd-zero: #2f36f4;
+      --rd-high: #06da53;
+      --rd-mid: #faf615;
+      --rd-low: #f5610b;
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
@@ -53,9 +51,7 @@
     .file { height:36px; }
     .table-wrap { background: var(--surface); border:1px solid var(--border); border-radius:10px; overflow:auto; margin-top:5px; }
     table { width: 100%; border-collapse: collapse; table-layout:auto; }
-    /* Ensure horizontal scroll when total width exceeds viewport */
     #dataTable { min-width: 1800px; }
-    /* Wider Camp & Location columns via colgroup */
     #dataTable col.col-wo { width: clamp(60px, 22vw, 10%); }
     #dataTable col.col-camp { width: clamp(60px, 22vw, 15%); }
     #dataTable col.col-location { width: clamp(60px, 22vw, 20%); }
@@ -90,7 +86,6 @@
     thead th { background: var(--col-meta); color:#fff; position: sticky; top: 0; z-index: 2; padding:8px; font-size: clamp(12px, 0.9vw, 14px); text-align:center; white-space: normal; overflow-wrap: anywhere; hyphens: auto; border: 1px solid var(--grid); }
   tbody td { border: 1px solid var(--grid); padding: 0 0px; text-align: center; font-size: 11px; font-weight: bold; white-space: normal; overflow-wrap: anywhere; hyphens:auto; height: 3px; }
   #dataTable tbody tr { height: 6px; }
-    /* header color per group */
     .th-meta { background: var(--col-meta); }
     .th-split { background: var(--col-split); }
     .th-window { background: var(--col-window); }
@@ -101,11 +96,9 @@
     .th-package { background: var(--col-package); }
     .th-freestand { background: var(--col-freestand); }
     tbody tr:nth-child(even) { background: #f8fafc; }
-    /* Highlight current (hovered) row */
     tbody tr:hover { background:rgb(255, 255, 255); }
     tbody tr:hover td { background:#00eeff }
     tbody tr:hover .progress-cell { background: transparent; }
-    /* Numeric-only badge display inside cells */
     td.split.is-numeric,
     td.window.is-numeric,
     td.package.is-numeric,
@@ -123,10 +116,8 @@
     .count-badge.fridge { background: var(--col-fridge); }
     .count-badge.freezer { background: var(--col-freezer); }
     .count-badge.freestand { background: var(--col-freestand); }
-    /* LPO cell button */
     .lpo-btn { display:inline-flex; align-items:center; justify-content:center; height: 30px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: #09ced5; color: var(--brand); font-weight: 700; font-size: 12px; text-decoration: none; cursor: pointer; }
     .lpo-btn:hover { background: #07de7a; border-color: #08e3e3; }
-    /* PDF viewer overlay */
     .pdf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; z-index: 9999; }
     .pdf-dialog { width: min(90vw, 1000px); height: min(90vh, 800px); background: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden; }
     .pdf-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--brand); color: #fff; font-weight: 700; }
@@ -147,14 +138,11 @@
       background: #f0f8ff;
     }
     .pdf-frame { flex: 1; border: none; width: 100%; }
-    /* Percentage progress cell */
     .progress-cell { position: relative; height: 24px; border-radius: 6px; background: #eef2f7; overflow: hidden; display:flex; align-items:center; justify-content:center; }
     .progress-bar { position: absolute; left:0; top:0; height:100%; width:0; background: var(--rd-high); }
     .progress-text { position: relative; z-index:1; font-weight:700; font-size: 12px; }
-    /* Remaining days badge */
     .remain-badge { display:inline-flex; align-items:center; justify-content:center; min-width: 28px; height: 24px; padding: 0 8px; border-radius: 6px; font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25), 0 1px 2px rgba(0,0,0,0.12); }
     .status { margin-top: 8px; font-size: 13px; color: var(--muted); }
-    /* Stats panel */
     .stats { background: var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; margin-top:12px; }
     .cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; }
     .card { border:1px solid var(--border); border-radius:8px; padding:10px; background:#fff; }
@@ -173,62 +161,60 @@
     .mini-card { border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; }
     .mini-title { font-weight:700; font-size:12px; color: var(--muted); margin-bottom:4px; }
     .mini-card canvas { width:100%; }
-/*======================================================================================*/    
-  .toast-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 10000;
-  max-width: 400px;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-}
-.toast {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: linear-gradient(135deg, #ffffff, #f9f9f9);
-  border-left: 5px solid #f5610b;
-  border-radius: 10px;
-  padding: 14px 18px;
-  margin-bottom: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-  animation: slideIn 0.5s ease-out;
-  font-size: 15px;
-  color: #333;
-  transition: opacity 0.3s ease;
-}
-.toast-icon {
-  font-size: 20px;
-  color: #f5610b;
-}
-@keyframes slideIn {
-  from { transform: translateX(450px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-@keyframes slideOut {
-  from { transform: translateX(0); opacity: 1; }
-  to { transform: translateX(450px); opacity: 0; }
-}
-.toast.removing {
-  animation: slideOut 0.5s ease-out forwards;
-}
- .action-cell {
-  padding: 0.25rem !important;
-  white-space: nowrap; /* Prevent line breaks */
-  text-align: center;
-}
-
-.action-btn {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  margin: 0 0.125rem; /* Horizontal margin only */
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  color: white;
-  display: inline-block; /* Ensure inline layout */
-}
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      max-width: 400px;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #ffffff, #f9f9f9);
+      border-left: 5px solid #f5610b;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+      animation: slideIn 0.5s ease-out;
+      font-size: 15px;
+      color: #333;
+      transition: opacity 0.3s ease;
+    }
+    .toast-icon {
+      font-size: 20px;
+      color: #f5610b;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(450px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(450px); opacity: 0; }
+    }
+    .toast.removing {
+      animation: slideOut 0.5s ease-out forwards;
+    }
+    .action-cell {
+      padding: 0.25rem !important;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .action-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      margin: 0 0.125rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+      display: inline-block;
+    }
     .edit-btn { background:#03979c; }
     .save-btn { background:#2f36f4; color:white; }
     .cancel-btn { background: var(--muted); }
@@ -300,9 +286,8 @@
       }
       .btn {
         width: 100%;
-      }}
-/*======================================================================================*/  
-    /* Responsive tweaks */
+      }
+    }
     @media (max-width: 640px){
       .controls { flex-direction: column; align-items: stretch; }
       .btn { width: 100%; }
@@ -311,138 +296,110 @@
       thead th, tbody td { padding: 2px; }
     }
     @media print {
-  .topbar,
-  .controls {
-    display: none !important;
-  }
-}
-@media print {
-  /* Hide Actions column (last column) */
-  td.action-cell,
-  tr.print-header-row td:last-child {
-    display: none !important;
-  }
-
-  /* Also hide the Actions header if you kept the thead (just in case) */
-  th:last-child {
-    display: none !important;
-  }
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 180px; /* ensures consistent width */
-}
-
-.filter-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-  margin: 0;
-  text-align: center;
-}
-
-.filter-select {
-  width: 100%;
-  text-align: center;
-  color: #000 !important;
-  font-size: large !important;
-  background-color: rgb(209, 250, 107) !important;
-}
-
-#filterLocation {
-  background-color: rgb(243, 245, 179) !important;
-}
-
-#filterType {
-  background-color: rgb(129, 246, 176) !important;
-}
-@media (max-width: 768px) {
-  .controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .filter-group {
-    min-width: auto;
-  }
-}
-.cost-sub {
-  font-size: 11px;
-  color: #ffffff;
-  margin-top: 4px;
-  opacity: 0.9;
-}
-/* Override for Cooler (black text on cyan) */
-.card:nth-child(6) .cost-sub {
-  color: #000000;
-}
-.custom-tooltip {
-  position: fixed;
-  z-index: 100000;
-  background: rgba(0, 0, 0, 0.9);
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  pointer-events: none;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  max-width: 300px;
-  white-space: nowrap;
-  text-align: left;
-}
-.custom-tooltip {
-  position: fixed;
-  z-index: 100000;
-  background: rgba(0, 0, 0, 0.9);
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  pointer-events: none;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  max-width: 1000px;
-  white-space: nowrap;
-  text-align: left;
-}
+      .topbar,
+      .controls {
+        display: none !important;
+      }
+      td.action-cell,
+      tr.print-header-row td:last-child,
+      th:last-child {
+        display: none !important;
+      }
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 180px;
+    }
+    .filter-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+      text-align: center;
+    }
+    .filter-select {
+      width: 100%;
+      text-align: center;
+      color: #000 !important;
+      font-size: large !important;
+      background-color: rgb(209, 250, 107) !important;
+    }
+    #filterLocation {
+      background-color: rgb(243, 245, 179) !important;
+    }
+    #filterType {
+      background-color: rgb(129, 246, 176) !important;
+    }
+    .cost-sub {
+      font-size: 11px;
+      color: #ffffff;
+      margin-top: 4px;
+      opacity: 0.9;
+    }
+    .card:nth-child(6) .cost-sub {
+      color: #000000;
+    }
+    .custom-tooltip {
+      position: fixed;
+      z-index: 100000;
+      background: rgba(0, 0, 0, 0.9);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      pointer-events: none;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      max-width: 1000px;
+      white-space: nowrap;
+      text-align: left;
+    }
+    /* 👇 New: Hide button style */
+    .hide-btn {
+      font-size: 9px !important;
+      padding: 2px 4px !important;
+      margin-right: 4px;
+      min-width: 32px;
+      background-color: #c022c5;
+    }
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="title">WORK ORDER PROJECT 4378M RAK & FUJ</div>
-    <a class="btn" style="background-color: var(--accent);" href="index.html">Back to Main Page</a>
+    <div>
+      <a class="btn" style="background-color: #6b778c; margin-right: 10px;" id="showAllBtn">Show All Rows</a>
+      <a class="btn" style="background-color: var(--accent);" href="index.html">Back to Main Page</a>
+    </div>
   </header>
   <main class="container">
     <section class="controls">
-  <button class="btn add-row-btn" id="addRowBtn" style="background-color: yellow;">➕ Add New Work Order</button>
-  <button class="btn print-btn" id="printBtn" title="Print this page" style="background-color: turquoise;">🖨️ Print</button>
-
-  <div class="filter-group">
-    <label class="filter-label">Filter By Camp</label>
-    <select class="btn filter-select" id="filterCamp">
-      <option value="">All Camps</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label class="filter-label">Filter By Location</label>
-    <select class="btn filter-select" id="filterLocation">
-      <option value="">All Locations</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label class="filter-label">Filter By Unit Type</label>
-    <select class="btn filter-select" id="filterType">
-      <option value="">All Types</option>
-    </select>
-  </div>
-</section>
+      <button class="btn add-row-btn" id="addRowBtn" style="background-color: yellow;">➕ Add New Work Order</button>
+      <button class="btn print-btn" id="printBtn" title="Print this page" style="background-color: turquoise;">🖨️ Print</button>
+      <div class="filter-group">
+        <label class="filter-label">Filter By Camp</label>
+        <select class="btn filter-select" id="filterCamp">
+          <option value="">All Camps</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Filter By Location</label>
+        <select class="btn filter-select" id="filterLocation">
+          <option value="">All Locations</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Filter By Unit Type</label>
+        <select class="btn filter-select" id="filterType">
+          <option value="">All Types</option>
+        </select>
+      </div>
+    </section>
     <div id="statusBar" class="status"></div>
     <section id="statsPanel" class="stats">
       <div class="cards">
-        <!-- Stats cards unchanged -->
         <div class="card" style="background-color: var(--col-split); color: #fff;">
           <div class="title" style="color: #eaf4ff;">Total Splits</div>
           <div id="statTotalSplit" class="value"style="color: #eaf4ff;">0</div>
@@ -489,7 +446,6 @@
            <div id="statCostNoVat" class="cost-sub"></div>
         </div>
       </div>
-      <!-- PDF viewer overlay -->
       <div id="pdfOverlay" class="pdf-overlay" aria-hidden="true">
         <div class="pdf-dialog" role="dialog" aria-modal="true" aria-label="PDF viewer">
           <div class="pdf-header">
@@ -503,7 +459,6 @@
           <iframe id="pdfFrame" class="pdf-frame" src="about:blank" title="PDF"></iframe>
         </div>
       </div>
-      <!-- Modals unchanged -->
       <div id="addModal" class="modal" >
         <div class="modal-content" >
           <h3 >Add New Work Order</h3>
@@ -619,23 +574,15 @@
     </div>
   </main>
   <script>
-    // =============================
-    // Supabase Client Initialization
-    // =============================
     const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    // =============================
-    // PDF CACHE
-    // =============================
     const PDF_CACHE_KEY = 'pdf_url_cache_v3';
     let PDF_URL_CACHE = JSON.parse(localStorage.getItem(PDF_CACHE_KEY) || '{}');
-    const CACHE_TTL = 60 * 60 * 1000; // 1 hour
-
+    const CACHE_TTL = 60 * 60 * 1000;
     function isCacheValid(ts) {
       return Date.now() - ts < CACHE_TTL;
     }
-
     function getCachedPdfUrls(filename) {
       const key = filename.toLowerCase();
       const cached = PDF_URL_CACHE[key];
@@ -644,31 +591,22 @@
       }
       return null;
     }
-
     function setCachedPdfUrls(filename, direct, google) {
       const key = filename.toLowerCase();
       PDF_URL_CACHE[key] = { direct, google, ts: Date.now() };
       localStorage.setItem(PDF_CACHE_KEY, JSON.stringify(PDF_URL_CACHE));
     }
-
     async function resolvePdfUrls(file) {
-  const cached = getCachedPdfUrls(file);
-  if (cached) return cached;
-
-  if (!file.toLowerCase().endsWith('.pdf')) {
-    file += '.pdf';
-  }
-  // ✅ Use GitHub Pages instead of raw.githubusercontent.com
-  const ghPagesUrl = `https://desho2050.github.io/Gisco/${encodeURIComponent(file)}`;
-  const googleUrl = `https://docs.google.com/gview?url=${encodeURIComponent(ghPagesUrl)}&embedded=true`;
-
-  setCachedPdfUrls(file, ghPagesUrl, googleUrl);
-  return { direct: ghPagesUrl, google: googleUrl };
-}
-
-    // =============================
-    // Updated HEADERS
-    // =============================
+      const cached = getCachedPdfUrls(file);
+      if (cached) return cached;
+      if (!file.toLowerCase().endsWith('.pdf')) {
+        file += '.pdf';
+      }
+      const ghPagesUrl = `https://desho2050.github.io/Gisco/${encodeURIComponent(file)}`;
+      const googleUrl = `https://docs.google.com/gview?url=${encodeURIComponent(ghPagesUrl)}&embedded=true`;
+      setCachedPdfUrls(file, ghPagesUrl, googleUrl);
+      return { direct: ghPagesUrl, google: googleUrl };
+    }
     const HEADERS = [
       { label: 'WO NO.', key: 'wo_no' },
       { label: 'CAMP', key: 'camp' },
@@ -700,10 +638,6 @@
       { label: 'WO', key: 'wo_pdf' },
       { label: 'Spilt Cost without VAT', key: 'cost' }
     ];
-
-    // =============================
-    // Utility Functions (unchanged)
-    // =============================
     function sortByWoNo(rows) {
       return [...rows].sort((a, b) => {
         const woA = String(a.wo_no || '').trim();
@@ -754,11 +688,7 @@
     }
     function parsePercentage(val) {
       if (val === null || val === undefined) return null;
-      if (typeof val === 'number') {
-        let n = val;
-        if (n <= 1) n = n * 100;
-        return Math.max(0, Math.min(100, Math.round(n)));
-      }
+      if (typeof val === 'number') { let n = val; if (n <= 1) n = n * 100; return Math.max(0, Math.min(100, Math.round(n))); }
       const s = String(val).trim();
       if (!s) return null;
       const m = s.match(/([0-9]+(?:\.[0-9]+)?)\s*%?/);
@@ -789,10 +719,6 @@
       const n = Number(value);
       return Number.isFinite(n) ? AED_FORMATTER.format(n) : 'AED 0.00';
     }
-
-    // =============================
-    // UI References
-    // =============================
     const statusEl = document.getElementById('statusBar');
     const selCamp = document.getElementById('filterCamp');
     const selLocation = document.getElementById('filterLocation');
@@ -805,15 +731,12 @@
     const editModal = document.getElementById('editModal');
     const editForm = document.getElementById('editForm');
     const closeEditModal = document.getElementById('closeEditModal');
-
+    const showAllBtn = document.getElementById('showAllBtn');
     let ALL_ROWS = [];
     let PDF_MAP = {};
     let NOTIFIED_WO = new Set();
     let currentPdfDirectUrl = '';
 
-    // =============================
-    // Toast / Status
-    // =============================
     function showToast(message, duration = 20000) {
       let container = document.getElementById('toastContainer');
       if (!container) {
@@ -839,9 +762,6 @@
       }
     }
 
-    // =============================
-    // PDF View Enhancements
-    // =============================
     async function loadRemotePdfMap() {
       try {
         const res = await fetch('attachs-remote.json?ts=' + Date.now(), { cache: 'no-store' });
@@ -851,45 +771,37 @@
         }
       } catch (e) { /* ignore */ }
     }
-
     async function openPdfViewerFromFile(file, title) {
       const urls = await resolvePdfUrls(file);
       currentPdfDirectUrl = urls.direct;
       return openPdfViewer(urls.google, title);
     }
-
     function openPdfViewer(url, title) {
       const overlay = document.getElementById('pdfOverlay');
       const frame = document.getElementById('pdfFrame');
       const titleEl = document.getElementById('pdfTitle');
       if (!overlay || !frame) return true;
-
       frame.src = 'about:blank';
       titleEl.textContent = 'Loading...';
-
       overlay.style.display = 'flex';
       overlay.setAttribute('aria-hidden', 'false');
       frame.src = url;
       if (titleEl) titleEl.textContent = title || 'PDF';
       return false;
     }
-
     (function setupPdfOverlay() {
       const overlay = document.getElementById('pdfOverlay');
       const closeBtn = document.getElementById('pdfClose');
       const downloadBtn = document.querySelector('.pdf-download');
       const newTabBtn = document.querySelector('.pdf-newtab');
-
       function closePdf() {
         overlay.style.display = 'none';
         overlay.setAttribute('aria-hidden', 'true');
         document.getElementById('pdfFrame').src = 'about:blank';
         currentPdfDirectUrl = '';
       }
-
       if (closeBtn) closeBtn.addEventListener('click', closePdf);
       if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closePdf(); });
-
       if (downloadBtn) {
         downloadBtn.addEventListener('click', () => {
           if (currentPdfDirectUrl) {
@@ -902,7 +814,6 @@
           }
         });
       }
-
       if (newTabBtn) {
         newTabBtn.addEventListener('click', () => {
           if (currentPdfDirectUrl) {
@@ -912,9 +823,6 @@
       }
     })();
 
-    // =============================
-    // CRUD Functions — MODIFIED FOR MODAL EDIT
-    // =============================
     function renderActionCell(rowData, rowId) {
       const td = document.createElement('td');
       td.className = 'action-cell';
@@ -930,7 +838,6 @@
       td.appendChild(deleteBtn);
       return td;
     }
-
     function buildEditForm(rowData) {
       editForm.innerHTML = '';
       HEADERS.forEach(h => {
@@ -999,7 +906,6 @@
         setStatus('Failed to update work order.', true);
       }
     });
-
     function buildAddForm() {
       addForm.innerHTML = '';
       HEADERS.forEach(h => {
@@ -1055,7 +961,6 @@
         setStatus('Failed to add work order.', true);
       }
     });
-
     function confirmDelete(woNo) {
       if (!confirm('Are you sure you want to delete this work order?')) return;
       deleteRow(woNo);
@@ -1075,61 +980,64 @@
       }
     }
 
-    // =============================
-    // Rendering & Filtering (unchanged)
-    // =============================
+    // ✅ NEW: "Show All Rows" logic
+    showAllBtn.addEventListener('click', () => {
+      document.querySelectorAll('#dataTable tbody tr').forEach(tr => {
+        tr.style.display = '';
+        tr.dataset.hidden = '';
+      });
+      setStatus('All rows restored.');
+    });
+
     function renderRows(rows) {
       const tbody = document.querySelector('#dataTable tbody');
-  const tooltip = document.getElementById('customTooltip');
-  tbody.innerHTML = '';
-
-  rows.forEach((row, idx) => {
-    const tr = document.createElement('tr');
-
-    // 👇 Set data attributes for tooltip
-    const woNo = row.wo_no || 'N/A';
-    const camp = row.camp || 'N/A';
-    const location = row.location || 'N/A';
-    tr.dataset.woNo = woNo;
-    tr.dataset.camp = camp;
-    tr.dataset.location = location;
-
-    // 👇 Mouse events for custom tooltip
-    tr.addEventListener('mouseenter', (e) => {
-      if (tooltip) {
-        tooltip.textContent = ` ${woNo} • Camp: ${camp} • Location: ${location}`;
-        tooltip.style.display = 'block';
-      }
-    });
-
-    tr.addEventListener('mouseleave', () => {
-      if (tooltip) {
-        tooltip.style.display = 'none';
-      }
-    });
-
-    tr.addEventListener('mousemove', (e) => {
+      const tooltip = document.getElementById('customTooltip');
+      tbody.innerHTML = '';
+      rows.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        const woNo = row.wo_no || 'N/A';
+        const camp = row.camp || 'N/A';
+        const location = row.location || 'N/A';
+        tr.dataset.woNo = woNo;
+        tr.dataset.camp = camp;
+        tr.dataset.location = location;
+       
+       
+        tr.addEventListener('dblclick', (e) => {
   if (tooltip) {
-    const tooltipWidth = tooltip.offsetWidth;
-    const tooltipHeight = tooltip.offsetHeight;
+    tooltip.textContent = ` ${woNo} • Camp: ${camp} • Location: ${location}`;
+    tooltip.style.display = 'block';
+    const left = e.pageX - tooltip.offsetWidth - 10;
+    const top = e.pageY;
+    tooltip.style.left = `${Math.max(0, left)}px`;
+    tooltip.style.top = `${top}px`;
 
-    // Position tooltip to the LEFT of cursor
-    const left = e.pageX - tooltipWidth - 10; // 10px gap
-    const top = e.pageY ;  // vertically centered on cursor
-
-    // Optional: prevent tooltip from going off the left edge of the screen
-    const safeLeft = Math.max(0, left);
-
-  tooltip.position = 'absolute';
-  tooltip.style.left = `${safeLeft}px`;
-  tooltip.style.top = `${top}px`;
+    // Auto-hide after 3 seconds
+    clearTimeout(tooltip.hideTimeout);
+    tooltip.hideTimeout = setTimeout(() => {
+      tooltip.style.display = 'none';
+    }, 3000);
   }
 });
         HEADERS.forEach(h => {
           const td = document.createElement('td');
           let handled = false;
           let val = '';
-          if (h.key === null && h.label === 'REMAINING DAYS') {
+
+          if (h.key === 'wo_no') {
+            const woVal = row[h.key] ?? '';
+            const hideBtn = document.createElement('button');
+            hideBtn.textContent = 'Hide';
+            hideBtn.className = 'action-btn cancel-btn hide-btn';
+            hideBtn.onclick = (e) => {
+              e.stopPropagation();
+              tr.style.display = 'none';
+              tr.dataset.hidden = 'true';
+            };
+            td.appendChild(hideBtn);
+            td.appendChild(document.createTextNode(woVal));
+            handled = true;
+          } else if (h.key === null && h.label === 'REMAINING DAYS') {
             val = remainingDays(row.end_date);
             td.classList.add('remain');
           } else if (h.key === 'start_date' || h.key === 'end_date') {
@@ -1227,6 +1135,7 @@
         tbody.appendChild(tr);
       });
     }
+
     function uniqueSorted(values) {
       const set = new Set(values.filter(v => v !== '' && v !== null && v !== undefined).map(v => String(v).trim()).filter(Boolean));
       return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
@@ -1266,58 +1175,50 @@
       return total;
     }
     function computeCounts(rows) {
-  const counts = {
-    split: { split_1_5: 0, split_2: 0, split_2_5: 0, split_3: 0, total: 0, cost: 0 },
-    window: { window_2: 0, total: 0, cost: 0 },
-    package: { pkg_8: 0, pkg_10: 0, pkg_12: 0, pkg_15: 0, pkg_20: 0, pkg_25: 0, total: 0, cost: 0 },
-    freestand: { free_5ton: 0, free_8ton: 0, total: 0, cost: 0 },
-    used: { used_ac: 0, total: 0, cost: 0 },
-    fridge: { fridge: 0, total: 0, cost: 0 },
-    cooler: { cooler: 0, total: 0, cost: 0 },
-    freezer: { freezer: 0, total: 0, cost: 0 }
-  };
-
-  // Map group → keys (same as before)
-  const GROUP_KEYS = {
-    split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
-    window: ['window_2'],
-    package: ['pkg_8', 'pkg_10', 'pkg_12', 'pkg_15', 'pkg_20', 'pkg_25'],
-    used: ['used_ac'],
-    fridge: ['fridge'],
-    cooler: ['cooler'],
-    freezer: ['freezer'],
-    freestand: ['free_5ton', 'free_8ton']
-  };
-
-  rows.forEach(row => {
-    const rowCost = isNumericOnly(row.cost) ? Number(row.cost) : 0;
-    // Total cost across all rows (already done elsewhere)
-
-    for (const [group, keys] of Object.entries(GROUP_KEYS)) {
-      let groupHasValue = false;
-      let groupQty = 0;
-
-      for (const key of keys) {
-        const val = row[key];
-        if (isNumericOnly(val)) {
-          const num = Number(val);
-          if (num > 0) {
-            groupHasValue = true;
-            groupQty += num;
-            counts[group][key] += num;
+      const counts = {
+        split: { split_1_5: 0, split_2: 0, split_2_5: 0, split_3: 0, total: 0, cost: 0 },
+        window: { window_2: 0, total: 0, cost: 0 },
+        package: { pkg_8: 0, pkg_10: 0, pkg_12: 0, pkg_15: 0, pkg_20: 0, pkg_25: 0, total: 0, cost: 0 },
+        freestand: { free_5ton: 0, free_8ton: 0, total: 0, cost: 0 },
+        used: { used_ac: 0, total: 0, cost: 0 },
+        fridge: { fridge: 0, total: 0, cost: 0 },
+        cooler: { cooler: 0, total: 0, cost: 0 },
+        freezer: { freezer: 0, total: 0, cost: 0 }
+      };
+      const GROUP_KEYS = {
+        split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
+        window: ['window_2'],
+        package: ['pkg_8', 'pkg_10', 'pkg_12', 'pkg_15', 'pkg_20', 'pkg_25'],
+        used: ['used_ac'],
+        fridge: ['fridge'],
+        cooler: ['cooler'],
+        freezer: ['freezer'],
+        freestand: ['free_5ton', 'free_8ton']
+      };
+      rows.forEach(row => {
+        const rowCost = isNumericOnly(row.cost) ? Number(row.cost) : 0;
+        for (const [group, keys] of Object.entries(GROUP_KEYS)) {
+          let groupHasValue = false;
+          let groupQty = 0;
+          for (const key of keys) {
+            const val = row[key];
+            if (isNumericOnly(val)) {
+              const num = Number(val);
+              if (num > 0) {
+                groupHasValue = true;
+                groupQty += num;
+                counts[group][key] += num;
+              }
+            }
+          }
+          if (groupHasValue) {
+            counts[group].total += groupQty;
+            counts[group].cost += rowCost;
           }
         }
-      }
-
-      if (groupHasValue) {
-        counts[group].total += groupQty;
-        counts[group].cost += rowCost; // 🔥 assign full row cost to each group it belongs to
-      }
+      });
+      return counts;
     }
-  });
-
-  return counts;
-}
     function hasGroupValue(row, group) {
       const keys = GROUP_KEYS[group] || [];
       return keys.some(k => {
@@ -1403,42 +1304,35 @@
       ctxProgress.parentNode.querySelector('.progress-value').textContent = `${avg}%`;
     }
     function renderStats(rows) {
-  const c = computeCounts(rows);
-  let totalCostNoVat = 0;
-  rows.forEach(r => {
-    const v = r.cost;
-    if (isNumericOnly(v)) totalCostNoVat += Number(v);
-  });
-
-  // Helper
-  const byId = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = String(val);
-  };
-
-  // Counts
-  byId('statTotalSplit', c.split.total);
-  byId('statTotalPackage', c.package.total);
-  byId('statTotalFreestand', c.freestand.total);
-  byId('statTotalWindow', c.window.total);
-  byId('statTotalUsed', c.used.total);
-  byId('statTotalCooler', c.cooler.total);
-  byId('statTotalFridge', c.fridge.total);
-  byId('statTotalFreezer', c.freezer.total);
-  byId('statTotalCostNoVat', formatAED(totalCostNoVat));
-
-  // ✅ COST PER GROUP
-  byId('statCostSplit', `Cost: ${formatAED(c.split.cost)}`);
-  byId('statCostPackage', `Cost: ${formatAED(c.package.cost)}`);
-  byId('statCostFreestand', `Cost: ${formatAED(c.freestand.cost)}`);
-  byId('statCostWindow', `Cost: ${formatAED(c.window.cost)}`);
-  byId('statCostUsed', `Cost: ${formatAED(c.used.cost)}`);
-  byId('statCostCooler', `Cost: ${formatAED(c.cooler.cost)}`);
-  byId('statCostFridge', `Cost: ${formatAED(c.fridge.cost)}`);
-  byId('statCostFreezer', `Cost: ${formatAED(c.freezer.cost)}`);
-
-  renderCharts(c);
-}
+      const c = computeCounts(rows);
+      let totalCostNoVat = 0;
+      rows.forEach(r => {
+        const v = r.cost;
+        if (isNumericOnly(v)) totalCostNoVat += Number(v);
+      });
+      const byId = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(val);
+      };
+      byId('statTotalSplit', c.split.total);
+      byId('statTotalPackage', c.package.total);
+      byId('statTotalFreestand', c.freestand.total);
+      byId('statTotalWindow', c.window.total);
+      byId('statTotalUsed', c.used.total);
+      byId('statTotalCooler', c.cooler.total);
+      byId('statTotalFridge', c.fridge.total);
+      byId('statTotalFreezer', c.freezer.total);
+      byId('statTotalCostNoVat', formatAED(totalCostNoVat));
+      byId('statCostSplit', `Cost: ${formatAED(c.split.cost)}`);
+      byId('statCostPackage', `Cost: ${formatAED(c.package.cost)}`);
+      byId('statCostFreestand', `Cost: ${formatAED(c.freestand.cost)}`);
+      byId('statCostWindow', `Cost: ${formatAED(c.window.cost)}`);
+      byId('statCostUsed', `Cost: ${formatAED(c.used.cost)}`);
+      byId('statCostCooler', `Cost: ${formatAED(c.cooler.cost)}`);
+      byId('statCostFridge', `Cost: ${formatAED(c.fridge.cost)}`);
+      byId('statCostFreezer', `Cost: ${formatAED(c.freezer.cost)}`);
+      renderCharts(c);
+    }
     function applyFilters() {
       const campVal = selCamp.value || 'All';
       const locVal = selLocation.value || 'All';
@@ -1464,10 +1358,6 @@
       } catch (e) { console.warn('Toast error:', e); }
       setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows.`);
     }
-
-    // =============================
-    // Supabase Data Loader
-    // =============================
     async function loadFromSupabase() {
       setStatus('Loading data from database...');
       try {
@@ -1482,10 +1372,6 @@
         setStatus('❌ Failed to load data from database.', true);
       }
     }
-
-    // =============================
-    // DOM Ready
-    // =============================
     document.addEventListener('DOMContentLoaded', async () => {
       await loadRemotePdfMap();
       loadFromSupabase();
@@ -1493,6 +1379,14 @@
         printBtn.addEventListener('click', () => window.print());
       }
     });
+    // Hide tooltip on any page click
+document.addEventListener('click', (e) => {
+  const tooltip = document.getElementById('customTooltip');
+  if (tooltip && tooltip.style.display === 'block') {
+    tooltip.style.display = 'none';
+    clearTimeout(tooltip.hideTimeout);
+  }
+});
   </script>
   <div id="customTooltip" class="custom-tooltip" style="display: none;"></div>
 </body>
