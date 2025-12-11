@@ -143,6 +143,12 @@
     .progress-text { position: relative; z-index:1; font-weight:700; font-size: 12px; }
     .remain-badge { display:inline-flex; align-items:center; justify-content:center; min-width: 28px; height: 24px; padding: 0 8px; border-radius: 6px; font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25), 0 1px 2px rgba(0,0,0,0.12); }
     .status { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    #selectedCostSum {
+      margin-top: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brand);
+    }
     .stats { background: var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; margin-top:12px; }
     .cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; }
     .card { border:1px solid var(--border); border-radius:8px; padding:10px; background:#fff; }
@@ -364,6 +370,12 @@
       min-width: 32px;
       background-color: #c022c5;
     }
+    /* 👇 Checkbox styling */
+    .row-selector {
+      margin-right: 4px;
+      transform: scale(0.9);
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -398,6 +410,7 @@
       </div>
     </section>
     <div id="statusBar" class="status"></div>
+    <div id="selectedCostSum">Selected Cost Total: AED 0.00</div>
     <section id="statsPanel" class="stats">
       <div class="cards">
         <div class="card" style="background-color: var(--col-split); color: #fff;">
@@ -580,6 +593,11 @@
     const PDF_CACHE_KEY = 'pdf_url_cache_v3';
     let PDF_URL_CACHE = JSON.parse(localStorage.getItem(PDF_CACHE_KEY) || '{}');
     const CACHE_TTL = 60 * 60 * 1000;
+    const HIDDEN_ROWS_KEY = 'hidden_work_orders_v1'; // ✅ For hide persistence
+
+    // ✅ NEW: Track selected rows
+    const selectedWoNos = new Set();
+
     function isCacheValid(ts) {
       return Date.now() - ts < CACHE_TTL;
     }
@@ -737,6 +755,18 @@
     let NOTIFIED_WO = new Set();
     let currentPdfDirectUrl = '';
 
+    // ✅ NEW: Update selected cost sum
+    function updateSelectedCostSum() {
+      let total = 0;
+      selectedWoNos.forEach(woNo => {
+        const row = ALL_ROWS.find(r => String(r.wo_no).trim() === woNo);
+        if (row && isNumericOnly(row.cost)) {
+          total += Number(row.cost);
+        }
+      });
+      document.getElementById('selectedCostSum').textContent = `Selected Cost Total: ${formatAED(total)}`;
+    }
+
     function showToast(message, duration = 20000) {
       let container = document.getElementById('toastContainer');
       if (!container) {
@@ -761,7 +791,6 @@
         statusEl.style.color = isError ? '#b00020' : 'var(--muted)';
       }
     }
-
     async function loadRemotePdfMap() {
       try {
         const res = await fetch('attachs-remote.json?ts=' + Date.now(), { cache: 'no-store' });
@@ -822,7 +851,6 @@
         });
       }
     })();
-
     function renderActionCell(rowData, rowId) {
       const td = document.createElement('td');
       td.className = 'action-cell';
@@ -980,12 +1008,15 @@
       }
     }
 
-    // ✅ NEW: "Show All Rows" logic
+    // ✅ Updated: Show All + clear selection
     showAllBtn.addEventListener('click', () => {
       document.querySelectorAll('#dataTable tbody tr').forEach(tr => {
         tr.style.display = '';
         tr.dataset.hidden = '';
       });
+      selectedWoNos.clear();
+      document.querySelectorAll('.row-selector').forEach(cb => cb.checked = false);
+      updateSelectedCostSum();
       setStatus('All rows restored.');
     });
 
@@ -993,6 +1024,7 @@
       const tbody = document.querySelector('#dataTable tbody');
       const tooltip = document.getElementById('customTooltip');
       tbody.innerHTML = '';
+
       rows.forEach((row, idx) => {
         const tr = document.createElement('tr');
         const woNo = row.wo_no || 'N/A';
@@ -1001,24 +1033,22 @@
         tr.dataset.woNo = woNo;
         tr.dataset.camp = camp;
         tr.dataset.location = location;
-       
-       
-        tr.addEventListener('dblclick', (e) => {
-  if (tooltip) {
-    tooltip.textContent = ` ${woNo} • Camp: ${camp} • Location: ${location}`;
-    tooltip.style.display = 'block';
-    const left = e.pageX - tooltip.offsetWidth - 10;
-    const top = e.pageY;
-    tooltip.style.left = `${Math.max(0, left)}px`;
-    tooltip.style.top = `${top}px`;
 
-    // Auto-hide after 3 seconds
-    clearTimeout(tooltip.hideTimeout);
-    tooltip.hideTimeout = setTimeout(() => {
-      tooltip.style.display = 'none';
-    }, 3000);
-  }
-});
+        tr.addEventListener('dblclick', (e) => {
+          if (tooltip) {
+            tooltip.textContent = ` ${woNo} • Camp: ${camp} • Location: ${location}`;
+            tooltip.style.display = 'block';
+            const left = e.pageX - tooltip.offsetWidth - 10;
+            const top = e.pageY;
+            tooltip.style.left = `${Math.max(0, left)}px`;
+            tooltip.style.top = `${top}px`;
+            clearTimeout(tooltip.hideTimeout);
+            tooltip.hideTimeout = setTimeout(() => {
+              tooltip.style.display = 'none';
+            }, 3000);
+          }
+        });
+
         HEADERS.forEach(h => {
           const td = document.createElement('td');
           let handled = false;
@@ -1026,6 +1056,25 @@
 
           if (h.key === 'wo_no') {
             const woVal = row[h.key] ?? '';
+            const woStr = String(woVal).trim();
+
+            // ✅ Checkbox for selection
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'row-selector';
+            checkbox.dataset.woNo = woStr;
+            checkbox.checked = selectedWoNos.has(woStr);
+            checkbox.addEventListener('change', (e) => {
+              const wo = e.target.dataset.woNo;
+              if (e.target.checked) {
+                selectedWoNos.add(wo);
+              } else {
+                selectedWoNos.delete(wo);
+              }
+              updateSelectedCostSum();
+            });
+
+            // Hide button
             const hideBtn = document.createElement('button');
             hideBtn.textContent = 'Hide';
             hideBtn.className = 'action-btn cancel-btn hide-btn';
@@ -1033,9 +1082,21 @@
               e.stopPropagation();
               tr.style.display = 'none';
               tr.dataset.hidden = 'true';
+
+              const wo = String(row.wo_no || '').trim();
+              if (wo) {
+                let hiddenSet = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
+                hiddenSet.add(wo);
+                localStorage.setItem(HIDDEN_ROWS_KEY, JSON.stringify([...hiddenSet]));
+              }
             };
+
+            // Assemble WO cell
+            const span = document.createElement('span');
+            span.textContent = woVal;
+            td.appendChild(checkbox);
             td.appendChild(hideBtn);
-            td.appendChild(document.createTextNode(woVal));
+            td.appendChild(span);
             handled = true;
           } else if (h.key === null && h.label === 'REMAINING DAYS') {
             val = remainingDays(row.end_date);
@@ -1116,6 +1177,7 @@
           } else {
             val = row[h.key] ?? '';
           }
+
           const group = h.group || '';
           if (group) td.classList.add(group);
           if (group && isNumericOnly(val) && group !== 'remain') {
@@ -1129,10 +1191,25 @@
           } else if (!handled) {
             td.textContent = val;
           }
+
           tr.appendChild(td);
         });
+
         tr.appendChild(renderActionCell(row, idx));
         tbody.appendChild(tr);
+      });
+
+      // ✅ Restore hidden state from localStorage
+      const savedHidden = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
+      rows.forEach((row, idx) => {
+        const wo = String(row.wo_no || '').trim();
+        if (wo && savedHidden.has(wo)) {
+          const tr = tbody.children[idx];
+          if (tr) {
+            tr.style.display = 'none';
+            tr.dataset.hidden = 'true';
+          }
+        }
       });
     }
 
@@ -1380,13 +1457,13 @@
       }
     });
     // Hide tooltip on any page click
-document.addEventListener('click', (e) => {
-  const tooltip = document.getElementById('customTooltip');
-  if (tooltip && tooltip.style.display === 'block') {
-    tooltip.style.display = 'none';
-    clearTimeout(tooltip.hideTimeout);
-  }
-});
+    document.addEventListener('click', (e) => {
+      const tooltip = document.getElementById('customTooltip');
+      if (tooltip && tooltip.style.display === 'block') {
+        tooltip.style.display = 'none';
+        clearTimeout(tooltip.hideTimeout);
+      }
+    });
   </script>
   <div id="customTooltip" class="custom-tooltip" style="display: none;"></div>
 </body>
