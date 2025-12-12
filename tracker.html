@@ -4,16 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Vehicle Usage Tracker</title>
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- Supabase v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <style>
+    /* Your existing CSS remains unchanged */
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { margin: 0; padding: 16px; background: #f5f7fa; color: #333; transition: direction 0.3s; }
     .container {
       max-width: 100%; margin: auto; background: white; padding: 20px;
       border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    h1 { text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.5rem; }
+    h1 { text-align: center; margin-bottom: 10px; color: #2c3e50; font-size: 1.5rem; }
+    #connectionStatus {
+      text-align: center; margin-bottom: 10px; font-size: 0.85rem; min-height: 20px;
+      color: #e74c3c; font-weight: bold;
+    }
     .info-header {
       display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;
       background: #eef2f7; border-radius: 8px; margin-bottom: 20px; font-weight: bold;
@@ -31,8 +36,6 @@
       flex: 1; 
       min-width: 120px;
     }
-
-    /* Table Styling */
     .log-table {
       width: 100%; border-collapse: collapse; margin-top: 20px;
       border: 1px solid #ddd;
@@ -45,18 +48,19 @@
       background-color: #f2f2f2; font-weight: bold;
     }
     .log-table tr:nth-child(even) { background-color: #fafafa; }
-
+    .log-table tr.open-trip { background-color: #fff9db; border-left: 3px solid #f39c12; }
     button {
       background: #3498db; color: white; border: none; padding: 10px 15px; margin-top: 10px; border-radius: 6px; cursor: pointer; font-size: 14px;
       flex: 1;
       min-width: 100px;
     }
-    button:hover { background: #2980b9; }
+    button:hover:not(:disabled) { background: #2980b9; }
+    button:disabled {
+      background: #bdc3c7; cursor: not-allowed;
+    }
     #langToggle { background: #9b59b6; margin-top: 0; }
     #langToggle:hover { background: #8e44ad; }
     #status { margin-top: 10px; text-align: center; font-style: italic; color: #7f8c8d; }
-
-    /* Modal Styles */
     .modal { 
       display: none; 
       position: fixed; 
@@ -87,8 +91,6 @@
       color: #e74c3c; 
     }
     .modal-title { margin-top: 0; text-align: center; }
-
-    /* Form styling */
     #entryForm { 
       display: flex; 
       flex-direction: column; 
@@ -107,53 +109,83 @@
       border: 1px solid #ccc; 
       border-radius: 4px; 
       width: 100%;
-      font-size: 16px; /* Prevents zoom on iOS */
+      font-size: 16px;
     }
     #entryForm button {
       width: 100%;
       padding: 12px;
       margin-top: 5px;
     }
-
-    /* Small text for (KM) */
     small { color: #777; font-size: 0.85em; }
-
-    /* Mobile Responsive */
+    .summary-container {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .summary-item {
+      text-align: center;
+      flex: 1;
+      min-width: 150px;
+    }
+    .summary-label {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 5px;
+    }
+    .summary-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #2c3e50;
+    }
     @media (max-width: 480px) {
       body { padding: 8px; }
       .container { padding: 12px; }
-      h1 { font-size: 1.3rem; margin-bottom: 15px; }
-      
+      h1 { font-size: 1.3rem; margin-bottom: 10px; }
       .info-header {
         flex-direction: column;
         align-items: stretch;
         padding: 10px;
         gap: 8px;
       }
-      
       .month-selector {
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
       }
-      
+       .month-selector2 {
+       display: flex;
+         grid-template-columns: 1fr 1fr;
+         gap: 10px;
+         border-radius: 10px;
+background-color: #2980b9;
+      }
       .month-selector label {
         align-self: flex-start;
       }
-      
+      .summary-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .summary-item {
+        width: 100%;
+      }
       .log-table {
         font-size: 0.75rem;
         min-width: 600px;
         overflow-x: auto;
         display: block;
       }
-      
       .modal-content {
         width: 95%;
         margin: 10px auto;
         padding: 12px;
       }
-      
       button {
         padding: 12px;
         font-size: 16px;
@@ -164,24 +196,40 @@
 <body>
   <div class="container">
     <h1 id="appTitle">Vehicle Usage Tracker</h1>
-
+    <div id="connectionStatus"></div>
+    <div ><label id="lblSelectMonth">View Month:</label>
+      <select id="monthSelect" style="width: 150px; height: 30px; border-radius: 20px;margin-bottom: 20px;background-color: aqua;">
+        <option value="">Select Month...</option>
+      </select>
+    </div>
+      <button id="langToggle">العربية / English</button>
     <div class="info-header">
       <div><span id="lblVehicle">VEHICLE NO</span></div>
       <div><span id="lblDriver">DRIVER NAME</span></div>
     </div>
-
-    <div class="month-selector">
-      <label id="lblSelectMonth">View Month:</label>
-      <select id="monthSelect">
-        <option value="">Select Month...</option>
-      </select>
-      <button id="addEntryBtn">Start Trip</button>
-      <button id="langToggle">العربية / English</button>
+       <div style="display: flex; justify-content: center; width: 100%; margin-bottom: 20px;">
+      <button id="addEntryBtn" style="width: fit-content; font-weight: bold; font-size: 16px; padding: 10px 20px; margin-top: 10px; margin-bottom: 10px;">Start Trip</button>
     </div>
-
     <div id="status"></div>
-
-    <!-- Log Table -->
+    <!-- Summary Section -->
+    <div class="summary-container">
+      <div class="summary-item">
+        <div class="summary-label" id="lblTotalTrips">TOTAL TRIPS</div>
+        <div class="summary-value" id="totalTrips">0</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label" id="lblTotalKm">TOTAL KM</div>
+        <div class="summary-value" id="totalKm">0</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label" id="lblTotalDuration">TOTAL DURATION</div>
+        <div class="summary-value" id="totalDuration">0h 0m</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label" id="lblTotalOvertime">TOTAL OVERTIME</div>
+        <div class="summary-value" id="totalOvertime">0h 0m</div>
+      </div>
+    </div>
     <table class="log-table" id="logTable">
       <thead>
         <tr>
@@ -193,15 +241,14 @@
           <th id="thEndKm">END (KM)</th>
           <th id="thEndTime">END TIME</th>
           <th id="thUsage">USAGE (KM)</th>
+          <th id="thDuration">DURATION</th>
+          <th id="thDutyType">DUTY TYPE</th>
           <th id="thRemarks">REMARKS</th>
         </tr>
       </thead>
       <tbody id="logBody">
-        <!-- Rows will be populated here -->
       </tbody>
     </table>
-
-    <!-- Modal for adding/editing entries -->
     <div id="entryModal" class="modal">
       <div class="modal-content">
         <span class="close">&times;</span>
@@ -209,671 +256,838 @@
         <form id="entryForm">
           <label id="lblDate">Date:</label>
           <input type="date" id="dateInput" required />
-
           <label id="lblLocation">Location:</label>
           <input type="text" id="locationInput" list="locationList" placeholder="Start typing or select..." />
-          <datalist id="locationList">
-            <!-- Dynamically populated -->
-          </datalist>
-
+          <datalist id="locationList"></datalist>
           <div id="startGroup">
             <label id="lblStartKm">Start (KM):</label>
-            <input type="number" id="startKmInput" min="0" step="1" />
+            <input type="number" id="startKmInput" min="0" step="1" required inputmode="numeric" pattern="\d*" />
             <label id="lblStartTime">Start Time:</label>
-            <input type="time" id="startTimeInput" />
+            <input type="time" id="startTimeInput" required />
           </div>
-
           <div id="endGroup" style="display:none;">
             <label id="lblEndKm">End (KM):</label>
-            <input type="number" id="endKmInput" min="0" step="1" />
+            <input type="number" id="endKmInput" min="0" step="1" inputmode="numeric" pattern="\d*" />
             <label id="lblEndTime">End Time:</label>
             <input type="time" id="endTimeInput" />
           </div>
-
           <label id="lblRemarks">Remarks:</label>
           <textarea id="remarksInput" rows="3" placeholder="Any additional notes..."></textarea>
-
           <button type="submit" id="btnSave">Start Trip</button>
           <button type="button" id="cancelBtn" style="background:#95a5a6;">Cancel</button>
         </form>
       </div>
     </div>
-
-    <!-- Modal for viewing past months -->
-    <div id="dataModal" class="modal">
-      <div class="modal-content">
-        <span class="close">&times;</span>
-        <h3 id="modalTitleView">Monthly Data</h3>
-        <div id="modalEntries"></div>
-      </div>
-    </div>
   </div>
-
-  <script>
-    // ==============================
-    // 🔑 DRIVER CONFIGURATION
-    // ==============================
-    const DRIVERS = {
-      1234: { name: "Mohammad Akbar Mohammad Wasi", vehicleNo: "43572" },
-      5678: { name: "Muhammad Asnaf Muhammad Siddique", vehicleNo: "43571" },
-      91011: { name: "Gurlal Singh Desa Singh", vehicleNo: "68034" },
-      1213: { name: "Muhammad Ashfaq Hameed Ahmed", vehicleNo: "68054" },
-      1415: { name: "RAJASEAKARAN", vehicleNo: "68046" },
-      1617: { name: "Atif Ullah Tahir Shah", vehicleNo: "68047" },
-      1819: { name: "KUMAR MuTHASAMY", vehicleNo: "68042" },
-      2021: { name: "Mohammed Safullah", vehicleNo: "68045" }
-    };
-
-    // ==============================
-    // 🔤 Translation System
-    // ==============================
-    const translations = {
-      en: {
-        appTitle: "Vehicle Usage Tracker",
-        lblSelectMonth: "View Month:",
-        startTripBtn: "Start Trip",
-        endTripBtn: "End Trip",
-        langToggle: "العربية / English",
-        thSN: "SN",
-        thLocation: "LOCATION",
-        thDate: "DATE",
-        thStartKm: "START (KM)",
-        thStartTime: "START TIME",
-        thEndKm: "END (KM)",
-        thUsage: "USAGE (KM)",
-        thEndTime: "END TIME",
-        thRemarks: "REMARKS",
-        modalTitle: "Add New Entry",
-        lblDate: "Date:",
-        lblLocation: "Location:",
-        lblStartKm: "Start (KM):",
-        lblStartTime: "Start Time:",
-        lblEndKm: "End (KM):",
-        lblEndTime: "End Time:",
-        lblRemarks: "Remarks:",
-        btnSave: "Save",
-        btnCancel: "Cancel",
-        statusSuccess: "✓ Successfully saved",
-        statusLoadError: "⚠ Failed to load records",
-        statusDbError: "⚠ Database connection error",
-        alertLessKm: "❌ End KM must be greater than Start KM!",
-        alertFutureDate: "❌ Cannot enter a future date!",
-        alertSaveFail: "❌ Save failed. Check connection and try again.",
-        alertCooldown: "Please wait {SECONDS} more second{PLURAL} before starting a new action.",
-        noDataCurrent: "No data for this month.",
-        noDataModal: "No data for this month.",
-        selectMonth: "Select Month...",
-        modalTitleView: "Monthly Data",
-        modalTitleClose: "Close Previous Trip",
-        locationPlaceholder: "Start typing or select...",
-        alertEndRequired: "End KM and End Time are required to close the trip."
-      },
-      ar: {
-        appTitle: "متابعة استخدام سيارة المشروع",
-        lblSelectMonth: "عرض الشهر:",
-        startTripBtn: "بدء الرحلة",
-        endTripBtn: "إنهاء الرحلة",
-        langToggle: "English / العربية",
-        thSN: "ر.ت",
-        thLocation: "الموقع",
-        thDate: "التاريخ",
-        thStartKm: "بداية (كم)",
-        thStartTime: "وقت البدء",
-        thEndKm: "نهاية (كم)",
-        thUsage: "الاستخدام (كم)",
-        thEndTime: "وقت النهاية",
-        thRemarks: "ملاحظات",
-        modalTitle: "إدخال جديد",
-        lblDate: "التاريخ:",
-        lblLocation: "الموقع:",
-        lblStartKm: "قراءة بداية الخدمة (كم):",
-        lblStartTime: "وقت البدء:",
-        lblEndKm: "قراءة نهاية الخدمة (كم):",
-        lblEndTime: "وقت النهاية:",
-        lblRemarks: "ملاحظات:",
-        btnSave: "حفظ",
-        btnCancel: "إلغاء",
-        statusSuccess: "✓ تم الحفظ بنجاح",
-        statusLoadError: "⚠ فشل تحميل السجلات",
-        statusDbError: "⚠ خطأ في الاتصال بقاعدة البيانات",
-        alertLessKm: "❌ يجب أن تكون قراءة النهاية أكبر من القراءة الابتدائية!",
-        alertFutureDate: "❌ لا يمكن إدخال تاريخ مستقبلي!",
-        alertSaveFail: "❌ فشل الحفظ. تحقق من الاتصال وحاول لاحقًا.",
-        alertCooldown: "يرجى الانتظار {SECONDS} ثانية{PLURAL} إضافية قبل تنفيذ أي إجراء.",
-        noDataCurrent: "لا توجد بيانات لهذا الشهر.",
-        noDataModal: "لا توجد بيانات لهذا الشهر.",
-        selectMonth: "اختر شهرًا...",
-        modalTitleView: "بيانات الشهر",
-        modalTitleClose: "إغلاق الرحلة السابقة",
-        locationPlaceholder: "ابدأ الكتابة أو اختر...",
-        alertEndRequired: "قراءة النهاية ووقت النهاية مطلوبان لإغلاق الرحلة."
-      }
-    };
-
-    // ==============================
-    // 🌍 Language Management
-    // ==============================
-    let currentLang = localStorage.getItem('userLang') || 'en';
-    const dirMap = { en: 'ltr', ar: 'rtl' };
-    const localeMap = { en: 'en-US', ar: 'ar-SA' };
-
-    function setLanguage(lang) {
-      currentLang = lang;
-      localStorage.setItem('userLang', lang);
-      document.documentElement.lang = lang;
-      document.documentElement.dir = dirMap[lang];
-      applyTranslations();
+<script>
+  // ==============================
+  // 🔧 GLOBAL VARIABLES
+  // ==============================
+  let supabase = null; // Initialize as null first
+  let vehicleId = null;
+  let entries = [];
+  let realtimeSubscription = null;
+  let isConnected = true;
+  // ==============================
+  // 🔑 DRIVER CONFIGURATION
+  // ==============================
+  const DRIVERS = {
+    1234: { name: "Mohammad Akbar Mohammad Wasi", vehicleNo: "43572" },
+    5678: { name: "Muhammad Asnaf Muhammad Siddique", vehicleNo: "43571" },
+    91011: { name: "Gurlal Singh Desa Singh", vehicleNo: "68034" },
+    1213: { name: "Muhammad Ashfaq Hameed Ahmed", vehicleNo: "68054" },
+    1415: { name: "RAJASEAKARAN", vehicleNo: "68046" },
+    1617: { name: "Atif Ullah Tahir Shah", vehicleNo: "68047" },
+    1819: { name: "KUMAR MuTHASAMY", vehicleNo: "68042" },
+    2021: { name: "Mohammed Safullah", vehicleNo: "68045" }
+  };
+  // ==============================
+  // 🔤 TRANSLATIONS
+  // ==============================
+  const translations = {
+    en: {
+      appTitle: "Vehicle Usage Tracker",
+      lblSelectMonth: "View Month:",
+      startTripBtn: "Start Trip",
+      endTripBtn: "End Trip",
+      langToggle: "العربية / English",
+      thSN: "SN",
+      thLocation: "LOCATION",
+      thDate: "DATE",
+      thStartKm: "START (KM)",
+      thStartTime: "START TIME",
+      thEndKm: "END (KM)",
+      thUsage: "USAGE (KM)",
+      thEndTime: "END TIME",
+      thDuration: "DURATION",
+      thDutyType: "DUTY TYPE",
+      thRemarks: "REMARKS",
+      lblTotalTrips: "TOTAL TRIPS",
+      lblTotalKm: "TOTAL KM",
+      lblTotalDuration: "TOTAL DURATION",
+      lblTotalOvertime: "TOTAL OVERTIME",
+      modalTitle: "Add New Entry",
+      lblDate: "Date:",
+      lblLocation: "Location:",
+      lblStartKm: "Start (KM):",
+      lblStartTime: "Start Time:",
+      lblEndKm: "End (KM):",
+      lblEndTime: "End Time:",
+      lblRemarks: "Remarks:",
+      btnSave: "Save",
+      btnCancel: "Cancel",
+      statusSuccess: "✓ Successfully saved",
+      statusLoadError: "⚠ Failed to load records",
+      statusDbError: "⚠ Database connection error",
+      alertLessKm: "❌ End KM must be greater than Start KM!",
+      alertFutureDate: "❌ Cannot enter a future date!",
+      alertSaveFail: "❌ Save failed. Check connection and try again.",
+      alertCooldown: "Please wait {SECONDS} more second{PLURAL} before starting a new action.",
+      noDataCurrent: "No data for this month.",
+      selectMonth: "Select Month...",
+      modalTitleClose: "Close Previous Trip",
+      locationPlaceholder: "Start typing or select...",
+      alertEndRequired: "End KM and End Time are required to close the trip.",
+      alertNonInteger: "KM values must be whole numbers (integers).",
+      saving: "Saving...",
+      online: "● Online",
+      offline: "● Offline – changes saved locally",
+      alertEndTimeTooLate: "❌ Trip started during duty hours. End time must be at or before 3:00 PM.\nTo log overtime, end this trip by 3:00 PM and start a new trip after 3:00 PM.",
+      alertEndTimeBeforeStart: "❌ End time must be after start time."
+    },
+    ar: {
+      appTitle: "متابعة استخدام سيارات المشروع",
+      lblSelectMonth: "عرض الشهر:",
+      startTripBtn: "بدء الرحلة",
+      endTripBtn: "إنهاء الرحلة",
+      langToggle: "English / العربية",
+      thSN: "مسلسل",
+      thLocation: "الموقع",
+      thDate: "التاريخ",
+      thStartKm: "بداية (كم)",
+      thStartTime: "وقت البدء",
+      thEndKm: "نهاية (كم)",
+      thUsage: "الاستخدام (كم)",
+      thEndTime: "وقت النهاية",
+      thDuration: "المدة",
+      thDutyType: "نوع الرحلة",
+      thRemarks: "ملاحظات",
+      lblTotalTrips: "إجمالي الرحلات",
+      lblTotalKm: "إجمالي الكيلومترات",
+      lblTotalDuration: "إجمالي المدة",
+      lblTotalOvertime: "إجمالي العمل الإضافي",
+      modalTitle: "إدخال جديد",
+      lblDate: "التاريخ:",
+      lblLocation: "الموقع:",
+      lblStartKm: "قراءة بداية الخدمة (كم):",
+      lblStartTime: "وقت البدء:",
+      lblEndKm: "قراءة نهاية الخدمة (كم):",
+      lblEndTime: "وقت النهاية:",
+      lblRemarks: "ملاحظات:",
+      btnSave: "حفظ",
+      btnCancel: "إلغاء",
+      statusSuccess: "✓ تم الحفظ بنجاح",
+      statusLoadError: "⚠ فشل تحميل السجلات",
+      statusDbError: "⚠ خطأ في الاتصال بقاعدة البيانات",
+      alertLessKm: "❌ يجب أن تكون قراءة النهاية أكبر من القراءة الابتدائية!",
+      alertFutureDate: "❌ لا يمكن إدخال تاريخ مستقبلي!",
+      alertSaveFail: "❌ فشل الحفظ. تحقق من الاتصال وحاول لاحقًا.",
+      alertCooldown: "يرجى الانتظار {SECONDS} ثانية{PLURAL} إضافية قبل تنفيذ أي إجراء.",
+      noDataCurrent: "لا توجد بيانات لهذا الشهر.",
+      selectMonth: "اختر شهرًا...",
+      modalTitleClose: "إغلاق الرحلة السابقة",
+      locationPlaceholder: "ابدأ الكتابة أو اختر...",
+      alertEndRequired: "قراءة النهاية ووقت النهاية مطلوبان لإغلاق الرحلة.",
+      alertNonInteger: "يجب أن تكون قيم الكيلومترات أرقامًا صحيحة (بدون فواصل عشرية).",
+      saving: "جارٍ الحفظ...",
+      online: "● متصل",
+      offline: "● غير متصل – يتم حفظ التغييرات محليًا",
+      alertEndTimeTooLate: "❌ الرحلة بدأت خلال ساعات الدوام. يجب أن يكون وقت النهاية قبل أو عند 3:00 عصرًا.\nلتسجيل العمل الإضافي، أنهِ هذه الرحلة عند 3:00 عصرًا وابدأ رحلة جديدة بعدها.",
+      alertEndTimeBeforeStart: "❌ يجب أن يكون وقت النهاية بعد وقت البدء."
     }
+  };
+  // ==============================
+  // 🌍 LANGUAGE SETUP
+  // ==============================
+  let currentLang = localStorage.getItem('userLang') || 'en';
+  const dirMap = { en: 'ltr', ar: 'rtl' };
+  const localeMap = { en: 'en-US', ar: 'ar-SA' };
+  function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('userLang', lang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = dirMap[lang];
+    applyTranslations();
+  }
+  function applyTranslations() {
+    const t = translations[currentLang];
+    document.getElementById('appTitle').textContent = t.appTitle;
+    document.getElementById('lblSelectMonth').textContent = t.lblSelectMonth;
+    document.getElementById('langToggle').textContent = t.langToggle;
+    document.getElementById('thSN').textContent = t.thSN;
+    document.getElementById('thLocation').textContent = t.thLocation;
+    document.getElementById('thDate').textContent = t.thDate;
+    document.getElementById('thStartKm').textContent = t.thStartKm;
+    document.getElementById('thStartTime').textContent = t.thStartTime;
+    document.getElementById('thEndKm').textContent = t.thEndKm;
+    document.getElementById('thUsage').textContent = t.thUsage;
+    document.getElementById('thEndTime').textContent = t.thEndTime;
+    document.getElementById('thDuration').textContent = t.thDuration;
+    document.getElementById('thDutyType').textContent = t.thDutyType;
+    document.getElementById('thRemarks').textContent = t.thRemarks;
+    document.getElementById('lblTotalTrips').textContent = t.lblTotalTrips;
+    document.getElementById('lblTotalKm').textContent = t.lblTotalKm;
+    document.getElementById('lblTotalDuration').textContent = t.lblTotalDuration;
+    document.getElementById('lblTotalOvertime').textContent = t.lblTotalOvertime;
+    document.getElementById('modalTitle').textContent = t.modalTitle;
+    document.getElementById('lblDate').textContent = t.lblDate;
+    document.getElementById('lblLocation').textContent = t.lblLocation;
+    document.getElementById('lblStartKm').textContent = t.lblStartKm;
+    document.getElementById('lblStartTime').textContent = t.lblStartTime;
+    document.getElementById('lblEndKm').textContent = t.lblEndKm;
+    document.getElementById('lblEndTime').textContent = t.lblEndTime;
+    document.getElementById('lblRemarks').textContent = t.lblRemarks;
+    document.getElementById('btnSave').textContent = t.btnSave;
+    document.getElementById('cancelBtn').textContent = t.btnCancel;
+    document.getElementById('locationInput').placeholder = t.locationPlaceholder;
+    document.getElementById('monthSelect').children[0].textContent = t.selectMonth;
+    updateTripButtons();
+    updateConnectionStatus(navigator.onLine);
+  }
+  // ==============================
+  // 🔌 SUPABASE SETUP (Now inside initSupabase)
+  // ==============================
+  const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+  function initSupabase() {
+    // Check if Supabase library loaded properly
+    if (typeof supabase === 'undefined' || !window.supabase) {
+      console.error("Supabase library not loaded");
+      return;
+    }
+    // Use the global supabase object to create client
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  // ==============================
+  // 📅 GLOBAL STATE
+  // ==============================
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' +
+    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+    String(today.getDate()).padStart(2, '0');
+  const PROJECT_NUMBER = "3478M";
+  const INITIAL_LOCATIONS = [
+    "Seh Albanah", "Fujirah", "Thoban", "Manama", "Manama Training",
+    "Al-Hail", "Fujairah airport", "Dubai", "Abu Dhabi", "Azan", "Dubai Airport"
+  ];
+  const urlParams = new URLSearchParams(window.location.search);
+  const driverId = parseInt(urlParams.get('driver')) || 4;
+  if (!DRIVERS[driverId]) {
+    window.location.search = '?driver=4';
+  }
+  const driverConfig = DRIVERS[driverId];
+  // ==============================
+  // ✅ HELPER FUNCTIONS
+  // ==============================
+  function isValidValue(val) {
+    return val != null && val !== '' && val !== undefined;
+  }
+const WORK_START_HOUR = 6;   // 06:00 AM
+const WORK_END_HOUR = 15;    // 03:00 PM
+  function isOpenTrip(entry) {
+    const hasStart = isValidValue(entry.start_km) && isValidValue(entry.start_time);
+    const hasEnd = isValidValue(entry.end_km) && isValidValue(entry.end_time);
+    return hasStart && !hasEnd;
+  }
+  function getCurrentOpenTrip() {
+    return entries.find(isOpenTrip) || null;
+  }
+  function getEntryTimestamp(entry) {
+    const timePart = (isValidValue(entry.end_km) && isValidValue(entry.end_time))
+      ? entry.end_time
+      : entry.start_time;
+    return new Date(entry.entry_date + 'T' + timePart);
+  }
+  function getLastClosedTrip() {
+    const closed = entries.filter(e => isValidValue(e.end_km) && isValidValue(e.end_time));
+    if (closed.length === 0) return null;
+    return closed.reduce((a, b) => getEntryTimestamp(a) > getEntryTimestamp(b) ? a : b);
+  }
+  function updateTripButtons() {
+    const t = translations[currentLang];
+    const hasOpen = entries.some(isOpenTrip);
+    const btn = document.getElementById('addEntryBtn');
+    const saveBtn = document.getElementById('btnSave');
+    if (hasOpen) {
+      btn.textContent = t.endTripBtn;
+      if (saveBtn) saveBtn.textContent = t.endTripBtn;
+    } else {
+      btn.textContent = t.startTripBtn;
+      if (saveBtn) saveBtn.textContent = t.startTripBtn;
+    }
+  }
+  function closeEntryModal() {
+    document.getElementById('entryModal').style.display = 'none';
+    document.getElementById('status').textContent = '';
+  }
+  function updateLocationDatalist() {
+    const datalist = document.getElementById('locationList');
+    if (!datalist) return;
+    const entryLocs = [...new Set(entries.map(e => e.location).filter(isValidValue))];
+    const allLocs = [...new Set([...INITIAL_LOCATIONS, ...entryLocs])];
+    datalist.innerHTML = '';
+    allLocs.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc;
+      datalist.appendChild(opt);
+    });
+  }
+  function updateConnectionStatus(online = true) {
+    const statusEl = document.getElementById('connectionStatus');
+    const t = translations[currentLang];
+    isConnected = online;
+    statusEl.textContent = online ? t.online : t.offline;
+    statusEl.style.color = online ? '#27ae60' : '#e74c3c';
+  }
+  // ==============================
+  // 💾 OFFLINE SUPPORT
+  // ==============================
+  const OFFLINE_KEY = `offline_entries_${driverConfig.vehicleNo}`;
+  function saveOffline(entry) {
+    let offline = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
+    offline.push(entry);
+    localStorage.setItem(OFFLINE_KEY, JSON.stringify(offline));
+  }
+  async function processOfflineQueue() {
+    if (!vehicleId || !isConnected || !supabase) return;
+    const offline = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
+    if (offline.length === 0) return;
+    for (let entry of offline) {
+      try {
+        if (entry.type === 'start') {
+          const { error } = await supabase
+            .from('meter_entries')
+            .insert([{
+              vehicle_id: vehicleId,
+              entry_date: entry.date,
+              location: entry.location || null,
+              start_km: entry.startKm,
+              start_time: entry.startTime,
+              remarks: entry.remarks || null
+            }]);
+          if (error) throw error;
+        } else if (entry.type === 'end') {
+          const remarks = document.getElementById('remarksInput').value.trim();
 
-    function applyTranslations() {
-      const t = translations[currentLang];
-      document.getElementById('appTitle').textContent = t.appTitle;
-      document.getElementById('lblSelectMonth').textContent = t.lblSelectMonth;
-      
-      updateTripButtons();
-      
-      document.getElementById('langToggle').textContent = t.langToggle;
-      document.getElementById('thSN').textContent = t.thSN;
-      document.getElementById('thLocation').textContent = t.thLocation;
-      document.getElementById('thDate').textContent = t.thDate;
-      document.getElementById('thStartKm').textContent = t.thStartKm;
-      document.getElementById('thStartTime').textContent = t.thStartTime;
-      document.getElementById('thEndKm').textContent = t.thEndKm;
-      document.getElementById('thUsage').textContent = t.thUsage;
-      document.getElementById('thEndTime').textContent = t.thEndTime;
-      document.getElementById('thRemarks').textContent = t.thRemarks;
-      document.getElementById('modalTitle').textContent = t.modalTitle;
-      document.getElementById('lblDate').textContent = t.lblDate;
-      document.getElementById('lblLocation').textContent = t.lblLocation;
-      document.getElementById('lblStartKm').textContent = t.lblStartKm;
-      document.getElementById('lblStartTime').textContent = t.lblStartTime;
-      document.getElementById('lblEndKm').textContent = t.lblEndKm;
-      document.getElementById('lblEndTime').textContent = t.lblEndTime;
-      document.getElementById('lblRemarks').textContent = t.lblRemarks;
-      document.getElementById('cancelBtn').textContent = t.btnCancel;
-      document.getElementById('locationInput').placeholder = t.locationPlaceholder;
-
-      document.getElementById('monthSelect').children[0].textContent = t.selectMonth;
-      document.getElementById('modalTitleView').textContent = t.modalTitleView;
-
-      const monthSelect = document.getElementById('monthSelect');
-      Array.from(monthSelect.options).forEach(opt => {
-        if (opt.value !== '') {
-          opt.textContent = new Date(opt.value + '-01').toLocaleDateString(localeMap[currentLang], { month: 'long', year: 'numeric' });
+const { error } = await supabase
+  .from('meter_entries')
+  .update({
+    end_km: endKmNum,
+    end_time: endTime,
+    location: location || null,
+    remarks: remarks || null  // ✅ Save end-trip remarks
+  })
+  .eq('id', openTrip.id);
+          if (error) throw error;
+        }
+      } catch (err) {
+        console.warn('Failed to sync offline entry, keeping in queue:', entry);
+        return;
+      }
+    }
+    localStorage.removeItem(OFFLINE_KEY);
+    await loadEntries();
+  }
+  // ==============================
+  // 🔁 REALTIME SYNC
+  // ==============================
+  function setupRealtime() {
+    if (realtimeSubscription) {
+      realtimeSubscription.unsubscribe();
+      realtimeSubscription = null;
+    }
+    if (!vehicleId || !supabase) return;
+    realtimeSubscription = supabase
+      .channel(`vehicle_usage_${vehicleId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'meter_entries',
+          filter: `vehicle_id=eq.${vehicleId}`
+        },
+        (payload) => {
+          clearTimeout(window.realtimeDebounce);
+          window.realtimeDebounce = setTimeout(async () => {
+            await loadEntries();
+          }, 300);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          processOfflineQueue();
         }
       });
-
-      displayCurrentMonthData();
-    }
-
-    // ==============================
-    // 🔑 Supabase Setup
-    // ==============================
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // ==============================
-    // 📅 Date & State
-    // ==============================
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    const PROJECT_NUMBER = "3478M";
-    const INITIAL_LOCATIONS = [
-      "Seh Albanah", "Fujirah", "Thoban", "Manama", "Manama Training",
-      "Al-Hail", "Fujairah airport", "Dubai", "Abu Dhabi", "Azan", "Dubai Airport"
-    ];
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const driverId = parseInt(urlParams.get('driver')) || 4;
-    
-    if (!DRIVERS[driverId]) {
-      alert('Invalid driver ID. Redirecting to default driver.');
-      window.location.search = '?driver=4';
-    }
-    
-    const driverConfig = DRIVERS[driverId];
-    let vehicleId = null;
-    let entries = [];
-
-    // ==============================
-    // ✅ Essential Functions
-    // ==============================
-    function closeEntryModal() {
-      document.getElementById('entryModal').style.display = 'none';
-    }
-
-    function updateLocationDatalist() {
-      const datalist = document.getElementById('locationList');
-      if (!datalist) return;
-
-      const entryLocations = [...new Set(entries.map(e => e.location).filter(Boolean))];
-      const allLocations = [...new Set([...INITIAL_LOCATIONS, ...entryLocations])];
-
-      datalist.innerHTML = '';
-      allLocations.forEach(loc => {
-        const option = document.createElement('option');
-        option.value = loc;
-        datalist.appendChild(option);
-      });
-    }
-
-    // ✅ Get last entry based on latest timestamp (end_time if exists, else start_time)
-    function getLastEntry() {
-      if (entries.length === 0) return null;
-      return entries.reduce((latest, current) => {
-        const timeA = new Date(latest.entry_date + 'T' + (latest.end_time || latest.start_time));
-        const timeB = new Date(current.entry_date + 'T' + (current.end_time || current.start_time));
-        return timeB > timeA ? current : latest;
-      });
-    }
-
-    // ==============================
-    // 📥 Data Loading & Display
-    // ==============================
-    async function loadEntries() {
-      if (!vehicleId) {
-        console.warn('vehicleId is not set yet');
-        return;
+  }
+  // ==============================
+  // 🔄 RETRY HELPER
+  // ==============================
+  async function withRetry(fn, maxRetries = 3) {
+    let lastError;
+    for (let i = 0; i <= maxRetries; i++) {
+      try {
+        const result = await fn();
+        updateConnectionStatus(true);
+        return result;
+      } catch (err) {
+        lastError = err;
+        updateConnectionStatus(false);
+        if (i < maxRetries) {
+          await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+        }
       }
-      const { data, error } = await supabaseClient
-        .from('meter_entries')
-        .select('*')
-        .eq('vehicle_id', vehicleId)
-        .order('entry_date', { ascending: true })
-        .order('start_time', { ascending: true });
-
-      if (error) {
-        console.error('Load error:', error);
-        document.getElementById('status').textContent = translations[currentLang].statusLoadError;
-        return;
-      }
-
-      entries = data || [];
+    }
+    throw lastError;
+  }
+  // ==============================
+  // 🚀 DATA LOADING
+  // ==============================
+  async function loadEntries() {
+    if (!vehicleId || !supabase) return;
+    try {
+      const result = await withRetry(async () => {
+        const { data, error } = await supabase
+          .from('meter_entries')
+          .select('id, entry_date, location, start_km, start_time, end_km, end_time, remarks')
+          .eq('vehicle_id', vehicleId)
+          .order('entry_date', { ascending: true })
+          .order('start_time', { ascending: true });
+        if (error) throw error;
+        return data;
+      });
+      entries = result || [];
       populateMonths();
       displayCurrentMonthData();
       updateLocationDatalist();
       updateTripButtons();
+    } catch (err) {
+      console.error('DB Load Error:', err);
+      document.getElementById('status').textContent = translations[currentLang].statusLoadError;
     }
-
-    function displayCurrentMonthData() {
-      const container = document.getElementById('logBody');
-      const t = translations[currentLang];
-
-      const selectedMonth = document.getElementById('monthSelect').value;
-      let filteredEntries = entries;
-
-      if (selectedMonth) {
-        filteredEntries = entries.filter(e => e.entry_date.startsWith(selectedMonth));
+  }
+  // ==============================
+  // 🕐 DURATION & DUTY TYPE CALCULATIONS
+  // ==============================
+  function calculateDuration(startTime, endTime) {
+    if (!startTime || !endTime) return '–';
+    const start = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+    if (end < start) {
+      // Handle overnight trips
+      end.setDate(end.getDate() + 1);
+    }
+    const diffMs = end - start;
+    const diffMins = Math.floor(diffMs / 60000);
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    return `${hours}h ${mins}m`;
+  }
+  function getDuty00Type(startTime) {
+  if (!startTime) return '–';
+  const hour = parseInt(startTime.split(':')[0], 10);
+  return hour >= WORK_END_HOUR ? 'Overtime' : 'Duty';
+}
+  // ==============================
+  // 📊 SUMMARY CALCULATIONS
+  // ==============================
+  function calculateSummaries() {
+    const selectedMonth = document.getElementById('monthSelect').value;
+    const filtered = selectedMonth
+      ? entries.filter(e => e.entry_date.startsWith(selectedMonth))
+      : entries;
+    // Filter to only completed trips
+    const completedTrips = filtered.filter(e => isValidValue(e.end_km) && isValidValue(e.end_time));
+    // Calculate total trips
+    const totalTrips = completedTrips.length;
+    // Calculate total km
+    const totalKm = completedTrips.reduce((sum, e) => {
+      if (isValidValue(e.start_km) && isValidValue(e.end_km)) {
+        return sum + (parseInt(e.end_km) - parseInt(e.start_km));
       }
-
-      if (filteredEntries.length === 0) {
-        container.innerHTML = `<tr><td colspan="9" style="text-align:center;">${t.noDataCurrent}</td></tr>`;
-        return;
-      }
-
-      filteredEntries.sort((a, b) => {
-        if (a.entry_date !== b.entry_date) {
-          return new Date(a.entry_date) - new Date(b.entry_date);
+      return sum;
+    }, 0);
+    // Calculate total duration and overtime
+    let totalDurationMins = 0;
+    let totalOvertimeMins = 0;
+    completedTrips.forEach(e => {
+      if (isValidValue(e.start_time) && isValidValue(e.end_time)) {
+        const start = new Date(`2000-01-01T${e.start_time}`);
+        const end = new Date(`2000-01-01T${e.end_time}`);
+        if (end < start) {
+          end.setDate(end.getDate() + 1);
         }
-        return a.start_time.localeCompare(b.start_time);
-      });
-
-      let html = '';
-      filteredEntries.forEach((entry, index) => {
-        const dateStr = new Date(entry.entry_date).toLocaleDateString(localeMap[currentLang]);
-        const sn = index + 1;
-        const usage = (entry.end_km !== null && entry.start_km !== null)
-          ? (parseFloat(entry.end_km) - parseFloat(entry.start_km)).toFixed(2)
-          : '–';
-
-        html += `
-          <tr>
-            <td>${sn}</td>
-            <td>${entry.location || ''}</td>
-            <td>${dateStr}</td>
-            <td>${entry.start_time}</td>
-            <td>${entry.start_km} <small>(KM)</small></td>
-            <td>${entry.end_km || ''} ${entry.end_km ? '<small>(KM)</small>' : ''}</td>
-            <td>${entry.end_time || ''}</td>
-            <td>${usage}</td>
-            <td>${entry.remarks || ''}</td>
-          </tr>
-        `;
-      });
-
-      container.innerHTML = html;
-    }
-
-    function populateMonths() {
-      const select = document.getElementById('monthSelect');
-      select.innerHTML = `<option value="">${translations[currentLang].selectMonth}</option>`;
-      const monthsSet = new Set();
-      entries.forEach(e => {
-        const monthYear = e.entry_date.substring(0, 7);
-        monthsSet.add(monthYear);
-      });
-      Array.from(monthsSet).sort().reverse().forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = new Date(m + '-01').toLocaleDateString(localeMap[currentLang], { month: 'long', year: 'numeric' });
-        select.appendChild(opt);
-      });
-    }
-
-    // ==============================
-    // 🎯 Button State Management
-    // ==============================
-    function updateTripButtons() {
-      const lastEntry = getLastEntry();
-      const hasOpenTrip = lastEntry && 
-        lastEntry.start_km != null && 
-        lastEntry.start_time && 
-        (lastEntry.end_km == null || lastEntry.end_time == null);
-      
-      const t = translations[currentLang];
-      const addBtn = document.getElementById('addEntryBtn');
-      const saveBtn = document.getElementById('btnSave');
-      
-      if (hasOpenTrip) {
-        addBtn.textContent = t.endTripBtn;
-        saveBtn.textContent = t.endTripBtn;
-      } else {
-        addBtn.textContent = t.startTripBtn;
-        saveBtn.textContent = t.startTripBtn;
-      }
-    }
-
-    // ✅ CHECK 5-SECOND COOLDOWN BEFORE OPENING MODAL
-    function tryOpenEntryModal() {
-      const lastEntry = getLastEntry();
-      const t = translations[currentLang];
-
-      if (lastEntry) {
-        // Use the latest timestamp from the last trip
-        const lastTimeStr = lastEntry.entry_date + 'T' + (lastEntry.end_time || lastEntry.start_time);
-        const lastTripTime = new Date(lastTimeStr).getTime();
-        const now = Date.now();
-        const diffSeconds = (now - lastTripTime) / 1000;
-
-        if (diffSeconds < 5) {
-          const remaining = Math.ceil(5 - diffSeconds);
-          let message;
-          if (currentLang === 'en') {
-            message = `Please wait ${remaining} more second${remaining === 1 ? '' : 's'} before starting a new action.`;
-          } else {
-            message = `يرجى الانتظار ${remaining} ثانية${remaining === 1 ? '' : 'ات'} إضافية قبل تنفيذ أي إجراء.`;
-          }
-          alert(message);
-          return;
+        const diffMs = end - start;
+        const diffMins = Math.floor(diffMs / 60000);
+        totalDurationMins += diffMins;
+        // Check if trip started after 3 PM (overtime)
+        const startHour = parseInt(e.start_time.split(':')[0]);
+        if (startHour >= 15) {
+          totalOvertimeMins += diffMins;
         }
       }
-
-      // ✅ OK to open
-      openEntryModal();
-    }
-
-    function openEntryModal() {
-      const t = translations[currentLang]; // ✅ Moved this line to the top!
-      
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const currentTime = `${hours}:${minutes}`;
-
-      document.getElementById('entryForm').reset();
-      document.getElementById('dateInput').value = todayStr;
-
-      const lastEntry = getLastEntry();
-      const startGroup = document.getElementById('startGroup');
-      const endGroup = document.getElementById('endGroup');
-      const startKmInput = document.getElementById('startKmInput');
-      const startTimeInput = document.getElementById('startTimeInput');
-      const endKmInput = document.getElementById('endKmInput');
-      const endTimeInput = document.getElementById('endTimeInput');
-      const locationInput = document.getElementById('locationInput');
-      const modalTitle = document.getElementById('modalTitle');
-      const saveBtn = document.getElementById('btnSave');
-
-      let mode = 'newTrip';
-
-      if (lastEntry) {
-        const hasStart = lastEntry.start_km != null && lastEntry.start_time;
-        const hasEnd = lastEntry.end_km != null && lastEntry.end_time;
-        if (hasStart && !hasEnd) mode = 'closeTrip';
-      }
-
-      if (mode === 'closeTrip') {
-        modalTitle.textContent = t.modalTitleClose;
-        startGroup.style.display = 'none';
-        endGroup.style.display = 'block';
-        saveBtn.textContent = t.endTripBtn;
-        
-        endKmInput.setAttribute('required', 'required');
-        endTimeInput.setAttribute('required', 'required');
-        startKmInput.removeAttribute('required');
-        startTimeInput.removeAttribute('required');
-        
-        if (lastEntry && lastEntry.location) {
-          locationInput.value = lastEntry.location;
-        }
-        endTimeInput.value = currentTime;
-        
-      } else {
-        modalTitle.textContent = t.modalTitle;
-        startGroup.style.display = 'block';
-        endGroup.style.display = 'none';
-        saveBtn.textContent = t.startTripBtn;
-        
-        startKmInput.setAttribute('required', 'required');
-        startTimeInput.setAttribute('required', 'required');
-        endKmInput.removeAttribute('required');
-        endTimeInput.removeAttribute('required');
-
-        startTimeInput.value = currentTime;
-
-        const closedTrips = entries.filter(e => e.start_km != null && e.end_km != null);
-        if (closedTrips.length === 0) {
-          startKmInput.value = 0;
-          locationInput.value = '';
-        } else {
-          const lastClosedTrip = closedTrips.reduce((prev, current) => {
-            const prevTime = new Date(prev.entry_date + 'T' + prev.start_time);
-            const currTime = new Date(current.entry_date + 'T' + current.start_time);
-            return (currTime > prevTime) ? current : prev;
-          });
-          startKmInput.value = lastClosedTrip.end_km;
-          locationInput.value = lastClosedTrip.location || '';
-        }
-      }
-
-      document.getElementById('entryModal').style.display = 'block';
-    }
-
-    // ✅ Simplified saveEntry (no cooldown needed here — already enforced at button level)
-    async function saveEntry(event) {
-      event.preventDefault();
-      const t = translations[currentLang];
-
-      if (!vehicleId || typeof vehicleId !== 'string' || vehicleId.length < 10) {
-        alert('Vehicle not properly initialized. Please refresh the page.');
-        return;
-      }
-
-      const startGroupVisible = document.getElementById('startGroup').style.display !== 'none';
-      const endGroupVisible = document.getElementById('endGroup').style.display === 'block';
-
-      try {
-        if (startGroupVisible && !endGroupVisible) {
-          const date = document.getElementById('dateInput').value;
-          const location = document.getElementById('locationInput').value.trim();
-          const startKm = parseFloat(document.getElementById('startKmInput').value);
-          const startTime = document.getElementById('startTimeInput').value;
-          const remarks = document.getElementById('remarksInput').value.trim();
-
-          if (new Date(date) > new Date()) {
-            alert(t.alertFutureDate);
-            return;
-          }
-
-          const closedTrips = entries.filter(e => e.start_km != null && e.end_km != null);
-          if (closedTrips.length > 0) {
-            const lastClosedTrip = closedTrips.reduce((prev, current) => {
-              const prevTime = new Date(prev.entry_date + 'T' + prev.start_time);
-              const currTime = new Date(current.entry_date + 'T' + current.start_time);
-              return (currTime > prevTime) ? current : prev;
-            });
-            if (startKm < lastClosedTrip.end_km) {
-              alert(t.alertLessKm);
-              return;
-            }
-          }
-
-          const { error } = await supabaseClient
-            .from('meter_entries')
-            .insert([{
-              vehicle_id: vehicleId,
-              entry_date: date,
-              location: location || null,
-              start_km: startKm,
-              start_time: startTime,
-              end_km: null,
-              end_time: null,
-              remarks: remarks || null
-            }]);
-
-          if (error) throw error;
-
-        } else if (!startGroupVisible && endGroupVisible) {
-          const endKmInput = document.getElementById('endKmInput').value.trim();
-          const endTimeInput = document.getElementById('endTimeInput').value.trim();
-          const location = document.getElementById('locationInput').value.trim();
-          const lastEntry = getLastEntry();
-
-          if (!lastEntry || lastEntry.end_km != null) {
-            alert("No open trip to close!");
-            return;
-          }
-
-          if (!endKmInput || !endTimeInput) {
-            alert(t.alertEndRequired);
-            return;
-          }
-
-          const endKm = parseFloat(endKmInput);
-          const endTime = endTimeInput;
-
-          if (endKm <= lastEntry.start_km) {
-            alert(t.alertLessKm);
-            return;
-          }
-
-          const remarks = document.getElementById('remarksInput').value.trim();
-
-const { error } = await supabaseClient
-  .from('meter_entries')
-  .update({ 
-    end_km: endKm, 
-    end_time: endTime,
-    location: location || null,
-    remarks: remarks || null  // ✅ Include remarks on trip closure
-  })
-  .eq('id', lastEntry.id);
-
-          if (error) throw error;
-        } else {
-          alert("Invalid form state.");
-          return;
-        }
-
-        document.getElementById('status').textContent = t.statusSuccess;
-        closeEntryModal();
-        await loadEntries(); // Refresh data
-
-        setTimeout(() => {
-          document.getElementById('status').textContent = '';
-        }, 3000);
-
-      } catch (error) {
-        console.error('Save error:', error);
-        alert(t.alertSaveFail);
-      }
-    }
-
-    // ==============================
-    // 🔄 Initialize App
-    // ==============================
-    async function initializeVehicle() {
-      try {
-        document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
-        document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
-        
-        let { data, error } = await supabaseClient
-          .from('vehicles')
-          .select('id')
-          .eq('vehicle_number', driverConfig.vehicleNo)
-          .single();
-
-        if (error?.code === 'PGRST116') {
-          const { data: newVehicle, error: createError } = await supabaseClient
-            .from('vehicles')
-            .insert({ 
-              project_number: PROJECT_NUMBER, 
-              vehicle_number: driverConfig.vehicleNo, 
-              driver_name: driverConfig.name 
-            })
-            .select('id')
-            .single();
-          
-          if (createError) throw createError;
-          vehicleId = newVehicle.id;
-        } else if (error) {
-          throw error;
-        } else {
-          vehicleId = data.id;
-        }
-
-        console.log(`Vehicle ID set to: ${vehicleId} for driver ${driverId}`);
-        await loadEntries();
-      } catch (err) {
-        console.error('Vehicle init error:', err);
-        document.getElementById('status').textContent = translations[currentLang].statusDbError;
-      }
-    }
-
-    // ==============================
-    // 🎯 Event Listeners
-    // ==============================
-    document.addEventListener('DOMContentLoaded', () => {
-      setLanguage(currentLang);
-      initializeVehicle();
-      
-      document.getElementById('langToggle').addEventListener('click', () => {
-        setLanguage(currentLang === 'en' ? 'ar' : 'en');
-      });
-      
-      // ✅ Intercept main button click to enforce 5-second rule
-      document.getElementById('addEntryBtn').addEventListener('click', tryOpenEntryModal);
-      
-      document.getElementById('entryForm').addEventListener('submit', saveEntry);
-      document.getElementById('cancelBtn').addEventListener('click', closeEntryModal);
-      
-      document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', () => {
-          closeBtn.closest('.modal').style.display = 'none';
-        });
-      });
-      
-      document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            modal.style.display = 'none';
-          }
-        });
-      });
-      
-      document.getElementById('monthSelect').addEventListener('change', displayCurrentMonthData);
     });
-  </script>
+    // Format total duration
+    const totalDurationHours = Math.floor(totalDurationMins / 60);
+    const totalDurationRemainingMins = totalDurationMins % 60;
+    const totalDurationStr = `${totalDurationHours}h ${totalDurationRemainingMins}m`;
+    // Format total overtime
+    const totalOvertimeHours = Math.floor(totalOvertimeMins / 60);
+    const totalOvertimeRemainingMins = totalOvertimeMins % 60;
+    const totalOvertimeStr = `${totalOvertimeHours}h ${totalOvertimeRemainingMins}m`;
+    // Update summary elements
+    document.getElementById('totalTrips').textContent = totalTrips;
+    document.getElementById('totalKm').textContent = totalKm;
+    document.getElementById('totalDuration').textContent = totalDurationStr;
+    document.getElementById('totalOvertime').textContent = totalOvertimeStr;
+  }
+  function displayCurrentMonthData() {
+    const container = document.getElementById('logBody');
+    const t = translations[currentLang];
+    const selectedMonth = document.getElementById('monthSelect').value;
+    const filtered = selectedMonth
+      ? entries.filter(e => e.entry_date.startsWith(selectedMonth))
+      : entries;
+    if (filtered.length === 0) {
+      container.innerHTML = `<tr><td colspan="11" style="text-align:center;">${t.noDataCurrent}</td></tr>`;
+      calculateSummaries(); // Update summaries even when no data
+      return;
+    }
+    filtered.sort((a, b) => getEntryTimestamp(a) - getEntryTimestamp(b));
+    let html = '';
+    const openTripId = getCurrentOpenTrip()?.id;
+    filtered.forEach((e, i) => {
+      const dateStr = new Date(e.entry_date).toLocaleDateString(localeMap[currentLang]);
+      const usage = isValidValue(e.end_km) && isValidValue(e.start_km)
+        ? (parseInt(e.end_km) - parseInt(e.start_km)).toString()
+        : '–';
+      const duration = isValidValue(e.end_time) && isValidValue(e.start_time)
+        ? calculateDuration(e.start_time, e.end_time)
+        : '–';
+      const dutyType = isValidValue(e.start_time) ? getDuty00Type(e.start_time) : '–';
+      const isRowOpen = e.id === openTripId;
+      html += `
+        <tr class="${isRowOpen ? 'open-trip' : ''}">
+          <td>${i + 1}</td>
+          <td>${e.location || ''}</td>
+          <td>${dateStr}</td>
+          <td>${e.start_time}</td>
+          <td>${e.start_km || ''} ${e.start_km ? '<small>(KM)</small>' : ''}</td>
+          <td>${e.end_km || ''} ${e.end_km ? '<small>(KM)</small>' : ''}</td>
+          <td>${e.end_time || ''}</td>
+          <td>${usage}</td>
+          <td>${duration}</td>
+          <td>${dutyType}</td>
+          <td>${e.remarks || ''}</td>
+        </tr>
+      `;
+    });
+    container.innerHTML = html;
+    // Calculate and display summaries
+    calculateSummaries();
+  }
+  function populateMonths() {
+    const select = document.getElementById('monthSelect');
+    select.innerHTML = `<option value="">${translations[currentLang].selectMonth}</option>`;
+    const months = [...new Set(entries.map(e => e.entry_date.substring(0, 7)))].sort().reverse();
+    months.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = new Date(m + '-01').toLocaleDateString(localeMap[currentLang], { month: 'long', year: 'numeric' });
+      select.appendChild(opt);
+    });
+  }
+  // ==============================
+  // 🎯 MODAL & SAVE LOGIC
+  // ==============================
+  function openEntryModal() {
+    const now = new Date();
+    document.getElementById('entryForm').reset();
+    document.getElementById('dateInput').value = todayStr;
+    const t = translations[currentLang];
+    const startGroup = document.getElementById('startGroup');
+    const endGroup = document.getElementById('endGroup');
+    const modalTitle = document.getElementById('modalTitle');
+    const saveBtn = document.getElementById('btnSave');
+    const openTrip = getCurrentOpenTrip();
+    if (openTrip) {
+      modalTitle.textContent = t.modalTitleClose;
+      startGroup.style.display = 'none';
+      endGroup.style.display = 'block';
+      saveBtn.textContent = t.endTripBtn;
+      document.getElementById('locationInput').value = openTrip.location || '';
+      // ✅ Default end time to 3:00 PM
+      document.getElementById('endTimeInput').value = "15:00";
+      // Remove required attribute from start fields when ending a trip
+      document.getElementById('startKmInput').removeAttribute('required');
+      document.getElementById('startTimeInput').removeAttribute('required');
+      // Add required attribute to end fields when ending a trip
+      document.getElementById('endKmInput').setAttribute('required', '');
+      document.getElementById('endTimeInput').setAttribute('required', '');
+    } else {
+      modalTitle.textContent = t.modalTitle;
+      startGroup.style.display = 'block';
+      endGroup.style.display = 'none';
+      saveBtn.textContent = t.startTripBtn;
+      // ✅ Default start time to 7:00 AM
+      document.getElementById('startTimeInput').value = "07:00";
+      const lastClosed = getLastClosedTrip();
+      if (lastClosed) {
+        document.getElementById('startKmInput').value = lastClosed.end_km;
+        document.getElementById('locationInput').value = lastClosed.location || '';
+      } else {
+        document.getElementById('startKmInput').value = 0;
+      }
+      // Add required attribute to start fields when starting a trip
+      document.getElementById('startKmInput').setAttribute('required', '');
+      document.getElementById('startTimeInput').setAttribute('required', '');
+      // Remove required attribute from end fields when starting a trip
+      document.getElementById('endKmInput').removeAttribute('required');
+      document.getElementById('endTimeInput').removeAttribute('required');
+    }
+    document.getElementById('entryModal').style.display = 'block';
+  }
+  function isInteger(value) {
+    const num = parseFloat(value);
+    return !isNaN(num) && Number.isInteger(num);
+  }
+  async function saveEntry(e) {
+    e.preventDefault();
+    const t = translations[currentLang];
+    const saveBtn = document.getElementById('btnSave');
+    const wasDisabled = saveBtn.disabled;
+    saveBtn.disabled = true;
+    saveBtn.textContent = t.saving || 'Saving...';
+    if (!vehicleId || !supabase) {
+      alert('Vehicle not initialized or Supabase not ready');
+      saveBtn.disabled = wasDisabled;
+      return;
+    }
+    try {
+      const openTrip = getCurrentOpenTrip();
+     if (openTrip) {
+  // ✅ Declare inputs FIRST
+  const endKmInput = document.getElementById('endKmInput');
+  const endTimeInput = document.getElementById('endTimeInput');
+  const locationInput = document.getElementById('locationInput');
+  const endKm = endKmInput.value.trim();
+  const endTime = endTimeInput.value.trim();
+  const location = locationInput.value.trim();
+  // ✅ Now validate
+  if (!endKm || !endTime) {
+    alert(t.alertEndRequired);
+    saveBtn.disabled = wasDisabled;
+    return;
+  }
+  if (!isInteger(endKm)) {
+    alert(t.alertNonInteger);
+    saveBtn.disabled = wasDisabled;
+    return;
+  }
+  const endKmNum = parseInt(endKm, 10);
+  if (endKmNum <= parseInt(openTrip.start_km, 10)) {
+    alert(t.alertLessKm);
+    saveBtn.disabled = wasDisabled;
+    return;
+  }
+  
+  // ✅ Validate end time > start time
+  const startParts = openTrip.start_time.split(':').map(Number);
+  const endParts = endTime.split(':').map(Number);
+  const startTotalMins = startParts[0] * 60 + startParts[1];
+  const endTotalMins = endParts[0] * 60 + endParts[1];
+  if (endTotalMins <= startTotalMins) {
+    alert(t.alertEndTimeBeforeStart || "❌ End time must be after start time.");
+    saveBtn.disabled = wasDisabled;
+    return;
+  }
+
+  // ✅ Now apply your new validation: enforce end time ≤ 15:00 if started ≥ 06:00
+  const startHour = parseInt(openTrip.start_time.split(':')[0], 10);
+  const endHour = parseInt(endTime.split(':')[0], 10);
+  const endMinute = parseInt(endTime.split(':')[1], 10);
+  if (startHour >= WORK_START_HOUR && startHour < WORK_END_HOUR) {
+    if (endHour > WORK_END_HOUR || (endHour === WORK_END_HOUR && endMinute > 0)) {
+      alert(translations[currentLang].alertEndTimeTooLate ||
+            "❌ Trip started during duty hours. End time must be at or before 3:00 PM.\n" +
+            "To log overtime, end this trip by 3:00 PM and start a new trip after 3:00 PM.");
+      saveBtn.disabled = wasDisabled;
+      return;
+    }
+  }
+  // ✅ Now save
+  const { error } = await supabase
+    .from('meter_entries')
+    .update({
+      end_km: endKmNum,
+      end_time: endTime,
+      location: location || null
+    })
+    .eq('id', openTrip.id);
+  if (error) throw error;
+} else {
+        const date = document.getElementById('dateInput').value;
+        const location = document.getElementById('locationInput').value.trim();
+        let startKm = document.getElementById('startKmInput').value;
+        const startTime = document.getElementById('startTimeInput').value;
+        const remarks = document.getElementById('remarksInput').value.trim();
+        if (date > todayStr) {
+          alert(t.alertFutureDate);
+          saveBtn.disabled = wasDisabled;
+          return;
+        }
+        if (!isInteger(startKm)) {
+          alert(t.alertNonInteger);
+          saveBtn.disabled = wasDisabled;
+          return;
+        }
+        const startKmNum = parseInt(startKm, 10);
+        const lastClosed = getLastClosedTrip();
+        if (lastClosed && startKmNum < parseInt(lastClosed.end_km, 10)) {
+          alert(t.alertLessKm);
+          saveBtn.disabled = wasDisabled;
+          return;
+        }
+        if (entries.some(isOpenTrip)) {
+          alert(t.alertOpenTripExists || "You already have an open trip!");
+          saveBtn.disabled = wasDisabled;
+          return;
+        }
+        const { error } = await supabase
+          .from('meter_entries')
+          .insert([{
+            vehicle_id: vehicleId,
+            entry_date: date,
+            location: location || null,
+            start_km: startKmNum,
+            start_time: startTime,
+            remarks: remarks || null
+          }]);
+        if (error) throw error;
+      }
+      document.getElementById('status').textContent = t.statusSuccess;
+      closeEntryModal();
+      await loadEntries();
+      setTimeout(() => document.getElementById('status').textContent = '', 3000);
+    } catch (err) {
+      console.error('Save Error:', err);
+      saveOffline({
+        type: openTrip ? 'end' : 'start',
+        ...(openTrip ? { id: openTrip.id } : {}),
+        date: document.getElementById('dateInput').value,
+        location: document.getElementById('locationInput').value.trim(),
+        startKm: document.getElementById('startKmInput').value,
+        startTime: document.getElementById('startTimeInput').value,
+        endKm: document.getElementById('endKmInput').value.trim(),
+        endTime: document.getElementById('endTimeInput').value.trim(),
+        remarks: document.getElementById('remarksInput').value.trim()
+      });
+      alert(t.alertSaveFail + " Saved offline.");
+    } finally {
+      saveBtn.disabled = wasDisabled;
+      saveBtn.textContent = openTrip ? t.endTripBtn : t.startTripBtn;
+    }
+  }
+  // ==============================
+  // 🔐 VEHICLE INIT
+  // ==============================
+  async function initializeVehicle() {
+    if (!supabase) {
+      console.error("Supabase client not initialized");
+      document.getElementById('status').textContent = translations[currentLang].statusDbError;
+      return;
+    }
+    try {
+      document.getElementById('lblVehicle').textContent = `VEHICLE NO (${driverConfig.vehicleNo})`;
+      document.getElementById('lblDriver').textContent = `DRIVER NAME : ${driverConfig.name}`;
+      let { data, error } = await supabase
+        .from('vehicles')
+        .select('id')
+        .eq('vehicle_number', driverConfig.vehicleNo)
+        .single();
+      if (error?.code === 'PGRST116') {
+        const {  newV, error: insErr } = await supabase
+          .from('vehicles')
+          .insert({
+            project_number: PROJECT_NUMBER,
+            vehicle_number: driverConfig.vehicleNo,
+            driver_name: driverConfig.name
+          })
+          .select('id')
+          .single();
+        if (insErr) throw insErr;
+        vehicleId = newV.id;
+      } else if (error) {
+        throw error;
+      } else {
+        vehicleId = data.id;
+      }
+      console.log('✅ Vehicle initialized with ID:', vehicleId);
+      await loadEntries();
+      setupRealtime();
+      await processOfflineQueue();
+    } catch (err) {
+      console.error('🔥 Vehicle Init FAILED:', err);
+      document.getElementById('status').textContent = translations[currentLang].statusDbError;
+    }
+  }
+  // ==============================
+  // 🎮 EVENT LISTENERS
+  // ==============================
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize Supabase client first
+    initSupabase();
+    setLanguage(currentLang);
+    await initializeVehicle(); // Now safe to call since supabase is initialized
+    // Setup online/offline listeners
+    window.addEventListener('online', () => {
+      updateConnectionStatus(true);
+      if (vehicleId) processOfflineQueue();
+    });
+    window.addEventListener('offline', () => {
+      updateConnectionStatus(false);
+    });
+    document.getElementById('langToggle').addEventListener('click', () =>
+      setLanguage(currentLang === 'en' ? 'ar' : 'en')
+    );
+    document.getElementById('addEntryBtn').addEventListener('click', openEntryModal);
+    document.getElementById('entryForm').addEventListener('submit', saveEntry);
+    document.getElementById('cancelBtn').addEventListener('click', closeEntryModal);
+    document.querySelectorAll('.close').forEach(btn =>
+      btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none')
+    );
+    document.querySelectorAll('.modal').forEach(modal =>
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.style.display = 'none';
+      })
+    );
+    let monthDebounce;
+    document.getElementById('monthSelect').addEventListener('change', () => {
+      clearTimeout(monthDebounce);
+      monthDebounce = setTimeout(displayCurrentMonthData, 150);
+    });
+    // Enforce integer input
+    ['startKmInput', 'endKmInput'].forEach(id => {
+      const input = document.getElementById(id);
+      input.addEventListener('input', () => {
+        let value = input.value;
+        if (value === '') return;
+        if (!/^\d*$/.test(value)) {
+          input.value = value.replace(/\D/g, '');
+        }
+      });
+    });
+  });
+</script>
 </body>
 </html>
