@@ -577,17 +577,14 @@ const WORK_END_HOUR = 15;    // 03:00 PM
             }]);
           if (error) throw error;
         } else if (entry.type === 'end') {
-          const remarks = document.getElementById('remarksInput').value.trim();
-
-const { error } = await supabase
-  .from('meter_entries')
-  .update({
-    end_km: endKmNum,
-    end_time: endTime,
-    location: location || null,
-    remarks: remarks || null  // ✅ Save end-trip remarks
-  })
-  .eq('id', openTrip.id);
+          const { error } = await supabase
+            .from('meter_entries')
+            .update({
+              end_km: entry.endKm,
+              end_time: entry.endTime,
+              location: entry.location || null
+            })
+            .eq('id', entry.id);
           if (error) throw error;
         }
       } catch (err) {
@@ -834,7 +831,23 @@ const { error } = await supabase
       // Add required attribute to end fields when ending a trip
       document.getElementById('endKmInput').setAttribute('required', '');
       document.getElementById('endTimeInput').setAttribute('required', '');
-    } else {
+    }if (openTrip) {
+  modalTitle.textContent = t.modalTitleClose;
+  startGroup.style.display = 'none';
+  endGroup.style.display = 'block';
+  saveBtn.textContent = t.endTripBtn;
+  document.getElementById('locationInput').value = openTrip.location || '';
+  document.getElementById('endTimeInput').value = "15:00";
+  // ✅ Pre-fill remarks from the open (start) trip
+  document.getElementById('remarksInput').value = openTrip.remarks || '';
+
+  // Remove required from start fields
+  document.getElementById('startKmInput').removeAttribute('required');
+  document.getElementById('startTimeInput').removeAttribute('required');
+  // Add required to end fields
+  document.getElementById('endKmInput').setAttribute('required', '');
+  document.getElementById('endTimeInput').setAttribute('required', '');
+} else {
       modalTitle.textContent = t.modalTitle;
       startGroup.style.display = 'block';
       endGroup.style.display = 'none';
@@ -926,14 +939,18 @@ const { error } = await supabase
     }
   }
   // ✅ Now save
-  const { error } = await supabase
-    .from('meter_entries')
-    .update({
-      end_km: endKmNum,
-      end_time: endTime,
-      location: location || null
-    })
-    .eq('id', openTrip.id);
+ const remarks = document.getElementById('remarksInput').value.trim();
+
+const { error } = await supabase
+  .from('meter_entries')
+  .update({
+    end_km: endKmNum,
+    end_time: endTime,
+    location: location || null,
+    
+    remarks: remarks || null  // ✅ Save updated remarks
+  })
+  .eq('id', openTrip.id);
   if (error) throw error;
 } else {
         const date = document.getElementById('dateInput').value;
