@@ -501,7 +501,7 @@ background: var(--primary-dark);
 display: flex;
 align-items: center;
 gap: 8px;
-margin-right: 15px;
+margin-right: 30px;
 font-size: 14px;
 }
 .fit-to-page-container input {
@@ -635,6 +635,7 @@ margin-left: 5px;
 </style>
 </head>
 <body>
+<body>
 <div class="back-btn-container">
 <a href="index.html" class="btn-back">
 <i class="fas fa-arrow-left"></i> Back to Main Dashboard
@@ -651,8 +652,8 @@ margin-left: 5px;
 <div class="file-upload-icon">
 <i class="fas fa-file-excel"></i>
 </div>
-<div class="file-upload-text" >Choose your Excel Timesheet file</div>
-<div class="file-upload-text" >اختر ملف التايم شيت الخاص بك</div>
+<div class="file-upload-text" >Choose last Month Excel Timesheet file</div>
+<div class="file-upload-text" >اختر ملف التايم شيت الخاص بالشهر الماضي</div>
 <div class="file-upload-subtext" >Upload your existing timesheet template (.xlsx)</div>
 <button class="file-upload-btn" id="fileBtn" >
 <i class="fas fa-upload"></i> Browse Files
@@ -682,6 +683,7 @@ margin-left: 5px;
 <label for="wplaceInput">Workplace Code (Wplace)</label>
 <input type="text" id="wplaceInput" placeholder="Workplace code will be loaded from file" />
 </div>
+
 <!-- New PHD Section -->
 <div class="phd-container">
 <h3 class="card-title" style="margin: 10px 0;">
@@ -700,8 +702,6 @@ margin-left: 5px;
 </div>
 </div>
 
-
-</div>
 <div id="status" class="status" style="display:none;"></div>
 <div id="empList" style="display:none;">
 <div class="card">
@@ -797,18 +797,46 @@ let empData = {};
 let empFileLoaded = false;
 const REQUIRED_HEADERS = ['DATE', 'EmpCode', 'Event', 'Wplace', 'Worked', 'NOT', 'WOT'];
 let publicHolidays = [];
+
 function showStatus(msg, isError = false) {
 const el = document.getElementById('status');
 el.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${msg}`;
 el.className = `status ${isError ? 'error' : 'success'}`;
 el.style.display = 'flex';
 }
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // New function to check if a date is a public holiday
 function isPublicHoliday(date) {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatDate(date);
     return publicHolidays.includes(dateStr);
 }
 
+// New function to render PHD list
+function renderPhdList() {
+    const phdList = document.getElementById('phdList');
+    phdList.innerHTML = '';
+    
+    if (publicHolidays.length === 0) {
+        phdList.innerHTML = '<div style="color: var(--gray);">No public holidays added</div>';
+        return;
+    }
+    
+    publicHolidays.forEach((dateStr, index) => {
+        const tag = document.createElement('div');
+        tag.className = 'phd-tag';
+        tag.innerHTML = `
+            ${dateStr}
+            <button class="remove-phd" data-index="${index}">×</button>
+        `;
+        phdList.appendChild(tag);
+    });
+}
 
 function hideStatus() {
 document.getElementById('status').style.display = 'none';
@@ -1000,26 +1028,6 @@ function addNewEmpRow() {
 empCodes.push({ code: '', name: '', not: '', wot: '' });
 renderEmpTable();
 }
-// New function to render PHD list
-function renderPhdList() {
-    const phdList = document.getElementById('phdList');
-    phdList.innerHTML = '';
-    
-    if (publicHolidays.length === 0) {
-        phdList.innerHTML = '<div style="color: var(--gray);">No public holidays added</div>';
-        return;
-    }
-    
-    publicHolidays.forEach((dateStr, index) => {
-        const tag = document.createElement('div');
-        tag.className = 'phd-tag';
-        tag.innerHTML = `
-            ${dateStr}
-            <button class="remove-phd" data-index="${index}">×</button>
-        `;
-        phdList.appendChild(tag);
-    });
-}
 
 function checkDuplicates() {
 renderEmpTable();
@@ -1075,196 +1083,166 @@ const rate = basicSalary / 200;
 const amount = (rate * not) + (rate * wot * 1.25);
 return amount;
 }
-function formatDateLocal(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
+
 function generateTimesheet() {
-    if (empCodes.length === 0) {
-        showStatus('No employee codes to generate.', true);
-        return;
-    }
-
-    const wplaceValue = document.getElementById('wplaceInput').value.trim();
-    if (!wplaceValue) {
-        showStatus('Workplace code (Wplace) cannot be empty.', true);
-        return;
-    }
-
-    // Validate employee data
-    const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
-    if (hasEmpty) {
-        showStatus('Employee code cannot be empty.', true);
-        return;
-    }
-
-    const hasDuplicates = empCodes.some((empData, i) => {
-        const code = empData.code || '';
-        return isDuplicateEmpCode(code, i);
-    });
-    if (hasDuplicates) {
-        showStatus('Duplicate employee codes are not allowed.', true);
-        return;
-    }
-
-    const hasDuplicateNames = empCodes.some((empData, i) => {
-        const name = empData.name || '';
-        return isDuplicateEmpName(name, i);
-    });
-    if (hasDuplicateNames) {
-        showStatus('Duplicate employee names are not allowed.', true);
-        return;
-    }
-
-    if (!validateOvertimeInputs()) {
-        showStatus('Invalid overtime values. Please check your inputs.', true);
-        return;
-    }
-
-    hideStatus();
-
-    // Determine date range: 15th of prev month to 14th of current month
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth(); // current month (0-indexed)
-    const startDate = new Date(year, month - 1, 15);
-    const endDate = new Date(year, month, 14);
-
-    // Generate list of dates with flags
-    const dates = [];
-    let currentDate = new Date(startDate);
-   while (currentDate <= endDate) {
-    const dateStr = formatDateLocal(currentDate); // ← LOCAL date string
-    dates.push({
-        date: new Date(currentDate),
-        isSunday: currentDate.getDay() === 0,
-        isPhd: publicHolidays.includes(dateStr) // now matches user input
-    });
-    currentDate.setDate(currentDate.getDate() + 1);
+if (empCodes.length === 0) {
+showStatus('No employee codes to generate.', true);
+return;
+}
+const wplaceValue = document.getElementById('wplaceInput').value.trim();
+if (!wplaceValue) {
+showStatus('Workplace code (Wplace) cannot be empty.', true);
+return;
+}
+const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
+if (hasEmpty) {
+showStatus('Employee code cannot be empty.', true);
+return;
+}
+const hasDuplicates = empCodes.some((empData, i) => {
+const code = empData.code || '';
+return isDuplicateEmpCode(code, i);
+});
+if (hasDuplicates) {
+showStatus('Duplicate employee codes are not allowed.', true);
+return;
+}
+const hasDuplicateNames = empCodes.some((empData, i) => {
+const name = empData.name || '';
+return isDuplicateEmpName(name, i);
+});
+if (hasDuplicateNames) {
+showStatus('Duplicate employee names are not allowed.', true);
+return;
+}
+if (!validateOvertimeInputs()) {
+showStatus('Invalid overtime values. Please check your inputs.', true);
+return;
+}
+hideStatus();
+const now = new Date();
+const year = now.getFullYear();
+const month = now.getMonth();
+const startDate = new Date(year, month - 1, 15);
+const endDate = new Date(year, month, 14);
+const dates = [];
+let currentDate = new Date(startDate);
+while (currentDate <= endDate) {
+dates.push({
+date: new Date(currentDate),
+isSunday: currentDate.getDay() === 0,
+isPhd: isPublicHoliday(currentDate)
+});
+currentDate.setDate(currentDate.getDate() + 1);
+}
+const rows = [];
+empCodes.forEach(empData => {
+const empCodeStr = String(empData.code).trim();
+const notTotal = parseInt(empData.not) || 0;
+const wotTotal = parseInt(empData.wot) || 0;
+const nonSundayRows = dates.filter(d => !d.isSunday && !d.isPhd).length;
+const notDistribution = new Array(dates.length).fill(0);
+let remainingNOT = notTotal;
+if (nonSundayRows > 0) {
+let nonSundayIndex = 0;
+for (let i = 0; i < dates.length && remainingNOT > 0; i++) {
+if (!dates[i].isSunday && !dates[i].isPhd) {
+const allocation = Math.min(2, remainingNOT);
+notDistribution[i] = allocation;
+remainingNOT -= allocation;
+nonSundayIndex++;
+}
+}
+}
+const sundayOrPhdRows = dates.filter(d => d.isSunday || d.isPhd).length;
+const wotDistribution = new Array(dates.length).fill(0);
+let remainingWOT = wotTotal;
+if (sundayOrPhdRows > 0 && remainingWOT > 0) {
+const idealAllocation = Math.min(8, Math.floor(remainingWOT / sundayOrPhdRows));
+let allocated = 0;
+for (let i = 0; i < dates.length; i++) {
+if (dates[i].isSunday || dates[i].isPhd) {
+const allocation = Math.min(idealAllocation, remainingWOT);
+wotDistribution[i] = allocation;
+remainingWOT -= allocation;
+allocated += allocation;
+}
+}
+if (remainingWOT > 0) {
+for (let i = 0; i < dates.length && remainingWOT > 0; i++) {
+if ((dates[i].isSunday || dates[i].isPhd) && wotDistribution[i] < 10) {
+const canAllocate = Math.min(10 - wotDistribution[i], remainingWOT);
+wotDistribution[i] += canAllocate;
+remainingWOT -= canAllocate;
+}
+}
+}
+}
+dates.forEach((dateInfo, index) => {
+let event, worked, finalNOT;
+// Check if it's a public holiday
+if (dateInfo.isPhd) {
+event = 'PHD';
+worked = 0;
+finalNOT = 0;
+} else if (dateInfo.isSunday) {
+event = 'OFF';
+worked = 0;
+finalNOT = 0;
+} else {
+event = 'P';
+worked = 8;
+finalNOT = notDistribution[index];
+}
+rows.push({
+DATE: dateToExcelSerial(dateInfo.date),
+EmpCode: empCodeStr,
+Event: event,
+Wplace: wplaceValue,
+Worked: worked,
+NOT: finalNOT,
+WOT: wotDistribution[index]
+});
+});
+});
+const ws = XLSX.utils.json_to_sheet(rows);
+ws['!cols'] = [
+{ wch: 15 },
+{ wch: 15 },
+{ wch: 10 },
+{ wch: 12 },
+{ wch: 10 },
+{ wch: 10 },
+{ wch: 10 }
+];
+const range = XLSX.utils.decode_range(ws['!ref']);
+for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+const dateCell = ws[XLSX.utils.encode_cell({ r: R, c: 0 })];
+const empCodeCell = ws[XLSX.utils.encode_cell({ r: R, c: 1 })];
+const eventCell = ws[XLSX.utils.encode_cell({ r: R, c: 2 })];
+const wplaceCell = ws[XLSX.utils.encode_cell({ r: R, c: 3 })];
+const workedCell = ws[XLSX.utils.encode_cell({ r: R, c: 4 })];
+const notCell = ws[XLSX.utils.encode_cell({ r: R, c: 5 })];
+const wotCell = ws[XLSX.utils.encode_cell({ r: R, c: 6 })];
+if (dateCell) {
+dateCell.t = 'n';
+dateCell.z = 'm/d/yyyy';
+}
+if (empCodeCell) empCodeCell.t = 's';
+if (eventCell) eventCell.z = '@';
+if (wplaceCell) wplaceCell.t = 's';
+if (workedCell) workedCell.z = '@';
+if (notCell) notCell.z = '@';
+if (wotCell) wotCell.z = '@';
+}
+const wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, ws, 'Timesheet');
+const wplaceSanitized = wplaceValue.replace(/[^a-z0-9]/gi, '_').substring(0, 10);
+const monthName = now.toLocaleString('en-US', { month: 'long' });
+const filename = `${monthName} ${year} ${wplaceSanitized} Timesheet.xlsx`;
+XLSX.writeFile(wb, filename);
 }
 
-    const rows = [];
-
-    empCodes.forEach(empData => {
-        const empCodeStr = String(empData.code).trim();
-        const notTotal = parseInt(empData.not) || 0;
-        const wotTotal = parseInt(empData.wot) || 0;
-
-        // === Distribute NOT (only on weekdays, excluding Sundays & PHDs) ===
-        const notDistribution = new Array(dates.length).fill(0);
-        let remainingNOT = notTotal;
-        if (remainingNOT > 0) {
-            for (let i = 0; i < dates.length && remainingNOT > 0; i++) {
-                if (!dates[i].isSunday && !dates[i].isPhd) {
-                    const alloc = Math.min(2, remainingNOT);
-                    notDistribution[i] = alloc;
-                    remainingNOT -= alloc;
-                }
-            }
-        }
-
-        // === Distribute WOT (only on Sundays and PHDs) ===
-        const wotDistribution = new Array(dates.length).fill(0);
-        let remainingWOT = wotTotal;
-        if (remainingWOT > 0) {
-            // Get indices of eligible days
-            const holidayIndices = [];
-            for (let i = 0; i < dates.length; i++) {
-                if (dates[i].isSunday || dates[i].isPhd) {
-                    holidayIndices.push(i);
-                    wotDistribution[i] = 0;
-                }
-            }
-
-            if (holidayIndices.length === 0) {
-                // No Sundays or PHDs → cannot assign WOT
-                if (wotTotal > 0) {
-                    showStatus(`WOT for ${empCodeStr} cannot be assigned: no Sundays or public holidays in period.`, true);
-                    return;
-                }
-            } else {
-                // Distribute WOT fairly using round-robin
-                let idx = 0;
-                while (remainingWOT > 0) {
-                    const pos = idx % holidayIndices.length;
-                    const i = holidayIndices[pos];
-                    if (wotDistribution[i] < 10) {
-                        wotDistribution[i]++;
-                        remainingWOT--;
-                    }
-                    idx++;
-                    // Safety break to avoid infinite loop (should not happen)
-                    if (idx > holidayIndices.length * 10) break;
-                }
-            }
-        }
-
-        // === Build rows for this employee ===
-        dates.forEach((dateInfo, index) => {
-            let event, worked, finalNOT;
-
-            if (dateInfo.isPhd) {
-                event = 'PHD';
-                worked = 0;
-                finalNOT = 0;
-            } else if (dateInfo.isSunday) {
-                event = 'OFF';
-                worked = 0;
-                finalNOT = 0;
-            } else {
-                event = 'P';
-                worked = 8;
-                finalNOT = notDistribution[index];
-            }
-
-            rows.push({
-                DATE: dateToExcelSerial(dateInfo.date),
-                EmpCode: empCodeStr,
-                Event: event,
-                Wplace: wplaceValue,
-                Worked: worked,
-                NOT: finalNOT,
-                WOT: wotDistribution[index]
-            });
-        });
-    });
-
-    // === Create Excel workbook ===
-    const ws = XLSX.utils.json_to_sheet(rows, { header: REQUIRED_HEADERS });
-    ws['!cols'] = [
-        { wch: 15 }, // DATE
-        { wch: 15 }, // EmpCode
-        { wch: 10 }, // Event
-        { wch: 12 }, // Wplace
-        { wch: 10 }, // Worked
-        { wch: 10 }, // NOT
-        { wch: 10 }  // WOT
-    ];
-
-    // Format DATE column as date in Excel
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        const cellRef = XLSX.utils.encode_cell({ r: R, c: 0 });
-        if (ws[cellRef]) {
-            ws[cellRef].t = 'n';
-            ws[cellRef].z = 'm/d/yyyy';
-        }
-    }
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Timesheet');
-
-    // Generate filename
-    const wplaceSanitized = wplaceValue.replace(/[^a-z0-9]/gi, '_').substring(0, 10);
-    const monthName = now.toLocaleString('en-US', { month: 'long' });
-    const year2 = now.getFullYear();
-    const filename = `${monthName} ${year2} ${wplaceSanitized} Timesheet.xlsx`;
-
-    // Save file
-    XLSX.writeFile(wb, filename);
-}
 function showOvertimeReport() {
 const reportTableBody = document.getElementById('reportTableBody');
 reportTableBody.innerHTML = '';
@@ -1307,7 +1285,7 @@ const reportTable = document.querySelector('.report-table').cloneNode(true);
 const totalAmount = document.getElementById('totalAmount').textContent;
 const reportTitle = document.querySelector('.report-title').textContent;
 const printContent = `
-<div class="report-title" style="font-size:18pt; font-weight:bold; text-align:center; margin-bottom:10mm;">${reportTitle}</div>
+<div class="report-title" style="font-size:18pt; font-weight:bold; text-align:center; margin-bottom:10mm; margin-right:10mm;margin-left:10mm">${reportTitle}</div>
 <table class="report-table">
 ${reportTable.innerHTML}
 </table>
@@ -1449,7 +1427,26 @@ function initEventListeners() {
 document.getElementById('fileUploadContainer').addEventListener('click', () => {
 document.getElementById('excelFile').click();
 });
+document.getElementById('fileBtn').addEventListener('click', (e) => {
+e.stopPropagation();
+document.getElementById('excelFile').click();
+});
+document.getElementById('empFileUploadContainer').addEventListener('click', () => {
+document.getElementById('empFile').click();
+});
+document.getElementById('empFileBtn').addEventListener('click', (e) => {
+e.stopPropagation();
+document.getElementById('empFile').click();
+});
 
+document.getElementById('excelFile').addEventListener('change', (e) => {
+const file = e.target.files[0];
+if (!file) return;
+const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+if (!validTypes.includes(file.type)) {
+showStatus('Please upload a valid Excel file (.xlsx or .xls)', true);
+return;
+}
 // New PHD event listeners
 document.getElementById('addPhdBtn').addEventListener('click', () => {
     const phdInput = document.getElementById('phdDate');
@@ -1483,27 +1480,6 @@ document.getElementById('phdList').addEventListener('click', (e) => {
     }
 });
 
-
-document.getElementById('fileBtn').addEventListener('click', (e) => {
-e.stopPropagation();
-document.getElementById('excelFile').click();
-});
-document.getElementById('empFileUploadContainer').addEventListener('click', () => {
-document.getElementById('empFile').click();
-});
-document.getElementById('empFileBtn').addEventListener('click', (e) => {
-e.stopPropagation();
-document.getElementById('empFile').click();
-});
-
-document.getElementById('excelFile').addEventListener('change', (e) => {
-const file = e.target.files[0];
-if (!file) return;
-const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-if (!validTypes.includes(file.type)) {
-showStatus('Please upload a valid Excel file (.xlsx or .xls)', true);
-return;
-}
 const reader = new FileReader();
 reader.onload = (ev) => {
 try {
@@ -1587,42 +1563,27 @@ showStatus('Error reading employee file. Please try again.', true);
 reader.readAsArrayBuffer(file);
 });
 
-// Handle real-time input (just update data, no validation or re-render)
 document.getElementById('empTableBody').addEventListener('input', (e) => {
-  const target = e.target;
-  const index = parseInt(target.dataset.index, 10);
-  if (isNaN(index) || index < 0 || index >= empCodes.length) return;
-
-  if (target.classList.contains('emp-input')) {
-    const newCode = target.value.trim();
-    empCodes[index].code = newCode;
-    // Update name if empFile is loaded
-    if (empFileLoaded && empData[newCode]) {
-      empCodes[index].name = empData[newCode].name || '';
-    } else {
-      empCodes[index].name = '';
-    }
-    // Note: We do NOT re-render here to avoid flicker
-  } else if (target.classList.contains('not-input')) {
-    empCodes[index].not = target.value;
-    updateGenerateButton();
-  } else if (target.classList.contains('wot-input')) {
-    empCodes[index].wot = target.value;
-    updateGenerateButton();
-  }
+const target = e.target;
+const index = parseInt(target.dataset.index, 10);
+if (isNaN(index) || index < 0 || index >= empCodes.length) return;
+if (target.classList.contains('emp-input')) {
+const newCode = target.value.trim();
+empCodes[index].code = newCode;
+if (empFileLoaded && empData[newCode]) {
+empCodes[index].name = empData[newCode].name || '';
+} else {
+empCodes[index].name = '';
+}
+renderEmpTable();
+} else if (target.classList.contains('not-input')) {
+empCodes[index].not = target.value;
+updateGenerateButton();
+} else if (target.classList.contains('wot-input')) {
+empCodes[index].wot = target.value;
+updateGenerateButton();
+}
 });
-
-// NEW: Handle blur (when user leaves the field) → validate duplicates & re-render
-document.getElementById('empTableBody').addEventListener('blur', (e) => {
-  const target = e.target;
-  const index = parseInt(target.dataset.index, 10);
-  if (isNaN(index) || index < 0 || index >= empCodes.length) return;
-
-  if (target.classList.contains('emp-input')) {
-    // After user finishes editing, validate and re-render to show warnings
-    renderEmpTable();
-  }
-}, true); // Use capture phase to ensure it fires even if focus moves quickly
 
 document.getElementById('empTableBody').addEventListener('click', (e) => {
 if (e.target.closest('.btn-remove')) {
@@ -1653,3 +1614,4 @@ initEventListeners();
 </script>
 </body>
 </html>
+
