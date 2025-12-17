@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Scheduler Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #06d6a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+            padding: 20px;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .app-body {
+            padding: 30px;
+        }
+
+        .form-container {
+            background: #f8f9ff;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #eef2f7;
+        }
+
+        .form-title {
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #cbd5e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .btn {
+            padding: 14px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .task-list {
+            margin-top: 20px;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .task-count {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .task-item {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .task-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .task-time {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #718096;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #cbd5e0;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            transform: translateX(200%);
+            transition: transform 0.4s ease-out;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #ef4444;
+        }
+
+        .notification.success {
+            background: #06d6a0;
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .app-body {
+                padding: 20px;
+            }
+            
+            .form-control {
+                padding: 12px;
+            }
+            
+            .task-actions {
+                flex-wrap: wrap;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-tasks"></i> Task Scheduler Pro</h1>
+            <p>Organize your tasks with system notifications & sound alerts</p>
+        </div>
+        
+        <div class="app-body">
+            <div class="form-container">
+                <h2 class="form-title"><i class="fas fa-plus-circle"></i> Add New Task</h2>
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskTitle">Task Title</label>
+                        <input type="text" id="taskTitle" class="form-control" placeholder="Enter task title..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskDate">Date & Time</label>
+                        <input type="datetime-local" id="taskDate" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskDescription">Description (Optional)</label>
+                        <textarea id="taskDescription" class="form-control" rows="3" placeholder="Add details about your task..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Task
+                    </button>
+                    <button type="button" id="clearForm" class="btn btn-secondary">
+                        <i class="fas fa-eraser"></i> Clear
+                    </button>
+                </form>
+            </div>
+            
+            <div class="task-list">
+                <div class="task-header">
+                    <h2 class="form-title"><i class="fas fa-list"></i> Your Tasks</h2>
+                    <div class="task-count">Total: <span id="taskCount">0</span></div>
+                </div>
+                
+                <div id="tasksContainer">
+                    <!-- Tasks will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        <i class="fas fa-bell"></i>
+        <span id="notificationMessage">Task reminder!</span>
+    </div>
+
+    <script>
+        // SUPABASE CONFIGURATION
+        const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+        const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+
+        // DOM Elements
+        const taskForm = document.getElementById('taskForm');
+        const tasksContainer = document.getElementById('tasksContainer');
+        const taskCountElement = document.getElementById('taskCount');
+        const clearFormButton = document.getElementById('clearForm');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
+        
+        // Set default date/time to today at 09:00 AM
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        document.getElementById('taskDate').value = `${year}-${month}-${day}T09:00`;
+        
+        // Initialize
+        let tasks = [];
+        
+        // Sound notification
+       function playNotificationSound() {
+    const soundUrl = 'https://raw.githubusercontent.com/Desho2050/Gisco/a897c0a3290edf8b66267d43da511d02515c2e8c/alert.wav';
+    const audio = new Audio(soundUrl);
+    
+    // Play sound and handle errors
+    audio.play().catch(e => {
+        console.error('Notification sound failed:', e);
+        // Optional fallback: simple beep
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 800;
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.3);
+        } catch (beepErr) {
+            console.warn('Fallback beep also failed:', beepErr);
+        }
+    });
+}
+        
+        // Load tasks on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchTasks();
+            checkNotifications();
+            startNotificationChecker();
+        });
+        
+        // Form submission
+        taskForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('taskTitle').value;
+            const dateTime = document.getElementById('taskDate').value;
+            const description = document.getElementById('taskDescription').value;
+            
+            if (!title || !dateTime) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('tasks')
+                    .insert([
+                        { 
+                            title, 
+                            due_date: new Date(dateTime).toISOString(), 
+                            description 
+                        }
+                    ])
+                    .select();
+                
+                if (error) throw error;
+                
+                // Reset form
+                taskForm.reset();
+                document.getElementById('taskDate').value = `${year}-${month}-${day}T09:00`;
+                
+                await fetchTasks();
+                showNotification('Task added successfully!', 'success');
+            } catch (error) {
+                console.error('Error adding task:', error);
+                showNotification('Failed to add task. Please try again.', 'error');
+            }
+        });
+        
+        // Clear form
+        clearFormButton.addEventListener('click', () => {
+            taskForm.reset();
+            document.getElementById('taskDate').value = `${year}-${month}-${day}T09:00`;
+        });
+        
+        // Fetch tasks from Supabase
+        async function fetchTasks() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('tasks')
+                    .select('*')
+                    .order('due_date', { ascending: true });
+                
+                if (error) throw error;
+                
+                tasks = data;
+                renderTasks();
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+                showNotification('Failed to load tasks. Please try again.', 'error');
+            }
+        }
+        
+        // Render tasks
+        function renderTasks() {
+            tasksContainer.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                tasksContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No tasks scheduled</h3>
+                        <p>Add your first task using the form above</p>
+                    </div>
+                `;
+                taskCountElement.textContent = '0';
+                return;
+            }
+            
+            tasks.forEach(task => {
+                const taskDate = new Date(task.due_date);
+                const now = new Date();
+                const isPast = taskDate < now;
+                
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task-item';
+                if (isPast) {
+                    taskElement.style.opacity = '0.7';
+                    taskElement.style.borderLeft = '4px solid #ef4444';
+                }
+                
+                const formattedDate = taskDate.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                
+                const formattedTime = taskDate.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                taskElement.innerHTML = `
+                    <div class="task-title">
+                        <i class="fas ${isPast ? 'fa-calendar-times' : 'fa-check-circle'}"></i>
+                        <span>${task.title}</span>
+                        ${isPast ? '<span style="margin-left:10px; font-size:0.8em; color:#ef4444;">(Expired)</span>' : ''}
+                    </div>
+                    <div class="task-time">
+                        <i class="far fa-calendar"></i>
+                        <span>${formattedDate} at ${formattedTime}</span>
+                    </div>
+                    ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
+                    <div class="task-actions">
+                        <button class="btn btn-secondary edit-btn" data-id="${task.id}">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-danger delete-btn" data-id="${task.id}">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                `;
+                
+                tasksContainer.appendChild(taskElement);
+            });
+            
+            taskCountElement.textContent = tasks.length;
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => editTask(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteTask(btn.dataset.id));
+            });
+        }
+        
+        // Edit task
+        async function editTask(id) {
+            const task = tasks.find(t => t.id == id);
+            if (!task) return;
+            
+            document.getElementById('taskTitle').value = task.title;
+            document.getElementById('taskDate').value = task.due_date.slice(0, 16);
+            document.getElementById('taskDescription').value = task.description || '';
+            
+            taskForm.onsubmit = async (e) => {
+                e.preventDefault();
+                await updateTask(id);
+                taskForm.onsubmit = null;
+            };
+            
+            showNotification('Editing task. Update details and save.', 'success');
+        }
+        
+        // Update task
+        async function updateTask(id) {
+            const title = document.getElementById('taskTitle').value;
+            const dateTime = document.getElementById('taskDate').value;
+            const description = document.getElementById('taskDescription').value;
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('tasks')
+                    .update({ 
+                        title, 
+                        due_date: new Date(dateTime).toISOString(), 
+                        description 
+                    })
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                taskForm.reset();
+                document.getElementById('taskDate').value = `${year}-${month}-${day}T09:00`;
+                await fetchTasks();
+                showNotification('Task updated successfully!', 'success');
+            } catch (error) {
+                console.error('Error updating task:', error);
+                showNotification('Failed to update task. Please try again.', 'error');
+            }
+        }
+        
+        // Delete task
+        async function deleteTask(id) {
+            if (confirm('Are you sure you want to delete this task?')) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('tasks')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    await fetchTasks();
+                    showNotification('Task deleted successfully', 'success');
+                } catch (error) {
+                    console.error('Error deleting task:', error);
+                    showNotification('Failed to delete task. Please try again.', 'error');
+                }
+            }
+        }
+        
+        // Notification system
+        function showNotification(message, type = 'info') {
+            notificationMessage.textContent = message;
+            notification.className = 'notification';
+            notification.classList.add(type);
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Check for notifications
+        function checkNotifications() {
+            const now = new Date();
+            
+            tasks.forEach(task => {
+                if (task.notified) return;
+                
+                const taskDate = new Date(task.due_date);
+                const timeDiff = taskDate - now;
+                
+                // Notify if task is due within 1 minute
+                if (timeDiff <= 60000 && timeDiff >= 0) {
+                    task.notified = true;
+                    
+                    // 🔊 PLAY SOUND
+                    playNotificationSound();
+                    
+                    // Browser notification
+                    if ('Notification' in window) {
+                        if (Notification.permission === 'granted') {
+                            new Notification('Task Reminder', {
+                                body: `${task.title} is due now!`,
+                                icon: 'https://cdn-icons-png.flaticon.com/512/3003/3003883.png'
+                            });
+                        } else if (Notification.permission !== 'denied') {
+                            Notification.requestPermission().then(permission => {
+                                if (permission === 'granted') {
+                                    new Notification('Task Reminder', {
+                                        body: `${task.title} is due now!`,
+                                        icon: 'https://cdn-icons-png.flaticon.com/512/3003/3003883.png'
+                                    });
+                                }
+                            });
+                        }
+                    }
+                    
+                    showNotification(`Time for: ${task.title}!`, 'success');
+                }
+            });
+        }
+        
+        // Start checking for notifications every 30 seconds
+        function startNotificationChecker() {
+            setInterval(checkNotifications, 30000);
+        }
+        
+        // Request notification permission on first interaction
+        document.addEventListener('click', () => {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
