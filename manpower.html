@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manpower Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <h1 class="text-2xl font-bold mb-4">Manpower Tracker</h1>
+
+  <!-- Add New Record Form -->
+  <div class="bg-white p-4 rounded mb-6 shadow">
+    <h2 class="text-lg font-semibold mb-2">Add New Entry</h2>
+    <form id="manpowerForm" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <input type="text" id="file_no" placeholder="File No" class="border p-2 rounded" required />
+      <input type="text" id="name" placeholder="Name" class="border p-2 rounded" required />
+      <select id="type" class="border p-2 rounded" required>
+        <option value="">Select Type</option>
+        <option value="LEAVE">Leave</option>
+        <option value="RESIGNATION">Resignation</option>
+        <option value="NOT APPROVED">Not Approved</option>
+        <option value="DRIVER">Driver</option>
+        <option value="OFFICE BOY">Office Boy</option>
+      </select>
+      <input type="date" id="start_date" class="border p-2 rounded" />
+      <input type="date" id="end_date" class="border p-2 rounded" />
+      <input type="text" id="actual_return" placeholder="Actual Return (e.g. 12/21/25 or 'STILL NOT RETURN')" class="border p-2 rounded" />
+      <input type="date" id="resignation_date" class="border p-2 rounded" />
+      <button type="submit" class="bg-blue-500 text-white p-2 rounded col-span-1 md:col-span-3">Add Record</button>
+    </form>
+  </div>
+
+  <!-- Data Table -->
+  <div class="bg-white p-4 rounded shadow overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead>
+        <tr>
+          <th class="px-4 py-2">SN</th>
+          <th class="px-4 py-2">File No</th>
+          <th class="px-4 py-2">Name</th>
+          <th class="px-4 py-2">Type</th>
+          <th class="px-4 py-2">Start</th>
+          <th class="px-4 py-2">End</th>
+          <th class="px-4 py-2">Days</th>
+          <th class="px-4 py-2">Actual Return</th>
+          <th class="px-4 py-2">Exceeded</th>
+          <th class="px-4 py-2">Resign Date</th>
+          <th class="px-4 py-2">Days to Resign</th>
+          <th class="px-4 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody" class="divide-y divide-gray-100">
+        <!-- Rows inserted here via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Helper: parse date like "12/21/25" → Date object
+    function parseCustomDate(str) {
+      if (!str || str === 'STILL NOT RETURN') return null;
+      const parts = str.split('/');
+      if (parts.length !== 3) return new Date(str); // fallback
+      const [m, d, y] = parts.map(Number);
+      const fullYear = y < 50 ? 2000 + y : y < 100 ? 1900 + y : y;
+      return new Date(fullYear, m - 1, d);
+    }
+
+    // Helper: date difference in days
+    function dateDiffInDays(a, b) {
+      if (!a || !b) return null;
+      const utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+      const utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+      return Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
+    }
+
+    // Helper: format date as MM/DD/YY
+    function formatDateShort(date) {
+      if (!date) return '';
+      const y = String(date.getFullYear()).slice(-2);
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${m}/${d}/${y}`;
+    }
+
+    // Compute derived fields before saving
+    function computeFields(row) {
+      let days = null;
+      let exceeded_days = null;
+      let days_to_resign_date = null;
+
+      const type = row.type;
+      const startDate = row.start_date ? new Date(row.start_date) : null;
+      const endDate = row.end_date ? new Date(row.end_date) : null;
+      const actualReturnStr = row.actual_return;
+      const resignationDate = row.resignation_date ? new Date(row.resignation_date) : null;
+      const today = new Date();
+
+      // Days = end - start (only for LEAVE)
+      if (type === 'LEAVE' && startDate && endDate) {
+        days = dateDiffInDays(startDate, endDate);
+      }
+
+      // Exceeded Days logic
+      if (type === 'LEAVE' && endDate) {
+        if (actualReturnStr === 'STILL NOT RETURN') {
+          exceeded_days = dateDiffInDays(endDate, today);
+        } else {
+          const actualDate = parseCustomDate(actualReturnStr) || new Date(actualReturnStr);
+          if (actualDate) {
+            if (actualDate.getTime() === endDate.getTime()) {
+              exceeded_days = 0;
+            } else if (actualDate > endDate) {
+              exceeded_days = dateDiffInDays(endDate, actualDate);
+            } else {
+              exceeded_days = 0; // returned early
+            }
+          }
+        }
+      }
+
+      // Days to Resign Date
+      if (resignationDate) {
+        days_to_resign_date = dateDiffInDays(today, resignationDate);
+      }
+
+      return {
+        ...row,
+        days,
+        exceeded_days,
+        days_to_resign_date
+      };
+    }
+
+    // Fetch and display data
+    async function fetchRecords() {
+      const { data, error } = await supabaseClient.from('manpower').select('*').order('created_at', { ascending: true });
+      if (error) {
+        console.error('Error fetching:', error);
+        return;
+      }
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      data.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-4 py-2">${idx + 1}</td>
+          <td class="px-4 py-2">${row.file_no || ''}</td>
+          <td class="px-4 py-2">${row.name || ''}</td>
+          <td class="px-4 py-2">${row.type || ''}</td>
+          <td class="px-4 py-2">${row.start_date ? formatDateShort(new Date(row.start_date)) : ''}</td>
+          <td class="px-4 py-2">${row.end_date ? formatDateShort(new Date(row.end_date)) : ''}</td>
+          <td class="px-4 py-2">${row.days != null ? row.days : ''}</td>
+          <td class="px-4 py-2">${row.actual_return || ''}</td>
+          <td class="px-4 py-2">${row.exceeded_days != null ? row.exceeded_days : ''}</td>
+          <td class="px-4 py-2">${row.resignation_date ? formatDateShort(new Date(row.resignation_date)) : ''}</td>
+          <td class="px-4 py-2">${row.days_to_resign_date != null ? row.days_to_resign_date : ''}</td>
+          <td class="px-4 py-2">
+            <button onclick="editRow(${row.id})" class="text-blue-500">Edit</button>
+            <button onclick="deleteRow(${row.id})" class="text-red-500 ml-2">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Handle form submit
+    document.getElementById('manpowerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const rawRow = {
+        file_no: document.getElementById('file_no').value.trim(),
+        name: document.getElementById('name').value.trim(),
+        type: document.getElementById('type').value,
+        start_date: document.getElementById('start_date').value || null,
+        end_date: document.getElementById('end_date').value || null,
+        actual_return: document.getElementById('actual_return').value.trim() || null,
+        resignation_date: document.getElementById('resignation_date').value || null
+      };
+
+      const finalRow = computeFields(rawRow);
+
+      const { error } = await supabaseClient.from('manpower').insert([finalRow]);
+      if (error) {
+        console.error('Insert error:', error);
+      } else {
+        fetchRecords();
+        document.getElementById('manpowerForm').reset();
+      }
+    });
+
+    async function deleteRow(id) {
+      if (!confirm('Delete this record?')) return;
+      const { error } = await supabaseClient.from('manpower').delete().eq('id', id);
+      if (!error) fetchRecords();
+    }
+
+    async function editRow(id) {
+      alert('Edit not implemented yet. Row ID = ' + id);
+    }
+
+    // Initial load
+    fetchRecords();
+  </script>
+</body>
+</html>
