@@ -34,10 +34,12 @@
       line-height: 1.5;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+   .container {
+  width: 100%;
+  max-width: 1500px; /* Slightly wider for large screens */
+  margin: 0 auto;
+  padding: 0 0.5rem; /* Compensate for reduced body padding */
+}
 
     header {
       text-align: center;
@@ -111,11 +113,41 @@
       letter-spacing: 0.025em;
     }
 
-    td {
-      padding: 0.75rem;
-      border-top: 1px solid var(--border);
-    }
+   td {
+  padding: 0.75rem;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+}
 
+
+
+/* Keep critical IDs compact */
+td:nth-child(1), /* Voucher # */
+td:nth-child(10), /* Project # */
+td:nth-child(8),
+td:nth-child(9) , /* JVR & JVR Date */
+td:nth-child(11),  /* Created */
+td:nth-child(6)  /* Created */
+ {
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+td:nth-child(4) {
+  white-space: nowrap;
+}
+.actions-cell {
+  white-space: nowrap;
+  min-width: 130px; /* Ensures enough space for both buttons */
+}
+
+.actions-cell .btn-edit,
+.actions-cell .btn-delete {
+  margin: 0 0.25rem 0 0;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
     tr:hover {
       background-color: #f9fafb;
     }
@@ -235,6 +267,60 @@
         font-size: 0.75rem;
       }
     }
+    /* Improve modal on small screens */
+@media (max-width: 600px) {
+  .modal-content {
+    width: 95%;
+    padding: 1rem;
+    font-size: 0.875rem;
+  }
+
+  .form-grid {
+    gap: 0.75rem;
+  }
+
+  input, select {
+    font-size: 1rem; /* Prevents iOS zoom on input focus */
+    padding: 0.625rem;
+  }
+
+  .btn-edit, .btn-delete {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}
+@media (max-width: 480px) {
+  body {
+    padding: 0.75rem;
+  }
+
+  .card h3 {
+    font-size: 0.75rem;
+  }
+
+   .received, .rejected, .total-count, .total-amount {
+    font-size: 1.1rem;
+  }
+}
+.pending{
+  color:#28da04; /* RED */
+ 
+}
+/* Row highlighting */
+tr.paid-received {
+  background-color: #58f085; /* light green */
+  border-left: 4px solid #16a34a;
+}
+tr.rejected {
+  background-color: #fae1d5; /* light orange */
+  border-left: 4px solid #000000;
+  font-size: medium; font-weight: normal;color: rgb(255, 0, 0);
+}
+.not-approved {
+  color:#10b981; /* GREEN */
+  font-weight: bold;
+  font-size: 1.25rem;
+}
   </style>
 </head>
 <body>
@@ -250,12 +336,19 @@
       <input type="text" id="searchInput" placeholder="Search any field..." />
     </div>
 
+    <!-- Date Filter -->
+    <div class="date-filter" style="margin-bottom: 1.5rem;">
+      <label for="dateFilter" style="display:block; margin-bottom:0.25rem; font-size:0.875rem; color:var(--gray);">
+        Filter by Receiving Date
+      </label>
+      <select id="dateFilter" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.375rem; font-size:1rem;">
+        <option value="">All</option>
+      </select>
+    </div>
+
     <!-- Summary Cards -->
     <div class="summary">
-      <div class="card">
-        <h3>Pending Amount</h3>
-        <p class="pending" id="pendingAmount">0.00</p>
-      </div>
+     
       <div class="card">
         <h3>Fully Received Amount</h3>
         <p class="received" id="fullyReceivedAmount">0.00</p>
@@ -272,6 +365,14 @@
         <h3>Total Voucher Value</h3>
         <p class="total-amount" id="totalAmount">0.00</p>
       </div>
+       <div class="card">
+        <h3>APPROVED Amount</h3>
+        <p class="pending" id="pendingAmount">0.00</p>
+      </div>
+      <div class="card">
+  <h3>Not Approved Amount</h3>
+ <p class="not-approved" id="notApprovedAmount">0.00</p>
+</div>
     </div>
 
     <!-- Table -->
@@ -279,19 +380,19 @@
       <table id="vouchersTable">
         <thead>
           <tr>
-            <th>Voucher #</th>
-            <th>Type</th>
+            <th data-sort="voucher_number">Voucher # ▲</th>
+            <th data-sort="voucher_type">Type ▲</th>
             <th>Total</th>
             <th>Status</th>
-            <th>SAAS Invoice</th>
-            <th>Payment Status</th>
+            <th data-sort="saas_invoice">SAAS Invoice ▲</th>
+            <th data-sort="payment_status">Payment Status ▲</th>
             <th>Line</th>
             <th>JVR</th>
             <th>JVR Date</th>
             <th>Project #</th>
             <th>Created</th>
             <th>Petty Cash</th>
-            <th>Receiving Date</th>
+            <th data-sort="receiving_date">Receiving Date ▲</th>
             <th>Received Amt</th>
             <th>Actions</th>
           </tr>
@@ -309,20 +410,20 @@
       <h2 id="modalTitle">Add New Voucher</h2>
       <form id="editForm">
         <div class="form-grid">
-          <div><label>Voucher Number</label><input type="text" id="editVoucherNumber" required /></div>
+          <div><label>Voucher Number</label><input type="text" id="editVoucherNumber" name="editVoucherNumber" required /></div>
           <div>
             <label>Voucher Type</label>
-            <select id="editVoucherType" required>
+            <select id="editVoucherType" name="editVoucherType" required>
               <option value="">-- Select --</option>
               <option value="MATERIAL">MATERIAL</option>
               <option value="VEHICLE">VEHICLE</option>
               <option value="NON-MATERIAL">NON-MATERIAL</option>
             </select>
           </div>
-          <div><label>Voucher Total</label><input type="number" step="0.01" id="editVoucherTotal" required /></div>
+          <div><label>Voucher Total</label><input type="number" step="0.01" id="editVoucherTotal" name="editVoucherTotal" required /></div>
           <div>
             <label>Voucher Status</label>
-            <select id="editVoucherStatus" required>
+            <select id="editVoucherStatus" name="editVoucherStatus" required>
               <option value="">-- Select --</option>
               <option value="FINANCE APPROVED">FINANCE APPROVED</option>
               <option value="Submitted">Submitted</option>
@@ -336,30 +437,30 @@
               <option value="HR REJECTED">HR REJECTED</option>
             </select>
           </div>
-          <div><label>SAAS Invoice</label><input type="text" id="editSaasInvoice" /></div>
+          <div><label>SAAS Invoice</label><input type="text" id="editSaasInvoice" name="editSaasInvoice" /></div>
           <div>
             <label>Payment Status</label>
-            <select id="editPaymentStatus" required>
+            <select id="editPaymentStatus" name="editPaymentStatus" required>
               <option value="">-- Select --</option>
               <option value="Paid in Full">Paid in Full</option>
               <option value="Not Paid">Not Paid</option>
             </select>
           </div>
-          <div><label>Voucher Line</label><input type="text" id="editVoucherLine" /></div>
-          <div><label>JVR</label><input type="text" id="editJvr" /></div>
-          <div><label>JVR Date</label><input type="date" id="editJvrDate" /></div>
-          <div><label>Project Number</label><input type="text" id="editProjectNumber" /></div>
-          <div><label>Created Date</label><input type="date" id="editCreatedDate" required /></div>
+          <div><label>Voucher Line</label><input type="text" id="editVoucherLine" name="editVoucherLine" /></div>
+          <div><label>JVR</label><input type="text" id="editJvr" name="editJvr" /></div>
+          <div><label>JVR Date</label><input type="date" id="editJvrDate" name="editJvrDate" /></div>
+          <div><label>Project Number</label><input type="text" id="editProjectNumber" name="editProjectNumber" /></div>
+          <div><label>Created Date</label><input type="date" id="editCreatedDate" name="editCreatedDate" required /></div>
           <div>
             <label>Received Petty Cash</label>
-            <select id="editReceivedPettyCash" required>
+            <select id="editReceivedPettyCash" name="editReceivedPettyCash" required>
               <option value="">-- Select --</option>
               <option value="Received">Received</option>
               <option value="Not Received">Not Received</option>
             </select>
           </div>
-          <div><label>Receiving Date</label><input type="date" id="editReceivingDate" /></div>
-          <div><label>Received Amount</label><input type="number" step="0.01" id="editReceivedAmount" /></div>
+          <div><label>Receiving Date</label><input type="date" id="editReceivingDate" name="editReceivingDate" /></div>
+          <div><label>Received Amount</label><input type="number" step="0.01" id="editReceivedAmount" name="editReceivedAmount" /></div>
         </div>
         <div class="form-actions">
           <button type="button" id="cancelEdit" class="btn-cancel">Cancel</button>
@@ -369,97 +470,175 @@
     </div>
   </div>
 
- <script>
-// ✅ Clean Supabase config (no trailing spaces)
-const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <script>
+    // Supabase config (cleaned)
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// DOM Elements
-const tableBody = document.getElementById('tableBody');
-const searchInput = document.getElementById('searchInput');
-const addBtn = document.getElementById('addBtn');
-const editModal = document.getElementById('editModal');
-const modalTitle = document.getElementById('modalTitle');
-const editForm = document.getElementById('editForm');
-const cancelEditBtn = document.getElementById('cancelEdit');
-const pendingAmountEl = document.getElementById('pendingAmount');
-const fullyReceivedAmountEl = document.getElementById('fullyReceivedAmount');
-const rejectedAmountEl = document.getElementById('rejectedAmount');
-const totalCountEl = document.getElementById('totalCount');
-const totalAmountEl = document.getElementById('totalAmount');
+    // DOM Elements
+    const tableBody = document.getElementById('tableBody');
+    const searchInput = document.getElementById('searchInput');
+    const addBtn = document.getElementById('addBtn');
+    const editModal = document.getElementById('editModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const editForm = document.getElementById('editForm');
+    const cancelEditBtn = document.getElementById('cancelEdit');
+    const pendingAmountEl = document.getElementById('pendingAmount');
+    const fullyReceivedAmountEl = document.getElementById('fullyReceivedAmount');
+    const rejectedAmountEl = document.getElementById('rejectedAmount');
+    const totalCountEl = document.getElementById('totalCount');
+    const totalAmountEl = document.getElementById('totalAmount');
+const notApprovedAmountEl = document.getElementById('notApprovedAmount');
+    let editingId = null;
+    let allVouchers = [];
+    let currentSortField = null;
+    let currentSortDirection = 'asc';
 
-let editingId = null;
+    // === Fetch & render data ===
+    async function fetchData(searchTerm = '') {
+      try {
+        const { data, error } = await supabaseClient
+          .from('vouchers')
+          .select('*')
+          .order('created_date', { ascending: false });
 
-// === Fetch data from Supabase ===
-async function fetchData(searchTerm = '') {
-  try {
-    let query = supabaseClient.from('vouchers').select('*');
+        if (error) throw error;
 
-    if (searchTerm) {
-      const term = `%${searchTerm}%`;
-      query = query.or(
-        `voucher_number.ilike.${term},` +
-        `voucher_type.ilike.${term},` +
-        `voucher_status.ilike.${term},` +
-        `saas_invoice.ilike.${term},` +
-        `payment_status.ilike.${term},` +
-        `voucher_line.ilike.${term},` +
-        `jvr.ilike.${term},` +
-        `project_number.ilike.${term},` +
-        `received_petty_cash.ilike.${term}`
-      );
+        allVouchers = data;
+        populateDateFilter(data);
+        let filtered = applyFilters(data, searchTerm, document.getElementById('dateFilter').value);
+        const sorted = sortData(filtered, currentSortField, currentSortDirection);
+        renderTable(sorted);
+        calculateSummary(sorted);
+      } catch (err) {
+        console.error('Fetch error:', err);
+        alert('Failed to load data: ' + (err.message || err.toString()));
+      }
     }
 
-    const { data, error } = await query.order('created_date', { ascending: false });
+    function populateDateFilter(data) {
+      const dateSet = new Set();
+      data.forEach(row => {
+        if (row.receiving_date) dateSet.add(row.receiving_date);
+      });
 
-    if (error) throw error;
+      const dateFilter = document.getElementById('dateFilter');
+      dateFilter.innerHTML = '<option value="">All</option>';
+      const sortedDates = Array.from(dateSet).sort((a, b) => new Date(b) - new Date(a));
+      sortedDates.forEach(date => {
+        const option = document.createElement('option');
+        option.value = date;
+        option.textContent = date;
+        dateFilter.appendChild(option);
+      });
+    }
 
-    renderTable(data);
-    calculateSummary(data);
-  } catch (err) {
-    console.error('Fetch error:', err);
-    alert('Failed to load data from database.');
-  }
-}
+    function applyFilters(data, searchTerm, selectedDate) {
+      return data.filter(row => {
+        let textMatch = true;
+        if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          textMatch = 
+            (row.voucher_number && row.voucher_number.toLowerCase().includes(term)) ||
+            (row.voucher_type && row.voucher_type.toLowerCase().includes(term)) ||
+            (row.voucher_status && row.voucher_status.toLowerCase().includes(term)) ||
+            (row.saas_invoice && row.saas_invoice.toLowerCase().includes(term)) ||
+            (row.payment_status && row.payment_status.toLowerCase().includes(term)) ||
+            (row.voucher_line && row.voucher_line.toLowerCase().includes(term)) ||
+            (row.jvr && row.jvr.toLowerCase().includes(term)) ||
+            (row.project_number && row.project_number.toLowerCase().includes(term)) ||
+            (row.received_petty_cash && row.received_petty_cash.toLowerCase().includes(term)) ||
+            (row.voucher_total != null && row.voucher_total.toString().includes(searchTerm)) ||
+            (row.received_amount != null && row.received_amount.toString().includes(searchTerm)) ||
+            (row.created_date && row.created_date.includes(searchTerm)) ||
+            (row.jvr_date && row.jvr_date.includes(searchTerm)) ||
+            (row.receiving_date && row.receiving_date.includes(searchTerm));
+        }
+        const dateMatch = !selectedDate || row.receiving_date === selectedDate;
+        return textMatch && dateMatch;
+      });
+    }
 
-function renderTable(data) {
-  tableBody.innerHTML = '';
-  if (data.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="15" style="text-align:center;padding:1rem;color:#6b7280;">No records found.</td></tr>`;
-    return;
-  }
+    function sortData(data, field, direction) {
+      if (!field) return data;
+      return [...data].sort((a, b) => {
+        let valA = a[field] ?? '';
+        let valB = b[field] ?? '';
 
-  data.forEach(v => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${v.voucher_number || '-'}</td>
-      <td>${v.voucher_type || '-'}</td>
-      <td>${v.voucher_total ? parseFloat(v.voucher_total).toFixed(2) : '0.00'}</td>
-      <td>${v.voucher_status || '-'}</td>
-      <td>${v.saas_invoice || '-'}</td>
-      <td>${v.payment_status || '-'}</td>
-      <td>${v.voucher_line || '-'}</td>
-      <td>${v.jvr || '-'}</td>
-      <td>${v.jvr_date || '-'}</td>
-      <td>${v.project_number || '-'}</td>
-      <td>${v.created_date || '-'}</td>
-      <td>${v.received_petty_cash || '-'}</td>
-      <td>${v.receiving_date || '-'}</td>
-      <td>${v.received_amount ? parseFloat(v.received_amount).toFixed(2) : '-'}</td>
-      <td>
-        <button class="btn-edit" onclick="openEditModal(${v.id})">Edit</button>
-        <button class="btn-delete" onclick="deleteVoucher(${v.id})">Delete</button>
-      </td>
-    `;
-    tableBody.appendChild(row);
-  });
-}
+        if (field === 'voucher_total' || field === 'received_amount') {
+          valA = parseFloat(valA) || 0;
+          valB = parseFloat(valB) || 0;
+          return direction === 'asc' ? valA - valB : valB - valA;
+        }
 
-function calculateSummary(data) {
+        if (['receiving_date', 'created_date', 'jvr_date'].includes(field)) {
+          if (!valA && !valB) return 0;
+          if (!valA) return 1;
+          if (!valB) return -1;
+          return direction === 'asc'
+            ? new Date(valA) - new Date(valB)
+            : new Date(valB) - new Date(valA);
+        }
+
+        valA = String(valA).toLowerCase();
+        valB = String(valB).toLowerCase();
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    function renderTable(data) {
+      tableBody.innerHTML = '';
+      if (data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="15" style="text-align:center;padding:1rem;color:#6b7280;">No records found.</td></tr>`;
+        return;
+      }
+
+      data.forEach(v => {
+        let rowClass = '';
+        const paymentStatus = (v.payment_status || '').trim();
+        const pettyCashStatus = (v.received_petty_cash || '').trim();
+        const voucherStatus = (v.voucher_status || '').trim();
+
+        if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
+          rowClass = 'paid-received';
+        } else if (/reject/i.test(paymentStatus) || /reject/i.test(voucherStatus)) {
+          rowClass = 'rejected';
+        }
+
+        const row = document.createElement('tr');
+        row.className = rowClass;
+        row.innerHTML = `
+          <td>${v.voucher_number || '-'}</td>
+          <td>${v.voucher_type || '-'}</td>
+          <td>${v.voucher_total ? parseFloat(v.voucher_total).toFixed(2) : '0.00'}</td>
+          <td>${v.voucher_status || '-'}</td>
+          <td>${v.saas_invoice || '-'}</td>
+          <td>${v.payment_status || '-'}</td>
+          <td>${v.voucher_line || '-'}</td>
+          <td>${v.jvr || '-'}</td>
+          <td>${v.jvr_date || '-'}</td>
+          <td>${v.project_number || '-'}</td>
+          <td>${v.created_date || '-'}</td>
+          <td>${v.received_petty_cash || '-'}</td>
+          <td>${v.receiving_date || '-'}</td>
+          <td>${v.received_amount ? parseFloat(v.received_amount).toFixed(2) : '-'}</td>
+          <td class="actions-cell">
+            <button class="btn-edit" onclick="openEditModal(${v.id})">Edit</button>
+            <button class="btn-delete" onclick="deleteVoucher(${v.id})">Delete</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function calculateSummary(data) {
   let pending = 0;
   let received = 0;
   let rejected = 0;
+  let notApproved = 0; // <-- NEW
   let totalCount = data.length;
   let totalAmount = 0;
 
@@ -470,8 +649,8 @@ function calculateSummary(data) {
     const voucherStatus = (v.voucher_status || '').trim();
     const pettyCashStatus = v.received_petty_cash;
 
-    // Check for rejection in either payment_status or voucher_status (case-insensitive)
-    const isRejected = /rejected/i.test(paymentStatus) || /reject/i.test(voucherStatus);
+    // Check if rejected (case-insensitive)
+    const isRejected = /reject/i.test(paymentStatus) || /reject/i.test(voucherStatus);
 
     totalAmount += total;
 
@@ -479,147 +658,179 @@ function calculateSummary(data) {
       rejected += total;
     } else if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
       received += receivedAmt || total;
-    } else {
-      pending += total;
+    } else if (voucherStatus === 'FINANCE APPROVED' && pettyCashStatus !== 'Received') {
+      pending += total ;
+    }
+
+    // NEW: Calculate "Not Approved"
+    const isFinanceApproved = voucherStatus === 'FINANCE APPROVED';
+    if (!isFinanceApproved && !isRejected) {
+      notApproved += total;
     }
   });
 
   pendingAmountEl.textContent = pending.toFixed(2);
   fullyReceivedAmountEl.textContent = received.toFixed(2);
   rejectedAmountEl.textContent = rejected.toFixed(2);
+  notApprovedAmountEl.textContent = notApproved.toFixed(2); // <-- NEW
   totalCountEl.textContent = totalCount;
   totalAmountEl.textContent = totalAmount.toFixed(2);
 }
 
-// === CRUD Operations ===
-async function saveVoucher(formData) {
-  const fieldMap = {
-    editVoucherNumber: 'voucher_number',
-    editVoucherType: 'voucher_type',
-    editVoucherTotal: 'voucher_total',
-    editVoucherStatus: 'voucher_status',
-    editSaasInvoice: 'saas_invoice',
-    editPaymentStatus: 'payment_status',
-    editVoucherLine: 'voucher_line',
-    editJvr: 'jvr',
-    editJvrDate: 'jvr_date',
-    editProjectNumber: 'project_number',
-    editCreatedDate: 'created_date',
-    editReceivedPettyCash: 'received_petty_cash',
-    editReceivingDate: 'receiving_date',
-    editReceivedAmount: 'received_amount'
-  };
+    // === CRUD ===
+    async function saveVoucher(formData) {
+      const fieldMap = {
+        editVoucherNumber: 'voucher_number',
+        editVoucherType: 'voucher_type',
+        editVoucherTotal: 'voucher_total',
+        editVoucherStatus: 'voucher_status',
+        editSaasInvoice: 'saas_invoice',
+        editPaymentStatus: 'payment_status',
+        editVoucherLine: 'voucher_line',
+        editJvr: 'jvr',
+        editJvrDate: 'jvr_date',
+        editProjectNumber: 'project_number',
+        editCreatedDate: 'created_date',
+        editReceivedPettyCash: 'received_petty_cash',
+        editReceivingDate: 'receiving_date',
+        editReceivedAmount: 'received_amount'
+      };
 
-  const data = {};
-  for (let [formId, value] of formData.entries()) {
-    if (formId in fieldMap) {
-      data[fieldMap[formId]] = value === '' ? null : value;
+      const data = {};
+      for (let [formId, value] of formData.entries()) {
+        if (formId in fieldMap) {
+          data[fieldMap[formId]] = value === '' ? null : value;
+        }
+      }
+
+      try {
+        let promise = editingId
+          ? supabaseClient.from('vouchers').update(data).eq('id', editingId)
+          : supabaseClient.from('vouchers').insert([data]);
+        const { error } = await promise;
+        if (error) throw error;
+        await fetchData(searchInput.value.trim());
+        editModal.classList.remove('active');
+      } catch (err) {
+        console.error('Save error:', err);
+        alert('Failed to save voucher: ' + (err.message || err.toString()));
+      }
     }
-  }
 
-  try {
-    let promise;
-    if (editingId) {
-      promise = supabaseClient.from('vouchers').update(data).eq('id', editingId);
-    } else {
-      promise = supabaseClient.from('vouchers').insert([data]);
+    async function deleteVoucher(id) {
+      if (!confirm('Delete this voucher?')) return;
+      try {
+        const { error } = await supabaseClient.from('vouchers').delete().eq('id', id);
+        if (error) throw error;
+        await fetchData(searchInput.value.trim());
+      } catch (err) {
+        console.error('Delete error:', err);
+        alert('Failed to delete voucher.');
+      }
     }
-    const { error } = await promise;
-    if (error) throw error;
-    await fetchData(searchInput.value.trim());
-    editModal.classList.remove('active');
-  } catch (err) {
-    console.error('Save error:', err);
-    alert('Failed to save voucher: ' + (err.message || err.toString()));
-  }
-}
 
-async function deleteVoucher(id) {
-  if (!confirm('Delete this voucher?')) return;
-  try {
-    const { error } = await supabaseClient.from('vouchers').delete().eq('id', id);
-    if (error) throw error;
-    await fetchData(searchInput.value.trim());
-  } catch (err) {
-    console.error('Delete error:', err);
-    alert('Failed to delete voucher.');
-  }
-}
+    window.openEditModal = async function(id = null) {
+      editingId = id;
+      modalTitle.textContent = id ? 'Edit Voucher' : 'Add New Voucher';
 
-window.openEditModal = async function(id = null) {
-  editingId = id;
-  modalTitle.textContent = id ? 'Edit Voucher' : 'Add New Voucher';
+      const resetForm = () => {
+        document.getElementById('editVoucherNumber').value = '';
+        document.getElementById('editVoucherType').value = '';
+        document.getElementById('editVoucherTotal').value = '';
+        document.getElementById('editVoucherStatus').value = '';
+        document.getElementById('editSaasInvoice').value = '';
+        document.getElementById('editPaymentStatus').value = 'Not Paid';
+        document.getElementById('editVoucherLine').value = '';
+        document.getElementById('editJvr').value = '';
+        document.getElementById('editJvrDate').value = '';
+        document.getElementById('editProjectNumber').value = '';
+        document.getElementById('editCreatedDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('editReceivedPettyCash').value = 'Not Received';
+        document.getElementById('editReceivingDate').value = '';
+        document.getElementById('editReceivedAmount').value = '';
+      };
 
-  const resetForm = () => {
-    document.getElementById('editVoucherNumber').value = '';
-    document.getElementById('editVoucherType').value = '';
-    document.getElementById('editVoucherTotal').value = '';
-    document.getElementById('editVoucherStatus').value = '';
-    document.getElementById('editSaasInvoice').value = '';
-    document.getElementById('editPaymentStatus').value = 'Not Paid';
-    document.getElementById('editVoucherLine').value = '';
-    document.getElementById('editJvr').value = '';
-    document.getElementById('editJvrDate').value = '';
-    document.getElementById('editProjectNumber').value = '';
-    document.getElementById('editCreatedDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('editReceivedPettyCash').value = 'Not Received';
-    document.getElementById('editReceivingDate').value = '';
-    document.getElementById('editReceivedAmount').value = '';
-  };
+      resetForm();
 
-  resetForm();
+      if (id) {
+        try {
+          const { data, error } = await supabaseClient.from('vouchers').select('*').eq('id', id).single();
+          if (error) throw error;
 
-  if (id) {
-    try {
-      const { data, error } = await supabaseClient
-        .from('vouchers')
-        .select('*')
-        .eq('id', id)
-        .single();
-      if (error) throw error;
+          document.getElementById('editVoucherNumber').value = data.voucher_number || '';
+          document.getElementById('editVoucherType').value = data.voucher_type || '';
+          document.getElementById('editVoucherTotal').value = data.voucher_total || '';
+          document.getElementById('editVoucherStatus').value = data.voucher_status || '';
+          document.getElementById('editSaasInvoice').value = data.saas_invoice || '';
+          document.getElementById('editPaymentStatus').value = data.payment_status || 'Not Paid';
+          document.getElementById('editVoucherLine').value = data.voucher_line || '';
+          document.getElementById('editJvr').value = data.jvr || '';
+          document.getElementById('editJvrDate').value = data.jvr_date || '';
+          document.getElementById('editProjectNumber').value = data.project_number || '';
+          document.getElementById('editCreatedDate').value = data.created_date || '';
+          document.getElementById('editReceivedPettyCash').value = data.received_petty_cash || 'Not Received';
+          document.getElementById('editReceivingDate').value = data.receiving_date || '';
+          document.getElementById('editReceivedAmount').value = data.received_amount || '';
+        } catch (err) {
+          console.error('Load voucher error:', err);
+          alert('Failed to load voucher for editing.');
+          return;
+        }
+      }
 
-      document.getElementById('editVoucherNumber').value = data.voucher_number || '';
-      document.getElementById('editVoucherType').value = data.voucher_type || '';
-      document.getElementById('editVoucherTotal').value = data.voucher_total || '';
-      document.getElementById('editVoucherStatus').value = data.voucher_status || '';
-      document.getElementById('editSaasInvoice').value = data.saas_invoice || '';
-      document.getElementById('editPaymentStatus').value = data.payment_status || 'Not Paid';
-      document.getElementById('editVoucherLine').value = data.voucher_line || '';
-      document.getElementById('editJvr').value = data.jvr || '';
-      document.getElementById('editJvrDate').value = data.jvr_date || '';
-      document.getElementById('editProjectNumber').value = data.project_number || '';
-      document.getElementById('editCreatedDate').value = data.created_date || '';
-      document.getElementById('editReceivedPettyCash').value = data.received_petty_cash || 'Not Received';
-      document.getElementById('editReceivingDate').value = data.receiving_date || '';
-      document.getElementById('editReceivedAmount').value = data.received_amount || '';
-    } catch (err) {
-      console.error('Load voucher error:', err);
-      alert('Failed to load voucher for editing.');
-      return;
+      editModal.classList.add('active');
+    };
+
+    // === Sorting UI ===
+    function attachSortListeners() {
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const field = th.dataset.sort;
+          if (currentSortField === field) {
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentSortField = field;
+            currentSortDirection = 'asc';
+          }
+          updateSortIndicators();
+          fetchData(searchInput.value.trim());
+        });
+      });
     }
-  }
 
-  editModal.classList.add('active');
-};
+    function updateSortIndicators() {
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        const field = th.dataset.sort;
+        th.textContent = th.textContent.replace(/ [▲▼]$/, '');
+        if (currentSortField === field) {
+          th.textContent += currentSortDirection === 'asc' ? ' ▲' : ' ▼';
+        }
+      });
+    }
 
-// === Event Listeners ===
-cancelEditBtn.addEventListener('click', () => {
-  editModal.classList.remove('active');
-});
+    // === Event Listeners ===
+    cancelEditBtn.addEventListener('click', () => {
+      editModal.classList.remove('active');
+    });
 
-editForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  saveVoucher(new FormData(editForm));
-});
+    editForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveVoucher(new FormData(editForm));
+    });
 
-addBtn.addEventListener('click', () => openEditModal());
+    addBtn.addEventListener('click', () => openEditModal());
 
-searchInput.addEventListener('input', (e) => {
-  fetchData(e.target.value.trim());
-});
+    searchInput.addEventListener('input', (e) => {
+      fetchData(e.target.value.trim());
+    });
 
-// === Initial Load ===
-fetchData();
-</script>
+    document.getElementById('dateFilter').addEventListener('change', (e) => {
+      fetchData(searchInput.value.trim());
+    });
+
+    // === Initial Load ===
+    fetchData();
+    attachSortListeners();
+  </script>
 </body>
 </html>
