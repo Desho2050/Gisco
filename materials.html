@@ -64,6 +64,19 @@
     }
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { min-width: 900px; }
+    .sort-indicator {
+  display: inline-block;
+  width: 12px;
+  opacity: 0.4;
+  margin-left: 6px;
+}
+.sort-indicator::after {
+  content: "▲"; /* neutral indicator */
+  color: #ffffff;
+  font-size: larger;
+}
+th[data-sort].asc .sort-indicator::after { content: "↑"; opacity: 1; font-size: larger;}
+th[data-sort].desc .sort-indicator::after { content: "↓"; opacity: 1;font-size: larger; }
   </style>
 </head>
 <body>
@@ -124,19 +137,19 @@
   <section class="table-wrap">
     <table id="dataTable">
       <thead>
-        <tr>
-          <th>REQUEST</th>
-          <th>ORACLE CODE</th>
-          <th>ITEM DESCRIPTION</th>
-          <th>ITEM CATEGORY</th>
-          <th>QTY</th>
-          <th>PRICE</th>
-          <th>JOB NO</th>
-          <th>TOTAL AMOUNT</th>
-          <th>STATUS</th>
-          <th>ORDER</th>
-        </tr>
-      </thead>
+  <tr>
+    <th data-sort="request">REQUEST <span class="sort-indicator"></span></th>
+    <th data-sort="code">ORACLE CODE <span class="sort-indicator"></span></th>
+    <th>ITEM DESCRIPTION</th>
+    <th>ITEM CATEGORY</th>
+    <th>QTY</th>
+    <th>PRICE</th>
+    <th>JOB NO</th>
+    <th>TOTAL AMOUNT</th>
+    <th data-sort="status">STATUS <span class="sort-indicator"></span></th>
+    <th>ORDER</th>
+  </tr>
+</thead>
       <tbody id="tableBody"></tbody>
     </table>
   </section>
@@ -249,8 +262,13 @@
         tr.dataset.total = String(r.total || 0);
         tbody.appendChild(tr);
       }
-      updateCounter(rows.length);
-      updateTotals();
+     updateCounter(rows.length);
+updateTotals();
+
+// Set default sort to "request" ascending
+currentSort = { column: 'request', direction: 'desc' };
+updateSortUI();      // Show ↑ on REQUEST header
+applySort();         // Actually sort the rows
     }
 
     function updateCounter(n){ document.getElementById('resultCount').textContent = String(n); }
@@ -353,6 +371,72 @@
           loadExcel().catch(err => setStatus(`Error loading Materials.xlsx: ${err.message}`, true));
         }
       });
+      // Sorting state
+let currentSort = { column: null, direction: 'asc' };
+
+// Attach sort listeners
+document.querySelectorAll('th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const column = th.dataset.sort;
+    if (currentSort.column === column) {
+      // Toggle direction
+      currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      // New column, default to ascending
+      currentSort.column = column;
+      currentSort.direction = 'asc';
+    }
+    applySort();
+    updateSortUI();
+  });
+});
+
+function applySort() {
+  const tbody = document.getElementById('tableBody');
+  const rows = Array.from(tbody.querySelectorAll('tr')); // ✅ Only tbody rows
+
+  if (rows.length === 0) return;
+
+  const dataRows = rows.map(tr => {
+    const cells = tr.querySelectorAll('td');
+    return {
+      element: tr,
+      request: cells[0]?.textContent.trim() || '',
+      code: cells[1]?.textContent.trim() || '',
+      status: cells[8]?.textContent.trim() || '' // STATUS is 9th column (index 8)
+    };
+  });
+
+  // Sort logic...
+  const { column, direction } = currentSort;
+  const multiplier = direction === 'asc' ? 1 : -1;
+
+  dataRows.sort((a, b) => {
+    let valA, valB;
+
+    if (column === 'request' || column === 'code' || column === 'status') {
+      valA = String(a[column]).toLowerCase();
+      valB = String(b[column]).toLowerCase();
+      return multiplier * valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
+    }
+    return 0;
+  });
+
+  // Re-append rows in new order
+  dataRows.forEach(({ element }) => tbody.appendChild(element));
+  updateTotals();
+}
+function updateSortUI() {
+  // Reset all headers
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.classList.remove('asc', 'desc');
+  });
+  // Highlight current
+  if (currentSort.column) {
+    const th = document.querySelector(`th[data-sort="${currentSort.column}"]`);
+    if (th) th.classList.add(currentSort.direction);
+  }
+}
   </script>
 </body>
 </html>
