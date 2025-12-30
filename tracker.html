@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -914,16 +915,7 @@ const WORK_END_HOUR = 15;    // 03:00 PM
     return;
   }
   
-  // ✅ Validate end time > start time
-  const startParts = openTrip.start_time.split(':').map(Number);
-  const endParts = endTime.split(':').map(Number);
-  const startTotalMins = startParts[0] * 60 + startParts[1];
-  const endTotalMins = endParts[0] * 60 + endParts[1];
-  if (endTotalMins <= startTotalMins) {
-    alert(t.alertEndTimeBeforeStart || "❌ End time must be after start time.");
-    saveBtn.disabled = wasDisabled;
-    return;
-  }
+
 
   // ✅ Now apply your new validation: enforce end time ≤ 15:00 if started ≥ 06:00
   const startHour = parseInt(openTrip.start_time.split(':')[0], 10);
