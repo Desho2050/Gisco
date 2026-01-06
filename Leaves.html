@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Leaves Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f9f9f9;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+    .search-box { margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .search-box input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; min-width: 200px; }
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    #addBtn { background: #28a745; color: white; }
+    #refreshBtn { background: #17a2b8; color: white; }
+
+    .action-btn { padding: 4px 8px; font-size: 12px; margin: 2px; }
+    .edit-btn { background: #ffc107; }
+    .delete-btn { background: #dc3545; color: white; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      background: white;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    th {
+      background: #333;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+    tr:nth-child(even) { background: #f2f2f2; }
+    .leave-days { background: #d4edda; }
+    .exceeds-days { background: #f8d7da; }
+    .resign-days { background: #fff3cd; }
+    .on-time { background: #d4edda; }
+    .overdue { background: #f8d7da; }
+    .pending { background: #fff3cd; }
+
+    .total-row {
+      font-weight: bold;
+      background: #e9ecef;
+    }
+    .total-cell {
+      text-align: center;
+      font-weight: bold;
+    }
+    .loading {
+      text-align: center;
+      padding: 50px;
+      font-size: 18px;
+      color: #666;
+    }
+    .error {
+      color: red;
+      text-align: center;
+      padding: 10px;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 5% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+    }
+    .modal h3 {
+      margin-top: 0;
+    }
+    .modal label {
+      display: inline-block;
+      min-width: 140px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .modal input, .modal select {
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 200px;
+    }
+    .modal-buttons {
+      margin-top: 20px;
+      text-align: right;
+    }
+    .modal-buttons button {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+<div style="margin-bottom: 10px; font-size: 14px; color: #555;">
+  <span>✅ Finished &nbsp;&nbsp; 🔄 In Progress &nbsp;&nbsp; ⏳ Not Started &nbsp;&nbsp; ❓ Incomplete</span>
+</div>
+  <div class="header">
+    <h2>Employee Leaves Dashboard</h2>
+    <div class="controls">
+      <button id="addBtn">➕ Add New</button>
+      <button id="refreshBtn">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search by File No or Name...">
+  </div>
+
+  <!-- Add Form (modal-style inline) -->
+  <div id="addForm" class="modal">
+    <div class="modal-content">
+      <h3>Add New Record</h3>
+      <form id="addRecordForm">
+        <label>File No:</label>
+        <input type="text" id="add_file_no" required><br>
+
+        <label>Name (EN):</label>
+        <input type="text" id="add_name" required><br>
+
+        <label>Name (AR):</label>
+        <input type="text" id="add_name_ar"><br>
+
+        <label>CMW Approval:</label>
+        <select id="add_cmw_approval">
+          <option value="">-- Select --</option>
+          <option value="NOT APPROVED">NOT APPROVED</option>
+          <option value="APPROVED">APPROVED</option>
+          <option value="PENDING APPROVE">PENDING APPROVE</option>
+          <option value="LEAVE APPROVED">LEAVE APPROVED</option>
+        </select><br>
+
+        <label>Status:</label>
+        <select id="add_leave_status" >
+           <option value="-">-</option>
+          <option value="LEAVE">Leave</option>
+          <option value="RESIGNATION">Resignation</option>
+          
+        </select><br>
+
+        <div id="add_leaveFields">
+          <label>Start Date:</label>
+          <input type="date" id="add_start_date"><br>
+          <label>End Date:</label>
+          <input type="date" id="add_end_date"><br>
+          <label>Actual Return:</label>
+          <input type="date" id="add_actual_return"><br>
+        </div>
+          
+        
+
+        <div id="add_resignFields" style="display:none;">
+          <label>Resignation Date:</label>
+          <input type="date" id="add_resignation_date"><br>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" id="cancelAdd">❌ Cancel</button>
+          <button type="submit">✅ Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h3>Edit Record</h3>
+      <form id="editRecordForm">
+        <input type="hidden" id="edit_id">
+        <label>File No:</label>
+        <input type="text" id="edit_file_no" required><br>
+
+        <label>Name (EN):</label>
+        <input type="text" id="edit_name" required><br>
+
+        <label>Name (AR):</label>
+        <input type="text" id="edit_name_ar"><br>
+
+        <label>CMW Approval:</label>
+        <select id="edit_cmw_approval">
+          <option value="">-- Select --</option>
+          <option value="NOT APPROVED">NOT APPROVED</option>
+          <option value="APPROVED">APPROVED</option>
+          <option value="PENDING APPROVE">PENDING APPROVE</option>
+          <option value="LEAVE APPROVED">LEAVE APPROVED</option>
+        </select><br>
+
+        <label>Status:</label>
+        <select id="edit_leave_status" >
+          <option value="">==</option>
+          <option value="LEAVE">Leave</option>
+          <option value="RESIGNATION">Resignation</option>
+        </select><br>
+
+        <div id="edit_leaveFields">
+          <label>Start Date:</label>
+          <input type="date" id="edit_start_date"><br>
+          <label>End Date:</label>
+          <input type="date" id="edit_end_date"><br>
+          <label>Actual Return:</label>
+          <input type="date" id="edit_actual_return"><br>
+        </div>
+
+        <div id="edit_resignFields" style="display:none;">
+          <label>Resignation Date:</label>
+          <input type="date" id="edit_resignation_date"><br>
+        </div>
+
+       
+
+        <div class="modal-buttons">
+          <button type="button" id="cancelEdit">❌ Cancel</button>
+          <button type="submit">💾 Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="errorMessage" class="error" style="display:none;"></div>
+  <div id="loading" class="loading">Loading data...</div>
+  <div id="tableContainer" style="display:none;">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>File No</th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Start / Resign Date</th>
+          <th>End Date</th>
+          <th>Actual Return</th>
+          <th>Leave Days</th>
+          <th>Exceeds Days</th>
+          <th>Days to Resign</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="dataBody"></tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="7" class="total-cell">TOTAL</td>
+          <td id="totalLeaveDays" class="total-cell">0</td>
+          <td id="totalExceedsDays" class="total-cell">0</td>
+          <td id="totalResignDays" class="total-cell">0</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let fullData = []; // Store all records for filtering
+
+    // Toggle form fields
+  function toggleFields(prefix, status) {
+  const leaveFields = document.getElementById(`${prefix}_leaveFields`);
+  const resignFields = document.getElementById(`${prefix}_resignFields`);
+
+  if (status === 'LEAVE') {
+    leaveFields.style.display = 'block';
+    resignFields.style.display = 'none';
+  } else if (status === 'RESIGNATION') {
+    leaveFields.style.display = 'none';
+    resignFields.style.display = 'block';
+  } else {
+    // status is "" (placeholder selected)
+    leaveFields.style.display = 'none';
+    resignFields.style.display = 'none';
+  }
+}
+
+    // Modal controls
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'block';
+    }
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+function getRowPriority(row) {
+  const today = new Date();
+
+  // Handle LEAVE
+  if (row.leave_status === 'LEAVE') {
+    const startDate = row.start_date ? new Date(row.start_date) : null;
+    const endDate = row.end_date ? new Date(row.end_date) : null;
+
+    // Invalid or missing dates → treat as pending/incomplete
+    if (!startDate || !endDate || isNaN(startDate) || isNaN(endDate)) {
+      return 1; // Pending Leave (highest priority)
+    }
+
+    if (startDate > today) {
+      return 1; // Not started yet → Pending
+    } else if (today <= endDate) {
+      return 1; // In progress → Still pending
+    } else {
+      return 3; // Finished
+    }
+  }
+
+  // Handle RESIGNATION
+  if (row.leave_status === 'RESIGNATION') {
+    const resignDate = row.resignation_date ? new Date(row.resignation_date) : null;
+
+    if (!resignDate || isNaN(resignDate)) {
+      return 2; // Treat as pending resignation
+    }
+
+    if (resignDate > today) {
+      return 2; // Resignation pending
+    } else {
+      return 3; // Resignation passed → Finished
+    }
+  }
+
+  // Fallback (should not happen)
+  return 3;
+}
+
+
+    // Event listeners for form toggles
+    document.getElementById('add_leave_status').addEventListener('change', (e) => {
+      toggleFields('add', e.target.value);
+    });
+    document.getElementById('edit_leave_status').addEventListener('change', (e) => {
+      toggleFields('edit', e.target.value);
+    });
+
+    // Show/hide modals
+    document.getElementById('addBtn').addEventListener('click', () => openModal('addForm'));
+    document.getElementById('cancelAdd').addEventListener('click', () => closeModal('addForm'));
+    document.getElementById('cancelEdit').addEventListener('click', () => closeModal('editModal'));
+
+    // Helpers
+    function formatDate(date) {
+      if (!date) return '';
+      const d = new Date(date);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function getDaysBetween(start, end) {
+      const s = new Date(start);
+      const e = new Date(end);
+      const diffTime = Math.abs(e - s);
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function getToday() {
+      return formatDate(new Date());
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMessage');
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 5000);
+    }
+
+    // Filter table based on search input
+    function filterTable() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+      const filtered = searchTerm
+        ? fullData.filter(row =>
+            row.file_no.toLowerCase().includes(searchTerm) ||
+            row.name.toLowerCase().includes(searchTerm)
+          )
+        : fullData;
+      renderTable(filtered);
+    }
+
+    // Render table
+    function renderTable(data) {
+      const dataBody = document.getElementById('dataBody');
+      let totalLeaveDays = 0;
+      let totalExceedsDays = 0;
+      let totalResignDays = 0;
+
+      dataBody.innerHTML = '';
+// Sort by custom priority, then by ID descending within each group
+const sortedData = [...data].sort((a, b) => {
+  const prioA = getRowPriority(a);
+  const prioB = getRowPriority(b);
+
+  if (prioA !== prioB) {
+    return prioA - prioB; // 1 → 2 → 3
+  }
+
+  // Within same group, show newest first (higher ID first)
+  return (b.id || 0) - (a.id || 0);
+});
+      sortedData.forEach(row => {
+        let leaveDays = 0;
+        let exceedsDays = '';
+        let daysToResign = 0;
+        let rowClass = '';
+
+        if (row.leave_status === 'LEAVE') {
+          if (row.start_date && row.end_date) {
+            leaveDays = getDaysBetween(row.start_date, row.end_date);
+            totalLeaveDays += leaveDays;
+          }
+
+          if (row.actual_return) {
+            const actualReturnDate = new Date(row.actual_return);
+            const endDate = new Date(row.end_date);
+            if (actualReturnDate > endDate) {
+              exceedsDays = getDaysBetween(row.end_date, row.actual_return);
+              totalExceedsDays += exceedsDays;
+              rowClass = 'overdue';
+            } else {
+              rowClass = 'on-time';
+            }
+          } else {
+            rowClass = 'pending';
+          }
+        } else if (row.leave_status === 'RESIGNATION') {
+          if (row.resignation_date) {
+            const resignDate = new Date(row.resignation_date);
+            const today = new Date(getToday());
+            if (resignDate <= today) {
+              daysToResign = 0;
+            } else {
+              daysToResign = getDaysBetween(resignDate, today);
+            }
+            totalResignDays += daysToResign;
+          }
+          rowClass = 'resign-days';
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = rowClass;
+        tr.innerHTML = `
+          <td>${row.id || '-'}</td>
+          <td>${row.file_no || '-'}</td>
+          <td>${row.name || '-'}</td>
+          <td>${row.leave_status || '-'}</td>
+         <td>
+  ${(row.start_date || row.resignation_date || '-') +
+    (row.leave_status === 'LEAVE' ? ' ' + getLeaveStatusSymbol(row) : '')}
+</td>
+          <td>${row.end_date || '-'}</td>
+          <td>${row.actual_return || '-'}</td>
+          <td class="leave-days">${leaveDays > 0 ? leaveDays : '-'}</td>
+          <td class="exceeds-days">${exceedsDays !== '' ? exceedsDays : '-'}</td>
+          <td class="resign-days">${daysToResign > 0 ? daysToResign : '-'}</td>
+          <td>
+            <button class="action-btn edit-btn" onclick="openEditModal(${row.id})">✏️</button>
+            <button class="action-btn delete-btn" onclick="deleteRow(${row.id})">🗑️</button>
+          </td>
+        `;
+        dataBody.appendChild(tr);
+      });
+
+      document.getElementById('totalLeaveDays').textContent = totalLeaveDays;
+      document.getElementById('totalExceedsDays').textContent = totalExceedsDays;
+      document.getElementById('totalResignDays').textContent = totalResignDays;
+    }
+
+function getLeaveStatusSymbol(row) {
+  const today = new Date();
+  const startDate = row.start_date ? new Date(row.start_date) : null;
+  const endDate = row.end_date ? new Date(row.end_date) : null;
+  const actualReturn = row.actual_return ? new Date(row.actual_return) : null;
+
+  if (row.leave_status !== 'LEAVE') {
+    return ''; // No symbol for resignation
+  }
+
+  if (startDate < today && endDate < today && !actualReturn) {
+    return '❓'; // Incomplete data
+  }
+
+  if (startDate > today) {
+    return '⏳'; // Not started yet
+  } else if (actualReturn && actualReturn >= endDate) {
+    return '✅'; // Finished (returned on or after end date)
+  } else if (today > endDate) {
+    return '✅'; // Consider finished if past end date (even without actual return)
+  } else {
+    return '🔄'; // In progress (started, but not yet ended)
+  }
+}
+
+    // Load data
+    async function loadLeavesData() {
+      const loading = document.getElementById('loading');
+      const tableContainer = document.getElementById('tableContainer');
+
+      loading.style.display = 'block';
+      tableContainer.style.display = 'none';
+
+      try {
+  let { data, error } = await supabaseClient
+    .from('employee_leaves')
+    .select('*');
+
+  if (error) throw error;
+
+  // Sort locally by ID descending (in case Supabase order doesn't apply due to caching, etc.)
+  fullData = data.sort((a, b) => (a.id || 0) - (b.id || 0));
+
+  filterTable(); // Apply current search (which uses fullData)
+
+  loading.style.display = 'none';
+  tableContainer.style.display = 'block';
+} catch (error) {
+  console.error('Error:', error);
+  showError('Load failed: ' + (error.message || error));
+  loading.style.display = 'none';
+  tableContainer.style.display = 'block';
+}
+    }
+
+    // Open edit modal with pre-filled data
+    window.openEditModal = (id) => {
+      const record = fullData.find(r => r.id === id);
+      if (!record) return;
+
+      document.getElementById('edit_id').value = record.id;
+      document.getElementById('edit_file_no').value = record.file_no || '';
+      document.getElementById('edit_name').value = record.name || '';
+      document.getElementById('edit_name_ar').value = record.name_ar || '';
+      document.getElementById('edit_cmw_approval').value = record.cmw_approval || '';
+      document.getElementById('edit_leave_status').value = record.leave_status || 'LEAVE';
+
+      toggleFields('edit', record.leave_status);
+
+      if (record.leave_status === 'LEAVE') {
+        document.getElementById('edit_start_date').value = record.start_date || '';
+        document.getElementById('edit_end_date').value = record.end_date || '';
+        document.getElementById('edit_actual_return').value = record.actual_return || '';
+      } else if (record.leave_status === 'RESIGNATION') {
+        document.getElementById('edit_resignation_date').value = record.resignation_date || '';
+      }else{
+        
+      }
+
+      openModal('editModal');
+    };
+
+    // Save edit
+    document.getElementById('editRecordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = document.getElementById('edit_id').value;
+      const updates = {
+        file_no: document.getElementById('edit_file_no').value.trim(),
+        name: document.getElementById('edit_name').value.trim(),
+        name_ar: document.getElementById('edit_name_ar').value.trim() || null,
+        cmw_approval: document.getElementById('edit_cmw_approval').value || null,
+        leave_status: document.getElementById('edit_leave_status').value
+      };
+
+      const status = updates.leave_status;
+      if (status === 'LEAVE') {
+        updates.start_date = document.getElementById('edit_start_date').value || null;
+        updates.end_date = document.getElementById('edit_end_date').value || null;
+        updates.actual_return = document.getElementById('edit_actual_return').value || null;
+        updates.resignation_date = null;
+      } else if (status === 'RESIGNATION') {
+        updates.resignation_date = document.getElementById('edit_resignation_date').value || null;
+        updates.start_date = null;
+        updates.end_date = null;
+        updates.actual_return = null;
+      
+      }
+
+      try {
+        const { error } = await supabaseClient
+          .from('employee_leaves')
+          .update(updates)
+          .eq('id', id);
+
+        if (error) throw error;
+
+        closeModal('editModal');
+        loadLeavesData();
+      } catch (err) {
+        showError('Update failed: ' + (err.message || err));
+      }
+    });
+
+    // Add new
+    document.getElementById('addRecordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const record = {
+        file_no: document.getElementById('add_file_no').value.trim(),
+        name: document.getElementById('add_name').value.trim(),
+        name_ar: document.getElementById('add_name_ar').value.trim() || null,
+        cmw_approval: document.getElementById('add_cmw_approval').value || null,
+        leave_status: document.getElementById('add_leave_status').value
+      };
+
+      const status = record.leave_status;
+      if (status === 'LEAVE') {
+        record.start_date = document.getElementById('add_start_date').value || null;
+        record.end_date = document.getElementById('add_end_date').value || null;
+        record.actual_return = document.getElementById('add_actual_return').value || null;
+      } else if (status === 'RESIGNATION') {
+        record.resignation_date = document.getElementById('add_resignation_date').value || null;
+      
+      }
+
+      try {
+        const { error } = await supabaseClient
+          .from('employee_leaves')
+          .insert([record]);
+
+        if (error) throw error;
+
+        closeModal('addForm');
+        document.getElementById('addRecordForm').reset();
+        loadLeavesData();
+      } catch (err) {
+        showError('Add failed: ' + (err.message || err));
+      }
+    });
+
+    // Delete
+    window.deleteRow = async (id) => {
+      if (!confirm('Delete this record? This cannot be undone.')) return;
+      try {
+        const { error } = await supabaseClient
+          .from('employee_leaves')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+        loadLeavesData();
+      } catch (err) {
+        showError('Delete failed: ' + (err.message || err));
+      }
+    };
+
+    // Search
+    document.getElementById('searchInput').addEventListener('input', filterTable);
+
+  
+
+    // Initial load
+    window.addEventListener('DOMContentLoaded', loadLeavesData);
+  </script>
+</body>
+</html>
