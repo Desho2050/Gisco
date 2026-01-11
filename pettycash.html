@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Petty Cash 4378M</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
- 
+ <!-- Excel Export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- PDF Export (jsPDF + html2canvas) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
       --primary: #3b82f6;
@@ -19,6 +24,12 @@
       --border: #e5e7eb;
       --shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
+
+.amount-mismatch {
+  background-color: #fee2e2 !important; /* Light red background */
+  color: var(--danger) !important;
+  font-weight: bold;
+}
 
     * {
       box-sizing: border-box;
@@ -278,7 +289,15 @@ td:nth-child(4) {
   .form-grid {
     gap: 0.75rem;
   }
-
+/* Add to your <style> */
+.btn-print, .btn-excel, .btn-pdf {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  color: white;
+}
   input, select {
     font-size: 1rem; /* Prevents iOS zoom on input focus */
     padding: 0.625rem;
@@ -306,6 +325,26 @@ td:nth-child(4) {
   color:#28da04; /* RED */
  
 }
+.btn-attachment {
+  background-color: #f9fafb;
+  color: var(--primary);
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.btn-attachment:hover {
+  background-color: #e5e7eb;
+}
+.submitted-amount { 
+  color: var(--warning); 
+  font-weight: bold; 
+  font-size: 1.25rem; 
+}
+
 /* Row highlighting */
 tr.paid-received {
   background-color: #58f085; /* light green */
@@ -321,6 +360,63 @@ tr.rejected {
   font-weight: bold;
   font-size: 1.25rem;
 }
+/* Attachment Modal */
+.attachment-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.attachment-modal.active {
+  display: flex;
+}
+
+.attachment-content {
+  width: 90%;
+  max-width: 1000px;
+  height: 90vh;
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.attachment-content iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.close-attachment {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.no-attachment {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: var(--gray);
+  font-size: 1.25rem;
+}
   </style>
 </head>
 <body>
@@ -330,7 +426,12 @@ tr.rejected {
     </header>
 
     <button id="addBtn" class="btn-add">+ Add New Voucher</button>
-
+<!-- Export & Print Buttons -->
+<div style="display: flex; gap: 0.75rem; margin: 1rem 0;">
+  <button id="printBtn" class="btn-add" style="background-color: #6b7280;">🖨️ Print</button>
+  <button id="exportExcelBtn" class="btn-add" style="background-color: #10b981;">📊 Export Excel</button>
+  <button id="exportPdfBtn" class="btn-add" style="background-color: #ef4444;">📄 Export PDF</button>
+</div>
     <!-- Search Bar -->
     <div class="search-bar">
       <input type="text" id="searchInput" placeholder="Search any field..." />
@@ -348,23 +449,26 @@ tr.rejected {
 
     <!-- Summary Cards -->
     <div class="summary">
-     
-      <div class="card">
-        <h3>Fully Received Amount</h3>
-        <p class="received" id="fullyReceivedAmount">0.00</p>
+    <div class="card">
+        <h3>Total Submitted Amount</h3>
+        <p class="total-amount" id="totalAmount">0.00</p>
       </div>
       <div class="card">
         <h3>Rejected Amount</h3>
         <p class="rejected" id="rejectedAmount">0.00</p>
       </div>
       <div class="card">
-        <h3>Total Voucher Count</h3>
+        <h3>Fully Received Amount</h3>
+        <p class="received" id="fullyReceivedAmount">0.00</p>
+      </div>
+
+
+      
+      <div class="card">
+        <h3>Count of Submitted Vouchers</h3>
         <p class="total-count" id="totalCount">0</p>
       </div>
-      <div class="card">
-        <h3>Total Voucher Value</h3>
-        <p class="total-amount" id="totalAmount">0.00</p>
-      </div>
+      
        <div class="card">
         <h3>APPROVED Amount</h3>
         <p class="pending" id="pendingAmount">0.00</p>
@@ -378,25 +482,27 @@ tr.rejected {
     <!-- Table -->
     <div class="table-container">
       <table id="vouchersTable">
-        <thead>
-          <tr>
-            <th data-sort="voucher_number">Voucher # ▲</th>
-            <th data-sort="voucher_type">Type ▲</th>
-            <th>Total</th>
-            <th>Status</th>
-            <th data-sort="saas_invoice">SAAS Invoice ▲</th>
-            <th data-sort="payment_status">Payment Status ▲</th>
-            <th>Line</th>
-            <th>JVR</th>
-            <th>JVR Date</th>
-            <th>Project #</th>
-            <th>Created</th>
-            <th>Petty Cash</th>
-            <th data-sort="receiving_date">Receiving Date ▲</th>
-            <th>Received Amt</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+  <thead>
+  <tr>
+    <th data-sort="voucher_number">Voucher # ▲</th>
+    <th data-sort="voucher_type">Type ▲</th>
+    <th>Total</th>
+    <th>Status</th>
+    <th data-sort="saas_invoice">SAAS Invoice ▲</th>
+    <th data-sort="payment_status">Payment Status ▲</th>
+    <th>Line</th>
+    <th>JVR</th>
+    <th>JVR Date</th>
+    <th>Project #</th>
+    <th>Created</th>
+    <th>Petty Cash</th>
+    <th data-sort="receiving_date">Receiving Date ▲</th>
+    <th>Received Amt</th>
+    <th>Notes</th>
+    <th>Attachment</th>
+    <th>Actions</th>
+  </tr>
+</thead>
         <tbody id="tableBody">
           <!-- Rows inserted by JS -->
         </tbody>
@@ -461,6 +567,7 @@ tr.rejected {
           </div>
           <div><label>Receiving Date</label><input type="date" id="editReceivingDate" name="editReceivingDate" /></div>
           <div><label>Received Amount</label><input type="number" step="0.01" id="editReceivedAmount" name="editReceivedAmount" /></div>
+          <div><label>Notes</label><textarea id="editNotes" name="editNotes" rows="3" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.25rem; font-size:0.875rem;"></textarea></div>
         </div>
         <div class="form-actions">
           <button type="button" id="cancelEdit" class="btn-cancel">Cancel</button>
@@ -469,7 +576,12 @@ tr.rejected {
       </form>
     </div>
   </div>
-
+ <!-- Attachment Modal -->
+<div id="attachmentModal" class="attachment-modal">
+  <div class="attachment-content">
+    <button class="close-attachment" id="closeAttachment">&times;</button>
+    <div id="attachmentPlaceholder" class="no-attachment">No attachment available</div>
+  </div>
   <script>
     // Supabase config (cleaned)
     const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
@@ -490,6 +602,7 @@ tr.rejected {
     const totalCountEl = document.getElementById('totalCount');
     const totalAmountEl = document.getElementById('totalAmount');
 const notApprovedAmountEl = document.getElementById('notApprovedAmount');
+
     let editingId = null;
     let allVouchers = [];
     let currentSortField = null;
@@ -516,7 +629,46 @@ const notApprovedAmountEl = document.getElementById('notApprovedAmount');
         alert('Failed to load data: ' + (err.message || err.toString()));
       }
     }
+// Global variable for attachment modal
+const attachmentModal = document.getElementById('attachmentModal');
+const attachmentPlaceholder = document.getElementById('attachmentPlaceholder');
+const closeAttachmentBtn = document.getElementById('closeAttachment');
 
+// Function to open attachment modal
+window.openAttachment = function(saasInvoice) {
+  // Clear previous content
+  attachmentPlaceholder.innerHTML = '';
+  
+  // Create iframe for PDF
+  const iframe = document.createElement('iframe');
+  iframe.src = `${saasInvoice}.pdf`;
+  iframe.style.width = '100%';
+  iframe.style.height = '100%';
+  iframe.style.border = 'none';
+  
+  // Handle PDF not found
+  iframe.onerror = function() {
+    attachmentPlaceholder.innerHTML = '<div class="no-attachment">PDF file not found</div>';
+  };
+  
+  attachmentPlaceholder.appendChild(iframe);
+  attachmentModal.classList.add('active');
+};
+
+// Close attachment modal
+closeAttachmentBtn.addEventListener('click', () => {
+  attachmentModal.classList.remove('active');
+  // Clear iframe to stop loading
+  attachmentPlaceholder.innerHTML = '<div class="no-attachment">No attachment available</div>';
+});
+
+// Close modal when clicking outside
+attachmentModal.addEventListener('click', (e) => {
+  if (e.target === attachmentModal) {
+    attachmentModal.classList.remove('active');
+    attachmentPlaceholder.innerHTML = '<div class="no-attachment">No attachment available</div>';
+  }
+});
     function populateDateFilter(data) {
       const dateSet = new Set();
       data.forEach(row => {
@@ -533,6 +685,81 @@ const notApprovedAmountEl = document.getElementById('notApprovedAmount');
         dateFilter.appendChild(option);
       });
     }
+
+// ===== PRINT =====
+document.getElementById('printBtn').addEventListener('click', () => {
+  const printWindow = window.open('', '_blank');
+  // Clone the table and remove attachment column for printing
+  const tableClone = document.querySelector('.table-container table').cloneNode(true);
+  const rows = tableClone.querySelectorAll('tr');
+  rows.forEach(row => {
+    // Remove the second-to-last column (Attachment column)
+    const cells = row.querySelectorAll('th, td');
+    if (cells.length >= 2) {
+      cells[cells.length - 2].remove(); // Remove attachment column
+    }
+  });
+  
+  const tableHtml = tableClone.outerHTML;
+  const summaryHtml = document.querySelector('.summary').outerHTML;
+  const title = document.querySelector('h1').outerHTML;
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Print Vouchers</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+          .card { background: #f9fafb; padding: 0.75rem; border-radius: 0.375rem; }
+          table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+          th { background-color: #f1f1f1; }
+          @media print {
+            body { padding: 0; }
+            button { display: none; }
+          }
+        <\/style>
+      <\/head>
+      <body>
+        ${title}
+        ${summaryHtml}
+        ${tableHtml}
+        <script>
+          window.onload = () => window.print();
+        <\/script>
+        
+      <\/body>
+    <\/html>
+  `);
+  printWindow.document.close();
+});
+// ===== EXPORT TO EXCEL =====
+document.getElementById('exportExcelBtn').addEventListener('click', () => {
+  const table = document.getElementById('vouchersTable');
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Vouchers" });
+  XLSX.writeFile(wb, `Vouchers_${new Date().toISOString().slice(0,10)}.xlsx`);
+});
+
+// ===== EXPORT TO PDF =====
+document.getElementById('exportPdfBtn').addEventListener('click', async () => {
+  alert('Preparing PDF... This may take a few seconds.');
+  
+  const element = document.querySelector('.table-container');
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    logging: false
+  });
+
+  const imgData = canvas.toDataURL('image/png');
+  const pdf = new jspdf.jsPDF('l', 'mm', [canvas.width * 0.264583, canvas.height * 0.264583]); // Convert px to mm
+  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width * 0.264583, canvas.height * 0.264583);
+  
+  pdf.save(`Vouchers_${new Date().toISOString().slice(0,10)}.pdf`);
+});
+
 
     function applyFilters(data, searchTerm, selectedDate) {
       return data.filter(row => {
@@ -590,55 +817,72 @@ const notApprovedAmountEl = document.getElementById('notApprovedAmount');
     }
 
     function renderTable(data) {
-      tableBody.innerHTML = '';
-      if (data.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="15" style="text-align:center;padding:1rem;color:#6b7280;">No records found.</td></tr>`;
-        return;
-      }
+  tableBody.innerHTML = '';
+  if (data.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="17" style="text-align:center;padding:1rem;color:#6b7280;">No records found.</td></tr>`;
+    return;
+  }
 
-      data.forEach(v => {
-        let rowClass = '';
-        const paymentStatus = (v.payment_status || '').trim();
-        const pettyCashStatus = (v.received_petty_cash || '').trim();
-        const voucherStatus = (v.voucher_status || '').trim();
+  data.forEach(v => {
+    let rowClass = '';
+    const paymentStatus = (v.payment_status || '').trim();
+    const pettyCashStatus = (v.received_petty_cash || '').trim();
+    const voucherStatus = (v.voucher_status || '').trim();
 
-        if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
-          rowClass = 'paid-received';
-        } else if (/reject/i.test(paymentStatus) || /reject/i.test(voucherStatus)) {
-          rowClass = 'rejected';
-        }
-
-        const row = document.createElement('tr');
-        row.className = rowClass;
-        row.innerHTML = `
-          <td>${v.voucher_number || '-'}</td>
-          <td>${v.voucher_type || '-'}</td>
-          <td>${v.voucher_total ? parseFloat(v.voucher_total).toFixed(2) : '0.00'}</td>
-          <td>${v.voucher_status || '-'}</td>
-          <td>${v.saas_invoice || '-'}</td>
-          <td>${v.payment_status || '-'}</td>
-          <td>${v.voucher_line || '-'}</td>
-          <td>${v.jvr || '-'}</td>
-          <td>${v.jvr_date || '-'}</td>
-          <td>${v.project_number || '-'}</td>
-          <td>${v.created_date || '-'}</td>
-          <td>${v.received_petty_cash || '-'}</td>
-          <td>${v.receiving_date || '-'}</td>
-          <td>${v.received_amount ? parseFloat(v.received_amount).toFixed(2) : '-'}</td>
-          <td class="actions-cell">
-            <button class="btn-edit" onclick="openEditModal(${v.id})">Edit</button>
-            <button class="btn-delete" onclick="deleteVoucher(${v.id})">Delete</button>
-          </td>
-        `;
-        tableBody.appendChild(row);
-      });
+    if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
+      rowClass = 'paid-received';
+    } else if (/reject/i.test(paymentStatus) || /reject/i.test(voucherStatus)) {
+      rowClass = 'rejected';
     }
 
-    function calculateSummary(data) {
+    const total = parseFloat(v.voucher_total) || 0;
+    const received = parseFloat(v.received_amount) || 0;
+    const amountMismatch = received !== total;
+
+    // Check if SAAS Invoice exists and create attachment button
+    const saasInvoice = v.saas_invoice || '';
+    let attachmentCell = '<td>-</td>';
+    
+    if (saasInvoice.trim() !== '') {
+      attachmentCell = `<td><button class="btn-attachment" onclick="openAttachment('${saasInvoice.trim()}')">📄 View</button></td>`;
+    }
+
+    const row = document.createElement('tr');
+    row.className = rowClass;
+    row.innerHTML = `
+      <td>${v.voucher_number || '-'}</td>
+      <td>${v.voucher_type || '-'}</td>
+      <td>${total.toFixed(2)}</td>
+      <td>${v.voucher_status || '-'}</td>
+      <td>${saasInvoice || '-'}</td>
+      <td>${v.payment_status || '-'}</td>
+      <td>${v.voucher_line || '-'}</td>
+      <td>${v.jvr || '-'}</td>
+      <td>${v.jvr_date || '-'}</td>
+      <td>${v.project_number || '-'}</td>
+      <td>${v.created_date || '-'}</td>
+      <td>${v.received_petty_cash || '-'}</td>
+      <td>${v.receiving_date || '-'}</td>
+      <td class="${amountMismatch ? 'amount-mismatch' : ''}">
+        ${received > 0 ? received.toFixed(2) : '-'}
+      </td>
+      <td>${v.notes || '-'}</td>
+      ${attachmentCell}
+      <td class="actions-cell">
+        <button class="btn-edit" onclick="openEditModal(${v.id})">Edit</button>
+        <button class="btn-delete" onclick="deleteVoucher(${v.id})">Delete</button>
+      </td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+ function calculateSummary(data) {
   let pending = 0;
   let received = 0;
   let rejected = 0;
-  let notApproved = 0; // <-- NEW
+  let notApproved = 0;
+
   let totalCount = data.length;
   let totalAmount = 0;
 
@@ -649,34 +893,32 @@ const notApprovedAmountEl = document.getElementById('notApprovedAmount');
     const voucherStatus = (v.voucher_status || '').trim();
     const pettyCashStatus = v.received_petty_cash;
 
+    totalAmount += total;
+
+  
+
     // Check if rejected (case-insensitive)
     const isRejected = /reject/i.test(paymentStatus) || /reject/i.test(voucherStatus);
-
-    totalAmount += total;
 
     if (isRejected) {
       rejected += total;
     } else if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
       received += receivedAmt || total;
     } else if (voucherStatus === 'FINANCE APPROVED' && pettyCashStatus !== 'Received') {
-      pending += total ;
+      pending += total;
     }
 
-    // NEW: Calculate "Not Approved"
-    const isFinanceApproved = voucherStatus === 'FINANCE APPROVED';
-    if (!isFinanceApproved && !isRejected) {
-      notApproved += total;
-    }
+  
   });
 
   pendingAmountEl.textContent = pending.toFixed(2);
   fullyReceivedAmountEl.textContent = received.toFixed(2);
   rejectedAmountEl.textContent = rejected.toFixed(2);
-  notApprovedAmountEl.textContent = notApproved.toFixed(2); // <-- NEW
+  notApprovedAmountEl.textContent = notApproved.toFixed(2);
   totalCountEl.textContent = totalCount;
   totalAmountEl.textContent = totalAmount.toFixed(2);
-}
 
+}
     // === CRUD ===
     async function saveVoucher(formData) {
       const fieldMap = {
@@ -693,7 +935,8 @@ const notApprovedAmountEl = document.getElementById('notApprovedAmount');
         editCreatedDate: 'created_date',
         editReceivedPettyCash: 'received_petty_cash',
         editReceivingDate: 'receiving_date',
-        editReceivedAmount: 'received_amount'
+        editReceivedAmount: 'received_amount',
+        editNotes: 'notes'
       };
 
       const data = {};
@@ -748,6 +991,7 @@ const notApprovedAmountEl = document.getElementById('notApprovedAmount');
         document.getElementById('editReceivedPettyCash').value = 'Not Received';
         document.getElementById('editReceivingDate').value = '';
         document.getElementById('editReceivedAmount').value = '';
+        document.getElementById('editNotes').value = '';
       };
 
       resetForm();
@@ -771,6 +1015,7 @@ const notApprovedAmountEl = document.getElementById('notApprovedAmount');
           document.getElementById('editReceivedPettyCash').value = data.received_petty_cash || 'Not Received';
           document.getElementById('editReceivingDate').value = data.receiving_date || '';
           document.getElementById('editReceivedAmount').value = data.received_amount || '';
+          document.getElementById('editNotes').value = data.notes || '';
         } catch (err) {
           console.error('Load voucher error:', err);
           alert('Failed to load voucher for editing.');
@@ -832,5 +1077,7 @@ const notApprovedAmountEl = document.getElementById('notApprovedAmount');
     fetchData();
     attachSortListeners();
   </script>
+ 
+</div>
 </body>
 </html>
