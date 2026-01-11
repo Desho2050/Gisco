@@ -422,7 +422,7 @@ tr.rejected {
 <body>
   <div class="container">
     <header>
-      <h1>Voucher Management System</h1>
+      <h1>4378M Petty Cash Management </h1>
     </header>
 
     <button id="addBtn" class="btn-add">+ Add New Voucher</button>
@@ -466,7 +466,7 @@ tr.rejected {
       
       <div class="card">
         <h3>Count of Submitted Vouchers</h3>
-        <p class="total-count" id="totalCount">0</p>
+        <p class="total-count" id="totalCount" >0</p>
       </div>
       
        <div class="card">
@@ -541,6 +541,7 @@ tr.rejected {
               <option value="HR APPROVED">HR APPROVED</option>
               <option value="FINANCE REJECTED">FINANCE REJECTED</option>
               <option value="HR REJECTED">HR REJECTED</option>
+              <option value="HR1 REJECTED">HR1 REJECTED</option>
             </select>
           </div>
           <div><label>SAAS Invoice</label><input type="text" id="editSaasInvoice" name="editSaasInvoice" /></div>
@@ -581,7 +582,19 @@ tr.rejected {
   <div class="attachment-content">
     <button class="close-attachment" id="closeAttachment">&times;</button>
     <div id="attachmentPlaceholder" class="no-attachment">No attachment available</div>
+  </div> <!-- Attachment Modal -->
+<div id="attachmentModal" class="attachment-modal">
+  <div class="attachment-content">
+    <button class="close-attachment" id="closeAttachment">&times;</button>
+    <div id="attachmentPlaceholder" class="no-attachment">No attachment available</div>
   </div>
+</div>
+
+<script>
+  // ... your JavaScript code
+</script>
+ 
+</body>
   <script>
     // Supabase config (cleaned)
     const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
@@ -689,19 +702,60 @@ attachmentModal.addEventListener('click', (e) => {
 // ===== PRINT =====
 document.getElementById('printBtn').addEventListener('click', () => {
   const printWindow = window.open('', '_blank');
-  // Clone the table and remove attachment column for printing
+  
+  // Clone the table and remove specific columns for printing
   const tableClone = document.querySelector('.table-container table').cloneNode(true);
-  const rows = tableClone.querySelectorAll('tr');
-  rows.forEach(row => {
-    // Remove the second-to-last column (Attachment column)
-    const cells = row.querySelectorAll('th, td');
-    if (cells.length >= 2) {
-      cells[cells.length - 2].remove(); // Remove attachment column
+  const headerRow = tableClone.querySelector('thead tr');
+  const dataRows = tableClone.querySelectorAll('tbody tr');
+  
+  // Find column indices to remove based on header text
+  const headers = Array.from(headerRow.querySelectorAll('th'));
+  const columnsToRemove = [];
+  
+  headers.forEach((header, index) => {
+    const headerText = header.textContent.trim().toLowerCase();
+    // Check for columns to exclude
+    if (headerText.includes('project #') || 
+        headerText.includes('attachment') || 
+        headerText.includes('actions')) {
+      columnsToRemove.push(index);
+    }
+  });
+  
+  // Remove columns from right to left to maintain correct indices
+  columnsToRemove.sort((a, b) => b - a); // Sort in descending order
+  
+  // Remove from header row
+  columnsToRemove.forEach(colIndex => {
+    const headerCells = headerRow.querySelectorAll('th');
+    if (headerCells[colIndex]) {
+      headerCells[colIndex].remove();
+    }
+  });
+  
+  // Remove from data rows
+  dataRows.forEach(row => {
+    columnsToRemove.forEach(colIndex => {
+      const dataCells = row.querySelectorAll('td');
+      if (dataCells[colIndex]) {
+        dataCells[colIndex].remove();
+      }
+    });
+  });
+  
+  // Clone and modify summary section to exclude "Count of Submitted Voucher"
+  const summaryClone = document.querySelector('.summary').cloneNode(true);
+  const summaryCards = summaryClone.querySelectorAll('.card');
+  
+  summaryCards.forEach(card => {
+    const cardTitle = card.querySelector('h3');
+    if (cardTitle && cardTitle.textContent.trim() === 'Count of Submitted Vouchers') {
+      card.remove();
     }
   });
   
   const tableHtml = tableClone.outerHTML;
-  const summaryHtml = document.querySelector('.summary').outerHTML;
+  const summaryHtml = summaryClone.outerHTML;
   const title = document.querySelector('h1').outerHTML;
 
   printWindow.document.write(`
@@ -729,37 +783,327 @@ document.getElementById('printBtn').addEventListener('click', () => {
         <script>
           window.onload = () => window.print();
         <\/script>
-        
       <\/body>
     <\/html>
   `);
   printWindow.document.close();
 });
-// ===== EXPORT TO EXCEL =====
+// ===== EXPORT TO EXCEL (with enhanced formatting and totals) =====
 document.getElementById('exportExcelBtn').addEventListener('click', () => {
+  // Clone the table for modification
   const table = document.getElementById('vouchersTable');
-  const wb = XLSX.utils.table_to_book(table, { sheet: "Vouchers" });
-  XLSX.writeFile(wb, `Vouchers_${new Date().toISOString().slice(0,10)}.xlsx`);
-});
-
-// ===== EXPORT TO PDF =====
-document.getElementById('exportPdfBtn').addEventListener('click', async () => {
-  alert('Preparing PDF... This may take a few seconds.');
+  const tableClone = table.cloneNode(true);
   
-  const element = document.querySelector('.table-container');
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    logging: false
+  // Remove columns: Project #, Attachment, Actions (same as print)
+  const headerRow = tableClone.querySelector('thead tr');
+  const dataRows = tableClone.querySelectorAll('tbody tr');
+  
+  // Find column indices to remove based on header text
+  const headers = Array.from(headerRow.querySelectorAll('th'));
+  const columnsToRemove = [];
+  
+  headers.forEach((header, index) => {
+    const headerText = header.textContent.trim().toLowerCase();
+    if (headerText.includes('project #') || 
+        headerText.includes('attachment') || 
+        headerText.includes('actions')) {
+      columnsToRemove.push(index);
+    }
   });
-
-  const imgData = canvas.toDataURL('image/png');
-  const pdf = new jspdf.jsPDF('l', 'mm', [canvas.width * 0.264583, canvas.height * 0.264583]); // Convert px to mm
-  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width * 0.264583, canvas.height * 0.264583);
   
-  pdf.save(`Vouchers_${new Date().toISOString().slice(0,10)}.pdf`);
+  // Remove columns from right to left
+  columnsToRemove.sort((a, b) => b - a);
+  
+  // Remove from header row
+  columnsToRemove.forEach(colIndex => {
+    const headerCells = headerRow.querySelectorAll('th');
+    if (headerCells[colIndex]) {
+      headerCells[colIndex].remove();
+    }
+  });
+  
+  // Remove from data rows and collect numeric data for totals
+  const numericColumns = [2, 12]; // Total (index 2) and Received Amt (index 12) after column removal
+  const columnTotals = {};
+  numericColumns.forEach(col => columnTotals[col] = 0);
+  
+  dataRows.forEach(row => {
+    columnsToRemove.forEach(colIndex => {
+      const dataCells = row.querySelectorAll('td');
+      if (dataCells[colIndex]) {
+        dataCells[colIndex].remove();
+      }
+    });
+    
+    // Calculate totals for numeric columns
+    numericColumns.forEach(colIndex => {
+      const cells = row.querySelectorAll('td');
+      if (cells[colIndex]) {
+        const cellText = cells[colIndex].textContent.trim();
+        if (cellText && cellText !== '-' && !isNaN(cellText)) {
+          columnTotals[colIndex] += parseFloat(cellText);
+        }
+      }
+    });
+  });
+  
+  // Create total row
+  const totalRow = document.createElement('tr');
+  const totalCells = headerRow.querySelectorAll('th');
+  
+  totalCells.forEach((header, index) => {
+    const cell = document.createElement('td');
+    if (index === 0) {
+      cell.textContent = 'TOTAL';
+    } else if (numericColumns.includes(index)) {
+      cell.textContent = columnTotals[index].toFixed(2);
+    } else {
+      cell.textContent = '';
+    }
+    totalRow.appendChild(cell);
+  });
+  
+  // Add total row to table
+  tableClone.querySelector('tbody').appendChild(totalRow);
+  
+  // Convert to workbook
+  const wb = XLSX.utils.table_to_book(tableClone, { sheet: "Vouchers" });
+  
+  // Get the first worksheet
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  
+  // Apply number formatting to numeric columns
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  
+  // Format Total column (column C, index 2)
+  for (let R = range.s.r + 1; R <= range.e.r - 1; R++) { // Exclude total row from this loop
+    const cellAddress = XLSX.utils.encode_cell({ c: 2, r: R });
+    if (ws[cellAddress]) {
+      ws[cellAddress].z = '#,##0.00'; // Number format with 2 decimals
+    }
+  }
+  
+  // Format Received Amt column (column M, index 12)
+  for (let R = range.s.r + 1; R <= range.e.r - 1; R++) { // Exclude total row from this loop
+    const cellAddress = XLSX.utils.encode_cell({ c: 12, r: R });
+    if (ws[cellAddress]) {
+      ws[cellAddress].z = '#,##0.00'; // Number format with 2 decimals
+    }
+  }
+  
+  // Get total row index
+  const totalRowIndex = range.e.r;
+  
+  // Apply formatting to header row (first row)
+  const headerRowIndex = range.s.r;
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    const cellAddress = XLSX.utils.encode_cell({ c: C, r: headerRowIndex });
+    if (!ws[cellAddress]) {
+      ws[cellAddress] = { t: 's', v: '' };
+    }
+    ws[cellAddress].s = {
+      font: {
+        bold: true,
+        color: { rgb: "FFFFFF" }, // White text
+        sz: 14 // Font size 14
+      },
+      fill: {
+        fgColor: { rgb: "000000" } // Black background
+      }
+    };
+  }
+  
+  // Apply formatting to total row (last row)
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    const cellAddress = XLSX.utils.encode_cell({ c: C, r: totalRowIndex });
+    if (!ws[cellAddress]) {
+      ws[cellAddress] = { t: 's', v: '' };
+    }
+    // Apply number formatting to numeric columns in total row
+    if (numericColumns.includes(C)) {
+      ws[cellAddress].z = '#,##0.00';
+    }
+    ws[cellAddress].s = {
+      font: {
+        bold: true,
+        color: { rgb: "FFFFFF" }, // White text
+        sz: 14 // Font size 14
+      },
+      fill: {
+        fgColor: { rgb: "000000" } // Black background
+      }
+    };
+  }
+  
+  // Auto-fit column widths (basic implementation)
+  const colWidths = [];
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    let maxWidth = 12; // Minimum width to accommodate larger font
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      const cellAddress = XLSX.utils.encode_cell({ c: C, r: R });
+      if (ws[cellAddress] && ws[cellAddress].v) {
+        const cellWidth = String(ws[cellAddress].v).length;
+        maxWidth = Math.max(maxWidth, cellWidth);
+      }
+    }
+    colWidths.push({ wch: Math.min(maxWidth + 2, 50) }); // Max width of 50
+  }
+  ws['!cols'] = colWidths;
+  
+  // Save file
+  XLSX.writeFile(wb, `PettyCash_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
 });
 
+// ===== EXPORT TO PDF (Printable Report) =====
+document.getElementById('exportPdfBtn').addEventListener('click', async () => {
+  // Show loading message
+  alert('Generating PDF report... This may take a few seconds.');
+  
+  try {
+    // Create a clean container for PDF content
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
+    pdfContainer.style.padding = '20px';
+    pdfContainer.style.width = '100%';
+    
+    // Add title
+    const title = document.querySelector('h1').cloneNode(true);
+    pdfContainer.appendChild(title);
+    
+    // Clone and modify summary section (exclude "Count of Submitted Vouchers")
+    const summaryClone = document.querySelector('.summary').cloneNode(true);
+    const summaryCards = summaryClone.querySelectorAll('.card');
+    
+    summaryCards.forEach(card => {
+      const cardTitle = card.querySelector('h3');
+      if (cardTitle && cardTitle.textContent.trim() === 'Count of Submitted Vouchers') {
+        card.remove();
+      }
+    });
+    
+    // Style summary for PDF
+    summaryClone.style.display = 'grid';
+    summaryClone.style.gridTemplateColumns = 'repeat(auto-fit, minmax(150px, 1fr))';
+    summaryClone.style.gap = '1rem';
+    summaryClone.style.marginBottom = '1.5rem';
+    
+    summaryCards.forEach(card => {
+      card.style.background = '#f9fafb';
+      card.style.padding = '0.75rem';
+      card.style.borderRadius = '0.375rem';
+    });
+    
+    pdfContainer.appendChild(summaryClone);
+    
+    // Clone and modify table (exclude Project #, Attachment, Actions columns)
+    const tableClone = document.querySelector('.table-container table').cloneNode(true);
+    const headerRow = tableClone.querySelector('thead tr');
+    const dataRows = tableClone.querySelectorAll('tbody tr');
+    
+    // Find column indices to remove based on header text
+    const headers = Array.from(headerRow.querySelectorAll('th'));
+    const columnsToRemove = [];
+    
+    headers.forEach((header, index) => {
+      const headerText = header.textContent.trim().toLowerCase();
+      if (headerText.includes('project #') || 
+          headerText.includes('attachment') || 
+          headerText.includes('actions')) {
+        columnsToRemove.push(index);
+      }
+    });
+    
+    // Remove columns from right to left
+    columnsToRemove.sort((a, b) => b - a);
+    
+    // Remove from header row
+    columnsToRemove.forEach(colIndex => {
+      const headerCells = headerRow.querySelectorAll('th');
+      if (headerCells[colIndex]) {
+        headerCells[colIndex].remove();
+      }
+    });
+    
+    // Remove from data rows
+    dataRows.forEach(row => {
+      columnsToRemove.forEach(colIndex => {
+        const dataCells = row.querySelectorAll('td');
+        if (dataCells[colIndex]) {
+          dataCells[colIndex].remove();
+        }
+      });
+    });
+    
+    // Style table for PDF
+    tableClone.style.width = '100%';
+    tableClone.style.borderCollapse = 'collapse';
+    tableClone.style.marginTop = '1rem';
+    
+    const allCells = tableClone.querySelectorAll('th, td');
+    allCells.forEach(cell => {
+      cell.style.border = '1px solid #ddd';
+      cell.style.padding = '8px';
+      cell.style.textAlign = 'left';
+      cell.style.fontSize = '12px';
+    });
+    
+    const headerCells = tableClone.querySelectorAll('th');
+    headerCells.forEach(cell => {
+      cell.style.backgroundColor = '#f1f1f1';
+    });
+    
+    pdfContainer.appendChild(tableClone);
+    
+    // Create a temporary container in the document for html2canvas
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'fixed';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '0';
+    tempContainer.appendChild(pdfContainer);
+    document.body.appendChild(tempContainer);
+    
+    // Generate canvas from the clean content
+    const canvas = await html2canvas(tempContainer, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    });
+    
+    // Clean up temporary container
+    document.body.removeChild(tempContainer);
+    
+    // Create PDF
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jspdf.jsPDF('l', 'mm', [297, 210]); // A4 landscape
+    
+    const imgWidth = 297; // A4 width in mm
+    const pageHeight = 210; // A4 height in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    let heightLeft = imgHeight;
+    let position = 0;
+    
+    // Add first page
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+    
+    // Add additional pages if needed
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+    
+    // Save PDF
+    pdf.save(`PettyCash_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+    
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    alert('Failed to generate PDF report. Please try again.');
+  }
+});
 
     function applyFilters(data, searchTerm, selectedDate) {
       return data.filter(row => {
@@ -837,7 +1181,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
 
     const total = parseFloat(v.voucher_total) || 0;
     const received = parseFloat(v.received_amount) || 0;
-    const amountMismatch = received !== total;
+    const amountMismatch = received !== total && received !== null && received > "";
 
     // Check if SAAS Invoice exists and create attachment button
     const saasInvoice = v.saas_invoice || '';
