@@ -155,7 +155,7 @@ td:nth-child(4) {
 
 .actions-cell .btn-edit,
 .actions-cell .btn-delete {
-  margin: 0 0.25rem 0 0;
+  margin: 0 0.05rem 0 0;
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
 }
@@ -654,7 +654,8 @@ window.openAttachment = function(saasInvoice) {
   
   // Create iframe for PDF
   const iframe = document.createElement('iframe');
-  iframe.src = `${saasInvoice}.pdf`;
+  const noCacheUrl = `${saasInvoice}.pdf?t=${new Date().getTime()}`;
+iframe.src = noCacheUrl;
   iframe.style.width = '100%';
   iframe.style.height = '100%';
   iframe.style.border = 'none';
