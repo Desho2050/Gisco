@@ -286,28 +286,31 @@
     function openDetails(req){ const url = 'Details.html?req=' + encodeURIComponent(decodeURIComponent(req || '')); window.open(url, '_blank'); }
 
     async function loadExcel(){
-      try {
-        showLoader(true);
-        setStatus('Loading Requests.xlsx…');
-        const res = await fetch(excelPath + '?ts=' + Date.now());
-        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
-        const buf = await res.arrayBuffer();
-        const wb = XLSX.read(buf, { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
-        ALL_ROWS = json.map(buildRow);
-        renderTable(ALL_ROWS);
-        setStatus(`Loaded ${ALL_ROWS.length} rows from Requests.xlsx`);
-      } catch (e) {
-        console.error(e);
-        setStatus('Auto-load failed. Make sure Requests.xlsx is available.', true);
-      } finally {
-        showLoader(false);
-      }
-    }
+  try {
+    showLoader(true);
+    setStatus('Loading Requests.xlsx…');
+    const res = await fetch(excelPath + '?ts=' + Date.now());
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+    const buf = await res.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    ALL_ROWS = json.map(buildRow);
+    
+    // 👇 Apply "Received Only" filter on load instead of showing all
+    filterReceived();
+    
+    setStatus(`Loaded ${ALL_ROWS.length} rows from Requests.xlsx`);
+  } catch (e) {
+    console.error(e);
+    setStatus('Auto-load failed. Make sure Requests.xlsx is available.', true);
+  } finally {
+    showLoader(false);
+  }
+}
 
     // Filters
-    function showAll(){ renderTable(ALL_ROWS); }
+    function showAll(){ filterReceived(); }
     function isReceived(val){ const s = String(val || '').trim().toLowerCase(); return s !== '' && s !== 'not received'; }
     function receivedOnly(){ return ALL_ROWS.filter(r => isReceived(r.receiptDate)); }
     function filterStore(){ const base = receivedOnly(); renderTable(base.filter(r => String(r.order || '').length === 6)); }
@@ -336,7 +339,7 @@
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
         ALL_ROWS = json.map(buildRow);
-        renderTable(ALL_ROWS);
+        filterReceived();
         setStatus(`Loaded ${ALL_ROWS.length} rows from local file`);
       } catch (e) {
         console.error(e);
