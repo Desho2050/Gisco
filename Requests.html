@@ -59,6 +59,10 @@
       .topbar { grid-template-columns: 1fr auto; }
     }
     @media (max-width: 640px){
+  .summary { flex-wrap: wrap; justify-content: center; }
+  .summary > div { min-width: 120px; text-align: center; }
+}
+    @media (max-width: 640px){
       .topbar { grid-template-columns: 1fr; row-gap: 8px; }
       .summary { flex-wrap: wrap; }
       .search-box { gap: 8px; }
@@ -66,6 +70,11 @@
       .actions { flex-direction: column; align-items: stretch; gap: 8px; }
       .btn { width: 100%; min-width: 0; }
     }
+    .btn.red {
+  background: #ef4444;
+  color: #fff;
+  border-color: #dc2626;
+}
    table {
   width: 100%;
   min-width: 900px;
@@ -100,6 +109,8 @@
     const setLang = (lang) => { localStorage.setItem('lang', lang); applyLang(lang); };
     const excelPath = 'Requests.xlsx';
     let ALL_ROWS = [];
+let GLOBAL_NOT_RECEIVED_TOTAL = 0; // 👈 ADD THIS
+
 
     function formatAED(n){ return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(Number(n || 0)); }
     function formatNumber(n){ return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 6 }); }
@@ -222,6 +233,11 @@
       }
       return s;
     }
+function filterNotReceived() {
+  const notReceivedRows = ALL_ROWS.filter(r => !isReceived(r.receiptDate));
+  renderTable(notReceivedRows);
+}
+
     function buildRow(item){
       const request = String(pickField(item, FIELD_ALIASES.request) || '').trim();
       const requestDate = pickField(item, FIELD_ALIASES.requestDate);
@@ -285,8 +301,12 @@ function updateSummary(rows) {
   document.getElementById('sumAmount').textContent = formatAED(total);
   document.getElementById('sumWO').textContent = formatAED(woTotal);
   document.getElementById('sumOther').textContent = formatAED(otherTotal);
+  // 👇 Always show global not-received total
+  document.getElementById('sumNotReceived').textContent = formatAED(GLOBAL_NOT_RECEIVED_TOTAL);
   document.getElementById('resultCount').textContent = String(rows.length);
 }
+
+
     function filterNow(){
       const queries = [
         (document.getElementById('q1') || { value:'' }).value.trim().toLowerCase(),
@@ -304,7 +324,7 @@ function updateSummary(rows) {
     // Encode once even if the input is already percent-encoded
     function openDetails(req){ const url = 'Details.html?req=' + encodeURIComponent(decodeURIComponent(req || '')); window.open(url, '_blank'); }
 
-    async function loadExcel(){
+  async function loadExcel(){
   try {
     showLoader(true);
     setStatus('Loading Requests.xlsx…');
@@ -316,8 +336,12 @@ function updateSummary(rows) {
     const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
     ALL_ROWS = json.map(buildRow);
     
-    // 👇 Apply "Received Only" filter on load instead of showing all
-    filterReceived();
+    // 👇 Compute global not-received total
+    GLOBAL_NOT_RECEIVED_TOTAL = ALL_ROWS
+      .filter(r => !isReceived(r.receiptDate))
+      .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    
+    filterReceived(); // still apply initial filter
     
     setStatus(`Loaded ${ALL_ROWS.length} rows from Requests.xlsx`);
   } catch (e) {
@@ -399,18 +423,22 @@ function updateSummary(rows) {
         <div class="label" style="color: #ffffff;">Requests Dashboard</div>
       </div>
     </div>
-    <div class="summary">
+  <div class="summary">
   <div style="display:flex;flex-direction:column;align-items:center;">
     <span class="label" style="color: #ffffff;">اجمالي التكلفة</span>
-    <div class="sum-box" id="sumAmount">AED 0.00</div>
+    <div class="sum-box" id="sumAmount">AED&nbsp;0.00</div>
   </div>
   <div style="display:flex;flex-direction:column;align-items:center;">
     <span class="label" style="color: #ffffff;">تكلفة أوامر العمل</span>
-    <div class="sum-box" id="sumWO">AED 0.00</div>
+    <div class="sum-box" id="sumWO">AED&nbsp;0.00</div>
   </div>
   <div style="display:flex;flex-direction:column;align-items:center;">
     <span class="label" style="color: #ffffff;">مواد أخرى</span>
-    <div class="sum-box" id="sumOther">AED 0.00</div>
+    <div class="sum-box" id="sumOther">AED&nbsp;0.00</div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <span class="label" style="color: #ffffff;">غير مستلمة</span>
+    <div class="sum-box" id="sumNotReceived">AED&nbsp;0.00</div>
   </div>
 </div>
     <div class="counter" style="color: #ffffff;"><span id="resultCount" style="color: #ffffff;">0</span> results</div>
@@ -433,6 +461,7 @@ function updateSummary(rows) {
       <button class="btn green" onclick="filterReceived()">اظهار المواد المستلمة فقط</button>
       <button class="btn orange" onclick="filterWO()">تكلفة اوامر العمل</button>
       <button class="btn pink" onclick="filterM()">تكلفة المواد بدون اوامر العمل</button>
+      <button class="btn red" onclick="filterNotReceived()">المواد غير المستلمة</button>
       <input type="file" id="localFile" accept=".xlsx,.xls" style="display:none" />
       <button id="btnLocal" class="btn green" style="display:none" onclick="document.getElementById('localFile').click()">Load Excel</button>
       <input type="text" id="pathSelector" placeholder="Selected file path" readonly style="height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;min-width:220px;display:none" />
