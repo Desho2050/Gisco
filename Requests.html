@@ -245,29 +245,48 @@
     }
     function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
 
-    function renderTable(rows){
-      const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '';
-      let sum = 0;
-      for (const r of rows){
-        sum += Number(r.amount) || 0;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="right">${escapeHtml(r.request)}</td>
-          <td>${escapeHtml(formatDateDMY(r.requestDate))}</td>
-          <td class="right">${escapeHtml(r.order)}</td>
-          <td class="right">${formatAED(r.amount)}</td>
-          <td>${escapeHtml(formatDate(r.receiptDate))}</td>
-          <td class="right">${escapeHtml(r.receiptOrder)}</td>
-          <td><button class="btn blue" onclick="openDetails('${encodeURIComponent(r.request)}')">تفاصيل</button></td>
-        `;
-        tr.dataset.index = r.searchIndex;
-        tbody.appendChild(tr);
-      }
-      document.getElementById('resultCount').textContent = String(rows.length);
-      document.getElementById('sumAmount').textContent = formatAED(sum);
-    }
+    function renderTable(rows) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="right">${escapeHtml(r.request)}</td>
+      <td>${escapeHtml(formatDateDMY(r.requestDate))}</td>
+      <td class="right">${escapeHtml(r.order)}</td>
+      <td class="right">${formatAED(r.amount)}</td>
+      <td>${escapeHtml(formatDate(r.receiptDate))}</td>
+      <td class="right">${escapeHtml(r.receiptOrder)}</td>
+      <td><button class="btn blue" onclick="openDetails('${encodeURIComponent(r.request)}')">تفاصيل</button></td>
+    `;
+    tr.dataset.index = r.searchIndex;
+    tbody.appendChild(tr);
+  }
+  // 👇 Now update summary separately
+  updateSummary(rows);
+}
+function updateSummary(rows) {
+  let total = 0;
+  let woTotal = 0;
+  let otherTotal = 0;
 
+  for (const r of rows) {
+    const amount = Number(r.amount) || 0;
+    total += amount;
+
+    const remark = String(r.remark || '').trim().toLowerCase();
+    if (remark === 'wo') {
+      woTotal += amount;
+    } else {
+      otherTotal += amount;
+    }
+  }
+
+  document.getElementById('sumAmount').textContent = formatAED(total);
+  document.getElementById('sumWO').textContent = formatAED(woTotal);
+  document.getElementById('sumOther').textContent = formatAED(otherTotal);
+  document.getElementById('resultCount').textContent = String(rows.length);
+}
     function filterNow(){
       const queries = [
         (document.getElementById('q1') || { value:'' }).value.trim().toLowerCase(),
@@ -381,9 +400,19 @@
       </div>
     </div>
     <div class="summary">
-      <span class="label" style="color: #ffffff;">اجمالي التكلفة</span>
-      <div class="sum-box" id="sumAmount">AED 0.00</div>
-    </div>
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <span class="label" style="color: #ffffff;">اجمالي التكلفة</span>
+    <div class="sum-box" id="sumAmount">AED 0.00</div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <span class="label" style="color: #ffffff;">تكلفة أوامر العمل</span>
+    <div class="sum-box" id="sumWO">AED 0.00</div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <span class="label" style="color: #ffffff;">مواد أخرى</span>
+    <div class="sum-box" id="sumOther">AED 0.00</div>
+  </div>
+</div>
     <div class="counter" style="color: #ffffff;"><span id="resultCount" style="color: #ffffff;">0</span> results</div>
   </header>
   <div class="container" style="margin-top: 10px;">
