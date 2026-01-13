@@ -271,25 +271,36 @@
     // ======================
     let allData = [];
 
-   function sortData() {
+  function sortData() {
   allData.sort((a, b) => {
-    const ppDaysA = calculateDaysRemaining(a.passport_exp_date);
-    const ppDaysB = calculateDaysRemaining(b.passport_exp_date);
-    const gpDaysA = calculateDaysRemaining(a.gatepass_exp_date);
-    const gpDaysB = calculateDaysRemaining(b.gatepass_exp_date);
+    // Helper: calculate remaining days or return Infinity if missing
+    const getDays = (dateStr) => {
+      if (!dateStr) return Infinity;
+      const expDate = new Date(dateStr);
+      const today = new Date();
+      if (isNaN(expDate)) return Infinity;
+      const diffTime = expDate - today;
+      return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    };
 
-    // Treat null/invalid dates as -Infinity so they appear last in descending sort
-    const valPPA = ppDaysA ?? -Infinity;
-    const valPPB = ppDaysB ?? -Infinity;
-    const valGPA = gpDaysA ?? -Infinity;
-    const valGPB = gpDaysB ?? -Infinity;
+    const ppDaysA = getDays(a.passport_exp_date);
+    const gpDaysA = getDays(a.gatepass_exp_date);
+    const ppDaysB = getDays(b.passport_exp_date);
+    const gpDaysB = getDays(b.gatepass_exp_date);
 
-    // Primary: Passport Remaining (descending)
-   
-if (valPPA !== valPPB) {
-  return valPPA - valPPB; // Ascending
-}
-return valGPA - valGPB;
+    const sumA = ppDaysA + gpDaysA;
+    const sumB = ppDaysB + gpDaysB;
+
+    const beforeA = isPassportBeforeGatepass(a.gatepass_exp_date, a.passport_exp_date);
+    const beforeB = isPassportBeforeGatepass(b.gatepass_exp_date, b.passport_exp_date);
+
+    // Primary: "Yes" (true) comes before "No" (false)
+    if (beforeA !== beforeB) {
+      return beforeA ? -1 : 1; // true -> -1 (comes first), false -> 1
+    }
+
+    // Secondary: sort by sum ascending (lower sum = more urgent)
+    return sumA - sumB;
   });
 }
 
