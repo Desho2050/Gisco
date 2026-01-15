@@ -35,6 +35,7 @@
     .btn { height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none; white-space: nowrap; min-width: 160px; justify-content: center; }
     .btn.primary { background: var(--brand); color: #fff; border-color: #183a5e; }
     .btn.blue { background: #4f46e5; color: #fff; border-color: #3730a3; }
+     .detalbutton { background: #4ef003; color: #000000; border-color: #77f104; font-weight: bold;font-size: 14px;width: 100px; height: 25px;border-radius: 20px;hover { background: #09e9b8; color: #0ff7f7; cursor: pointer; } }
     .btn.purple { background: #7c3aed; color: #fff; border-color: #5b21b6; }
     .btn.green { background: #22c55e; color: #fff; border-color: #16a34a; }
     .btn.orange { background: #f59e0b; color: #fff; border-color: #d97706; }
@@ -279,7 +280,7 @@ function filterNotReceived() {
       <td>${escapeHtml(formatDate(r.receiptDate))}</td>
       <td class="right">${escapeHtml(r.receiptOrder)}</td>
       <td>${escapeHtml(r.notes)}</td>
-      <td><button class="btn blue" onclick="openDetails('${encodeURIComponent(r.request)}')">تفاصيل</button></td>
+      <td><button class="detalbutton" onclick="openDetails('${encodeURIComponent(r.request)}')">تفاصيل</button></td>
     `;
     tr.dataset.index = r.searchIndex;
     tbody.appendChild(tr);
