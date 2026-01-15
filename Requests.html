@@ -124,7 +124,8 @@ let GLOBAL_NOT_RECEIVED_TOTAL = 0; // 👈 ADD THIS
       amount: ['amount','total','cost','المبلغ','value'],
       receiptDate: ['RECEIPT DATE','rec date','receiptdate','تاريخ الاستلام','تاريخالاستلام'],
       receiptOrder: ['Receipt','receiptno','receipt no','رقم امر الاستلام','رقمامرالاستلام'],
-      remark: ['remark','type','classification','ملاحظة','ملاحظه','rmk']
+      remark: ['remark','type','classification','ملاحظة','ملاحظه','rmk'],
+        notes: ['notes', 'note', 'ملاحظات', 'تعليق', 'comments']
     };
     function normalizeKey(k){ return String(k || '').toLowerCase().replace(/\s+|_/g,'').trim(); }
     function pickField(obj, aliases){
@@ -239,26 +240,30 @@ function filterNotReceived() {
 }
 
     function buildRow(item){
-      const request = String(pickField(item, FIELD_ALIASES.request) || '').trim();
-      const requestDate = pickField(item, FIELD_ALIASES.requestDate);
-      const order = String(pickField(item, FIELD_ALIASES.order) || '').trim();
-      const amountRaw = pickField(item, FIELD_ALIASES.amount);
-      const amount = Number(amountRaw || 0);
-      const receiptDate = pickField(item, FIELD_ALIASES.receiptDate);
-      const receiptOrder = String(pickField(item, FIELD_ALIASES.receiptOrder) || '').trim();
-      const remark = String(pickField(item, FIELD_ALIASES.remark) || '').trim();
-      const searchIndex = [
-        request,
-        dateToExcelSerial(requestDate),
-        formatDateDMY(requestDate),
-        order,
-        amount,
-        formatDate(receiptDate),
-        receiptOrder,
-        remark
-      ].map(s => String(s).toLowerCase()).join(' | ');
-      return { request, requestDate, order, amount, receiptDate, receiptOrder, remark, searchIndex };
-    }
+  const request = String(pickField(item, FIELD_ALIASES.request) || '').trim();
+  const requestDate = pickField(item, FIELD_ALIASES.requestDate);
+  const order = String(pickField(item, FIELD_ALIASES.order) || '').trim();
+  const amountRaw = pickField(item, FIELD_ALIASES.amount);
+  const amount = Number(amountRaw || 0);
+  const receiptDate = pickField(item, FIELD_ALIASES.receiptDate);
+  const receiptOrder = String(pickField(item, FIELD_ALIASES.receiptOrder) || '').trim();
+  const remark = String(pickField(item, FIELD_ALIASES.remark) || '').trim();
+  const notes = String(pickField(item, FIELD_ALIASES.notes) || '').trim(); // 👈 Added
+
+  const searchIndex = [
+    request,
+    dateToExcelSerial(requestDate),
+    formatDateDMY(requestDate),
+    order,
+    amount,
+    formatDate(receiptDate),
+    receiptOrder,
+    remark,
+    notes // 👈 Include in search
+  ].map(s => String(s).toLowerCase()).join(' | ');
+
+  return { request, requestDate, order, amount, receiptDate, receiptOrder, remark, notes, searchIndex };
+}
     function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
 
     function renderTable(rows) {
@@ -266,13 +271,14 @@ function filterNotReceived() {
   tbody.innerHTML = '';
   for (const r of rows) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
+       tr.innerHTML = `
       <td class="right">${escapeHtml(r.request)}</td>
       <td>${escapeHtml(formatDateDMY(r.requestDate))}</td>
       <td class="right">${escapeHtml(r.order)}</td>
       <td class="right">${formatAED(r.amount)}</td>
       <td>${escapeHtml(formatDate(r.receiptDate))}</td>
       <td class="right">${escapeHtml(r.receiptOrder)}</td>
+      <td>${escapeHtml(r.notes)}</td>
       <td><button class="btn blue" onclick="openDetails('${encodeURIComponent(r.request)}')">تفاصيل</button></td>
     `;
     tr.dataset.index = r.searchIndex;
@@ -477,17 +483,18 @@ function updateSummary(rows) {
 
     <section class="table-wrap">
       <table id="dataTable">
-        <thead>
-          <tr >
-            <th style="text-align: center;">رقم الطلب</th>
-            <th style="text-align: center;">تاريخ الطلب</th>
-            <th style="text-align: center;">رقم الأمر</th>
-            <th style="text-align: center;">المبلغ</th>
-            <th style="text-align: center;">تاريخ الاستلام</th>
-            <th style="text-align: center;">رقم امر الاستلام</th>
-            <th></th>
-          </tr>
-        </thead>
+       <thead>
+  <tr>
+    <th style="text-align: center;">رقم الطلب</th>
+    <th style="text-align: center;">تاريخ الطلب</th>
+    <th style="text-align: center;">رقم الأمر</th>
+    <th style="text-align: center;">المبلغ</th>
+    <th style="text-align: center;">تاريخ الاستلام</th>
+    <th style="text-align: center;">رقم امر الاستلام</th>
+    <th style="text-align: center;">ملاحظات</th> <!-- 👈 Added -->
+    <th></th>
+  </tr>
+</thead>
         <tbody id="tableBody"></tbody>
       </table>
     </section>
