@@ -302,7 +302,8 @@ function updateSummary(rows) {
   document.getElementById('sumWO').textContent = formatAED(woTotal);
   document.getElementById('sumOther').textContent = formatAED(otherTotal);
   // 👇 Always show global not-received total
-  document.getElementById('sumNotReceived').textContent = formatAED(GLOBAL_NOT_RECEIVED_TOTAL);
+  document.getElementById('sumNotReceived').textContent = formatAED(GLOBALWO_NOT_RECEIVED_TOTAL);
+  document.getElementById('matNotReceived').textContent = formatAED(GLOBALMAT_NOT_RECEIVED_TOTAL);
   document.getElementById('resultCount').textContent = String(rows.length);
 }
 
@@ -337,8 +338,11 @@ function updateSummary(rows) {
     ALL_ROWS = json.map(buildRow);
     
     // 👇 Compute global not-received total
-    GLOBAL_NOT_RECEIVED_TOTAL = ALL_ROWS
-      .filter(r => !isReceived(r.receiptDate))
+    GLOBALWO_NOT_RECEIVED_TOTAL = ALL_ROWS
+      .filter(r => !isReceived(r.receiptDate) && String(r.remark || '').trim().toLowerCase() === 'wo')
+      .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    GLOBALMAT_NOT_RECEIVED_TOTAL = ALL_ROWS
+      .filter(r => !isReceived(r.receiptDate) && String(r.remark || '').trim().toLowerCase() !== 'wo')
       .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
     
     filterReceived(); // still apply initial filter
@@ -436,9 +440,13 @@ function updateSummary(rows) {
     <span class="label" style="color: #ffffff;">مواد أخرى</span>
     <div class="sum-box" id="sumOther">AED&nbsp;0.00</div>
   </div>
-  <div style="display:flex;flex-direction:column;align-items:center;">
-    <span class="label" style="color: #ffffff;">غير مستلمة</span>
-    <div class="sum-box" id="sumNotReceived">AED&nbsp;0.00</div>
+  <div style="display:flex;flex-direction:column;align-items:center; margin-right: 30px; margin-left: 30px;">
+    <span class="label" style="color: #fa8b0b;">اوامر عمل غير مستلمة</span>
+    <div class="sum-box" id="sumNotReceived" style="background-color: #f59e0b;">AED&nbsp;0.00</div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center; margin-right: 30px; margin-left: 30px;">
+    <span class="label" style="color: #fa8b0b;">مواد اخري غير مستلمة</span>
+    <div class="sum-box" id="matNotReceived" style="background-color: #f59e0b;">AED&nbsp;0.00</div>
   </div>
 </div>
     <div class="counter" style="color: #ffffff;"><span id="resultCount" style="color: #ffffff;">0</span> results</div>
