@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,6 +72,15 @@
       .actions { flex-direction: column; align-items: stretch; gap: 8px; }
       .btn { width: 100%; min-width: 0; }
     }
+[dir="rtl"] .modal-content {
+  direction: rtl;
+  text-align: right;
+}
+[dir="rtl"] #modalTable th,
+[dir="rtl"] #modalTable td {
+  text-align: right;
+}
+
     .btn.red {
   background: #ef4444;
   color: #fff;
@@ -82,6 +92,83 @@
   table-layout: fixed; /* 👈 Critical */
   border-collapse: collapse;
   text-align: center;
+}
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: #1e4672;
+}
+
+#modalSearch {
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+#modalTable th, #modalTable td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+#modalTable th {
+  background: #1e4672;
+  color: white;
+  font-weight: 600;
+}
+
+#modalTable tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-content {
+    margin: 5% auto;
+    padding: 15px;
+    max-width: 95%;
+  }
 }
   </style>
   <script>
@@ -110,7 +197,9 @@
     const setLang = (lang) => { localStorage.setItem('lang', lang); applyLang(lang); };
     const excelPath = 'Requests.xlsx';
     let ALL_ROWS = [];
-let GLOBAL_NOT_RECEIVED_TOTAL = 0; // 👈 ADD THIS
+let MATERIALS_ROWS = []; // 👈 ADD THIS
+let GLOBALWO_NOT_RECEIVED_TOTAL = 0;
+let GLOBALMAT_NOT_RECEIVED_TOTAL = 0;
 
 
     function formatAED(n){ return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(Number(n || 0)); }
@@ -239,6 +328,58 @@ function filterNotReceived() {
   const notReceivedRows = ALL_ROWS.filter(r => !isReceived(r.receiptDate));
   renderTable(notReceivedRows);
 }
+async function loadMaterialsExcel() {
+  try {
+    showLoader(true);
+    setStatus('Loading Materials.xlsx…');
+    const res = await fetch('Materials.xlsx?ts=' + Date.now());
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    
+    const buf = await res.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+    // Define field aliases for Materials.xlsx
+    const MATERIAL_FIELD_ALIASES = {
+      request: ['Requisition','REQUEST','reqno','req_no','req id','reqid','رقمالطلب','رقم الطلب'],
+      oracleCode: ['ORACLE CODE', 'ORACLE CODE', 'كود اوراكل', 'Item Code'],
+      description: ['ITEM DESCRIPTION', 'وصف', 'الوصف', 'Description'],
+      category: ['ITEM CATEGORY', 'الفئة', 'type', 'Category'],
+      quantity: ['quantity', 'QTY', 'الكمية', 'Qty'],
+      unitPrice: ['unit price', 'PRICE', 'سعر الوحدة', 'Unit Price'],
+      projectNo: ['project no', 'JOB NO', 'رقم المشروع', 'Job No'],
+      status: ['status', 'الحالة', 'STATUE', 'Status'],
+      order: ['ORDER','orderno','order_no','po','po no','po_no','store order','storeorder','رقمالامر','رقم الامر']
+    };
+
+    MATERIALS_ROWS = json.map(item => {
+      const qty = Number(pickField(item, MATERIAL_FIELD_ALIASES.quantity) || 0);
+      const price = Number(pickField(item, MATERIAL_FIELD_ALIASES.unitPrice) || 0);
+      return {
+        request: String(pickField(item, MATERIAL_FIELD_ALIASES.request) || '').trim(),
+        oracleCode: String(pickField(item, MATERIAL_FIELD_ALIASES.oracleCode) || '').trim(),
+        description: String(pickField(item, MATERIAL_FIELD_ALIASES.description) || '').trim(),
+        category: String(pickField(item, MATERIAL_FIELD_ALIASES.category) || '').trim(),
+        quantity: qty,
+        unitPrice: price,
+        projectNo: String(pickField(item, MATERIAL_FIELD_ALIASES.projectNo) || '').trim(),
+        status: String(pickField(item, MATERIAL_FIELD_ALIASES.status) || '').trim(),
+        order: String(pickField(item, MATERIAL_FIELD_ALIASES.order) || '').trim(),
+        totalAmount: qty * price
+      };
+    });
+
+    setStatus(`Loaded ${MATERIALS_ROWS.length} material rows from Materials.xlsx`);
+  } catch (e) {
+    console.error('Failed to load Materials.xlsx:', e);
+    setStatus('Warning: Materials.xlsx not found. Details may be empty.', true);
+    MATERIALS_ROWS = [];
+  } finally {
+    showLoader(false);
+  }
+}
+
 
     function buildRow(item){
   const request = String(pickField(item, FIELD_ALIASES.request) || '').trim();
@@ -250,7 +391,14 @@ function filterNotReceived() {
   const receiptOrder = String(pickField(item, FIELD_ALIASES.receiptOrder) || '').trim();
   const remark = String(pickField(item, FIELD_ALIASES.remark) || '').trim();
   const notes = String(pickField(item, FIELD_ALIASES.notes) || '').trim(); // 👈 Added
-
+const oracleCode = String(pickField(item, ['ORACLE CODE', 'oraclecode', 'كود اوراكل']) || '').trim();
+const description = String(pickField(item, ['ITEM DESCRIPTION', 'وصف', 'الوصف']) || '').trim();
+const category = String(pickField(item, ['ITEM CATEGORY', 'الفئة', 'type']) || '').trim();
+const quantity = Number(pickField(item, ['quantity', 'QTY', 'الكمية']) || 0);
+const unitPrice = Number(pickField(item, ['unit price', 'PRICE', 'سعر الوحدة']) || 0);
+const projectNo = String(pickField(item, ['project no', 'JOB NO', 'رقم المشروع']) || '').trim();
+const status = String(pickField(item, ['status', 'الحالة', 'STATUE']) || '').trim();
+const totalAmount = Number(pickField(item, ['total amount', 'total', 'المجموع']) || 0);
   const searchIndex = [
     request,
     dateToExcelSerial(requestDate),
@@ -263,7 +411,11 @@ function filterNotReceived() {
     notes // 👈 Include in search
   ].map(s => String(s).toLowerCase()).join(' | ');
 
-  return { request, requestDate, order, amount, receiptDate, receiptOrder, remark, notes, searchIndex };
+  return {
+  request, requestDate, order, amount, receiptDate, receiptOrder, remark, notes,
+  oracleCode, description, category, quantity, unitPrice, projectNo, status, totalAmount,
+  searchIndex
+};
 }
     function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
 
@@ -329,9 +481,90 @@ function updateSummary(rows) {
       renderTable(filtered);
     }
 
-    // Encode once even if the input is already percent-encoded
-    function openDetails(req){ const url = 'Details.html?req=' + encodeURIComponent(decodeURIComponent(req || '')); window.open(url, '_blank'); }
+function openDetails(receiptOrderEncoded) {
+  const reqId = decodeURIComponent(receiptOrderEncoded);
 
+  try {
+    // Filter materials by request ID
+    const detailsRows = MATERIALS_ROWS.filter(r => 
+      String(r.request || '').trim() === reqId
+    );
+
+    let totalQty = 0;
+    let totalCost = 0;
+    detailsRows.forEach(r => {
+      totalQty += r.quantity || 0;
+      totalCost += r.totalAmount || 0;
+    });
+
+    // Populate modal
+    document.getElementById('modalReqId').textContent = reqId;
+    document.getElementById('modalTotalQty').textContent = totalQty;
+    document.getElementById('modalTotalCost').textContent = formatAED(totalCost);
+    document.getElementById('modalResultCount').textContent = detailsRows.length;
+
+    // Render table
+    const tbody = document.getElementById('modalTableBody');
+    tbody.innerHTML = '';
+    detailsRows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(reqId)}</td>
+        <td>${escapeHtml(r.oracleCode || '')}</td>
+        <td>${escapeHtml(r.description || '')}</td>
+        <td>${escapeHtml(r.category || '')}</td>
+        <td>${escapeHtml(r.quantity || '')}</td>
+        <td>${escapeHtml(r.unitPrice || '')}</td>
+        <td>${escapeHtml(r.projectNo || '')}</td>
+        <td>${formatAED(r.totalAmount || 0)}</td>
+        <td>${escapeHtml(r.status || '')}</td>
+        <td>${escapeHtml(r.order || '')}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Show modal
+    document.getElementById('detailsModal').style.display = 'block';
+    document.getElementById('modalOverlay').style.display = 'block';
+
+  } catch (e) {
+    console.error("Error loading details:", e);
+    alert("Failed to load request details.");
+  }
+}
+
+// Close modal when clicking X or overlay
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('detailsModal');
+  const overlay = document.getElementById('modalOverlay');
+  const closeBtn = document.querySelector('.close');
+// Live search inside modal
+document.getElementById('modalSearch')?.addEventListener('input', function(e) {
+  const query = e.target.value.trim().toLowerCase();
+  const rows = document.querySelectorAll('#modalTableBody tr');
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(query) ? '' : 'none';
+  });
+});
+  closeBtn?.addEventListener('click', () => {
+    modal.style.display = 'none';
+    overlay.style.display = 'none';
+  });
+
+  overlay.addEventListener('click', () => {
+    modal.style.display = 'none';
+    overlay.style.display = 'none';
+  });
+
+  // Also close on ESC key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.style.display === 'block') {
+      modal.style.display = 'none';
+      overlay.style.display = 'none';
+    }
+  });
+});
   async function loadExcel(){
   try {
     showLoader(true);
@@ -343,7 +576,20 @@ function updateSummary(rows) {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
     ALL_ROWS = json.map(buildRow);
-    
+   
+
+    // 👇 Compute totals (same as before)
+    GLOBALWO_NOT_RECEIVED_TOTAL = ALL_ROWS
+      .filter(r => !isReceived(r.receiptDate) && String(r.remark || '').trim().toLowerCase() === 'wo')
+      .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    GLOBALMAT_NOT_RECEIVED_TOTAL = ALL_ROWS
+      .filter(r => !isReceived(r.receiptDate) && String(r.remark || '').trim().toLowerCase() !== 'wo')
+      .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+
+    filterReceived();
+    setStatus(`Loaded ${ALL_ROWS.length} request rows`);
+
+   
     // 👇 Compute global not-received total
     GLOBALWO_NOT_RECEIVED_TOTAL = ALL_ROWS
       .filter(r => !isReceived(r.receiptDate) && String(r.remark || '').trim().toLowerCase() === 'wo')
@@ -355,6 +601,8 @@ function updateSummary(rows) {
     filterReceived(); // still apply initial filter
     
     setStatus(`Loaded ${ALL_ROWS.length} rows from Requests.xlsx`);
+     // 👇 NOW LOAD MATERIALS
+    await loadMaterialsExcel(); // Note: async/await
   } catch (e) {
     console.error(e);
     setStatus('Auto-load failed. Make sure Requests.xlsx is available.', true);
@@ -502,5 +750,43 @@ function updateSummary(rows) {
 
     <div id="statusBar" class="label" style="margin-top:10px"></div>
   </main>
+
+  <!-- Modal Popup -->
+<div id="detailsModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3 id="modalTitle">Request Details: <span id="modalReqId"></span></h3>
+    <div id="modalSummary" style="margin: 10px 0; display: flex; gap: 20px; align-items: center;">
+      <div><strong>Total Quantity:</strong> <span id="modalTotalQty">0</span></div>
+      <div><strong>Total Cost:</strong> <span id="modalTotalCost">AED 0.00</span></div>
+      <div><strong>Results:</strong> <span id="modalResultCount">0</span></div>
+    </div>
+    <input type="text" id="modalSearch" placeholder="Search materials (code, description, category, job, status, order)" style="width: 100%; padding: 8px; margin-bottom: 10px;" />
+    <div id="modalTableContainer" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; background: white;">
+      <table id="modalTable" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+        <thead style="background: #1e4672; color: white;">
+          <tr>
+            <th style="padding: 8px; text-align: left;">رقم الطلب</th>
+            <th style="padding: 8px; text-align: left;">Oracle Code</th>
+            <th style="padding: 8px; text-align: left;">الوصف</th>
+            <th style="padding: 8px; text-align: left;">الفئة</th>
+            <th style="padding: 8px; text-align: left;">الكمية</th>
+            <th style="padding: 8px; text-align: left;">سعر الوحدة</th>
+            <th style="padding: 8px; text-align: left;">رقم المشروع</th>
+            <th style="padding: 8px; text-align: left;">الإجمالي</th>
+            <th style="padding: 8px; text-align: left;">الحالة</th>
+            <th style="padding: 8px; text-align: left;">رقم الأمر</th>
+          </tr>
+        </thead>
+        <tbody id="modalTableBody">
+          <!-- Dynamically filled -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay for modal -->
+<div id="modalOverlay" class="modal-overlay" style="display: none;"></div>
 </body>
 </html>
