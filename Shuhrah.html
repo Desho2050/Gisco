@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,7 +21,7 @@
     * { box-sizing: border-box; }
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
     header { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 28px 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-    header h2 { margin: 0; text-align: center; letter-spacing: 0.4px; color: #000 !important; }
+    header h2 { margin: 0; text-align: center; letter-spacing: 0.4px; color: #ffffff !important; }
     .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); padding: 18px; }
     .search-box { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
@@ -41,7 +42,7 @@
     tbody tr:nth-child(odd) { background: #fafafa; }
     tbody tr:hover { background: #f0f7ff; }
     td[contenteditable="true"] { background-color: #fcfcff; }
-    .summary { margin-top: 18px; font-size: 16px; font-weight: 600; color: var(--text); display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; }
+    .summary { margin-top: 18px; font-size: 16px; font-weight: 600; color: var(--text); display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; align-items: center; margin-bottom: 30px; }
     .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
     .error { color: var(--danger); margin-top: 10px; padding: 10px 12px; background: #fde7ea; border: 1px solid #f6c3cb; border-radius: 10px; display:none; }
     .loader { display: none; align-items: center; gap: 10px; color: var(--muted); font-weight: 600; }
@@ -76,7 +77,14 @@
     .btn { text-decoration: none; }
   </style>
     <a class="btn back-link" href="index.html" data-i18n="back_main" title="Back to Main Page">Back to Main Page</a>
-  <div class="card">
+  <div class="summary" style="display: list-item;">
+  التكلفة بدون ضريبة: <span id="totalWithoutVAT">0</span> درهم إماراتي<br>
+  التكلفة مع الضريبة: <span id="totalWithVAT">0</span> درهم إماراتي
+  <span id="totalWithVATWords" style="font-weight: bold;font-size: 20px; color: rgb(0, 0, 0); align-items: center; display: flex; justify-content: center;box-shadow: 0 0 10px rgb(19, 255, 35); margin-top: 7px;margin-bottom: 7px;background-color: chartreuse;">صفر درهماً</span>
+  العدد: <span id="totalQty">0</span> كمبرريسور
+</div>
+
+    <div class="card">
   <div class="search-box">
     <input type="text" id="search1" placeholder="النص الأول / First Text" onkeyup="filterTable()">
     <input type="text" id="search2" placeholder="النص الثاني / Second Text" onkeyup="filterTable()">
@@ -117,13 +125,7 @@
     <tbody></tbody>
   </table>
 
- <div class="summary" style="display: list-item;">
-  التكلفة بدون ضريبة: <span id="totalWithoutVAT">0</span> درهم إماراتي<br>
-  التكلفة مع الضريبة: <span id="totalWithVAT">0</span> درهم إماراتي
-  <span id="totalWithVATWords" style="font-weight: bold;font-size: 20px; color: rgb(0, 0, 0); align-items: center; display: flex; justify-content: center;box-shadow: 0 0 10px rgb(19, 255, 35); margin-top: 7px;margin-bottom: 7px;background-color: chartreuse;">صفر درهماً</span>
-  العدد: <span id="totalQty">0</span> كمبرريسور
-</div>
-
+ 
   <div id="error" class="error"></div>
 
   </div>
