@@ -125,6 +125,8 @@
     }
   </style>
 </head>
+<!-- Add this right after the closing </div> of .header -->
+<div id="monthlyCards" style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;"></div>
 <body>
 <div style="margin-bottom: 10px; font-size: 14px; color: #555;">
   <span>✅ Finished &nbsp;&nbsp; 🔄 In Progress &nbsp;&nbsp; ⏳ Not Started &nbsp;&nbsp; ❓ Incomplete</span>
@@ -388,6 +390,31 @@ function getRowPriority(row) {
       return formatDate(new Date());
     }
 
+// Helper: Format month as "Month YYYY" (e.g., "January 2026")
+function formatMonth(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d)) return null;
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
+
+// Helper: Check if a leave is active today
+function isOnLeave(row, today) {
+  if (row.leave_status !== 'LEAVE') return false;
+  const start = row.start_date ? new Date(row.start_date) : null;
+  const end = row.end_date ? new Date(row.end_date) : null;
+  if (!start || !end || isNaN(start) || isNaN(end)) return false;
+  return start <= today && today <= end;
+}
+
+// Helper: Check if a leave is pending (starts in future)
+function isPendingLeave(row, today) {
+  if (row.leave_status !== 'LEAVE') return false;
+  const start = row.start_date ? new Date(row.start_date) : null;
+  if (!start || isNaN(start)) return false;
+  return start > today;
+}
+
     function showError(msg) {
       const el = document.getElementById('errorMessage');
       el.textContent = msg;
@@ -495,6 +522,80 @@ const sortedData = [...data].sort((a, b) => {
       document.getElementById('totalResignDays').textContent = totalResignDays;
     }
 
+function renderMonthlyCards(data) {
+  const today = new Date();
+  const monthMap = new Map(); // key: "January 2026", value: stats object
+
+  // First pass: collect all relevant months from leave/resignation dates
+  data.forEach(row => {
+    let monthKey = null;
+    if (row.leave_status === 'LEAVE' && row.start_date) {
+      monthKey = formatMonth(row.start_date);
+    } else if (row.leave_status === 'RESIGNATION' && row.resignation_date) {
+      monthKey = formatMonth(row.resignation_date);
+    }
+
+    if (monthKey) {
+      if (!monthMap.has(monthKey)) {
+        monthMap.set(monthKey, {
+          totalLeaves: 0,
+          onLeave: 0,
+          pendingLeave: 0,
+          resignations: 0
+        });
+      }
+      const stats = monthMap.get(monthKey);
+      if (row.leave_status === 'LEAVE') {
+        stats.totalLeaves++;
+        if (isOnLeave(row, today)) stats.onLeave++;
+        if (isPendingLeave(row, today)) stats.pendingLeave++;
+      } else if (row.leave_status === 'RESIGNATION') {
+        stats.resignations++;
+      }
+    }
+  });
+
+  // Convert to array and sort chronologically (newest first)
+  const sortedMonths = Array.from(monthMap.entries())
+    .map(([key, stats]) => ({ key, ...stats }))
+    .sort((a, b) => {
+      const [aMonth, aYear] = a.key.split(' ');
+      const [bMonth, bYear] = b.key.split(' ');
+      const aDate = new Date(`${aMonth} 1, ${aYear}`);
+      const bDate = new Date(`${bMonth} 1, ${bYear}`);
+      return bDate - aDate; // newest first
+    });
+
+  // Render cards
+  const container = document.getElementById('monthlyCards');
+  container.innerHTML = '';
+
+  if (sortedMonths.length === 0) {
+    container.innerHTML = '<em>No leave or resignation records found.</em>';
+    return;
+  }
+
+  sortedMonths.forEach(item => {
+    const card = document.createElement('div');
+    card.style = `
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      min-width: 180px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    `;
+    card.innerHTML = `
+      <h4 style="margin: 0 0 10px; font-size: 16px; color: #333;">${item.key}</h4>
+      <p style="margin: 4px 0; font-size: 14px;"><strong>Total Leaves:</strong> ${item.totalLeaves}</p>
+      <p style="margin: 4px 0; font-size: 14px;"><strong>On Leave:</strong> ${item.onLeave}</p>
+      <p style="margin: 4px 0; font-size: 14px;"><strong>Pending Leave:</strong> ${item.pendingLeave}</p>
+      <p style="margin: 4px 0; font-size: 14px;"><strong>Resignations:</strong> ${item.resignations}</p>
+    `;
+    container.appendChild(card);
+  });
+}
+
 function getLeaveStatusSymbol(row) {
   const today = new Date();
   const startDate = row.start_date ? new Date(row.start_date) : null;
@@ -537,7 +638,7 @@ function getLeaveStatusSymbol(row) {
 
   // Sort locally by ID descending (in case Supabase order doesn't apply due to caching, etc.)
   fullData = data.sort((a, b) => (a.id || 0) - (b.id || 0));
-
+renderMonthlyCards(fullData);
   filterTable(); // Apply current search (which uses fullData)
 
   loading.style.display = 'none';
