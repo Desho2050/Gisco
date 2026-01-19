@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1231,30 +1232,27 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
   let totalCount = data.length;
   let totalAmount = 0;
 
-  data.forEach(v => {
-    const total = parseFloat(v.voucher_total || 0);
-    const receivedAmt = parseFloat(v.received_amount || 0);
-    const paymentStatus = (v.payment_status || '').trim();
-    const voucherStatus = (v.voucher_status || '').trim();
-    const pettyCashStatus = v.received_petty_cash;
+ data.forEach(v => {
+  const total = parseFloat(v.voucher_total || 0);
+  const receivedAmt = parseFloat(v.received_amount || 0);
+  const paymentStatus = (v.payment_status || '').trim();
+  const voucherStatus = (v.voucher_status || '').trim();
+  const pettyCashStatus = v.received_petty_cash;
+  totalAmount += total;
 
-    totalAmount += total;
+  const isRejected = /reject/i.test(paymentStatus) || /reject/i.test(voucherStatus);
 
-  
-
-    // Check if rejected (case-insensitive)
-    const isRejected = /reject/i.test(paymentStatus) || /reject/i.test(voucherStatus);
-
-    if (isRejected) {
-      rejected += total;
-    } else if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
-      received += receivedAmt || total;
-    } else if (voucherStatus === 'FINANCE APPROVED' && pettyCashStatus !== 'Received') {
-      pending += total;
-    }
-
-  
-  });
+  if (isRejected) {
+    rejected += total;
+  } else if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
+    received += receivedAmt || total;
+  } else if (voucherStatus === 'FINANCE APPROVED' && pettyCashStatus !== 'Received') {
+    pending += total;
+  } else {
+    // All other non-rejected, non-paid, non-FINANCE-APPROVED records = Pending Approval
+    notApproved += total;
+  }
+});
 
   pendingAmountEl.textContent = pending.toFixed(2);
   fullyReceivedAmountEl.textContent = received.toFixed(2);
