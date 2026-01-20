@@ -1194,7 +1194,21 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
         let textMatch = true;
         if (searchTerm) {
           const term = searchTerm.toLowerCase();
-        textMatch =
+          // Format dates like in populateDateFilter for search
+          const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            }).toLowerCase();
+          };
+          // Format numbers like in renderTable
+          const formatNumber = (num) => {
+            if (num == null || num === '') return '';
+            return parseFloat(num).toFixed(2);
+          };
+          textMatch =
             (row.voucher_number && row.voucher_number.toLowerCase().includes(term)) ||
             (row.voucher_type && row.voucher_type.toLowerCase().includes(term)) ||
             (row.voucher_status && row.voucher_status.toLowerCase().includes(term)) ||
@@ -1205,11 +1219,11 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
             (row.project_number && row.project_number.toLowerCase().includes(term)) ||
             (row.received_petty_cash && row.received_petty_cash.toLowerCase().includes(term)) ||
             (row.notes && row.notes.toLowerCase().includes(term)) ||
-            (row.voucher_total != null && row.voucher_total.toString().includes(searchTerm)) ||
-            (row.received_amount != null && row.received_amount.toString().includes(searchTerm)) ||
-            (row.created_date && row.created_date.includes(searchTerm)) ||
-            (row.jvr_date && row.jvr_date.includes(searchTerm)) ||
-            (row.receiving_date && row.receiving_date.includes(searchTerm));
+            (formatNumber(row.voucher_total).includes(term)) ||
+            (formatNumber(row.received_amount).includes(term)) ||
+            (formatDate(row.created_date).includes(term)) ||
+            (formatDate(row.jvr_date).includes(term)) ||
+            (formatDate(row.receiving_date).includes(term));
         }
         const dateMatch = !selectedDate || row.receiving_date === selectedDate;
         const pettyCashMatch = !selectedPettyCash || row.received_petty_cash === selectedPettyCash;
