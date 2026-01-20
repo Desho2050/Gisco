@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,7 +49,7 @@
 
    .container {
   width: 100%;
-  max-width: 1500px; /* Slightly wider for large screens */
+  max-width: none; /* Allow container to expand to fit contents */
   margin: 0 auto;
   padding: 0 0.5rem; /* Compensate for reduced body padding */
 }
@@ -101,6 +102,7 @@
     .rejected { color: var(--danger); font-weight: bold; font-size: 1.25rem; }
     .total-count { color: var(--gray); font-weight: bold; font-size: 1.25rem; }
     .total-amount { color: var(--primary); font-weight: bold; font-size: 1.25rem; }
+    .balance { color: var(--success); font-weight: bold; font-size: 1.25rem; }
 
     .table-container {
       background: white;
@@ -478,6 +480,10 @@ tr.rejected {
   <h3>Pending Approval Amount</h3>
  <p class="not-approved" id="notApprovedAmount">0.00</p>
 </div>
+      <div class="card">
+        <h3>Balance Check</h3>
+        <p class="balance" id="balanceAmount">0.00</p>
+      </div>
     </div>
 
     <!-- Table -->
@@ -595,6 +601,44 @@ tr.rejected {
   // ... your JavaScript code
 </script>
  
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
 </body>
   <script>
     // Supabase config (cleaned)
@@ -616,6 +660,7 @@ tr.rejected {
     const totalCountEl = document.getElementById('totalCount');
     const totalAmountEl = document.getElementById('totalAmount');
 const notApprovedAmountEl = document.getElementById('notApprovedAmount');
+const balanceAmountEl = document.getElementById('balanceAmount');
 
     let editingId = null;
     let allVouchers = [];
@@ -691,14 +736,22 @@ attachmentModal.addEventListener('click', (e) => {
       });
 
       const dateFilter = document.getElementById('dateFilter');
-      dateFilter.innerHTML = '<option value="">All</option>';
-      const sortedDates = Array.from(dateSet).sort((a, b) => new Date(b) - new Date(a));
+      const currentSelection = dateFilter.value; // Preserve current selection
+      dateFilter.innerHTML = '<option value="">All Dates</option>';
+      const sortedDates = Array.from(dateSet).sort((a, b) => new Date(a) - new Date(b)); // Sort ascending (oldest first)
       sortedDates.forEach(date => {
         const option = document.createElement('option');
         option.value = date;
-        option.textContent = date;
+        // Format date for better readability (assuming YYYY-MM-DD format)
+        const formattedDate = new Date(date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+        option.textContent = formattedDate;
         dateFilter.appendChild(option);
       });
+      dateFilter.value = currentSelection; // Restore selection
     }
 
 // ===== PRINT =====
@@ -1040,6 +1093,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
     tableClone.style.width = '100%';
     tableClone.style.borderCollapse = 'collapse';
     tableClone.style.marginTop = '1rem';
+ 
     
     const allCells = tableClone.querySelectorAll('th, td');
     allCells.forEach(cell => {
@@ -1058,7 +1112,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
     
     // Create a temporary container in the document for html2canvas
     const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'fixed';
+    tempContainer.style.position = 'flex';
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '0';
     tempContainer.appendChild(pdfContainer);
@@ -1066,7 +1120,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
     
     // Generate canvas from the clean content
     const canvas = await html2canvas(tempContainer, {
-      scale: 2,
+      scale: 1,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff'
@@ -1077,10 +1131,10 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
     
     // Create PDF
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jspdf.jsPDF('l', 'mm', [297, 210]); // A4 landscape
+    const pdf = new jspdf.jsPDF('p', 'mm', [320, 800]); // A4 landscape
     
-    const imgWidth = 297; // A4 width in mm
-    const pageHeight = 210; // A4 height in mm
+    const imgWidth = 320; // A4 width in mm
+    const pageHeight = 800; // A4 height in mm
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
     let heightLeft = imgHeight;
@@ -1092,7 +1146,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
     
     // Add additional pages if needed
     while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
+      position = heightLeft - imgHeight ;
       pdf.addPage();
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
@@ -1112,7 +1166,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
         let textMatch = true;
         if (searchTerm) {
           const term = searchTerm.toLowerCase();
-          textMatch = 
+        textMatch =
             (row.voucher_number && row.voucher_number.toLowerCase().includes(term)) ||
             (row.voucher_type && row.voucher_type.toLowerCase().includes(term)) ||
             (row.voucher_status && row.voucher_status.toLowerCase().includes(term)) ||
@@ -1122,6 +1176,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
             (row.jvr && row.jvr.toLowerCase().includes(term)) ||
             (row.project_number && row.project_number.toLowerCase().includes(term)) ||
             (row.received_petty_cash && row.received_petty_cash.toLowerCase().includes(term)) ||
+            (row.notes && row.notes.toLowerCase().includes(term)) ||
             (row.voucher_total != null && row.voucher_total.toString().includes(searchTerm)) ||
             (row.received_amount != null && row.received_amount.toString().includes(searchTerm)) ||
             (row.created_date && row.created_date.includes(searchTerm)) ||
@@ -1260,6 +1315,10 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
   notApprovedAmountEl.textContent = notApproved.toFixed(2);
   totalCountEl.textContent = totalCount;
   totalAmountEl.textContent = totalAmount.toFixed(2);
+
+  // Calculate balance: (Total Submitted Amount - Rejected Amount) - (Fully Received Amount + APPROVED Amount + Pending Approval Amount)
+  const balance = (totalAmount - rejected) - (received + pending + notApproved);
+  balanceAmountEl.textContent = balance.toFixed(2);
 
 }
     // === CRUD ===
@@ -1422,5 +1481,4 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
   </script>
  
 </div>
-</body>
-</html>
+<!-- Code injected
