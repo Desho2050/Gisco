@@ -434,22 +434,50 @@ tr.rejected {
   <button id="printBtn" class="btn-add" style="background-color: #6b7280;">🖨️ Print</button>
   <button id="exportExcelBtn" class="btn-add" style="background-color: #10b981;">📊 Export Excel</button>
   <button id="exportPdfBtn" class="btn-add" style="background-color: #ef4444;">📄 Export PDF</button>
-</div>
+</div style>
+
     <!-- Search Bar -->
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search any field..." />
+    <div style="margin: 10px; " >
+      <input type="text" id="searchInput" placeholder="Search any field..." style="background-color: rgba(0, 255, 255, 0.377);"/>
     </div>
 
-    <!-- Date Filter -->
-    <div class="date-filter" style="margin-bottom: 1.5rem;">
-      <label for="dateFilter" style="display:block; margin-bottom:0.25rem; font-size:0.875rem; color:var(--gray);">
-        Filter by Receiving Date
-      </label>
-      <select id="dateFilter" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.375rem; font-size:1rem;">
-        <option value="">All</option>
-      </select>
+    <!-- Filters -->
+    <div style="margin-bottom: 1.5rem;">
+      <table style="width:100%; border-collapse:collapse; background:white; border-radius:0.5rem; box-shadow:var(--shadow);">
+        <tbody>
+          <tr>
+            <td style="padding:0.75rem; border-bottom:1px solid var(--border); border-right:1px solid var(--border);">
+              <div style="font-weight:600;">Receiving Date</div>
+              <select id="dateFilter" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.375rem; font-size:1rem; background-color: rgba(0, 255, 255, 0.377);">
+                <option value="">All</option>
+              </select>
+            </td>
+            <td style="padding:0.75rem; border-bottom:1px solid var(--border);">
+              <div style="font-weight:600;">Petty Cash Status</div>
+              <select id="pettyCashFilter" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.375rem; font-size:1rem;background-color: rgba(0, 255, 255, 0.377);">
+                <option value="">All</option>
+                <option value="Received">Received</option>
+                <option value="Not Received">Not Received</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0.75rem; border-right:1px solid var(--border);">
+              <div style="font-weight:600;">Payment Status</div>
+              <select id="paymentStatusFilter" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.375rem; font-size:1rem;background-color: rgba(0, 255, 255, 0.377);">
+                <option value="">All</option>
+                <option value="Paid in Full">Paid in Full</option>
+                <option value="Not Paid">Not Paid</option>
+              </select>
+            </td>
+            <td style="padding:0.75rem;">
+              <button id="clearFiltersBtn" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.375rem; font-size:1rem; background-color:#b700ff27; color:var(--dark); cursor:pointer;">Clear All Filters</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-
+</div>
     <!-- Summary Cards -->
     <div class="summary">
     <div class="card">
@@ -679,7 +707,7 @@ const balanceAmountEl = document.getElementById('balanceAmount');
 
         allVouchers = data;
         populateDateFilter(data);
-        let filtered = applyFilters(data, searchTerm, document.getElementById('dateFilter').value);
+        let filtered = applyFilters(data, searchTerm, document.getElementById('dateFilter').value, document.getElementById('pettyCashFilter').value, document.getElementById('paymentStatusFilter').value);
         const sorted = sortData(filtered, currentSortField, currentSortDirection);
         renderTable(sorted);
         calculateSummary(sorted);
@@ -1161,7 +1189,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
   }
 });
 
-    function applyFilters(data, searchTerm, selectedDate) {
+    function applyFilters(data, searchTerm, selectedDate, selectedPettyCash, selectedPayment) {
       return data.filter(row => {
         let textMatch = true;
         if (searchTerm) {
@@ -1184,7 +1212,9 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
             (row.receiving_date && row.receiving_date.includes(searchTerm));
         }
         const dateMatch = !selectedDate || row.receiving_date === selectedDate;
-        return textMatch && dateMatch;
+        const pettyCashMatch = !selectedPettyCash || row.received_petty_cash === selectedPettyCash;
+        const paymentMatch = !selectedPayment || row.payment_status === selectedPayment;
+        return textMatch && dateMatch && pettyCashMatch && paymentMatch;
       });
     }
 
@@ -1473,6 +1503,22 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
 
     document.getElementById('dateFilter').addEventListener('change', (e) => {
       fetchData(searchInput.value.trim());
+    });
+
+    document.getElementById('pettyCashFilter').addEventListener('change', (e) => {
+      fetchData(searchInput.value.trim());
+    });
+
+    document.getElementById('paymentStatusFilter').addEventListener('change', (e) => {
+      fetchData(searchInput.value.trim());
+    });
+
+    document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+      searchInput.value = '';
+      document.getElementById('dateFilter').value = '';
+      document.getElementById('pettyCashFilter').value = '';
+      document.getElementById('paymentStatusFilter').value = '';
+      fetchData('');
     });
 
     // === Initial Load ===
