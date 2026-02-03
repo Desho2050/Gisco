@@ -768,7 +768,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const fiveDaysFromNow = new Date();
-    fiveDaysFromNow.setDate(today.getDate() + 5);
+    fiveDaysFromNow.setDate(today.getDate() + 7);
     fiveDaysFromNow.setHours(23, 59, 59, 999);
     
     const upcomingEvents = [];
@@ -816,8 +816,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Set notification text based on language
       const dict = I18N[currentLang] || I18N.ar;
       const leaveWarning = currentLang === 'ar' 
-        ? `تنبيه: ${upcomingEvents.length} موظف سيبدأ إجازته أو يستقيل خلال الأيام الخمسة القادمة!`
-        : `Alert: ${upcomingEvents.length} employee(s) will start leave or resign within the next 5 days!`;
+        ? `تنبيه: ${upcomingEvents.length} موظف سيبدأ إجازته أو يستقيل خلال الاسبوع القادم!`
+        : `Alert: ${upcomingEvents.length} employee(s) will start leave or resign within the next week!`;
       
       notificationText.textContent = leaveWarning;
       
