@@ -373,7 +373,15 @@
       </div>
     </div>
   </header>
-
+<div id="leaveNotifications" style="display:none; margin:20px auto; max-width:1200px; padding:15px; background:linear-gradient(135deg, #ffedd5, #fef3c7); border-radius:16px; border:2px solid #fdba74; box-shadow:0 8px 25px rgba(245, 158, 11, 0.3); text-align:center; direction:rtl;">
+  <div style="display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;">
+    <span style="font-size:28px; line-height:1;">⏰</span>
+    <div>
+      <div id="leaveNotificationText" style="font-weight:700; font-size:18px; color:#92400e; margin-bottom:8px;"></div>
+      <div id="leaveDetails" style="font-size:14px; color:#b45309; max-height:200px; overflow:auto; text-align:start;"></div>
+    </div>
+  </div>
+</div>
   <main class="container">
     <div class="grid">
       <!-- Cards remain exactly as in your original -->
@@ -686,19 +694,48 @@ open_leaves: 'ادارة الإجازات',
     });
 
     // ===== SUPABASE LOGIC =====
-   document.addEventListener('DOMContentLoaded', async () => {
+   // ===== SUPABASE LOGIC WITH LEAVE NOTIFICATIONS =====
+document.addEventListener('DOMContentLoaded', async () => {
   const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-
   const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
-
-  function showAlert(message) {
+  
+  // Helper: Format date with Arabic numerals when needed
+  const convertToArabicNumerals = (numStr) => {
+    const arabicNumerals = { '0': '٠', '1': '١', '2': '٢', '3': '٣', '4': '٤', '5': '٥', '6': '٦', '7': '٧', '8': '٨', '9': '٩' };
+    return numStr.replace(/\d/g, d => arabicNumerals[d] || d);
+  };
+  
+  // Helper: Format date for display based on language
+  const formatDateForDisplay = (dateStr, lang) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    if (lang === 'ar') {
+      const day = date.toLocaleDateString('en-US', { day: 'numeric' });
+      const month = date.toLocaleDateString('en-US', { month: 'long' });
+      const year = date.toLocaleDateString('en-US', { year: 'numeric' });
+      const arabicMonths = {
+        'January': 'يناير', 'February': 'فبراير', 'March': 'مارس', 'April': 'أبريل',
+        'May': 'مايو', 'June': 'يونيو', 'July': 'يوليو', 'August': 'أغسطس',
+        'September': 'سبتمبر', 'October': 'أكتوبر', 'November': 'نوفمبر', 'December': 'ديسمبر'
+      };
+      return `${convertToArabicNumerals(day)} ${arabicMonths[date.toLocaleDateString('en-US', { month: 'long' })]} ${convertToArabicNumerals(year)}`;
+    } else {
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+  };
+  
+  // Show alert notification
+  const showAlert = (message, type = 'warning') => {
     const alertDiv = document.createElement('div');
     alertDiv.style.cssText = `
       position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      background: #fef3c7; color: #92400e; padding: 16px 24px;
-      border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      z-index: 1000; font-weight: 600; border: 2px solid #fdba74;
+      background: ${type === 'warning' ? '#fef3c7' : '#dcfce7'}; 
+      color: ${type === 'warning' ? '#92400e' : '#166534'}; 
+      padding: 16px 24px; border-radius: 12px; 
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      z-index: 1000; font-weight: 600; 
+      border: 2px solid ${type === 'warning' ? '#fdba74' : '#86efac'};
       max-width: 90%; text-align: center; white-space: pre-wrap;`;
     alertDiv.textContent = message;
     document.body.appendChild(alertDiv);
@@ -706,30 +743,141 @@ open_leaves: 'ادارة الإجازات',
       alertDiv.style.opacity = '0';
       alertDiv.style.transition = 'opacity 0.5s';
       setTimeout(() => document.body.removeChild(alertDiv), 500);
-    }, 10000); // Show longer for detailed message
+    }, 10000);
+  };
+  
+  // Fetch and process leave data for notifications
+  try {
+    // Fetch leaves data
+    const { data: leavesData, error: leavesError } = await supabaseClient
+      .from('employee_leaves')
+      .select('id, file_no, name, name_ar, leave_status, start_date, resignation_date');
+    
+    if (leavesError) throw leavesError;
+    
+    // Update Leaves card count
+    const setCount = (id, n) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const dict = I18N[currentLang] || I18N.ar;
+      el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
+    };
+    setCount('Leaves', leavesData.length);
+    
+    // Process upcoming leaves/resignations (within 5 days)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const fiveDaysFromNow = new Date();
+    fiveDaysFromNow.setDate(today.getDate() + 5);
+    fiveDaysFromNow.setHours(23, 59, 59, 999);
+    
+    const upcomingEvents = [];
+    
+    leavesData.forEach(row => {
+      if (row.leave_status === 'LEAVE' && row.start_date) {
+        const startDate = new Date(row.start_date);
+        startDate.setHours(0, 0, 0, 0);
+        
+        if (startDate >= today && startDate <= fiveDaysFromNow) {
+          upcomingEvents.push({
+            type: 'leave',
+            file_no: row.file_no || '—',
+            name: currentLang === 'ar' ? (row.name_ar || row.name || 'غير معروف') : (row.name || 'Unknown'),
+            date: row.start_date,
+            daysUntil: Math.ceil((startDate - today) / (1000 * 60 * 60 * 24))
+          });
+        }
+      } 
+      else if (row.leave_status === 'RESIGNATION' && row.resignation_date) {
+        const resignDate = new Date(row.resignation_date);
+        resignDate.setHours(0, 0, 0, 0);
+        
+        if (resignDate >= today && resignDate <= fiveDaysFromNow) {
+          upcomingEvents.push({
+            type: 'resignation',
+            file_no: row.file_no || '—',
+            name: currentLang === 'ar' ? (row.name_ar || row.name || 'غير معروف') : (row.name || 'Unknown'),
+            date: row.resignation_date,
+            daysUntil: Math.ceil((resignDate - today) / (1000 * 60 * 60 * 24))
+          });
+        }
+      }
+    });
+    
+    // Display notifications if any upcoming events
+    if (upcomingEvents.length > 0) {
+      const notificationContainer = document.getElementById('leaveNotifications');
+      const notificationText = document.getElementById('leaveNotificationText');
+      const detailsContainer = document.getElementById('leaveDetails');
+      
+      // Sort by days until event (soonest first)
+      upcomingEvents.sort((a, b) => a.daysUntil - b.daysUntil);
+      
+      // Set notification text based on language
+      const dict = I18N[currentLang] || I18N.ar;
+      const leaveWarning = currentLang === 'ar' 
+        ? `تنبيه: ${upcomingEvents.length} موظف سيبدأ إجازته أو يستقيل خلال الأيام الخمسة القادمة!`
+        : `Alert: ${upcomingEvents.length} employee(s) will start leave or resign within the next 5 days!`;
+      
+      notificationText.textContent = leaveWarning;
+      
+      // Build details list
+      let detailsHTML = '<div style="display:flex; flex-direction:column; gap:8px; padding:10px; background:rgba(255,255,255,0.6); border-radius:10px; margin-top:10px;">';
+      
+      upcomingEvents.forEach(event => {
+        const formattedDate = formatDateForDisplay(event.date, currentLang);
+        const eventType = event.type === 'leave' 
+          ? (currentLang === 'ar' ? 'إجازة' : 'Leave')
+          : (currentLang === 'ar' ? 'استقالة' : 'Resignation');
+        
+        const daysText = currentLang === 'ar'
+          ? (event.daysUntil === 0 ? 'اليوم' : `خلال ${event.daysUntil} أيام`)
+          : (event.daysUntil === 0 ? 'Today' : `in ${event.daysUntil} days`);
+        
+        detailsHTML += `
+          <div style="padding:8px; background:rgba(254, 243, 199, 0.7); border-radius:8px; border-right:3px solid #f59e0b;">
+            <strong>رقم الملف ${event.file_no}</strong> | ${event.name} | ${eventType} ${daysText} (${formattedDate})
+          </div>
+        `;
+      });
+      
+      detailsHTML += '</div>';
+      detailsContainer.innerHTML = detailsHTML;
+      
+      // Show notification container
+      notificationContainer.style.display = 'block';
+      
+      // Also show a temporary alert for immediate attention
+      showAlert(leaveWarning, 'warning');
+    }
+    
+  } catch (err) {
+    console.error('Supabase leaves fetch error:', err);
+    document.getElementById('Leaves').textContent = 'error';
   }
-
+  
+  // Existing gatepass logic (kept intact)
   try {
     const { data, error } = await supabaseClient
       .from('employee_passports')
       .select('file_no,name,name_ar,gatepass_exp_date,passport_exp_date');
-
+    
     if (error) throw error;
-
+    
     const today = new Date();
     const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000;
     const expiringEntries = [];
-
+    
     for (const row of data) {
       let isExpiring = false;
       const details = {
         file_no: row.file_no || '—',
         name: currentLang === 'ar' ? (row.name_ar || row.name || 'غير معروف') : (row.name || row.name_ar || 'Unknown')
       };
-
+      
       let gatepassExp = null;
       let passportExp = null;
-
+      
       if (row.gatepass_exp_date) {
         const gatepassDate = new Date(row.gatepass_exp_date);
         if (gatepassDate >= today && gatepassDate - today < sixtyDaysMs) {
@@ -737,15 +885,15 @@ open_leaves: 'ادارة الإجازات',
           gatepassExp = gatepassDate.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US');
         }
       }
-
+      
       if (row.passport_exp_date) {
         const passportDate = new Date(row.passport_exp_date);
         if (passportDate >= today && passportDate - today < sixtyDaysMs) {
           isExpiring = true;
-          passportExp = passportDate.toLocaleDateString(currentLang === 'ar' + 'ar-EG' + 'en-US');
+          passportExp = passportDate.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US');
         }
       }
-
+      
       if (isExpiring) {
         expiringEntries.push({
           ...details,
@@ -754,8 +902,8 @@ open_leaves: 'ادارة الإجازات',
         });
       }
     }
-
-    // Update count
+    
+    // Update gatepass count
     const setCount = (id, n) => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -763,27 +911,25 @@ open_leaves: 'ادارة الإجازات',
       el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
     };
     setCount('gatepassCount', data.length);
-
-    // Show detailed warning if any
+    
+    // Show gatepass expiry warning if any
     if (expiringEntries.length > 0) {
       const dict = I18N[currentLang] || I18N.ar;
       let messageLines = [dict.expiry_warning + '\n'];
-
       expiringEntries.forEach(entry => {
         let line = `File: ${entry.file_no} | Name: ${entry.name}`;
         if (entry.gatepass_exp_date) line += ` | GatePass: ${entry.gatepass_exp_date}`;
         if (entry.passport_exp_date) line += ` | Passport: ${entry.passport_exp_date}`;
         messageLines.push(line);
       });
-
       showAlert(messageLines.join('\n'));
     }
-
   } catch (err) {
-    console.error('Supabase fetch error:', err);
+    console.error('Supabase gatepass fetch error:', err);
     document.getElementById('gatepassCount').textContent = 'error';
   }
 });
+
 
   </script>
 </body>
