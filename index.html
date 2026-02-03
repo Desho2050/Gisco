@@ -520,212 +520,37 @@
   <!-- Load Supabase SDK first -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script>
-    // ===== CLOCK & LANGUAGE =====
-    let currentLang = 'ar';
-
-    function updateClock() {
-      const now = new Date();
-      const time = now.toLocaleTimeString('en-US', { hour12: false });
-      document.getElementById('time').textContent = time;
-
-      if (currentLang === 'ar') {
-        const day = now.toLocaleDateString('en-US', { day: 'numeric' });
-        const month = now.toLocaleDateString('en-US', { month: 'long' });
-        const year = now.toLocaleDateString('en-US', { year: 'numeric' });
-        const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
-
-        const arabicWeekdays = {
-          'Sunday': 'الأحد', 'Monday': 'الاثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
-          'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'
-        };
-        const arabicMonths = {
-          'January': 'يناير', 'February': 'فبراير', 'March': 'مارس', 'April': 'أبريل',
-          'May': 'مايو', 'June': 'يونيو', 'July': 'يوليو', 'August': 'أغسطس',
-          'September': 'سبتمبر', 'October': 'أكتوبر', 'November': 'نوفمبر', 'December': 'ديسمبر'
-        };
-        const arabicNumerals = { '0': '٠', '1': '١', '2': '٢', '3': '٣', '4': '٤', '5': '٥', '6': '٦', '7': '٧', '8': '٨', '9': '٩' };
-        const convertToArabicNumerals = (numStr) => numStr.replace(/\d/g, d => arabicNumerals[d]);
-
-        const arabicDate = `${arabicWeekdays[weekday]}, ${convertToArabicNumerals(day)} ${arabicMonths[month]} ${convertToArabicNumerals(year)}`;
-        document.getElementById('date').textContent = arabicDate;
-        document.getElementById('date').className = 'date arabic-clock';
-      } else {
-        const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('date').textContent = date;
-        document.getElementById('date').className = 'date';
-      }
-    }
-
-    setInterval(updateClock, 1000);
-    updateClock();
- 
-    // ===== I18N DICTIONARY =====
-    const I18N = {
-      en: {
-        brand_title: 'Gulf Industrial Service Company',
-        card_oracle_title: 'Oracle Materials (Search Oracle)',
-        card_oracle_desc: 'Enhanced search across Oracle.xlsx with multi-input filtering.',
-        open_oracle: 'Open Oracle Page',
-        card_materials_title: 'Received Materials (Search Received Materials)',
-        card_materials_desc: 'Same design, powered by Materials.xlsx with totals and search.',
-        open_materials: 'Open Materials Page',
-        card_requests_title: 'Requests Summary (Search Requests Summary)',
-        card_requests_desc: 'Open the requests summary with search and filters.',
-        open_requests: 'Open Requests Page',
-        card_sh_title: 'Al-Shuhrah Compressors (Search Al-Shuhrah Materials)',
-        card_sh_desc: 'Editable table with totals, export to Excel/PDF.',
-        open_sh: 'Open Al-Shuhrah Compressors',
-        card_wo_title: '4378M Work Orders Summary',
-        card_wo_desc: 'Open the 4378M work orders summary.',
-        open_wo: 'Open Work Orders Page',
-        EMP_Card: '4378M Staff Management',
-        EMP_Card_Desc: 'Open 4378M Staff Management.',
-        new_badge: 'New',
-        data_label: 'Data:',
-        rows_suffix: ' rows',
-        file_not_found: 'file not found',
-        card_vehicles_title: 'Vehicle Usage Tracker',
-        card_vehicles_desc: 'Track vehicle odometer readings and daily usage.',
-        open_vehicles: 'Open Vehicle Tracker',
-        card_timesheet_title: 'Employee Timesheet',
-        card_timesheet_desc: 'Manage and track employee attendance and working hours.',
-        open_timesheet: 'Open Timesheet',
-        card_gatepass_title: 'Passport & GatePass Manager',
-        card_gatepass_desc: 'Manage employee passport and gatepass expiry dates.',
-        open_gatepass: 'Open Passport & GatePass',
-        expiry_warning: '⚠️ Warning: Some passports or gatepasses expire in less than 60 days.',
-         card_tasks_title: 'Task Scheduler Pro',
-        card_tasks_desc: 'Schedule tasks with reminders and system notifications.',
-        open_tasks: 'Open Task Manager',
-        card_pettycash_title: 'Petty Cash Voucher Management',
-card_pettycash_desc: 'Manage and track petty cash vouchers with full CRUD and summary analytics.',
-open_pettycash: 'Open Petty Cash',
-open_leaves: 'Open Leaves Management',
-      },
-      ar: {
-        brand_title: 'شركة الخليج للخدمات الصناعية',
-        card_oracle_title: 'مواد الاوراكل ( البحث في الاوراكل )',
-        card_oracle_desc: 'بحث محسّن عبر Oracle.xlsx مع تصفية متعددة المدخلات.',
-        open_oracle: 'اذهب للاوراكل',
-        card_materials_title: 'المواد المستلمة ( البحث في المواد المستلمة )',
-        card_materials_desc: 'نفس التصميم باستخدام Materials.xlsx مع المجاميع والبحث.',
-        open_materials: 'اذهب للمواد',
-        card_requests_title: 'ملخص الطلبات ( البحث في ملخص الطلبات )',
-        card_requests_desc: 'افتح ملخص الطلبات مع البحث والمرشحات.',
-        open_requests: 'اذهب للطلبات',
-        card_sh_title: 'كومبيرسورز الشهرة ( البحث في مواد محل الشهرة )',
-        card_sh_desc: 'جدول قابل للتعديل مع المجاميع والتصدير إلى Excel/PDF.',
-        open_sh: 'افتح محل الشهرة',
-        card_wo_title: 'ملخص أوامر العمل 4378M',
-        card_wo_desc: 'افتح ملخص أوامر العمل 4378M.',
-        open_wo: 'اذهب لأوامر العمل',
-        new_badge: 'جديد',
-        EMP_Card: 'ادارة الموظفين',
-        EMP_Card_Desc: 'افتح ادارة الموظفين.',
-        data_label: 'تم العثور على:',
-        rows_suffix: ' نتيجة',
-        file_not_found: 'الملف غير موجود',
-        card_vehicles_title: 'متابعة استخدام المركبات',
-        card_vehicles_desc: 'تتبع قراءات عداد الكيلومترات والاستخدام اليومي للمركبة.',
-        open_vehicles: 'افتح تتبع المركبة',
-        card_timesheet_title: 'جدول حضور الموظفين',
-        card_timesheet_desc: 'إدارة وتسجيل ساعات حضور الموظفين.',
-        open_timesheet: 'افتح جدول الحضور',
-        card_gatepass_title: 'إدارة جوازات السفر وتصاريح الدخول',
-        card_gatepass_desc: 'إدارة تواريخ انتهاء جوازات السفر وتصاريح الدخول للموظفين.',
-        open_gatepass: 'افتح إدارة التصاريح',
-        expiry_warning: '⚠️ تحذير: بعض جوازات السفر أو التصاريح تنتهي خلال أقل من 60 يومًا.',
-         card_tasks_title: 'مدير المهام',
-        card_tasks_desc: 'جدولة المهام مع التذكيرات والإشعارات النظامية.',
-        open_tasks: 'افتح مدير المهام',
-        card_pettycash_title: 'إدارة المصروفات النثرية',
-card_pettycash_desc: 'إدارة وتتبع المصروفات النثرية للمشروع.',
-open_pettycash: 'افتح المصروفات النثرية',
-open_leaves: 'ادارة الإجازات',
-      }
-    };
-
-    const applyLang = (lang) => {
-      document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-      const dict = I18N[lang] || I18N.ar;
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (dict[key]) el.textContent = dict[key];
-      });
-      currentLang = lang;
-      updateClock();
-    };
-
-    // ===== THEME & INIT =====
-    document.addEventListener('DOMContentLoaded', () => {
-      // Theme
-      const themeSelect = document.getElementById('themeSelect');
-      const savedTheme = localStorage.getItem('selectedTheme') || 'modern';
-      themeSelect.value = savedTheme;
-      document.body.className = `theme-${savedTheme}`;
-      themeSelect.addEventListener('change', (e) => {
-        document.body.className = `theme-${e.target.value}`;
-        localStorage.setItem('selectedTheme', e.target.value);
-      });
-
-      // Language
-      applyLang(currentLang);
-      document.querySelectorAll('[data-lang]').forEach(btn =>
-        btn.addEventListener('click', () => applyLang(btn.dataset.lang))
-      );
-
-      // Mock counts
-      const setCount = (id, n) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const dict = I18N[currentLang] || I18N.ar;
-        el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
-      };
-
-      setCount('oracleCount', 58009);
-      setCount('materialsCount', 890);
-      setCount('requestsCount', 340);
-      setCount('purchaseCount', 210);
-      setCount('woCount', 175);
-      setCount('empcount', 85);
-      setCount('vehiclesCount', 120);
-      setCount('timesheetCount', 95);
-    });
-
-    // ===== SUPABASE LOGIC =====
-   // ===== SUPABASE LOGIC WITH LEAVE NOTIFICATIONS =====
-document.addEventListener('DOMContentLoaded', async () => {
-  const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-  const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+<script>
+  // ===== GLOBAL STATE =====
+  let currentLang = 'ar';
+  let upcomingLeaveEvents = null; // Stores RAW data with both language names
   
-  // Helper: Format date with Arabic numerals when needed
+  // ===== HELPER FUNCTIONS (LANGUAGE-AGNOSTIC) =====
   const convertToArabicNumerals = (numStr) => {
-    const arabicNumerals = { '0': '٠', '1': '١', '2': '٢', '3': '٣', '4': '٤', '5': '٥', '6': '٦', '7': '٧', '8': '٨', '9': '٩' };
+    if (typeof numStr !== 'string') numStr = String(numStr);
+    const arabicNumerals = { '0':'٠','1':'١','2':'٢','3':'٣','4':'٤','5':'٥','6':'٦','7':'٧','8':'٨','9':'٩' };
     return numStr.replace(/\d/g, d => arabicNumerals[d] || d);
   };
   
-  // Helper: Format date for display based on language
   const formatDateForDisplay = (dateStr, lang) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '-';
+    
     if (lang === 'ar') {
       const day = date.toLocaleDateString('en-US', { day: 'numeric' });
-      const month = date.toLocaleDateString('en-US', { month: 'long' });
+      const monthKey = date.toLocaleDateString('en-US', { month: 'long' });
       const year = date.toLocaleDateString('en-US', { year: 'numeric' });
       const arabicMonths = {
-        'January': 'يناير', 'February': 'فبراير', 'March': 'مارس', 'April': 'أبريل',
-        'May': 'مايو', 'June': 'يونيو', 'July': 'يوليو', 'August': 'أغسطس',
-        'September': 'سبتمبر', 'October': 'أكتوبر', 'November': 'نوفمبر', 'December': 'ديسمبر'
+        'January':'يناير','February':'فبراير','March':'مارس','April':'أبريل',
+        'May':'مايو','June':'يونيو','July':'يوليو','August':'أغسطس',
+        'September':'سبتمبر','October':'أكتوبر','November':'نوفمبر','December':'ديسمبر'
       };
-      return `${convertToArabicNumerals(day)} ${arabicMonths[date.toLocaleDateString('en-US', { month: 'long' })]} ${convertToArabicNumerals(year)}`;
-    } else {
-      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      return `${convertToArabicNumerals(day)} ${arabicMonths[monthKey] || monthKey} ${convertToArabicNumerals(year)}`;
     }
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
   
-  // Show alert notification
   const showAlert = (message, type = 'warning') => {
     const alertDiv = document.createElement('div');
     alertDiv.style.cssText = `
@@ -746,191 +571,424 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 10000);
   };
   
-  // Fetch and process leave data for notifications
-  try {
-    // Fetch leaves data
-    const { data: leavesData, error: leavesError } = await supabaseClient
-      .from('employee_leaves')
-      .select('id, file_no, name, name_ar, leave_status, start_date, resignation_date');
+  // ===== I18N DICTIONARY =====
+  const I18N = {
+    en: {
+      brand_title: 'Gulf Industrial Service Company',
+      card_oracle_title: 'Oracle Materials (Search Oracle)',
+      card_oracle_desc: 'Enhanced search across Oracle.xlsx with multi-input filtering.',
+      open_oracle: 'Open Oracle Page',
+      card_materials_title: 'Received Materials (Search Received Materials)',
+      card_materials_desc: 'Same design, powered by Materials.xlsx with totals and search.',
+      open_materials: 'Open Materials Page',
+      card_requests_title: 'Requests Summary (Search Requests Summary)',
+      card_requests_desc: 'Open the requests summary with search and filters.',
+      open_requests: 'Open Requests Page',
+      card_sh_title: 'Al-Shuhrah Compressors (Search Al-Shuhrah Materials)',
+      card_sh_desc: 'Editable table with totals, export to Excel/PDF.',
+      open_sh: 'Open Al-Shuhrah Compressors',
+      card_wo_title: '4378M Work Orders Summary',
+      card_wo_desc: 'Open the 4378M work orders summary.',
+      open_wo: 'Open Work Orders Page',
+      EMP_Card: '4378M Staff Management',
+      EMP_Card_Desc: 'Open 4378M Staff Management.',
+      new_badge: 'New',
+      data_label: 'Data:',
+      rows_suffix: ' rows',
+      file_not_found: 'file not found',
+      card_vehicles_title: 'Vehicle Usage Tracker',
+      card_vehicles_desc: 'Track vehicle odometer readings and daily usage.',
+      open_vehicles: 'Open Vehicle Tracker',
+      card_timesheet_title: 'Employee Timesheet',
+      card_timesheet_desc: 'Manage and track employee attendance and working hours.',
+      open_timesheet: 'Open Timesheet',
+      card_gatepass_title: 'Passport & GatePass Manager',
+      card_gatepass_desc: 'Manage employee passport and gatepass expiry dates.',
+      open_gatepass: 'Open Passport & GatePass',
+      expiry_warning: '⚠️ Warning: Some passports or gatepasses expire in less than 60 days.',
+      card_tasks_title: 'Task Scheduler Pro',
+      card_tasks_desc: 'Schedule tasks with reminders and system notifications.',
+      open_tasks: 'Open Task Manager',
+      card_pettycash_title: 'Petty Cash Voucher Management',
+      card_pettycash_desc: 'Manage and track petty cash vouchers with full CRUD and summary analytics.',
+      open_pettycash: 'Open Petty Cash',
+      open_leaves: 'Open Leaves Management',
+      leave_notification_title: 'Alert: {count} employee(s) will start leave or resign within the next week!',
+      leave_type_leave: 'Leave',
+      leave_type_resignation: 'Resignation',
+      days_today: 'Today',
+      days_in: 'in {days} days',
+      file_prefix: 'File No: '
+    },
+    ar: {
+      brand_title: 'شركة الخليج للخدمات الصناعية',
+      card_oracle_title: 'مواد الاوراكل ( البحث في الاوراكل )',
+      card_oracle_desc: 'بحث محسّن عبر Oracle.xlsx مع تصفية متعددة المدخلات.',
+      open_oracle: 'اذهب للاوراكل',
+      card_materials_title: 'المواد المستلمة ( البحث في المواد المستلمة )',
+      card_materials_desc: 'نفس التصميم باستخدام Materials.xlsx مع المجاميع والبحث.',
+      open_materials: 'اذهب للمواد',
+      card_requests_title: 'ملخص الطلبات ( البحث في ملخص الطلبات )',
+      card_requests_desc: 'افتح ملخص الطلبات مع البحث والمرشحات.',
+      open_requests: 'اذهب للطلبات',
+      card_sh_title: 'كومبيرسورز الشهرة ( البحث في مواد محل الشهرة )',
+      card_sh_desc: 'جدول قابل للتعديل مع المجاميع والتصدير إلى Excel/PDF.',
+      open_sh: 'افتح محل الشهرة',
+      card_wo_title: 'ملخص أوامر العمل 4378M',
+      card_wo_desc: 'افتح ملخص أوامر العمل 4378M.',
+      open_wo: 'اذهب لأوامر العمل',
+      new_badge: 'جديد',
+      EMP_Card: 'ادارة الموظفين',
+      EMP_Card_Desc: 'افتح ادارة الموظفين.',
+      data_label: 'تم العثور على:',
+      rows_suffix: ' نتيجة',
+      file_not_found: 'الملف غير موجود',
+      card_vehicles_title: 'متابعة استخدام المركبات',
+      card_vehicles_desc: 'تتبع قراءات عداد الكيلومترات والاستخدام اليومي للمركبة.',
+      open_vehicles: 'افتح تتبع المركبة',
+      card_timesheet_title: 'جدول حضور الموظفين',
+      card_timesheet_desc: 'إدارة وتسجيل ساعات حضور الموظفين.',
+      open_timesheet: 'افتح جدول الحضور',
+      card_gatepass_title: 'إدارة جوازات السفر وتصاريح الدخول',
+      card_gatepass_desc: 'إدارة تواريخ انتهاء جوازات السفر وتصاريح الدخول للموظفين.',
+      open_gatepass: 'افتح إدارة التصاريح',
+      expiry_warning: '⚠️ تحذير: بعض جوازات السفر أو التصاريح تنتهي خلال أقل من 60 يومًا.',
+      card_tasks_title: 'مدير المهام',
+      card_tasks_desc: 'جدولة المهام مع التذكيرات والإشعارات النظامية.',
+      open_tasks: 'افتح مدير المهام',
+      card_pettycash_title: 'إدارة المصروفات النثرية',
+      card_pettycash_desc: 'إدارة وتتبع المصروفات النثرية للمشروع.',
+      open_pettycash: 'افتح المصروفات النثرية',
+      open_leaves: 'ادارة الإجازات',
+      leave_notification_title: 'تنبيه: {count} موظف سيبدأ إجازته أو يستقيل خلال الأسبوع القادم!',
+      leave_type_leave: 'إجازة',
+      leave_type_resignation: 'استقالة',
+      days_today: 'اليوم',
+      days_in: 'خلال {days} أيام',
+      file_prefix: 'رقم الملف '
+    }
+  };
+
+  // ===== CRITICAL FIX: NOTIFICATION RENDERER (LANGUAGE-RESPONSIVE) =====
+  function renderLeaveNotifications(lang) {
+    const container = document.getElementById('leaveNotifications');
+    const titleEl = document.getElementById('leaveNotificationText');
+    const detailsEl = document.getElementById('leaveDetails');
     
-    if (leavesError) throw leavesError;
+    // Hide if no data or container missing
+    if (!container || !titleEl || !detailsEl || !upcomingLeaveEvents?.length) {
+      if (container) container.style.display = 'none';
+      return;
+    }
     
-    // Update Leaves card count
-    const setCount = (id, n) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const dict = I18N[currentLang] || I18N.ar;
-      el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
-    };
-    setCount('Leaves', leavesData.length);
+    const dict = I18N[lang] || I18N.ar;
     
-    // Process upcoming leaves/resignations (within 5 days)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const fiveDaysFromNow = new Date();
-    fiveDaysFromNow.setDate(today.getDate() + 7);
-    fiveDaysFromNow.setHours(23, 59, 59, 999);
+    // Set title with count
+    const titleText = dict.leave_notification_title.replace('{count}', upcomingLeaveEvents.length);
+    titleEl.textContent = titleText;
     
-    const upcomingEvents = [];
+    // Build details with language-aware formatting
+    let detailsHTML = '<div style="display:flex; flex-direction:column; gap:8px; padding:10px; background:rgba(255,255,255,0.6); border-radius:10px; margin-top:10px;">';
     
-    leavesData.forEach(row => {
-      if (row.leave_status === 'LEAVE' && row.start_date) {
-        const startDate = new Date(row.start_date);
-        startDate.setHours(0, 0, 0, 0);
-        
-        if (startDate >= today && startDate <= fiveDaysFromNow) {
-          upcomingEvents.push({
-            type: 'leave',
-            file_no: row.file_no || '—',
-            name: currentLang === 'ar' ? (row.name_ar || row.name || 'غير معروف') : (row.name || 'Unknown'),
-            date: row.start_date,
-            daysUntil: Math.ceil((startDate - today) / (1000 * 60 * 60 * 24))
-          });
-        }
-      } 
-      else if (row.leave_status === 'RESIGNATION' && row.resignation_date) {
-        const resignDate = new Date(row.resignation_date);
-        resignDate.setHours(0, 0, 0, 0);
-        
-        if (resignDate >= today && resignDate <= fiveDaysFromNow) {
-          upcomingEvents.push({
-            type: 'resignation',
-            file_no: row.file_no || '—',
-            name: currentLang === 'ar' ? (row.name_ar || row.name || 'غير معروف') : (row.name || 'Unknown'),
-            date: row.resignation_date,
-            daysUntil: Math.ceil((resignDate - today) / (1000 * 60 * 60 * 24))
-          });
-        }
-      }
-    });
-    
-    // Display notifications if any upcoming events
-    if (upcomingEvents.length > 0) {
-      const notificationContainer = document.getElementById('leaveNotifications');
-      const notificationText = document.getElementById('leaveNotificationText');
-      const detailsContainer = document.getElementById('leaveDetails');
-      
-      // Sort by days until event (soonest first)
-      upcomingEvents.sort((a, b) => a.daysUntil - b.daysUntil);
-      
-      // Set notification text based on language
-      const dict = I18N[currentLang] || I18N.ar;
-      const leaveWarning = currentLang === 'ar' 
-        ? `تنبيه: ${upcomingEvents.length} موظف سيبدأ إجازته أو يستقيل خلال الاسبوع القادم!`
-        : `Alert: ${upcomingEvents.length} employee(s) will start leave or resign within the next week!`;
-      
-      notificationText.textContent = leaveWarning;
-      
-      // Build details list
-      let detailsHTML = '<div style="display:flex; flex-direction:column; gap:8px; padding:10px; background:rgba(255,255,255,0.6); border-radius:10px; margin-top:10px;">';
-      
-      upcomingEvents.forEach(event => {
-        const formattedDate = formatDateForDisplay(event.date, currentLang);
+    // Sort by urgency (soonest first)
+    [...upcomingLeaveEvents]
+      .sort((a, b) => a.daysUntil - b.daysUntil)
+      .forEach(event => {
+        const formattedDate = formatDateForDisplay(event.date, lang);
         const eventType = event.type === 'leave' 
-          ? (currentLang === 'ar' ? 'إجازة' : 'Leave')
-          : (currentLang === 'ar' ? 'استقالة' : 'Resignation');
+          ? dict.leave_type_leave 
+          : dict.leave_type_resignation;
         
-        const daysText = currentLang === 'ar'
-          ? (event.daysUntil === 0 ? 'اليوم' : `خلال ${event.daysUntil} أيام`)
-          : (event.daysUntil === 0 ? 'Today' : `in ${event.daysUntil} days`);
+        // 🔑 CRITICAL FIX: Select name based on CURRENT language
+        const displayName = lang === 'ar' ? event.name_ar : event.name_en;
+        
+        // Days text with proper numeral conversion
+        let daysText;
+        if (event.daysUntil === 0) {
+          daysText = dict.days_today;
+        } else {
+          daysText = dict.days_in.replace('{days}', 
+            lang === 'ar' 
+              ? convertToArabicNumerals(event.daysUntil.toString()) 
+              : event.daysUntil
+          );
+        }
+        
+        // File prefix with language awareness
+        const filePrefix = dict.file_prefix;
         
         detailsHTML += `
           <div style="padding:8px; background:rgba(254, 243, 199, 0.7); border-radius:8px; border-right:3px solid #f59e0b;">
-            <strong>رقم الملف ${event.file_no}</strong> | ${event.name} | ${eventType} ${daysText} (${formattedDate})
-          </div>
-        `;
+            <strong>${filePrefix}${event.file_no}</strong> | ${displayName} | ${eventType} ${daysText} (${formattedDate})
+          </div>`;
       });
-      
-      detailsHTML += '</div>';
-      detailsContainer.innerHTML = detailsHTML;
-      
-      // Show notification container
-      notificationContainer.style.display = 'block';
-      
-      // Also show a temporary alert for immediate attention
-      showAlert(leaveWarning, 'warning');
-    }
     
-  } catch (err) {
-    console.error('Supabase leaves fetch error:', err);
-    document.getElementById('Leaves').textContent = 'error';
+    detailsHTML += '</div>';
+    detailsEl.innerHTML = detailsHTML;
+    container.style.display = 'block';
   }
-  
-  // Existing gatepass logic (kept intact)
-  try {
-    const { data, error } = await supabaseClient
-      .from('employee_passports')
-      .select('file_no,name,name_ar,gatepass_exp_date,passport_exp_date');
-    
-    if (error) throw error;
-    
-    const today = new Date();
-    const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000;
-    const expiringEntries = [];
-    
-    for (const row of data) {
-      let isExpiring = false;
-      const details = {
-        file_no: row.file_no || '—',
-        name: currentLang === 'ar' ? (row.name_ar || row.name || 'غير معروف') : (row.name || row.name_ar || 'Unknown')
+
+  // ===== CLOCK SYSTEM =====
+  function updateClock() {
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-US', { hour12: false });
+    document.getElementById('time').textContent = time;
+
+    if (currentLang === 'ar') {
+      const day = now.toLocaleDateString('en-US', { day: 'numeric' });
+      const monthKey = now.toLocaleDateString('en-US', { month: 'long' });
+      const year = now.toLocaleDateString('en-US', { year: 'numeric' });
+      const weekdayKey = now.toLocaleDateString('en-US', { weekday: 'long' });
+
+      const arabicWeekdays = {
+        'Sunday':'الأحد','Monday':'الاثنين','Tuesday':'الثلاثاء','Wednesday':'الأربعاء',
+        'Thursday':'الخميس','Friday':'الجمعة','Saturday':'السبت'
+      };
+      const arabicMonths = {
+        'January':'يناير','February':'فبراير','March':'مارس','April':'أبريل',
+        'May':'مايو','June':'يونيو','July':'يوليو','August':'أغسطس',
+        'September':'سبتمبر','October':'أكتوبر','November':'نوفمبر','December':'ديسمبر'
       };
       
-      let gatepassExp = null;
-      let passportExp = null;
-      
-      if (row.gatepass_exp_date) {
-        const gatepassDate = new Date(row.gatepass_exp_date);
-        if (gatepassDate >= today && gatepassDate - today < sixtyDaysMs) {
-          isExpiring = true;
-          gatepassExp = gatepassDate.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US');
-        }
-      }
-      
-      if (row.passport_exp_date) {
-        const passportDate = new Date(row.passport_exp_date);
-        if (passportDate >= today && passportDate - today < sixtyDaysMs) {
-          isExpiring = true;
-          passportExp = passportDate.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US');
-        }
-      }
-      
-      if (isExpiring) {
-        expiringEntries.push({
-          ...details,
-          gatepass_exp_date: gatepassExp,
-          passport_exp_date: passportExp
-        });
-      }
+      const arabicDate = `${arabicWeekdays[weekdayKey] || weekdayKey}, ${convertToArabicNumerals(day)} ${arabicMonths[monthKey] || monthKey} ${convertToArabicNumerals(year)}`;
+      document.getElementById('date').textContent = arabicDate;
+      document.getElementById('date').className = 'date arabic-clock';
+    } else {
+      const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('date').textContent = date;
+      document.getElementById('date').className = 'date';
+    }
+  }
+
+  // ===== LANGUAGE SYSTEM (NOW UPDATES NOTIFICATIONS) =====
+  const applyLang = (lang) => {
+    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    const dict = I18N[lang] || I18N.ar;
+    
+    // Update all data-i18n elements
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (dict[key]) el.textContent = dict[key];
+    });
+    
+    // 🔑 CRITICAL FIX: Re-render notifications when language changes
+    if (upcomingLeaveEvents?.length) {
+      renderLeaveNotifications(lang);
     }
     
-    // Update gatepass count
+    currentLang = lang;
+    updateClock();
+  };
+
+  // ===== INITIAL SETUP =====
+  document.addEventListener('DOMContentLoaded', () => {
+    // Theme initialization
+    const themeSelect = document.getElementById('themeSelect');
+    const savedTheme = localStorage.getItem('selectedTheme') || 'modern';
+    themeSelect.value = savedTheme;
+    document.body.className = `theme-${savedTheme}`;
+    themeSelect.addEventListener('change', (e) => {
+      document.body.className = `theme-${e.target.value}`;
+      localStorage.setItem('selectedTheme', e.target.value);
+    });
+
+    // Language initialization
+    applyLang(currentLang);
+    document.querySelectorAll('[data-lang]').forEach(btn => {
+      btn.addEventListener('click', () => applyLang(btn.dataset.lang));
+    });
+
+    // Mock data counters
     const setCount = (id, n) => {
       const el = document.getElementById(id);
       if (!el) return;
       const dict = I18N[currentLang] || I18N.ar;
-      el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : dict.file_not_found;
+      el.textContent = (typeof n === 'number') 
+        ? `${n}${dict.rows_suffix}` 
+        : (dict.file_not_found || 'error');
     };
-    setCount('gatepassCount', data.length);
+
+    // Set initial mock counts
+    setCount('oracleCount', 58009);
+    setCount('materialsCount', 890);
+    setCount('requestsCount', 340);
+    setCount('purchaseCount', 210);
+    setCount('woCount', 175);
+    setCount('empcount', 85);
+    setCount('vehiclesCount', 120);
+    setCount('timesheetCount', 95);
+    setCount('gatepassCount', 0);
+    setCount('Leaves', 0);
+    setCount('tasksCount', 0);
+    setCount('pettyCashCount', 0);
     
-    // Show gatepass expiry warning if any
-    if (expiringEntries.length > 0) {
-      const dict = I18N[currentLang] || I18N.ar;
-      let messageLines = [dict.expiry_warning + '\n'];
-      expiringEntries.forEach(entry => {
-        let line = `File: ${entry.file_no} | Name: ${entry.name}`;
-        if (entry.gatepass_exp_date) line += ` | GatePass: ${entry.gatepass_exp_date}`;
-        if (entry.passport_exp_date) line += ` | Passport: ${entry.passport_exp_date}`;
-        messageLines.push(line);
-      });
-      showAlert(messageLines.join('\n'));
+    // Initialize clock
+    updateClock();
+    setInterval(updateClock, 1000);
+  });
+
+  // ===== SUPABASE DATA LOADING =====
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      // Clean Supabase credentials
+      const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+      const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+      
+      // Helper for count updates
+      const updateCount = (id, value) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const dict = I18N[currentLang] || I18N.ar;
+        el.textContent = (typeof value === 'number') 
+          ? `${value}${dict.rows_suffix}` 
+          : (dict.file_not_found || 'error');
+      };
+      
+      // ===== LEAVE/RESIGNATION NOTIFICATIONS =====
+      try {
+        const { data: leavesData, error: leavesError } = await supabaseClient
+          .from('employee_leaves')
+          .select('id, file_no, name, name_ar, leave_status, start_date, resignation_date');
+        
+        if (leavesError) throw leavesError;
+        
+        // Update Leaves card count
+        updateCount('Leaves', leavesData.length);
+        
+        // Process upcoming events (within next 7 days)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const cutoffDate = new Date();
+        cutoffDate.setDate(today.getDate() + 7);
+        cutoffDate.setHours(23, 59, 59, 999);
+        
+        const upcomingEvents = [];
+        
+        leavesData.forEach(row => {
+          // 🔑 FIX 1: Normalize status (case/spaces safe)
+          const status = (row.leave_status || '').trim().toUpperCase();
+          
+          // Process leaves
+          if (status === 'LEAVE' && row.start_date) {
+            const startDate = new Date(row.start_date);
+            if (isNaN(startDate.getTime())) return; // Skip invalid dates
+            startDate.setHours(0, 0, 0, 0);
+            
+            if (startDate >= today && startDate <= cutoffDate) {
+              upcomingEvents.push({
+                type: 'leave',
+                file_no: row.file_no || '—',
+                // 🔑 FIX 2: Store BOTH language versions
+                name_en: row.name || 'Unknown',
+                name_ar: row.name_ar || row.name || 'غير معروف',
+                date: row.start_date,
+                daysUntil: Math.max(0, Math.ceil((startDate - today) / 86400000))
+              });
+            }
+          } 
+          // Process resignations
+          else if (status === 'RESIGNATION' && row.resignation_date) {
+            const resignDate = new Date(row.resignation_date);
+            if (isNaN(resignDate.getTime())) return;
+            resignDate.setHours(0, 0, 0, 0);
+            
+            if (resignDate >= today && resignDate <= cutoffDate) {
+              upcomingEvents.push({
+                type: 'resignation',
+                file_no: row.file_no || '—',
+                name_en: row.name || 'Unknown',
+                name_ar: row.name_ar || row.name || 'غير معروف',
+                date: row.resignation_date,
+                daysUntil: Math.max(0, Math.ceil((resignDate - today) / 86400000))
+              });
+            }
+          }
+        });
+        
+        // 🔑 FIX 3: Store RAW data globally (not language-specific)
+        upcomingLeaveEvents = upcomingEvents;
+        
+        // Render notifications in CURRENT language
+        renderLeaveNotifications(currentLang);
+        
+        // Show transient alert if events exist
+        if (upcomingEvents.length > 0) {
+          const dict = I18N[currentLang] || I18N.ar;
+          const alertMsg = dict.leave_notification_title.replace('{count}', upcomingEvents.length);
+          showAlert(alertMsg, 'warning');
+        }
+      } catch (err) {
+        console.error('⚠️ Supabase leaves fetch error:', err);
+        document.getElementById('Leaves').textContent = 'error';
+      }
+      
+      // ===== GATEPASS EXPIRY CHECK =====
+      try {
+        const { data, error } = await supabaseClient
+          .from('employee_passports')
+          .select('file_no, name, name_ar, gatepass_exp_date, passport_exp_date');
+        
+        if (error) throw error;
+        
+        // Update gatepass count
+        updateCount('gatepassCount', data.length);
+        
+        // Check for expiring items (within 60 days)
+        const today = new Date();
+        const sixtyDaysMs = 60 * 24 * 60 * 60 * 1000;
+        const expiringEntries = [];
+        
+        for (const row of data) {
+          let isExpiring = false;
+          const entry = {
+            file_no: row.file_no || '—',
+            name_en: row.name || 'Unknown',
+            name_ar: row.name_ar || row.name || 'غير معروف'
+          };
+          
+          // Validate gatepass date
+          if (row.gatepass_exp_date) {
+            const gatepassDate = new Date(row.gatepass_exp_date);
+            if (!isNaN(gatepassDate.getTime()) && gatepassDate >= today && gatepassDate - today < sixtyDaysMs) {
+              isExpiring = true;
+              entry.gatepass_exp = formatDateForDisplay(row.gatepass_exp_date, currentLang);
+            }
+          }
+          
+          // Validate passport date
+          if (row.passport_exp_date) {
+            const passportDate = new Date(row.passport_exp_date);
+            if (!isNaN(passportDate.getTime()) && passportDate >= today && passportDate - today < sixtyDaysMs) {
+              isExpiring = true;
+              entry.passport_exp = formatDateForDisplay(row.passport_exp_date, currentLang);
+            }
+          }
+          
+          if (isExpiring) expiringEntries.push(entry);
+        }
+        
+        // Show warning if any expiring items
+        if (expiringEntries.length > 0) {
+          const dict = I18N[currentLang] || I18N.ar;
+          let message = dict.expiry_warning + '\n';
+          expiringEntries.forEach(entry => {
+            let line = `File: ${entry.file_no} | Name: ${currentLang === 'ar' ? entry.name_ar : entry.name_en}`;
+            if (entry.gatepass_exp) line += ` | GatePass: ${entry.gatepass_exp}`;
+            if (entry.passport_exp) line += ` | Passport: ${entry.passport_exp}`;
+            message += `\n${line}`;
+          });
+          showAlert(message, 'warning');
+        }
+      } catch (err) {
+        console.error('⚠️ Supabase gatepass fetch error:', err);
+        document.getElementById('gatepassCount').textContent = 'error';
+      }
+    } catch (err) {
+      console.error('⚠️ Critical Supabase initialization error:', err);
+      showAlert('Failed to connect to database. Notifications disabled.', 'warning');
     }
-  } catch (err) {
-    console.error('Supabase gatepass fetch error:', err);
-    document.getElementById('gatepassCount').textContent = 'error';
-  }
-});
-
-
-  </script>
+  });
+</script>
 </body>
 </html>
