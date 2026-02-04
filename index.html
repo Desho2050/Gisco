@@ -26,6 +26,10 @@
       --btn-primary-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
       --title-bg: rgba(255,255,255,0.15);
       --title-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      --notification-bg: #fef3c7;
+      --notification-border: #fdba74;
+      --notification-text: #92400e;
+      --notification-icon: #f59e0b;
     }
 
     /* Modern Theme */
@@ -45,6 +49,10 @@
       --btn-primary-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
       --title-bg: rgba(255,255,255,0.15);
       --title-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      --notification-bg: #fef3c7;
+      --notification-border: #fdba74;
+      --notification-text: #92400e;
+      --notification-icon: #f59e0b;
     }
 
     /* Colorful Theme */
@@ -64,6 +72,10 @@
       --btn-primary-shadow: 0 6px 15px rgba(255, 107, 107, 0.4);
       --title-bg: rgba(255,255,255,0.2);
       --title-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+      --notification-bg: #ffe8e8;
+      --notification-border: #ffabab;
+      --notification-text: #c53030;
+      --notification-icon: #f56565;
     }
 
     /* Business Theme */
@@ -83,6 +95,10 @@
       --btn-primary-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
       --title-bg: rgba(255,255,255,0.1);
       --title-shadow: 0 6px 20px rgba(37, 99, 235, 0.2);
+      --notification-bg: #dbeafe;
+      --notification-border: #93c5fd;
+      --notification-text: #1e40af;
+      --notification-icon: #3b82f6;
     }
 
     /* Classic Theme */
@@ -102,6 +118,10 @@
       --btn-primary-shadow: 0 6px 15px rgba(124, 58, 237, 0.4);
       --title-bg: rgba(255,255,255,0.15);
       --title-shadow: 0 6px 20px rgba(124, 58, 237, 0.25);
+      --notification-bg: #f3e8ff;
+      --notification-border: #d8b4fe;
+      --notification-text: #581c87;
+      --notification-icon: #a78bfa;
     }
 
     /* Professional Theme */
@@ -121,6 +141,10 @@
       --btn-primary-shadow: 0 6px 15px rgba(15, 23, 42, 0.3);
       --title-bg: rgba(255,255,255,0.1);
       --title-shadow: 0 6px 20px rgba(15, 23, 42, 0.2);
+      --notification-bg: #e2e8f0;
+      --notification-border: #a7b2c1;
+      --notification-text: #334155;
+      --notification-icon: #64748b;
     }
 
     * { box-sizing: border-box; }
@@ -141,6 +165,7 @@
       justify-content: space-between; 
       gap: 12px; 
       height: auto;
+      position: relative;
     }
     .brand { display: flex; align-items: center; gap: 12px; }
     .logo { 
@@ -349,6 +374,204 @@
       gap: 16px;
       align-items: center;
     }
+    
+    /* Notification Center Styles */
+    .notification-center {
+      position: absolute;
+      top: 100%;
+      right: 20px;
+      width: 400px;
+      max-height: 80vh;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      border: 2px solid var(--notification-border);
+      direction: rtl;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    
+    .notification-header {
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      color: white;
+      padding: 16px 20px;
+      font-weight: 700;
+      font-size: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .notification-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .notification-close:hover {
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.1);
+    }
+    
+    .notification-content {
+      padding: 20px;
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+    
+    .notification-section {
+      margin-bottom: 25px;
+    }
+    
+    .notification-section-title {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .notification-item {
+      background: var(--notification-bg);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      border-right: 4px solid var(--notification-icon);
+      position: relative;
+    }
+    
+    .notification-icon {
+      font-size: 24px;
+      margin-left: 10px;
+      color: var(--notification-icon);
+    }
+    
+    .notification-title {
+      font-weight: 700;
+      color: var(--notification-text);
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+    
+    .notification-details {
+      font-size: 13px;
+      color: var(--notification-text);
+      line-height: 1.5;
+    }
+    
+    .notification-date {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      font-weight: 500;
+    }
+    
+    .notification-actions {
+      padding: 15px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: center;
+      background: var(--hover);
+    }
+    
+    .btn.mark-read {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn.mark-read:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    
+    .notification-badge {
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      background: #ef4444;
+      color: white;
+      font-weight: 700;
+      font-size: 11px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 2px var(--card-bg);
+      display: none;
+    }
+    
+    .notification-badge.show {
+      display: flex;
+    }
+    
+    .notification-empty {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--muted);
+      font-style: italic;
+    }
+    
+    .notification-empty-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+      opacity: 0.7;
+    }
+    
+    /* Responsive notification center */
+    @media (max-width: 768px) {
+      .notification-center {
+        width: calc(100% - 40px);
+        right: 20px;
+        left: 20px;
+        max-height: 70vh;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .notification-center {
+        width: calc(100% - 20px);
+        right: 10px;
+        left: 10px;
+      }
+      
+      .topbar {
+        flex-wrap: wrap;
+      }
+      
+      .logo {
+        height: 100px;
+        width: 300px;
+      }
+      
+      .title {
+        font-size: 20px;
+        padding: 12px;
+      }
+    }
   </style>
 </head>
 <body class="theme-modern">
@@ -359,6 +582,30 @@
       <div class="time" id="time">--:--:--</div>
       <div class="date" id="date"></div>
     </div>
+    
+    <div class="notification-container">
+      <button class="btn small" id="notificationBtn" title="عرض الإشعارات" style="position: relative; width: 42px; min-width: 42px; padding: 0; display: flex; align-items: center; justify-content: center;">
+        <span style="font-size:24px; line-height:1;">🔔</span>
+        <span class="notification-badge" id="notificationBadge">0</span>
+      </button>
+      <div class="notification-center" id="notificationCenter">
+        <div class="notification-header">
+          <span id="notificationHeaderTitle">الإشعارات</span>
+          <button class="notification-close" id="closeNotificationCenter">&times;</button>
+        </div>
+        <div class="notification-content" id="notificationContent">
+          <!-- Notifications will be dynamically inserted here -->
+          <div class="notification-empty">
+            <div class="notification-empty-icon">🔕</div>
+            <div id="noNotificationsText">لا توجد إشعارات جديدة</div>
+          </div>
+        </div>
+        <div class="notification-actions">
+          <button class="btn mark-read" id="markReadBtn">تحديد كمقروء</button>
+        </div>
+      </div>
+    </div>
+    
     <div class="theme-controls">
       <select class="theme-select" id="themeSelect">
         <option value="modern">Modern</option>
@@ -367,21 +614,17 @@
         <option value="classic">Classic</option>
         <option value="professional">Professional</option>
       </select>
+      
+      <div class="theme-switch" aria-label="Theme Switch">
+        <label for="themeSelect" style="color:#fff; font-size:14px; font-weight:600;margin-left: 20px;">:Theme:</label>
+      </div>
       <div class="lang-switch" aria-label="Language Switch">
         <button class="btn small" data-lang="ar">عربي</button>
         <button class="btn small" data-lang="en">English</button>
       </div>
     </div>
   </header>
-<div id="leaveNotifications" style="display:none; margin:20px auto; max-width:1200px; padding:15px; background:linear-gradient(135deg, #ffedd5, #fef3c7); border-radius:16px; border:2px solid #fdba74; box-shadow:0 8px 25px rgba(245, 158, 11, 0.3); text-align:center; direction:rtl;">
-  <div style="display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;">
-    <span style="font-size:28px; line-height:1;">⏰</span>
-    <div>
-      <div id="leaveNotificationText" style="font-weight:700; font-size:18px; color:#92400e; margin-bottom:8px;"></div>
-      <div id="leaveDetails" style="font-size:14px; color:#b45309; max-height:200px; overflow:auto; text-align:start;"></div>
-    </div>
-  </div>
-</div>
+
   <main class="container">
     <div class="grid">
       <!-- Cards remain exactly as in your original -->
@@ -478,40 +721,40 @@
           <a class="btn primary" href="tasks.html" data-i18n="open_tasks">Open Task Manager</a>
         </div>
         <div class="meta">
-          <span data-i18n="data_label">Tasks:</span> 
+          <span data-i18n="data_label">Data:</span> 
           <span id="tasksCount">loading…</span>
         </div>
       </section>
 
       <section class="card">
-  <h3>
-    <span data-i18n="card_pettycash_title">Petty Cash Voucher Management</span>
-    <span class="badge" data-i18n="new_badge">New</span>
-  </h3>
-  <p data-i18n="card_pettycash_desc">Manage and track petty cash vouchers with full CRUD and summary analytics.</p>
-  <div class="actions">
-    <a class="btn primary" href="pettycash.html" data-i18n="open_pettycash">Open Petty Cash</a>
-  </div>
-  <div class="meta">
-    <span data-i18n="data_label">Data:</span> 
-    <span id="pettyCashCount">loading…</span>
-  </div>
-</section>
+        <h3>
+          <span data-i18n="card_pettycash_title">Petty Cash Voucher Management</span>
+          <span class="badge" data-i18n="new_badge">New</span>
+        </h3>
+        <p data-i18n="card_pettycash_desc">Manage and track petty cash vouchers with full CRUD and summary analytics.</p>
+        <div class="actions">
+          <a class="btn primary" href="pettycash.html" data-i18n="open_pettycash">Open Petty Cash</a>
+        </div>
+        <div class="meta">
+          <span data-i18n="data_label">Data:</span> 
+          <span id="pettyCashCount">loading…</span>
+        </div>
+      </section>
 
- <section class="card">
-  <h3>
-    <span data-i18n="data_label">Petty Cash Voucher Management</span>
-    <span class="badge" data-i18n="new_badge">New</span>
-  </h3>
-  <p data-i18n="data_label">Manage and track petty cash vouchers with full CRUD and summary analytics.</p>
-  <div class="actions">
-    <a class="btn primary" href="Leaves.html" data-i18n="open_leaves">Open Leaves Management</a>
-  </div>
-  <div class="meta">
-    <span data-i18n="data_label">Data:</span> 
-    <span id="Leaves">loading…</span>
-  </div>
-</section>
+      <section class="card">
+        <h3>
+          <span data-i18n="card_leaves_title">Leaves Management</span>
+          <span class="badge" data-i18n="new_badge">New</span>
+        </h3>
+        <p data-i18n="card_leaves_desc">Manage employee leave requests and approvals.</p>
+        <div class="actions">
+          <a class="btn primary" href="Leaves.html" data-i18n="open_leaves">Open Leaves Management</a>
+        </div>
+        <div class="meta">
+          <span data-i18n="data_label">Data:</span> 
+          <span id="Leaves">loading…</span>
+        </div>
+      </section>
     </div>
 
     <div class="credit">Programmed By Mostafa Al-Najar<br>تصميم وبرمجة م: مصطفي النجار</div>
@@ -524,6 +767,8 @@
   // ===== GLOBAL STATE =====
   let currentLang = 'ar';
   let upcomingLeaveEvents = null; // Stores RAW data with both language names
+  let expiringDocuments = null; // Stores expiring passport/gatepass data
+  let notificationCenterVisible = false;
   
   // ===== HELPER FUNCTIONS (LANGUAGE-AGNOSTIC) =====
   const convertToArabicNumerals = (numStr) => {
@@ -612,13 +857,22 @@
       card_pettycash_title: 'Petty Cash Voucher Management',
       card_pettycash_desc: 'Manage and track petty cash vouchers with full CRUD and summary analytics.',
       open_pettycash: 'Open Petty Cash',
+      card_leaves_title: 'Leaves Management',
+      card_leaves_desc: 'Manage employee leave requests and approvals.',
       open_leaves: 'Open Leaves Management',
       leave_notification_title: 'Alert: {count} employee(s) will start leave or resign within the next week!',
       leave_type_leave: 'Leave',
       leave_type_resignation: 'Resignation',
       days_today: 'Today',
       days_in: 'in {days} days',
-      file_prefix: 'File No: '
+      file_prefix: 'File No: ',
+      notification_center_title: 'Notifications',
+      no_notifications: 'No new notifications',
+      mark_as_read: 'Mark as Read',
+      expiring_documents_title: 'Expiring Documents',
+      leave_resignation_title: 'Upcoming Leaves & Resignations',
+      close: 'Close',
+      notification_badge_title: 'You have {count} new notifications'
     },
     ar: {
       brand_title: 'شركة الخليج للخدمات الصناعية',
@@ -659,73 +913,192 @@
       card_pettycash_title: 'إدارة المصروفات النثرية',
       card_pettycash_desc: 'إدارة وتتبع المصروفات النثرية للمشروع.',
       open_pettycash: 'افتح المصروفات النثرية',
+      card_leaves_title: 'ادارة الإجازات',
+      card_leaves_desc: 'إدارة طلبات إجازات الموظفين والموافقات.',
       open_leaves: 'ادارة الإجازات',
       leave_notification_title: 'تنبيه: {count} موظف سيبدأ إجازته أو يستقيل خلال الأسبوع القادم!',
       leave_type_leave: 'إجازة',
       leave_type_resignation: 'استقالة',
       days_today: 'اليوم',
       days_in: 'خلال {days} أيام',
-      file_prefix: 'رقم الملف '
+      file_prefix: 'رقم الملف ',
+      notification_center_title: 'الإشعارات',
+      no_notifications: 'لا توجد إشعارات جديدة',
+      mark_as_read: 'تحديد كمقروء',
+      expiring_documents_title: 'مستندات منتهية الصلاحية',
+      leave_resignation_title: 'الإجازات والاستقالات القادمة',
+      close: 'إغلاق',
+      notification_badge_title: 'لديك {count} إشعارات جديدة'
     }
   };
 
-  // ===== CRITICAL FIX: NOTIFICATION RENDERER (LANGUAGE-RESPONSIVE) =====
-  function renderLeaveNotifications(lang) {
-    const container = document.getElementById('leaveNotifications');
-    const titleEl = document.getElementById('leaveNotificationText');
-    const detailsEl = document.getElementById('leaveDetails');
+  // ===== NOTIFICATION SYSTEM =====
+  function updateNotificationBadge() {
+    const badge = document.getElementById('notificationBadge');
+    const totalCount = (upcomingLeaveEvents?.length || 0) + (expiringDocuments?.length || 0);
     
-    // Hide if no data or container missing
-    if (!container || !titleEl || !detailsEl || !upcomingLeaveEvents?.length) {
-      if (container) container.style.display = 'none';
+    if (badge) {
+      badge.textContent = totalCount;
+      badge.classList.toggle('show', totalCount > 0);
+      
+      // Update tooltip
+      if (totalCount > 0) {
+        const dict = I18N[currentLang] || I18N.ar;
+        badge.title = dict.notification_badge_title.replace('{count}', totalCount);
+      }
+    }
+  }
+  
+  function renderNotifications() {
+    const contentEl = document.getElementById('notificationContent');
+    const dict = I18N[currentLang] || I18N.ar;
+    const noNotificationsEl = document.getElementById('noNotificationsText');
+    
+    if (noNotificationsEl) {
+      noNotificationsEl.textContent = dict.no_notifications;
+    }
+    
+    // Clear current content
+    contentEl.innerHTML = '';
+    
+    const totalCount = (upcomingLeaveEvents?.length || 0) + (expiringDocuments?.length || 0);
+    
+    if (totalCount === 0) {
+      contentEl.innerHTML = `
+        <div class="notification-empty">
+          <div class="notification-empty-icon">🔕</div>
+          <div>${dict.no_notifications}</div>
+        </div>
+      `;
       return;
     }
     
-    const dict = I18N[lang] || I18N.ar;
+    let html = '';
     
-    // Set title with count
-    const titleText = dict.leave_notification_title.replace('{count}', upcomingLeaveEvents.length);
-    titleEl.textContent = titleText;
+    // Leave/Resignation Notifications
+    if (upcomingLeaveEvents?.length > 0) {
+      html += `
+        <div class="notification-section">
+          <div class="notification-section-title">
+            <span class="notification-icon">📅</span>
+            <span>${dict.leave_resignation_title}</span>
+          </div>
+      `;
+      
+      [...upcomingLeaveEvents]
+        .sort((a, b) => a.daysUntil - b.daysUntil)
+        .forEach(event => {
+          const formattedDate = formatDateForDisplay(event.date, currentLang);
+          const eventType = event.type === 'leave' 
+            ? dict.leave_type_leave 
+            : dict.leave_type_resignation;
+          
+          const displayName = currentLang === 'ar' ? event.name_ar : event.name_en;
+          
+          let daysText;
+          if (event.daysUntil === 0) {
+            daysText = dict.days_today;
+          } else {
+            daysText = dict.days_in.replace('{days}', 
+              currentLang === 'ar' 
+                ? convertToArabicNumerals(event.daysUntil.toString()) 
+                : event.daysUntil
+            );
+          }
+          
+          const filePrefix = dict.file_prefix;
+          
+          html += `
+            <div class="notification-item">
+              <div class="notification-title">${filePrefix}${event.file_no} | ${displayName}</div>
+              <div class="notification-details">${eventType} ${daysText} (${formattedDate})</div>
+              <div class="notification-date">${event.type === 'leave' ? 'إجازة' : 'استقالة'} • ${formattedDate}</div>
+            </div>
+          `;
+        });
+      
+      html += `</div>`;
+    }
     
-    // Build details with language-aware formatting
-    let detailsHTML = '<div style="display:flex; flex-direction:column; gap:8px; padding:10px; background:rgba(255,255,255,0.6); border-radius:10px; margin-top:10px;">';
-    
-    // Sort by urgency (soonest first)
-    [...upcomingLeaveEvents]
-      .sort((a, b) => a.daysUntil - b.daysUntil)
-      .forEach(event => {
-        const formattedDate = formatDateForDisplay(event.date, lang);
-        const eventType = event.type === 'leave' 
-          ? dict.leave_type_leave 
-          : dict.leave_type_resignation;
+    // Expiring Documents Notifications
+    if (expiringDocuments?.length > 0) {
+      html += `
+        <div class="notification-section">
+          <div class="notification-section-title">
+            <span class="notification-icon">🛂</span>
+            <span>${dict.expiring_documents_title}</span>
+          </div>
+      `;
+      
+      expiringDocuments.forEach(doc => {
+        const gatepassDate = doc.gatepass_exp ? formatDateForDisplay(doc.gatepass_exp, currentLang) : null;
+        const passportDate = doc.passport_exp ? formatDateForDisplay(doc.passport_exp, currentLang) : null;
+        const displayName = currentLang === 'ar' ? doc.name_ar : doc.name_en;
         
-        // 🔑 CRITICAL FIX: Select name based on CURRENT language
-        const displayName = lang === 'ar' ? event.name_ar : event.name_en;
-        
-        // Days text with proper numeral conversion
-        let daysText;
-        if (event.daysUntil === 0) {
-          daysText = dict.days_today;
-        } else {
-          daysText = dict.days_in.replace('{days}', 
-            lang === 'ar' 
-              ? convertToArabicNumerals(event.daysUntil.toString()) 
-              : event.daysUntil
-          );
-        }
-        
-        // File prefix with language awareness
-        const filePrefix = dict.file_prefix;
-        
-        detailsHTML += `
-          <div style="padding:8px; background:rgba(254, 243, 199, 0.7); border-radius:8px; border-right:3px solid #f59e0b;">
-            <strong>${filePrefix}${event.file_no}</strong> | ${displayName} | ${eventType} ${daysText} (${formattedDate})
-          </div>`;
+        html += `
+          <div class="notification-item">
+            <div class="notification-title">${dict.file_prefix}${doc.file_no} | ${displayName}</div>
+            <div class="notification-details">
+              ${doc.gatepass_exp ? `GatePass: ${gatepassDate}` : ''}
+              ${doc.gatepass_exp && doc.passport_exp ? ' • ' : ''}
+              ${doc.passport_exp ? `Passport: ${passportDate}` : ''}
+            </div>
+            <div class="notification-date">
+              ${doc.gatepass_exp ? 'GatePass Expiry' : ''}
+              ${doc.gatepass_exp && doc.passport_exp ? ' • ' : ''}
+              ${doc.passport_exp ? 'Passport Expiry' : ''}
+            </div>
+          </div>
+        `;
       });
+      
+      html += `</div>`;
+    }
     
-    detailsHTML += '</div>';
-    detailsEl.innerHTML = detailsHTML;
-    container.style.display = 'block';
+    contentEl.innerHTML = html;
+  }
+  
+  function toggleNotificationCenter() {
+    const center = document.getElementById('notificationCenter');
+    notificationCenterVisible = !notificationCenterVisible;
+    
+    if (notificationCenterVisible) {
+      center.style.display = 'flex';
+      renderNotifications();
+      
+      // Update badge to show unread count is seen
+      const badge = document.getElementById('notificationBadge');
+      if (badge) {
+        badge.classList.remove('show');
+      }
+    } else {
+      center.style.display = 'none';
+    }
+  }
+  
+  function closeNotificationCenter() {
+    const center = document.getElementById('notificationCenter');
+    center.style.display = 'none';
+    notificationCenterVisible = false;
+    
+    // Hide badge when closing notification center
+    const badge = document.getElementById('notificationBadge');
+    if (badge) {
+      badge.classList.remove('show');
+    }
+  }
+  
+  function markNotificationsAsRead() {
+    // In a real app, this would update a "read" status in the database
+    // For now, we'll just hide the badge
+    const badge = document.getElementById('notificationBadge');
+    if (badge) {
+      badge.classList.remove('show');
+    }
+    
+    // Show confirmation
+    const dict = I18N[currentLang] || I18N.ar;
+    showAlert(`✓ ${dict.mark_as_read}`, 'success');
   }
 
   // ===== CLOCK SYSTEM =====
@@ -760,7 +1133,7 @@
     }
   }
 
-  // ===== LANGUAGE SYSTEM (NOW UPDATES NOTIFICATIONS) =====
+  // ===== LANGUAGE SYSTEM =====
   const applyLang = (lang) => {
     document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
     const dict = I18N[lang] || I18N.ar;
@@ -771,10 +1144,22 @@
       if (dict[key]) el.textContent = dict[key];
     });
     
-    // 🔑 CRITICAL FIX: Re-render notifications when language changes
-    if (upcomingLeaveEvents?.length) {
-      renderLeaveNotifications(lang);
+    // Update notification center elements
+    const headerTitle = document.getElementById('notificationHeaderTitle');
+    const markReadBtn = document.getElementById('markReadBtn');
+    const closeBtn = document.getElementById('closeNotificationCenter');
+    
+    if (headerTitle) headerTitle.textContent = dict.notification_center_title;
+    if (markReadBtn) markReadBtn.textContent = dict.mark_as_read;
+    if (closeBtn) closeBtn.title = dict.close;
+    
+    // Update notification content if visible
+    if (notificationCenterVisible) {
+      renderNotifications();
     }
+    
+    // Update badge tooltip
+    updateNotificationBadge();
     
     currentLang = lang;
     updateClock();
@@ -825,6 +1210,35 @@
     // Initialize clock
     updateClock();
     setInterval(updateClock, 1000);
+    
+    // Notification button setup
+    const notificationBtn = document.getElementById('notificationBtn');
+    const closeNotificationBtn = document.getElementById('closeNotificationCenter');
+    const markReadBtn = document.getElementById('markReadBtn');
+    
+    if (notificationBtn) {
+      notificationBtn.addEventListener('click', toggleNotificationCenter);
+    }
+    
+    if (closeNotificationBtn) {
+      closeNotificationBtn.addEventListener('click', closeNotificationCenter);
+    }
+    
+    if (markReadBtn) {
+      markReadBtn.addEventListener('click', markNotificationsAsRead);
+    }
+    
+    // Close notification center when clicking outside
+    document.addEventListener('click', (e) => {
+      const notificationCenter = document.getElementById('notificationCenter');
+      const notificationBtn = document.getElementById('notificationBtn');
+      
+      if (notificationCenterVisible && 
+          !notificationCenter.contains(e.target) && 
+          !notificationBtn.contains(e.target)) {
+        closeNotificationCenter();
+      }
+    });
   });
 
   // ===== SUPABASE DATA LOADING =====
@@ -866,7 +1280,7 @@
         const upcomingEvents = [];
         
         leavesData.forEach(row => {
-          // 🔑 FIX 1: Normalize status (case/spaces safe)
+          // Normalize status (case/spaces safe)
           const status = (row.leave_status || '').trim().toUpperCase();
           
           // Process leaves
@@ -879,7 +1293,6 @@
               upcomingEvents.push({
                 type: 'leave',
                 file_no: row.file_no || '—',
-                // 🔑 FIX 2: Store BOTH language versions
                 name_en: row.name || 'Unknown',
                 name_ar: row.name_ar || row.name || 'غير معروف',
                 date: row.start_date,
@@ -906,11 +1319,8 @@
           }
         });
         
-        // 🔑 FIX 3: Store RAW data globally (not language-specific)
+        // Store RAW data globally (not language-specific)
         upcomingLeaveEvents = upcomingEvents;
-        
-        // Render notifications in CURRENT language
-        renderLeaveNotifications(currentLang);
         
         // Show transient alert if events exist
         if (upcomingEvents.length > 0) {
@@ -952,7 +1362,7 @@
             const gatepassDate = new Date(row.gatepass_exp_date);
             if (!isNaN(gatepassDate.getTime()) && gatepassDate >= today && gatepassDate - today < sixtyDaysMs) {
               isExpiring = true;
-              entry.gatepass_exp = formatDateForDisplay(row.gatepass_exp_date, currentLang);
+              entry.gatepass_exp = row.gatepass_exp_date;
             }
           }
           
@@ -961,12 +1371,15 @@
             const passportDate = new Date(row.passport_exp_date);
             if (!isNaN(passportDate.getTime()) && passportDate >= today && passportDate - today < sixtyDaysMs) {
               isExpiring = true;
-              entry.passport_exp = formatDateForDisplay(row.passport_exp_date, currentLang);
+              entry.passport_exp = row.passport_exp_date;
             }
           }
           
           if (isExpiring) expiringEntries.push(entry);
         }
+        
+        // Store expiring documents
+        expiringDocuments = expiringEntries;
         
         // Show warning if any expiring items
         if (expiringEntries.length > 0) {
@@ -974,8 +1387,8 @@
           let message = dict.expiry_warning + '\n';
           expiringEntries.forEach(entry => {
             let line = `File: ${entry.file_no} | Name: ${currentLang === 'ar' ? entry.name_ar : entry.name_en}`;
-            if (entry.gatepass_exp) line += ` | GatePass: ${entry.gatepass_exp}`;
-            if (entry.passport_exp) line += ` | Passport: ${entry.passport_exp}`;
+            if (entry.gatepass_exp) line += ` | GatePass: ${formatDateForDisplay(entry.gatepass_exp, currentLang)}`;
+            if (entry.passport_exp) line += ` | Passport: ${formatDateForDisplay(entry.passport_exp, currentLang)}`;
             message += `\n${line}`;
           });
           showAlert(message, 'warning');
@@ -984,6 +1397,10 @@
         console.error('⚠️ Supabase gatepass fetch error:', err);
         document.getElementById('gatepassCount').textContent = 'error';
       }
+      
+      // Update notification badge after loading data
+      updateNotificationBadge();
+      
     } catch (err) {
       console.error('⚠️ Critical Supabase initialization error:', err);
       showAlert('Failed to connect to database. Notifications disabled.', 'warning');
