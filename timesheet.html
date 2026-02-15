@@ -1,1617 +1,2007 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Professional Timesheet Generator</title>
-<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-:root {
---primary: #3b82f6;
---primary-dark: #2563eb;
---secondary: #10b981;
---danger: #ef4444;
---success: #10b981;
---warning: #f59e0b;
---light: #f8fafc;
---dark: #1e293b;
---gray: #64748b;
---light-gray: #e2e8f0;
---border: #cbd5e1;
---shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
---card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0.1);
-}
-* {
-margin: 0;
-padding: 0;
-box-sizing: border-box;
-}
-#empCounter {
-font-weight: bold;
-font-size: 20px;
-box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.577);
-background-color: rgb(98, 255, 0);
-color: #1e293b;
-border-style: solid;
-border-width: 1px;
-border-color: #01429d;
-}
-
-body {
-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-background: linear-gradient(135deg, #11def1 0%, #9c03bb 100%);
-color: var(--dark);
-min-height: 100vh;
-padding: 20px;
-display: flex;
-flex-direction: column;
-align-items: center;
-}
-.back-btn-container {
-width: 100%;
-max-width: 850px;
-margin: 10px auto;
-text-align: center;
-}
-.btn-back {
-background: var(--gray);
-padding: 10px 24px;
-font-size: 16px;
-text-decoration: none;
-display: inline-flex;
-align-items: center;
-gap: 10px;
-border-radius: 10px;
-color: white;
-box-shadow: var(--shadow);
-transition: all 0.2s ease;
-border: none;
-cursor: pointer;
-}
-.btn-back:hover {
-background: #475569;
-transform: translateY(-2px);
-}
-.container {
-max-width: 850px;
-width: 100%;
-margin: 0 auto;
-background: white;
-border-radius: 16px;
-box-shadow: var(--card-shadow);
-padding: 15px;
-margin-top: 10px;
-flex: 1;
-display: flex;
-flex-direction: column;
-}
-header {
-text-align: center;
-margin-bottom: 15px;
-}
-h1 {
-font-size: 28px;
-font-weight: 700;
-color: var(--dark);
-margin-bottom: 4px;
-background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
-background-clip: text;
-}
-.subtitle {
-color: var(--gray);
-font-size: 16px;
-font-weight: 500;
-}
-.card {
-background: white;
-border-radius: 12px;
-padding: 15px;
-margin-bottom: 15px;
-border: 1px solid var(--border);
-box-shadow: var(--shadow);
-}
-.card-title {
-font-size: 18px;
-font-weight: 600;
-margin-bottom: 8px;
-color: var(--dark);
-display: flex;
-align-items: center;
-gap: 8px;
-}
-.card-title i {
-color: var(--primary);
-}
-.emp-counter {
-background: var(--light);
-padding: 8px 16px;
-border-radius: 20px;
-font-size: 14px;
-font-weight: 600;
-color: var(--primary);
-display: inline-flex;
-align-items: center;
-gap: 8px;
-margin-left: 8px;
-}
-.file-upload-container {
-text-align: center;
-padding: 24px;
-border: 2px dashed var(--light-gray);
-border-radius: 12px;
-background: var(--light);
-transition: all 0.3s ease;
-cursor: pointer;
-}
-.file-upload-container:hover {
-border-color:#10469d6c;
-background: rgba(59, 130, 246, 0.05);
-border-width: 5px;
-}
-.file-upload-icon {
-font-size: 48px;
-color: var(--primary);
-margin-bottom: 16px;
-}
-.file-upload-text {
-font-size: 16px;
-font-weight: 600;
-margin-bottom: 8px;
-color: var(--dark);
-}
-.file-upload-subtext {
-color: var(--gray);
-font-size: 14px;
-margin-bottom: 16px;
-}
-.file-upload-btn {
-background: var(--primary);
-color: white;
-border: none;
-padding: 10px 24px;
-border-radius: 8px;
-font-weight: 600;
-font-size: 14px;
-cursor: pointer;
-transition: all 0.2s ease;
-display: inline-flex;
-align-items: center;
-gap: 8px;
-}
-.file-upload-btn:hover {
-background: var(--primary-dark);
-transform: translateY(-1px);
-}
-#excelFile, #empFile {
-display: none;
-}
-.status {
-padding: 12px 16px;
-border-radius: 8px;
-font-weight: 500;
-margin: 16px 0;
-display: flex;
-align-items: center;
-gap: 12px;
-border: 1px solid transparent;
-}
-.status.error {
-background: #fee2e2;
-color: #dc2626;
-border-color: #fecaca;
-}
-.status.success {
-background: #dcfce7;
-color: #16a34a;
-border-color: #bbf7d0;
-}
-.status i {
-font-size: 20px;
-}
-.input-group {
-margin: 2px 0;
-}
-.input-group label {
-display: block;
-margin-bottom: 8px;
-font-weight: 600;
-color: var(--dark);
-font-size: 14px;
-}
-.input-group input[type="text"] {
-padding: 12px 16px;
-font-size: 16px;
-width: 100%;
-max-width: 300px;
-border: 2px solid var(--border);
-border-radius: 8px;
-transition: border-color 0.2s ease;
-font-family: inherit;
-}
-.input-group input[type="text"]:focus {
-outline: none;
-border-color: var(--primary);
-box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-.emp-table-container {
-overflow-x: auto;
-margin: 15px 0;
-border-radius: 12px;
-border: 1px solid var(--border);
-}
-table {
-width: 100%;
-border-collapse: collapse;
-min-width: 500px;
-}
-th {
-background: var(--light);
-padding: 12px;
-text-align: left;
-font-weight: 600;
-color: var(--dark);
-font-size: 14px;
-border-bottom: 2px solid var(--border);
-}
-td {
-padding: 5px;
-border-bottom: 1px solid var(--border);
-font-size: 15px;
-text-align: center;
-}
-td:last-child {
-text-align: right;
-}
-input[type="text"].emp-input{
-padding: 8px 12px;
-border: 2px solid var(--border);
-border-radius: 6px;
-font-size: 15px;
-width: 100%;
-max-width: 500px;
-font-family: inherit;
-transition: border-color 0.2s ease;
-}
-input[type="number"].overtime-input {
-padding: 8px 12px;
-border: 2px solid var(--border);
-border-radius: 6px;
-font-size: 15px;
-width: 100%;
-max-width: 120px;
-font-family: inherit;
-transition: border-color 0.2s ease;
-}
-input[type="text"].emp-input:focus,
-input[type="number"].overtime-input:focus {
-outline: none;
-border-color: var(--primary);
-}
-input[type="text"].emp-input.invalid,
-input[type="number"].overtime-input.invalid {
-border-color: var(--danger);
-background: #fef2f2;
-}
-input[type="number"].overtime-input {
-max-width: 80px;
-}
-.duplicate-warning,
-.overtime-warning {
-color: var(--danger);
-font-size: 12px;
-margin-top: 4px;
-display: block;
-}
-.table-actions {
-display: flex;
-gap: 12px;
-justify-content: flex-end;
-padding: 12px;
-background: var(--light);
-border-top: 1px solid var(--border);
-border-radius: 0 0 12px 12px;
-}
-.action-btn {
-padding: 8px 16px;
-border: none;
-border-radius: 6px;
-font-weight: 600;
-font-size: 14px;
-cursor: pointer;
-transition: all 0.2s ease;
-display: inline-flex;
-align-items: center;
-gap: 8px;
-}
-.btn-remove {
-background: var(--danger);
-color: white;
-}
-.btn-remove:hover {
-background: #dc2626;
-}
-.btn-add {
-background: var(--secondary);
-color: white;
-}
-.btn-add:hover {
-background: #059669;
-}
-.btn-check-duplicates {
-background: var(--warning);
-color: white;
-}
-.btn-check-duplicates:hover {
-background: #d97706;
-}
-.generate-btn-container {
-text-align: center;
-margin-top: 20px;
-margin-bottom: 20px;
-display: flex;
-justify-content: center;
-gap: 15px;
-}
-.btn-generate {
-padding: 14px 32px;
-background: var(--primary);
-color: white;
-border: none;
-border-radius: 10px;
-font-size: 18px;
-font-weight: 700;
-cursor: pointer;
-transition: all 0.3s ease;
-display: inline-flex;
-align-items: center;
-gap: 12px;
-box-shadow: var(--shadow);
-}
-.btn-generate:hover:not(:disabled) {
-background: var(--primary-dark);
-transform: translateY(-2px);
-box-shadow: 0 6px 12px -2px rgba(59, 130, 246, 0.3);
-}
-.btn-generate:disabled {
-background: var(--light-gray);
-cursor: not-allowed;
-transform: none;
-box-shadow: none;
-color: var(--gray);
-}
-.report-popup {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0, 0, 0, 0.7);
-display: flex;
-justify-content: center;
-align-items: center;
-z-index: 1000;
-opacity: 0;
-visibility: hidden;
-transition: opacity 0.3s, visibility 0.3s;
-}
-.report-popup.active {
-opacity: 1;
-visibility: visible;
-}
-.report-content {
-background: white;
-border-radius: 16px;
-width: 90%;
-max-width: 900px;
-max-height: 80vh;
-overflow: auto;
-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-padding: 5px;
-position: relative;
-}
-.report-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 10px;
-padding-bottom: 10px;
-border-bottom: 2px solid var(--border);
-}
-.report-title {
-font-size: 16px;
-font-weight: 300;
-color: var(--dark);
-}
-.close-report {
-background: var(--danger);
-color: white;
-border: none;
-width: 36px;
-height: 36px;
-border-radius: 50%;
-font-size: 18px;
-cursor: pointer;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-.report-table {
-width: 100%;
-border-collapse: collapse;
-margin-top: 15px;
-}
-.report-table th {
-background: var(--primary);
-color: white;
-padding: 5px 5px;
-text-align: center;
-font-weight: 600;
-}
-.report-table td {
-padding: 2px;
-text-align: center;
-border-bottom: 1px solid var(--border);
-}
-.report-table tr:nth-child(even) {
-background-color: #f8fafc;
-}
-.report-total {
-font-weight: 700;
-text-align: right;
-padding: 15px 10px;
-border-top: 2px solid var(--border);
-margin-top: 10px;
-}
-.report-actions {
-display: flex;
-justify-content: flex-end;
-gap: 15px;
-margin-top: 20px;
-align-items: center;
-}
-.report-btn {
-padding: 10px 20px;
-border: none;
-border-radius: 8px;
-font-weight: 600;
-cursor: pointer;
-display: inline-flex;
-align-items: center;
-gap: 8px;
-}
-.btn-print {
-background: var(--secondary);
-color: white;
-}
-.btn-print:hover {
-background: #059669;
-}
-.btn-export {
-background: var(--primary);
-color: white;
-}
-.btn-export:hover {
-background: var(--primary-dark);
-}
-.fit-to-page-container {
-display: flex;
-align-items: center;
-gap: 8px;
-margin-right: 30px;
-font-size: 14px;
-}
-.fit-to-page-container input {
-margin: 0;
-}
-@media (max-width: 600px) {
-.container {
-padding: 15px;
-}
-h1 {
-font-size: 24px;
-}
-.card {
-padding: 15px;
-}
-th, td {
-padding: 8px 6px;
-font-size: 13px;
-}
-.action-btn {
-padding: 6px 12px;
-font-size: 12px;
-}
-.btn-generate {
-width: 100%;
-justify-content: center;
-padding: 12px;
-}
-.emp-counter {
-margin-left: 0;
-margin-top: 8px;
-display: inline-block;
-}
-input[type="text"].emp-input,
-input[type="number"].overtime-input {
-max-width: none;
-}
-.generate-btn-container {
-flex-direction: column;
-align-items: center;
-}
-.report-content {
-width: 95%;
-padding: 15px;
-}
-.report-table {
-font-size: 12px;
-}
-.report-actions {
-flex-direction: column;
-align-items: stretch;
-}
-.fit-to-page-container {
-margin-right: 0;
-margin-bottom: 10px;
-justify-content: center;
-}
-}
-.footer {
-margin-top: auto;
-text-align: center;
-color: white;
-padding: 15px;
-font-size: 17px;
-font-weight: bold;
-}
-.footer.arabic {
-font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-.loading {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(255, 255, 255, 0.8);
-z-index: 999;
-justify-content: center;
-align-items: center;
-}
-.spinner {
-width: 50px;
-height: 50px;
-border: 5px solid rgba(59, 130, 246, 0.3);
-border-radius: 50%;
-border-top-color: var(--primary);
-animation: spin 1s linear infinite;
-}
-@keyframes spin {
-to { transform: rotate(360deg); }
-}
-
-/* New styles for PHD section */
-.phd-container {
-margin-top: 15px;
-padding-top: 15px;
-padding-left: 15px;
-padding-right: 15px;
-border-radius: 15px;
-border-top: 1px dashed var(--border);
-background-color: rgba(134, 243, 238, 0.452);
-border-color: #1e293b;
-box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1);
-}
-.phd-list {
-display: flex;
-flex-wrap: wrap;
-gap: 8px;
-margin-top: 10px;
-}
-.phd-tag {
-background: #e0f2fe;
-color: var(--primary);
-padding: 6px 12px;
-border-radius: 20px;
-font-size: 20px;
-display: flex;
-align-items: center;
-gap: 8px;
-}
-.phd-tag .remove-phd {
-background: none;
-border: none;
-color: var(--danger);
-cursor: pointer;
-font-size: 16px;
-padding: 0;
-margin-left: 5px;
-}
-</style>
-</head>
-<body>
-<body>
-<div class="back-btn-container">
-<a href="index.html" class="btn-back">
-<i class="fas fa-arrow-left"></i> Back to Main Dashboard
-</a>
-</div>
-<div class="container">
-<header>
-<h1><i class="fas fa-clock"></i> Professional Timesheet Generator</h1>
-<p class="subtitle">Generate Excel-compatible timesheets with proper date formatting</p>
-</header>
-<div class="card" >
-<h2 class="card-title" ><i class="fas fa-file-excel"></i> Upload Templates</h2>
-<div class="file-upload-container" id="fileUploadContainer" style="background-color: #b6baad46;">
-<div class="file-upload-icon">
-<i class="fas fa-file-excel"></i>
-</div>
-<div class="file-upload-text" >Choose last Month Excel Timesheet file</div>
-<div class="file-upload-text" >اختر ملف التايم شيت الخاص بالشهر الماضي</div>
-<div class="file-upload-subtext" >Upload your existing timesheet template (.xlsx)</div>
-<button class="file-upload-btn" id="fileBtn" >
-<i class="fas fa-upload"></i> Browse Files
-</button>
-</div>
-<input type="file" id="excelFile" accept=".xlsx, .xls" />
-<div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border);">
-<div class="file-upload-container" id="empFileUploadContainer" style="background-color: #b6baad46; ">
-<div class="file-upload-icon">
-<i class="fas fa-users"></i>
-</div>
-<div class="file-upload-text">Choose Employee Data File(Optional:Only for load Employee Names and Salaries) </div>
-<div class="file-upload-text">اختر ملف بيانات الموظفين (اختياري: فقط لتحميل أسماء ورواتب الموظفين) </div>
-
-<div class="file-upload-subtext">Upload emp.xlsx with employee basic salaries</div>
-<button class="file-upload-btn" id="empFileBtn">
-<i class="fas fa-upload"></i> Browse Files
-</button>
-</div>
-<input type="file" id="empFile" accept=".xlsx, .xls" />
-</div>
-</div>
-<div class="card">
-<h2 class="card-title"><i class="fas fa-building"></i> Workplace Configuration</h2>
-<h2 style="text-align: left;font-size: 14px;"> رقم المشروع</h2>
-<div class="input-group">
-<label for="wplaceInput">Workplace Code (Wplace)</label>
-<input type="text" id="wplaceInput" placeholder="Workplace code will be loaded from file" />
-</div>
-
-<!-- New PHD Section -->
-<div class="phd-container">
-<h3 class="card-title" style="margin: 10px 0;">
-<i class="fas fa-calendar-day"></i> Public Holidays (PHD)
-</h3>
-<div class="input-group" style="display: flex; align-items: center; gap: 10px;">
-<label for="phdDate">Add Public Holiday Date</label>
-<input type="date" id="phdDate" style="font-size: 16px; border-radius: 10px; margin-left: 20px; margin-right: 20px ; width: 200px; justify-content: center;text-align: center;font-weight: bold;" />
-<button id="addPhdBtn" class="action-btn btn-add" style="margin-top: 8px; padding: 6px 12px;">
-<i class="fas fa-plus"></i> Add Holiday
-</button>
-</div>
-<div class="phd-list" id="phdList">
-<!-- PHD dates will appear here -->
-</div>
-</div>
-</div>
-
-<div id="status" class="status" style="display:none;"></div>
-<div id="empList" style="display:none;">
-<div class="card">
-<h2 class="card-title">
-<i class="fas fa-users"></i> Employee Management
-<span id="empCounter" class="emp-counter">0 Employees</span>
-</h2>
-<div class="emp-table-container">
-<table id="empTable">
-<thead>
-<tr>
-<th style="width: 100px;">Employee Code</th>
-<th style="width: 500px;">Employee Name</th>
-<th style="width: 100px;">NOT<br><small>(Non-Work Overtime)</small></th>
-<th style="width: 100px;">WOT<br><small>(Work Overtime)</small></th>
-<th style="width: 100px;">Actions</th>
-</tr>
-</thead>
-<tbody id="empTableBody"></tbody>
-</table>
-</div>
-<div class="table-actions">
-<button id="addEmpBtn" class="action-btn btn-add">
-<i class="fas fa-plus"></i> Add Employee
-</button>
-<button id="CheckDuplicates" class="action-btn btn-check-duplicates">
-<i class="fas fa-search"></i> Check Duplicates
-</button>
-</div>
-</div>
-</div>
-<div class="generate-btn-container">
-<button id="generateBtn" class="btn-generate" disabled>
-<i class="fas fa-file-download"></i> Generate Timesheet
-</button>
-<button id="showReportBtn" class="btn-generate" disabled>
-<i class="fas fa-chart-bar"></i> Show Overtime Report
-</button>
-</div>
-</div>
-<!-- Report Popup -->
-<div class="report-popup" id="reportPopup">
-<div class="report-content">
-<div class="report-header">
-<div class="report-title">Overtime Report</div>
-<div class="report-actions">
-<div class="fit-to-page-container">
-<input type="checkbox" id="fitToOnePage" checked>
-<label for="fitToOnePage">Fit to One Page (A4)</label>
-</div>
-<button class="report-btn btn-print" id="printReport">
-<i class="fas fa-print"></i> Print
-</button>
-<button class="report-btn btn-export" id="exportReport">
-<i class="fas fa-file-excel"></i> Export to Excel
-</button>
-<button class="close-report" id="closeReport">&times;</button>
-</div>
-</div>
-<table class="report-table">
-<thead>
-<tr>
-<th>SN</th>
-<th>Emp Code</th>
-<th>NAME</th>
-<th>NOT</th>
-<th>WOT</th>
-<th>Overtime Amount</th>
-</tr>
-</thead>
-<tbody id="reportTableBody">
-</tbody>
-<tfoot>
-<tr>
-<td colspan="4" class="report-total">Total Overtime Amount:</td>
-<td class="report-total" id="totalAmount">0.00</td>
-</tr>
-</tfoot>
-</table>
-</div>
-</div>
-<!-- Loading Indicator -->
-<div class="loading" id="loadingIndicator">
-<div class="spinner"></div>
-</div>
-<div class="footer">
-<div>Designed & Programmed By: Mostafa Al-najjar 2025</div>
-<div class="footer arabic">تصميم وبرمجة: مصطفي النجار 2025</div>
-</div>
-<script>
-let empCodes = [];
-let empData = {};
-let empFileLoaded = false;
-const REQUIRED_HEADERS = ['DATE', 'EmpCode', 'Event', 'Wplace', 'Worked', 'NOT', 'WOT'];
-let publicHolidays = [];
-
-function showStatus(msg, isError = false) {
-const el = document.getElementById('status');
-el.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${msg}`;
-el.className = `status ${isError ? 'error' : 'success'}`;
-el.style.display = 'flex';
-}
-function formatDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-// New function to check if a date is a public holiday
-function isPublicHoliday(date) {
-    const dateStr = formatDate(date);
-    return publicHolidays.includes(dateStr);
-}
-
-// New function to render PHD list
-function renderPhdList() {
-    const phdList = document.getElementById('phdList');
-    phdList.innerHTML = '';
-    
-    if (publicHolidays.length === 0) {
-        phdList.innerHTML = '<div style="color: var(--gray);">No public holidays added</div>';
-        return;
-    }
-    
-    publicHolidays.forEach((dateStr, index) => {
-        const tag = document.createElement('div');
-        tag.className = 'phd-tag';
-        tag.innerHTML = `
-            ${dateStr}
-            <button class="remove-phd" data-index="${index}">×</button>
-        `;
-        phdList.appendChild(tag);
-    });
-}
-
-function hideStatus() {
-document.getElementById('status').style.display = 'none';
-}
-
-function normalizeHeader(h) {
-return String(h || '').trim();
-}
-
-function isValidHeaders(headers) {
-const norm = headers.map(normalizeHeader);
-return REQUIRED_HEADERS.every(h => norm.includes(h));
-}
-
-function extractDataFromSheet(sheet) {
-const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-if (json.length === 0) throw new Error('Empty sheet');
-const headers = json[0].map(normalizeHeader);
-if (!isValidHeaders(headers)) {
-throw new Error('Invalid columns. Required: DATE, EmpCode, Event, Wplace, Worked, NOT, WOT');
-}
-const empCodeIndex = headers.indexOf('EmpCode');
-const wplaceIndex = headers.indexOf('Wplace');
-const codes = new Set();
-let wplaceValue = '';
-for (let i = 1; i < json.length; i++) {
-const empVal = json[i][empCodeIndex];
-if (empVal !== undefined && empVal !== null && empVal !== '') {
-const strVal = String(empVal).trim();
-if (strVal !== '') codes.add(strVal);
-}
-if (!wplaceValue && json[i][wplaceIndex] !== undefined && 
-json[i][wplaceIndex] !== null && json[i][wplaceIndex] !== '') {
-wplaceValue = String(json[i][wplaceIndex]).trim();
-}
-}
-return {
-empCodes: Array.from(codes).sort(),
-wplace: wplaceValue
-};
-}
-
-function extractEmpDataFromSheet(sheet) {
-const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-if (json.length === 0) throw new Error('Empty sheet');
-const headers = json[0].map(normalizeHeader);
-const codeIndex = headers.findIndex(h => 
-h.toLowerCase().includes('code') || h.toLowerCase().includes('emp')
-);
-const basicSalaryIndex = headers.findIndex(h => 
-h.toLowerCase().includes('salary') || h.toLowerCase().includes('basic')
-);
-const empNameIndex = headers.findIndex(h => 
-h.includes('NameEng') 
-);
-if (codeIndex === -1 || basicSalaryIndex === -1) {
-throw new Error('Required columns "code" and "Basic Salary" not found in emp.xlsx');
-}
-const empData = {};
-for (let i = 1; i < json.length; i++) {
-const code = json[i][codeIndex];
-const name = empNameIndex !== -1 ? json[i][empNameIndex] : '';
-const salary = json[i][basicSalaryIndex];
-if (code !== undefined && code !== null && code !== '' &&
-salary !== undefined && salary !== null && !isNaN(salary)) {
-empData[String(code).trim()] = {
-name: String(name || '').trim(),
-salary: parseFloat(salary)
-};
-}
-}
-return empData;
-}
-
-function isDuplicateEmpCode(value, excludeIndex = -1) {
-const normalized = String(value).trim();
-if (!normalized) return false;
-return empCodes.some((empData, idx) => {
-const code = empData.code || '';
-return idx !== excludeIndex && String(code).trim() === normalized;
-});
-}
-
-function isDuplicateEmpName(value, excludeIndex = -1) {
-const normalized = String(value).trim();
-if (!normalized) return false;
-return empCodes.some((empData, idx) => {
-const name = empData.name || '';
-return idx !== excludeIndex && String(name).trim() === normalized;
-});
-}
-
-function updateEmpCounter() {
-const counterEl = document.getElementById('empCounter');
-const validCount = empCodes.filter(empData => String(empData.code || '').trim() !== '').length;
-const totalCount = empCodes.length;
-counterEl.textContent = `${totalCount} Employee${totalCount !== 1 ? 's' : ''} (${validCount} valid)`;
-}
-
-function validateOvertimeInputs() {
-let isValid = true;
-document.querySelectorAll('.not-input').forEach(input => {
-const val = parseInt(input.value) || 0;
-if (val < 0 || val > 999) {
-input.classList.add('invalid');
-isValid = false;
-} else {
-input.classList.remove('invalid');
-}
-});
-document.querySelectorAll('.wot-input').forEach(input => {
-const val = parseInt(input.value) || 0;
-if (val < 0 || val > 999) {
-input.classList.add('invalid');
-isValid = false;
-} else {
-input.classList.remove('invalid');
-}
-});
-return isValid;
-}
-
-function renderEmpTable() {
-const tbody = document.getElementById('empTableBody');
-tbody.innerHTML = '';
-empCodes.forEach((empEntry, i) => {
-const code = (empEntry.code || '').trim();
-const name = (empEntry.name || '').trim();
-const not = empEntry.not !== undefined ? empEntry.not : '';
-const wot = empEntry.wot !== undefined ? empEntry.wot : '';
-const empInfo = empData[code] || { name: '' };
-const autoName = empInfo.name || name;
-empCodes[i].name = autoName;
-const duplicateCode = isDuplicateEmpCode(code, i);
-const duplicateName = isDuplicateEmpName(autoName, i);
-const codeInputClass = duplicateCode ? 'emp-input invalid' : 'emp-input';
-const nameInputClass = duplicateName ? 'emp-input invalid' : 'emp-input';
-const codeWarning = duplicateCode ? '<span class="duplicate-warning">Duplicate!</span>' : '';
-const nameWarning = duplicateName ? '<span class="duplicate-warning">Duplicate!</span>' : '';
-const tr = document.createElement('tr');
-
-tr.innerHTML = `
-<td>
-<input type="text" value="${code}" data-index="${i}" class="${codeInputClass}" placeholder="Enter employee code" />
-${codeWarning}
-</td>
-<td>
-<input type="text" value="${autoName}" data-index="${i}" class="${nameInputClass}" placeholder="Name" style="background:#f1f5f9;" disabled />
-${nameWarning}
-</td>
-<td>
-<input type="number" min="0" max="999" value="${not}" data-index="${i}" class="overtime-input not-input" placeholder="NOT" />
-<span class="overtime-warning" id="not-warning-${i}" style="display:none;"></span>
-</td>
-<td>
-<input type="number" min="0" max="999" value="${wot}" data-index="${i}" class="overtime-input wot-input" placeholder="WOT" />
-<span class="overtime-warning" id="wot-warning-${i}" style="display:none;"></span>
-</td>
-<td>
-<button class="action-btn btn-remove" data-index="${i}">
-<i class="fas fa-trash"></i> Remove
-</button>
-</td>
-`;
-tbody.appendChild(tr);
-});
-updateEmpCounter();
-updateGenerateButton();
-}
-
-function updateGenerateButton() {
-const hasDuplicates = empCodes.some((empData, i) => {
-const code = empData.code || '';
-return isDuplicateEmpCode(code, i);
-});
-const hasDuplicateNames = empCodes.some((empData, i) => {
-const name = empData.name || '';
-return isDuplicateEmpName(name, i);
-});
-const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
-const hasInvalidOvertime = !validateOvertimeInputs();
-const canGenerate = empCodes.length > 0 && !hasDuplicates && !hasDuplicateNames && !hasEmpty && !hasInvalidOvertime;
-const canShowReport = canGenerate && empFileLoaded;
-document.getElementById('generateBtn').disabled = !canGenerate;
-document.getElementById('showReportBtn').disabled = !canShowReport;
-}
-
-function addNewEmpRow() {
-empCodes.push({ code: '', name: '', not: '', wot: '' });
-renderEmpTable();
-}
-
-function checkDuplicates() {
-renderEmpTable();
-const hasDuplicates = empCodes.some((empData, i) => {
-const code = empData.code || '';
-return isDuplicateEmpCode(code, i);
-});
-const hasDuplicateNames = empCodes.some((empData, i) => {
-const name = empData.name || '';
-return isDuplicateEmpName(name, i);
-});
-if (hasDuplicates) {
-showStatus('There are duplicate employee codes. Please resolve duplicates before generating.', true);
-} else if (hasDuplicateNames) {
-showStatus('There are duplicate employee names. Please resolve duplicates before generating.', true);
-} else {
-showStatus('No duplicate employee codes or names found. Ready to generate.');
-}
-}
-
-function updateNOT(index, value) {
-empCodes[index] = empCodes[index] || { code: '', name: '', wot: '' };
-empCodes[index].not = value;
-}
-
-function updateWOT(index, value) {
-empCodes[index] = empCodes[index] || { code: '', name: '', not: '' };
-empCodes[index].wot = value;
-}
-
-function removeEmpCode(index) {
-empCodes.splice(index, 1);
-renderEmpTable();
-}
-
-function dateToExcelSerial(date) {
-if (!(date instanceof Date) || isNaN(date)) {
-throw new Error("Invalid Date object");
-}
-const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-const diffInMs = date.getTime() - excelEpoch.getTime();
-let serial = diffInMs / (1000 * 60 * 60 * 24);
-if (serial >= 61) {
-serial += 1;
-}
-return Math.floor(serial);
-}
-
-function calculateOvertimeAmount(empCode, not, wot) {
-const empInfo = empData[empCode] || { salary: 0 };
-const basicSalary = empInfo.salary || 0;
-const rate = basicSalary / 200;
-const amount = (rate * not) + (rate * wot * 1.25);
-return amount;
-}
-
-function generateTimesheet() {
-if (empCodes.length === 0) {
-showStatus('No employee codes to generate.', true);
-return;
-}
-const wplaceValue = document.getElementById('wplaceInput').value.trim();
-if (!wplaceValue) {
-showStatus('Workplace code (Wplace) cannot be empty.', true);
-return;
-}
-const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
-if (hasEmpty) {
-showStatus('Employee code cannot be empty.', true);
-return;
-}
-const hasDuplicates = empCodes.some((empData, i) => {
-const code = empData.code || '';
-return isDuplicateEmpCode(code, i);
-});
-if (hasDuplicates) {
-showStatus('Duplicate employee codes are not allowed.', true);
-return;
-}
-const hasDuplicateNames = empCodes.some((empData, i) => {
-const name = empData.name || '';
-return isDuplicateEmpName(name, i);
-});
-if (hasDuplicateNames) {
-showStatus('Duplicate employee names are not allowed.', true);
-return;
-}
-if (!validateOvertimeInputs()) {
-showStatus('Invalid overtime values. Please check your inputs.', true);
-return;
-}
-hideStatus();
-const now = new Date();
-const year = now.getFullYear();
-const month = now.getMonth();
-const startDate = new Date(year, month - 1, 15);
-const endDate = new Date(year, month, 14);
-const dates = [];
-let currentDate = new Date(startDate);
-while (currentDate <= endDate) {
-dates.push({
-date: new Date(currentDate),
-isSunday: currentDate.getDay() === 0,
-isPhd: isPublicHoliday(currentDate)
-});
-currentDate.setDate(currentDate.getDate() + 1);
-}
-const rows = [];
-empCodes.forEach(empData => {
-const empCodeStr = String(empData.code).trim();
-const notTotal = parseInt(empData.not) || 0;
-const wotTotal = parseInt(empData.wot) || 0;
-const nonSundayRows = dates.filter(d => !d.isSunday && !d.isPhd).length;
-const notDistribution = new Array(dates.length).fill(0);
-let remainingNOT = notTotal;
-if (nonSundayRows > 0) {
-let nonSundayIndex = 0;
-for (let i = 0; i < dates.length && remainingNOT > 0; i++) {
-if (!dates[i].isSunday && !dates[i].isPhd) {
-const allocation = Math.min(2, remainingNOT);
-notDistribution[i] = allocation;
-remainingNOT -= allocation;
-nonSundayIndex++;
-}
-}
-}
-const sundayOrPhdRows = dates.filter(d => d.isSunday || d.isPhd).length;
-const wotDistribution = new Array(dates.length).fill(0);
-let remainingWOT = wotTotal;
-if (sundayOrPhdRows > 0 && remainingWOT > 0) {
-const idealAllocation = Math.min(8, Math.floor(remainingWOT / sundayOrPhdRows));
-let allocated = 0;
-for (let i = 0; i < dates.length; i++) {
-if (dates[i].isSunday || dates[i].isPhd) {
-const allocation = Math.min(idealAllocation, remainingWOT);
-wotDistribution[i] = allocation;
-remainingWOT -= allocation;
-allocated += allocation;
-}
-}
-if (remainingWOT > 0) {
-for (let i = 0; i < dates.length && remainingWOT > 0; i++) {
-if ((dates[i].isSunday || dates[i].isPhd) && wotDistribution[i] < 10) {
-const canAllocate = Math.min(10 - wotDistribution[i], remainingWOT);
-wotDistribution[i] += canAllocate;
-remainingWOT -= canAllocate;
-}
-}
-}
-}
-dates.forEach((dateInfo, index) => {
-let event, worked, finalNOT;
-// Check if it's a public holiday
-if (dateInfo.isPhd) {
-event = 'PHD';
-worked = 0;
-finalNOT = 0;
-} else if (dateInfo.isSunday) {
-event = 'OFF';
-worked = 0;
-finalNOT = 0;
-} else {
-event = 'P';
-worked = 8;
-finalNOT = notDistribution[index];
-}
-rows.push({
-DATE: dateToExcelSerial(dateInfo.date),
-EmpCode: empCodeStr,
-Event: event,
-Wplace: wplaceValue,
-Worked: worked,
-NOT: finalNOT,
-WOT: wotDistribution[index]
-});
-});
-});
-const ws = XLSX.utils.json_to_sheet(rows);
-ws['!cols'] = [
-{ wch: 15 },
-{ wch: 15 },
-{ wch: 10 },
-{ wch: 12 },
-{ wch: 10 },
-{ wch: 10 },
-{ wch: 10 }
-];
-const range = XLSX.utils.decode_range(ws['!ref']);
-for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-const dateCell = ws[XLSX.utils.encode_cell({ r: R, c: 0 })];
-const empCodeCell = ws[XLSX.utils.encode_cell({ r: R, c: 1 })];
-const eventCell = ws[XLSX.utils.encode_cell({ r: R, c: 2 })];
-const wplaceCell = ws[XLSX.utils.encode_cell({ r: R, c: 3 })];
-const workedCell = ws[XLSX.utils.encode_cell({ r: R, c: 4 })];
-const notCell = ws[XLSX.utils.encode_cell({ r: R, c: 5 })];
-const wotCell = ws[XLSX.utils.encode_cell({ r: R, c: 6 })];
-if (dateCell) {
-dateCell.t = 'n';
-dateCell.z = 'm/d/yyyy';
-}
-if (empCodeCell) empCodeCell.t = 's';
-if (eventCell) eventCell.z = '@';
-if (wplaceCell) wplaceCell.t = 's';
-if (workedCell) workedCell.z = '@';
-if (notCell) notCell.z = '@';
-if (wotCell) wotCell.z = '@';
-}
-const wb = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb, ws, 'Timesheet');
-const wplaceSanitized = wplaceValue.replace(/[^a-z0-9]/gi, '_').substring(0, 10);
-const monthName = now.toLocaleString('en-US', { month: 'long' });
-const filename = `${monthName} ${year} ${wplaceSanitized} Timesheet.xlsx`;
-XLSX.writeFile(wb, filename);
-}
-
-function showOvertimeReport() {
-const reportTableBody = document.getElementById('reportTableBody');
-reportTableBody.innerHTML = '';
-let totalAmount = 0;
-empCodes.forEach((empEntry, index) => {
-const empCode = (empEntry.code || '').trim();
-if (!empCode) return;
-const not = parseInt(empEntry.not) || 0;
-const wot = parseInt(empEntry.wot) || 0;
-const empInfo = empData[empCode] || { name: '', salary: 0 };
-const empName = empInfo.name || 'N/A';
-const overtimeAmount = calculateOvertimeAmount(empCode, not, wot);
-totalAmount += overtimeAmount;
-const row = document.createElement('tr');
-row.innerHTML = `
-<td>${index + 1}</td>
-<td >${empCode}</td>
-<td style="text-align:left; padding-left: 10px;">${empName}</td>
-<td>${not}</td>
-<td>${wot}</td>
-<td>${overtimeAmount.toFixed(2)}</td>
-`;
-reportTableBody.appendChild(row);
-});
-document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
-const wplaceValue = document.getElementById('wplaceInput').value.trim() || 'WPLACE';
-const now = new Date();
-const monthName = now.toLocaleString('en-US', { month: 'long' });
-const year = now.getFullYear();
-const reportTitleText = `${wplaceValue} - Over Time Report - ${monthName} ${year}`;
-document.querySelector('.report-title').textContent = reportTitleText;
-const rowCount = empCodes.filter(e => (e.code || '').trim()).length;
-document.getElementById('fitToOnePage').checked = rowCount > 15;
-document.getElementById('reportPopup').classList.add('active');
-}
-
-function printReport() {
-const fitToOnePage = document.getElementById('fitToOnePage').checked;
-const reportTable = document.querySelector('.report-table').cloneNode(true);
-const totalAmount = document.getElementById('totalAmount').textContent;
-const reportTitle = document.querySelector('.report-title').textContent;
-const printContent = `
-<div class="report-title" style="font-size:18pt; font-weight:bold; text-align:center; margin-bottom:10mm; margin-right:10mm;margin-left:10mm">${reportTitle}</div>
-<table class="report-table">
-${reportTable.innerHTML}
-</table>
-<div class="report-total" style="font-weight:bold; text-align:right; padding-top:5mm; margin-top:5mm; border-top:2px solid black;">
-Total Overtime Amount: ${totalAmount}
-</div>
-`;
-const printWindow = window.open('', '_blank');
-printWindow.document.write(`
-<!DOCTYPE html>
-<html>
-<head>
-<title>Overtime Report - Print</title>
-<meta charset="UTF-8" />
-<style>
-body {
-font-family: Arial, sans-serif;
-margin: 0;
-padding: 2mm;
-color: #000;
-width: 210mm;
-min-height: 297mm;
-box-sizing: border-box;
-}
-.report-title {
-font-size: 15pt;
-font-weight: bold;
-text-align: center;
-margin-bottom: 5mm;
-}
-table {
-width: 100%;
-border-collapse: collapse;
-font-size: 7pt;
-}
-th, td {
-padding: .5mm .5mm;
-text-align: center;
-border: 1px solid #000;
-}
-th {
-background: #3b82f6;
-color: white;
-}
-.report-total {
-font-weight: bold;
-text-align: right;
-padding-top: 5mm;
-margin-top: 5mm;
-border-top: 2px solid black;
-}
-@page {
-size: A4;
-margin: 0;
-
-
-}
-@media print {
-html, body {
-width: 210mm;
-height: 297mm;
-}
-
-.scaled {
-transform-origin: top left;
-position: center;
-left: auto;
-top: 0;
-}
-</style>
-</head>
-<body>
-<div id="printRoot">
-${printContent}
-</div>
-${fitToOnePage ? `
-<script>
-window.onload = function() {
-const root = document.getElementById('printRoot');
-let width = root.offsetWidth;
-let height = root.offsetHeight;
-const pxToMm = 3.7795275591;
-const scaleX = 190 / (width / pxToMm);
-const scaleY = 277 / (height / pxToMm);
-const scale = Math.min(scaleX, scaleY, 1);
-if (scale < 1) {
-root.classList.add('scaled');
-root.style.transform = 'scale(' + scale + ')';
-root.style.width = (width / scale) + 'px';
-root.style.height = (height / scale) + 'px';
-}
-};
-<\/script>` : ''}
-<\/body>
-<\/html>
-`);
-printWindow.document.close();
-printWindow.focus();
-printWindow.onload = () => {
-setTimeout(() => {
-printWindow.print();
-//printWindow.close();
-}, 300);
-};
-}
-
-function exportReport() {
-const reportData = [];
-reportData.push(['SN', 'Emp Code', 'Name', 'NOT', 'WOT', 'Overtime Amount']);
-empCodes.forEach((empData, index) => {
-const empCode = empData.code || '';
-if (!empCode.trim()) return;
-const not = parseInt(empData.not) || 0;
-const wot = parseInt(empData.wot) || 0;
-const overtimeAmount = calculateOvertimeAmount(empCode, not, wot);
-reportData.push([index + 1, empCode, empData.name || '', not, wot, overtimeAmount.toFixed(2)]);
-});
-const totalAmount = reportData.slice(1).reduce((sum, row) => sum + parseFloat(row[5] || 0), 0);
-reportData.push(['', '', '', '', 'Total:', totalAmount.toFixed(2)]);
-const ws = XLSX.utils.aoa_to_sheet(reportData);
-ws['!cols'] = [{ wch: 8 }, { wch: 15 }, { wch: 25 }, { wch: 8 }, { wch: 8 }, { wch: 15 }];
-const wb = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb, ws, 'Overtime Report');
-const now = new Date();
-const monthName = now.toLocaleString('en-US', { month: 'long' });
-const year = now.getFullYear();
-XLSX.writeFile(wb, `Overtime_Report_${monthName}_${year}.xlsx`);
-}
-
-function showLoading() {
-document.getElementById('loadingIndicator').style.display = 'flex';
-}
-
-function hideLoading() {
-document.getElementById('loadingIndicator').style.display = 'none';
-}
-
-function initEventListeners() {
-document.getElementById('fileUploadContainer').addEventListener('click', () => {
-document.getElementById('excelFile').click();
-});
-document.getElementById('fileBtn').addEventListener('click', (e) => {
-e.stopPropagation();
-document.getElementById('excelFile').click();
-});
-document.getElementById('empFileUploadContainer').addEventListener('click', () => {
-document.getElementById('empFile').click();
-});
-document.getElementById('empFileBtn').addEventListener('click', (e) => {
-e.stopPropagation();
-document.getElementById('empFile').click();
-});
-
-document.getElementById('excelFile').addEventListener('change', (e) => {
-const file = e.target.files[0];
-if (!file) return;
-const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-if (!validTypes.includes(file.type)) {
-showStatus('Please upload a valid Excel file (.xlsx or .xls)', true);
-return;
-}
-// New PHD event listeners
-document.getElementById('addPhdBtn').addEventListener('click', () => {
-    const phdInput = document.getElementById('phdDate');
-    const dateValue = phdInput.value;
-    
-    if (!dateValue) {
-        showStatus('Please select a date', true);
-        return;
-    }
-    
-    // Check if date is already added
-    if (publicHolidays.includes(dateValue)) {
-        showStatus('This date is already added as a public holiday', true);
-        return;
-    }
-    
-    publicHolidays.push(dateValue);
-    renderPhdList();
-    phdInput.value = '';
-    showStatus(`Public holiday added: ${dateValue}`, false);
-});
-
-document.getElementById('phdList').addEventListener('click', (e) => {
-    if (e.target.classList.contains('remove-phd')) {
-        const index = parseInt(e.target.dataset.index);
-        if (!isNaN(index) && index >= 0 && index < publicHolidays.length) {
-            publicHolidays.splice(index, 1);
-            renderPhdList();
-            showStatus('Public holiday removed', false);
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Professional Timesheet Generator</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --light-gray: #e2e8f0;
+            --border: #cbd5e1;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0.1);
+            --format-preserve: #8b5cf6;
         }
-    }
-});
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        #empCounter {
+            font-weight: bold;
+            font-size: 20px;
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.577);
+            background-color: rgb(98, 255, 0);
+            color: #1e293b;
+            border-style: solid;
+            border-width: 1px;
+            border-color: #01429d;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .back-btn-container {
+            width: 100%;
+            max-width: 850px;
+            margin: 10px auto;
+            text-align: center;
+        }
+        .btn-back {
+            background: var(--gray);
+            padding: 10px 24px;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 10px;
+            color: white;
+            box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-back:hover {
+            background: #475569;
+            transform: translateY(-2px);
+        }
+        .container {
+            max-width: 850px;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 15px;
+            margin-top: 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            position: relative;
+            padding-top: 10px;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--format-preserve) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .format-badge {
+            background: var(--format-preserve);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 5px rgba(139, 92, 246, 0.3);
+        }
+        .subtitle {
+            color: var(--gray);
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-title i {
+            color: var(--primary);
+        }
+        .emp-counter {
+            background: var(--light);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 8px;
+        }
+        .file-upload-container {
+            text-align: center;
+            padding: 24px;
+            border: 2px dashed var(--light-gray);
+            border-radius: 12px;
+            background: var(--light);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .file-upload-container:hover {
+            border-color: #10469d6c;
+            background: rgba(59, 130, 246, 0.05);
+            border-width: 5px;
+        }
+        .file-upload-container.format-preserved::after {
+            content: "✓ FORMATTING PRESERVED";
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--success);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .file-upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--format-preserve));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .file-upload-text {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+        .file-upload-subtext {
+            color: var(--gray);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .file-upload-btn {
+            background: linear-gradient(120deg, var(--primary), var(--format-preserve));
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
+        }
+        .file-upload-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px rgba(59, 130, 246, 0.35);
+        }
+        #excelFile, #empFile {
+            display: none;
+        }
+        .status {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin: 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid transparent;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #16a34a;
+            border-color: #bbf7d0;
+        }
+        .status.warning {
+            background: #fffbf0;
+            color: #926c03;
+            border-color: #fde68a;
+        }
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-color: #bfdbfe;
+        }
+        .status i {
+            font-size: 20px;
+        }
+        .input-group {
+            margin: 2px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 14px;
+        }
+        .input-group input[type="text"] {
+            padding: 12px 16px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            transition: border-color 0.2s ease;
+            font-family: inherit;
+        }
+        .input-group input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .emp-table-container {
+            overflow-x: auto;
+            margin: 15px 0;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+        th {
+            background: var(--light);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 14px;
+            border-bottom: 2px solid var(--border);
+        }
+        td {
+            padding: 5px;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            text-align: center;
+        }
+        td:last-child {
+            text-align: right;
+        }
+        input[type="text"].emp-input{
+            padding: 8px 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 15px;
+            width: 100%;
+            max-width: 500px;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+        input[type="number"].overtime-input {
+            padding: 8px 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 15px;
+            width: 100%;
+            max-width: 120px;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+        input[type="text"].emp-input:focus,
+        input[type="number"].overtime-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        input[type="text"].emp-input.invalid,
+        input[type="number"].overtime-input.invalid {
+            border-color: var(--danger);
+            background: #fef2f2;
+        }
+        input[type="number"].overtime-input {
+            max-width: 80px;
+        }
+        .duplicate-warning,
+        .overtime-warning {
+            color: var(--danger);
+            font-size: 12px;
+            margin-top: 4px;
+            display: block;
+        }
+        .table-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding: 12px;
+            background: var(--light);
+            border-top: 1px solid var(--border);
+            border-radius: 0 0 12px 12px;
+        }
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-remove {
+            background: var(--danger);
+            color: white;
+        }
+        .btn-remove:hover {
+            background: #dc2626;
+        }
+        .btn-add {
+            background: var(--secondary);
+            color: white;
+        }
+        .btn-add:hover {
+            background: #059669;
+        }
+        .btn-check-duplicates {
+            background: var(--warning);
+            color: white;
+        }
+        .btn-check-duplicates:hover {
+            background: #d97706;
+        }
+        .generate-btn-container {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .btn-generate {
+            padding: 14px 32px;
+            background: linear-gradient(120deg, var(--primary), var(--format-preserve));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow);
+            min-width: 220px;
+            justify-content: center;
+        }
+        .btn-generate i {
+            font-size: 20px;
+        }
+        .btn-generate:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(59, 130, 246, 0.4);
+        }
+        .btn-generate:disabled {
+            background: var(--light-gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            color: var(--gray);
+        }
+        .report-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .report-popup.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .report-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 5px;
+            position: relative;
+        }
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .report-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark);
+            background: linear-gradient(135deg, var(--primary), var(--format-preserve));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .close-report {
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .report-table th {
+            background: linear-gradient(120deg, var(--primary), var(--format-preserve));
+            color: white;
+            padding: 8px 5px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .report-table td {
+            padding: 6px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .report-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .report-total {
+            font-weight: 700;
+            text-align: right;
+            padding: 15px 10px;
+            border-top: 2px solid var(--border);
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        .report-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .report-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
+        }
+        .btn-print {
+            background: var(--secondary);
+            color: white;
+        }
+        .btn-print:hover {
+            background: #059669;
+        }
+        .btn-export {
+            background: linear-gradient(120deg, var(--primary), var(--format-preserve));
+            color: white;
+        }
+        .btn-export:hover {
+            background: linear-gradient(120deg, var(--primary-dark), #7c3aed);
+        }
+        .fit-to-page-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 30px;
+            font-size: 14px;
+        }
+        .fit-to-page-container input {
+            margin: 0;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 24px;
+                flex-direction: column;
+                gap: 5px;
+            }
+            .card {
+                padding: 15px;
+            }
+            th, td {
+                padding: 8px 6px;
+                font-size: 13px;
+            }
+            .action-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .btn-generate {
+                width: 100%;
+                justify-content: center;
+                padding: 12px;
+            }
+            .emp-counter {
+                margin-left: 0;
+                margin-top: 8px;
+                display: inline-block;
+            }
+            input[type="text"].emp-input,
+            input[type="number"].overtime-input {
+                max-width: none;
+            }
+            .generate-btn-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .report-content {
+                width: 95%;
+                padding: 15px;
+            }
+            .report-table {
+                font-size: 12px;
+            }
+            .report-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .fit-to-page-container {
+                margin-right: 0;
+                margin-bottom: 10px;
+                justify-content: center;
+            }
+            .report-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+        .footer {
+            margin-top: auto;
+            text-align: center;
+            color: white;
+            padding: 15px;
+            font-size: 17px;
+            font-weight: bold;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        .footer.arabic {
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(59, 130, 246, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--format-preserve);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark);
+            text-align: center;
+            max-width: 80%;
+        }
+        .loading-subtext {
+            color: var(--gray);
+            font-size: 16px;
+            text-align: center;
+            max-width: 80%;
+        }
+        .phd-container {
+            margin-top: 15px;
+            padding-top: 15px;
+            padding-left: 15px;
+            padding-right: 15px;
+            border-radius: 15px;
+            border-top: 1px dashed var(--border);
+            background-color: rgba(134, 243, 238, 0.15);
+            border-color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .phd-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            min-height: 30px;
+        }
+        .phd-tag {
+            background: linear-gradient(120deg, #dbeafe, #ede9fe);
+            color: var(--primary-dark);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .phd-tag .remove-phd {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            margin-left: 5px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .phd-tag .remove-phd:hover {
+            transform: scale(1.2);
+        }
+        .format-preservation-note {
+            background: #f0f9ff;
+            border-left: 4px solid var(--primary);
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .debug-headers {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 10px 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 13px;
+            border-radius: 0 6px 6px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="back-btn-container">
+        <a href="index.html" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Main Dashboard
+        </a>
+    </div>
+    <div class="container">
+        <header>
+            <h1>
+                <i class="fas fa-file-excel"></i> Professional Timesheet Generator
+                <span class="format-badge">FORMAT PRESERVATION</span>
+            </h1>
+            <p class="subtitle">Upload your formatted template to generate timesheets without losing any cell styles, formulas, or formatting</p>
+        </header>
+        
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-file-excel"></i> Upload Templates</h2>
+            <div class="file-upload-container" id="fileUploadContainer">
+                <div class="file-upload-icon">
+                    <i class="fas fa-file-excel"></i>
+                </div>
+                <div class="file-upload-text">Choose Last Month Excel Timesheet Template</div>
+                <div class="file-upload-text">اختر ملف التايم شيت المُنسَّق للشهر الماضي</div>
+                <div class="file-upload-subtext">Upload your formatted timesheet template (.xlsx) - All styles will be preserved!</div>
+                <button class="file-upload-btn" id="fileBtn">
+                    <i class="fas fa-upload"></i> Browse Template File
+                </button>
+                <div class="template-status" id="templateStatus">
+                    <i class="fas fa-info-circle"></i> No template loaded. Formatting will not be preserved.
+                </div>
+            </div>
+            <input type="file" id="excelFile" accept=".xlsx, .xls, .xlsm" />
+            
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border);">
+                <div class="file-upload-container" id="empFileUploadContainer">
+                    <div class="file-upload-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="file-upload-text">Choose Employee Data File (Optional)</div>
+                    <div class="file-upload-text">اختر ملف بيانات الموظفين (اختياري)</div>
+                    <div class="file-upload-subtext">Upload emp.xlsx with employee names and basic salaries</div>
+                    <button class="file-upload-btn" id="empFileBtn">
+                        <i class="fas fa-upload"></i> Browse Employee File
+                    </button>
+                </div>
+                <input type="file" id="empFile" accept=".xlsx, .xls" />
+            </div>
+            
+            <div class="format-preservation-note">
+                <i class="fas fa-shield-alt"></i> <strong>Format Preservation Active:</strong> When a template is loaded, all cell formatting (fonts, colors, borders, number formats), formulas, and styles will be preserved in the generated timesheet. Only cell values will be updated.
+            </div>
+            
+            <div class="debug-headers" id="debugHeaders"></div>
+        </div>
+        
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-building"></i> Workplace Configuration</h2>
+            <h2 style="text-align: left;font-size: 14px;">رقم المشروع</h2>
+            <div class="input-group">
+                <label for="wplaceInput">Workplace Code (Wplace)</label>
+                <input type="text" id="wplaceInput" placeholder="Workplace code will be loaded from file" />
+            </div>
+            
+            <div class="phd-container">
+                <h3 class="card-title" style="margin: 10px 0;">
+                    <i class="fas fa-calendar-day"></i> Public Holidays (PHD)
+                </h3>
+                <div class="input-group" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <label for="phdDate">Add Public Holiday Date</label>
+                    <input type="date" id="phdDate" style="font-size: 16px; border-radius: 10px; margin-left: 20px; margin-right: 20px; width: 200px; justify-content: center; text-align: center; font-weight: bold;" />
+                    <button id="addPhdBtn" class="action-btn btn-add" style="margin-top: 8px; padding: 6px 12px; white-space: nowrap;">
+                        <i class="fas fa-plus"></i> Add Holiday
+                    </button>
+                </div>
+                <div class="phd-list" id="phdList">
+                    <div style="color: var(--gray); width: 100%;">No public holidays added. February 2026 will treat all days as regular workdays unless added here.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="status" class="status" style="display:none;"></div>
+        
+        <div id="empList" style="display:none;">
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-users"></i> Employee Management
+                    <span id="empCounter" class="emp-counter">0 Employees</span>
+                </h2>
+                <div class="emp-table-container">
+                    <table id="empTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 120px;">Employee Code</th>
+                                <th style="width: 250px;">Employee Name</th>
+                                <th style="width: 100px;">NOT<br><small>(Non-Work Overtime)</small></th>
+                                <th style="width: 100px;">WOT<br><small>(Work Overtime)</small></th>
+                                <th style="width: 100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="empTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="table-actions">
+                    <button id="addEmpBtn" class="action-btn btn-add">
+                        <i class="fas fa-plus"></i> Add Employee
+                    </button>
+                    <button id="CheckDuplicates" class="action-btn btn-check-duplicates">
+                        <i class="fas fa-search"></i> Check Duplicates
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="generate-btn-container">
+            <button id="generateBtn" class="btn-generate" disabled>
+                <i class="fas fa-magic"></i> Generate & Preserve Format
+            </button>
+            <button id="showReportBtn" class="btn-generate" disabled>
+                <i class="fas fa-chart-bar"></i> Show Overtime Report
+            </button>
+        </div>
+    </div>
+    
+    <div class="report-popup" id="reportPopup">
+        <div class="report-content">
+            <div class="report-header">
+                <div class="report-title">Overtime Report</div>
+                <div class="report-actions">
+                    <div class="fit-to-page-container">
+                        <input type="checkbox" id="fitToOnePage" checked>
+                        <label for="fitToOnePage">Fit to One Page (A4)</label>
+                    </div>
+                    <button class="report-btn btn-print" id="printReport">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button class="report-btn btn-export" id="exportReport">
+                        <i class="fas fa-file-excel"></i> Export to Excel
+                    </button>
+                    <button class="close-report" id="closeReport">&times;</button>
+                </div>
+            </div>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>SN</th>
+                        <th>Emp Code</th>
+                        <th>NAME</th>
+                        <th>NOT</th>
+                        <th>WOT</th>
+                        <th>Overtime Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="report-total">Total Overtime Amount:</td>
+                        <td class="report-total" id="totalAmount">0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    
+    <div class="loading" id="loadingIndicator">
+        <div class="spinner"></div>
+        <div class="loading-text">Preserving Your Excel Formatting...</div>
+        <div class="loading-subtext">Updating cell values while maintaining all styles, formulas, and number formats from your template</div>
+    </div>
+    
+    <div class="footer">
+        <div>Designed & Programmed By: Mostafa Al-najjar 2025</div>
+        <div class="footer arabic">تصميم وبرمجة: مصطفي النجار 2025</div>
+    </div>
 
-const reader = new FileReader();
-reader.onload = (ev) => {
-try {
-const data = new Uint8Array(ev.target.result);
-const wb = XLSX.read(data, { type: 'array', cellNF: true, cellDates: true });
-const sheet = wb.Sheets[wb.SheetNames[0]];
-const extractedData = extractDataFromSheet(sheet);
-empCodes = extractedData.empCodes.map(code => ({ code, name: '', not: '', wot: '' }));
-const wplaceValue = extractedData.wplace;
-const wplaceInput = document.getElementById('wplaceInput');
-if (wplaceValue) {
-wplaceInput.value = wplaceValue;
-} else {
-wplaceInput.placeholder = "No Wplace found in file";
-}
-if (empCodes.length === 0) {
-showStatus('No valid employee codes found in the file.', true);
-} else {
-showStatus(`Successfully loaded ${empCodes.length} employee code(s) and workplace code.`, false);
-document.getElementById('empList').style.display = 'block';
-document.getElementById('fileUploadContainer').style.backgroundColor = 'lightgreen'; 
-renderEmpTable();
-}
-} catch (err) {
-console.error('File reading error:', err);
-showStatus('Error reading file: ' + (err.message || 'Invalid Excel file format'), true);
-document.getElementById('fileUploadContainer').style.backgroundColor = 'silver'; 
-}
-};
-reader.onerror = () => {
-showStatus('Error reading file. Please try again.', true);
-};
-reader.readAsArrayBuffer(file);
-});
-
-document.getElementById('empFile').addEventListener('change', (e) => {
-showLoading();
-const file = e.target.files[0];
-if (!file) {
-hideLoading();
-return;
-}
-const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-if (!validTypes.includes(file.type)) {
-hideLoading();
-showStatus('Please upload a valid Excel file (.xlsx or .xls)', true);
-return;
-}
-const reader = new FileReader();
-reader.onload = (ev) => {
-try {
-const data = new Uint8Array(ev.target.result);
-const wb = XLSX.read(data, { type: 'array', cellNF: true, cellDates: true });
-const sheet = wb.Sheets[wb.SheetNames[0]];
-empData = extractEmpDataFromSheet(sheet);
-empFileLoaded = true;
-showStatus(`Successfully loaded employee data with ${Object.keys(empData).length} records.`, false);
-document.getElementById('empFileUploadContainer').style.backgroundColor = 'lightgreen';
-empCodes = empCodes.map(emp => {
-const empInfo = empData[emp.code] || { name: '' };
-return { 
-code: emp.code, 
-name: empInfo.name || emp.name || '', 
-not: emp.not, 
-wot: emp.wot 
-};
-});
-renderEmpTable();
-updateGenerateButton();
-} catch (err) {
-console.error('Employee file reading error:', err);
-showStatus('Error reading employee file: ' + (err.message || 'Invalid Excel file format'), true);
-document.getElementById('empFileUploadContainer').style.backgroundColor = 'silver';
-}
-hideLoading();
-};
-reader.onerror = () => {
-hideLoading();
-showStatus('Error reading employee file. Please try again.', true);
-};
-reader.readAsArrayBuffer(file);
-});
-
-document.getElementById('empTableBody').addEventListener('input', (e) => {
-const target = e.target;
-const index = parseInt(target.dataset.index, 10);
-if (isNaN(index) || index < 0 || index >= empCodes.length) return;
-if (target.classList.contains('emp-input')) {
-const newCode = target.value.trim();
-empCodes[index].code = newCode;
-if (empFileLoaded && empData[newCode]) {
-empCodes[index].name = empData[newCode].name || '';
-} else {
-empCodes[index].name = '';
-}
-renderEmpTable();
-} else if (target.classList.contains('not-input')) {
-empCodes[index].not = target.value;
-updateGenerateButton();
-} else if (target.classList.contains('wot-input')) {
-empCodes[index].wot = target.value;
-updateGenerateButton();
-}
-});
-
-document.getElementById('empTableBody').addEventListener('click', (e) => {
-if (e.target.closest('.btn-remove')) {
-const button = e.target.closest('.btn-remove');
-const idx = parseInt(button.dataset.index, 10);
-if (!isNaN(idx)) {
-removeEmpCode(idx);
-}
-}
-});
-
-document.getElementById('addEmpBtn').addEventListener('click', addNewEmpRow);
-document.getElementById('CheckDuplicates').addEventListener('click', checkDuplicates);
-document.getElementById('generateBtn').addEventListener('click', generateTimesheet);
-document.getElementById('showReportBtn').addEventListener('click', showOvertimeReport);
-document.getElementById('closeReport').addEventListener('click', () => {
-document.getElementById('reportPopup').classList.remove('active');
-});
-document.getElementById('printReport').addEventListener('click', printReport);
-document.getElementById('exportReport').addEventListener('click', exportReport);
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-hideStatus();
-updateEmpCounter();
-initEventListeners();
-});
-</script>
+    <script>
+        let empCodes = [];
+        let empData = {};
+        let empFileLoaded = false;
+        let templateArrayBuffer = null;
+        let templateWorkBook = null;
+        const REQUIRED_HEADERS = ['DATE', 'EmpCode', 'Event', 'Wplace', 'Worked', 'NOT', 'WOT'];
+        let publicHolidays = [];
+        let headerRowIdx = 0;
+        let templateColumnMap = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            hideStatus();
+            updateEmpCounter();
+            initEventListeners();
+            renderPhdList();
+        });
+        
+        function initEventListeners() {
+            document.getElementById('fileUploadContainer').addEventListener('click', () => {
+                document.getElementById('excelFile').click();
+            });
+            
+            document.getElementById('fileBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('excelFile').click();
+            });
+            
+            document.getElementById('excelFile').addEventListener('change', handleTemplateFile);
+            
+            document.getElementById('empFileUploadContainer').addEventListener('click', () => {
+                document.getElementById('empFile').click();
+            });
+            
+            document.getElementById('empFileBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('empFile').click();
+            });
+            
+            document.getElementById('empFile').addEventListener('change', handleEmpFile);
+            
+            document.getElementById('addPhdBtn').addEventListener('click', addPublicHoliday);
+            document.getElementById('phdList').addEventListener('click', handlePhdListClick);
+            document.getElementById('empTableBody').addEventListener('input', handleEmpTableInput);
+            document.getElementById('empTableBody').addEventListener('click', handleEmpTableClick);
+            document.getElementById('addEmpBtn').addEventListener('click', addNewEmpRow);
+            document.getElementById('CheckDuplicates').addEventListener('click', checkDuplicates);
+            document.getElementById('generateBtn').addEventListener('click', generateTimesheet);
+            document.getElementById('showReportBtn').addEventListener('click', showOvertimeReport);
+            document.getElementById('closeReport').addEventListener('click', closeReport);
+            document.getElementById('printReport').addEventListener('click', printReport);
+            document.getElementById('exportReport').addEventListener('click', exportReport);
+        }
+        
+        function handleTemplateFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const validTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel',
+                'application/vnd.ms-excel.sheet.macroEnabled.12'
+            ];
+            
+            if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|xlsm)$/i)) {
+                showStatus('Please upload a valid Excel file (.xlsx, .xls, or .xlsm)', true);
+                return;
+            }
+            
+            showLoading();
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    templateArrayBuffer = ev.target.result;
+                    const data = new Uint8Array(templateArrayBuffer);
+                    templateWorkBook = XLSX.read(data, { 
+                        type: 'array', 
+                        cellStyles: true, 
+                        cellNF: true,
+                        cellDates: true
+                    });
+                    
+                    const sheet = templateWorkBook.Sheets[templateWorkBook.SheetNames[0]];
+                    const extractedData = extractDataFromSheetDirect(sheet);
+                    headerRowIdx = extractedData.headerRow;
+                    templateColumnMap = extractedData.columnMap;
+                    
+                    empCodes = extractedData.empCodes.map(code => ({ 
+                        code, 
+                        name: '', 
+                        not: '', 
+                        wot: '' 
+                    }));
+                    
+                    const wplaceValue = extractedData.wplace;
+                    const wplaceInput = document.getElementById('wplaceInput');
+                    if (wplaceValue) {
+                        wplaceInput.value = wplaceValue;
+                    } else {
+                        wplaceInput.placeholder = "No Wplace found in file";
+                    }
+                    
+                    if (empCodes.length === 0) {
+                        showStatus('No valid employee codes found in the template file.', true);
+                        document.getElementById('fileUploadContainer').classList.remove('format-preserved');
+                    } else {
+                        showStatus(`✅ Successfully loaded ${empCodes.length} employee code(s). Format preservation ACTIVE!`, false);
+                        document.getElementById('fileUploadContainer').classList.add('format-preserved');
+                        document.getElementById('empList').style.display = 'block';
+                        renderEmpTable();
+                    }
+                    
+                    const statusEl = document.getElementById('templateStatus');
+                    statusEl.className = 'template-status active';
+                    statusEl.innerHTML = `<i class="fas fa-check-circle"></i> Template loaded! Headers detected in row 1. Formatting will be preserved.`;
+                    
+                    document.getElementById('debugHeaders').style.display = 'none';
+                    
+                } catch (err) {
+                    console.error('File reading error:', err);
+                    showStatus('⚠️ ' + (err.message || 'Invalid Excel file format'), true);
+                    document.getElementById('fileUploadContainer').classList.remove('format-preserved');
+                    
+                    const statusEl = document.getElementById('templateStatus');
+                    statusEl.className = 'template-status';
+                    statusEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error loading template. Formatting will not be preserved.`;
+                    
+                    try {
+                        const data = new Uint8Array(templateArrayBuffer);
+                        const wb = XLSX.read(data, { type: 'array' });
+                        const sheet = wb.Sheets[wb.SheetNames[0]];
+                        const range = XLSX.utils.decode_range(sheet['!ref']);
+                        
+                        let debugHtml = '<strong>🔍 First 5 rows of your Excel file:</strong><br><br>';
+                        for (let R = range.s.r; R <= Math.min(range.e.r, range.s.r + 4); R++) {
+                            let rowValues = [];
+                            for (let C = range.s.c; C <= Math.min(range.e.c, 6); C++) {
+                                const cell = sheet[XLSX.utils.encode_cell({r: R, c: C})];
+                                const cellVal = cell ? getCellValue(cell) : '—';
+                                rowValues.push(cellVal.length > 20 ? cellVal.substring(0, 17) + '...' : cellVal);
+                            }
+                            debugHtml += `Row ${R+1}: [${rowValues.join(' | ')}]<br>`;
+                        }
+                        debugHtml += `<br><strong>💡 Note:</strong> Your template has headers in row 1. This tool will preserve formatting even when extending rows for multiple employees.`;
+                        document.getElementById('debugHeaders').innerHTML = debugHtml;
+                        document.getElementById('debugHeaders').style.display = 'block';
+                    } catch (debugErr) {
+                        console.error('Debug error:', debugErr);
+                    }
+                } finally {
+                    hideLoading();
+                }
+            };
+            
+            reader.onerror = () => {
+                hideLoading();
+                showStatus('Error reading file. Please try again.', true);
+                document.getElementById('fileUploadContainer').classList.remove('format-preserved');
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function extractDataFromSheetDirect(sheet) {
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+            const headerRow = 0;
+            const headers = [];
+            
+            for (let C = range.s.c; C <= range.e.c; C++) {
+                const cell = sheet[XLSX.utils.encode_cell({r: headerRow, c: C})];
+                const cellVal = cell ? getCellValue(cell) : '';
+                headers.push(cellVal.trim());
+            }
+            
+            const hasRequired = REQUIRED_HEADERS.every(req => {
+                return headers.some(h => 
+                    h.toUpperCase().replace(/[^A-Z0-9]/g, '') === req.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                );
+            });
+            
+            if (!hasRequired) {
+                throw new Error('Could not find required headers (DATE, EmpCode, Event, Wplace, Worked, NOT, WOT) in row 1.');
+            }
+            
+            const empCodeIndex = findHeaderIndex(headers, 'EmpCode');
+            const wplaceIndex = findHeaderIndex(headers, 'Wplace');
+            const dateIndex = findHeaderIndex(headers, 'DATE');
+            const eventIndex = findHeaderIndex(headers, 'Event');
+            const workedIndex = findHeaderIndex(headers, 'Worked');
+            const notIndex = findHeaderIndex(headers, 'NOT');
+            const wotIndex = findHeaderIndex(headers, 'WOT');
+            
+            const missing = [];
+            if (empCodeIndex === -1) missing.push('EmpCode');
+            if (wplaceIndex === -1) missing.push('Wplace');
+            if (dateIndex === -1) missing.push('DATE');
+            if (eventIndex === -1) missing.push('Event');
+            if (workedIndex === -1) missing.push('Worked');
+            if (notIndex === -1) missing.push('NOT');
+            if (wotIndex === -1) missing.push('WOT');
+            
+            if (missing.length > 0) {
+                throw new Error(`Missing required columns: ${missing.join(', ')}`);
+            }
+            
+            const codes = new Set();
+            let wplaceValue = '';
+            
+            for (let R = headerRow + 1; R <= range.e.r; R++) {
+                const cellRef = XLSX.utils.encode_cell({r: R, c: empCodeIndex});
+                const cell = sheet[cellRef];
+                const empVal = cell ? getCellValue(cell) : '';
+                
+                if (empVal && empVal.trim() !== '') {
+                    codes.add(empVal.trim());
+                }
+                
+                if (!wplaceValue) {
+                    const wplaceCellRef = XLSX.utils.encode_cell({r: R, c: wplaceIndex});
+                    const wplaceCell = sheet[wplaceCellRef];
+                    const wplaceVal = wplaceCell ? getCellValue(wplaceCell) : '';
+                    if (wplaceVal && wplaceVal.trim() !== '') {
+                        wplaceValue = wplaceVal.trim();
+                    }
+                }
+            }
+            
+            return {
+                empCodes: Array.from(codes).sort(),
+                wplace: wplaceValue,
+                headerRow: headerRow,
+                columnMap: {
+                    DATE: dateIndex,
+                    EmpCode: empCodeIndex,
+                    Event: eventIndex,
+                    Wplace: wplaceIndex,
+                    Worked: workedIndex,
+                    NOT: notIndex,
+                    WOT: wotIndex
+                }
+            };
+        }
+        
+        function getCellValue(cell) {
+            if (!cell || cell.v === undefined || cell.v === null) return '';
+            
+            if (cell.t === 'd' && cell.v instanceof Date) {
+                return cell.v.toLocaleDateString('en-US');
+            }
+            
+            if (cell.t === 'n' && typeof cell.v === 'number' && cell.v > 40000) {
+                try {
+                    const date = new Date(Math.round((cell.v - 25569) * 86400 * 1000));
+                    if (!isNaN(date.getTime())) {
+                        return date.toLocaleDateString('en-US');
+                    }
+                } catch (e) {
+                }
+            }
+            
+            return String(cell.v).trim();
+        }
+        
+        function findHeaderIndex(headers, target) {
+            const targetNorm = target.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            
+            for (let i = 0; i < headers.length; i++) {
+                const headerNorm = headers[i].toUpperCase().replace(/[^A-Z0-9]/g, '');
+                if (headerNorm === targetNorm || 
+                    headerNorm.includes(targetNorm) || 
+                    targetNorm.includes(headerNorm)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        
+        // Rest of helper functions (unchanged from previous working version)
+        function handleEmpFile(e) {
+            showLoading();
+            const file = e.target.files[0];
+            if (!file) {
+                hideLoading();
+                return;
+            }
+            
+            const validTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel'
+            ];
+            
+            if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls)$/i)) {
+                hideLoading();
+                showStatus('Please upload a valid Excel file (.xlsx or .xls)', true);
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = new Uint8Array(ev.target.result);
+                    const wb = XLSX.read(data, { type: 'array', cellNF: true, cellDates: true });
+                    const sheet = wb.Sheets[wb.SheetNames[0]];
+                    empData = extractEmpDataFromSheet(sheet);
+                    empFileLoaded = true;
+                    
+                    showStatus(`✅ Successfully loaded employee data with ${Object.keys(empData).length} records.`, false);
+                    document.getElementById('empFileUploadContainer').style.backgroundColor = 'lightgreen';
+                    
+                    empCodes = empCodes.map(emp => {
+                        const empInfo = empData[emp.code] || { name: '' };
+                        return {
+                            code: emp.code,
+                            name: empInfo.name || emp.name || '',
+                            not: emp.not,
+                            wot: emp.wot
+                        };
+                    });
+                    
+                    renderEmpTable();
+                    updateGenerateButton();
+                } catch (err) {
+                    console.error('Employee file reading error:', err);
+                    showStatus('Error reading employee file: ' + (err.message || 'Invalid Excel file format'), true);
+                    document.getElementById('empFileUploadContainer').style.backgroundColor = 'silver';
+                } finally {
+                    hideLoading();
+                }
+            };
+            
+            reader.onerror = () => {
+                hideLoading();
+                showStatus('Error reading employee file. Please try again.', true);
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function addPublicHoliday() {
+            const phdInput = document.getElementById('phdDate');
+            const dateValue = phdInput.value;
+            if (!dateValue) {
+                showStatus('Please select a date', true);
+                return;
+            }
+            if (publicHolidays.includes(dateValue)) {
+                showStatus('This date is already added as a public holiday', true);
+                return;
+            }
+            publicHolidays.push(dateValue);
+            renderPhdList();
+            phdInput.value = '';
+            showStatus(`Public holiday added: ${dateValue}`, false);
+        }
+        
+        function renderPhdList() {
+            const phdList = document.getElementById('phdList');
+            phdList.innerHTML = '';
+            if (publicHolidays.length === 0) {
+                phdList.innerHTML = '<div style="color: var(--gray); width: 100%;">No public holidays added. February 2026 will treat all days as regular workdays unless added here.</div>';
+                return;
+            }
+            publicHolidays.forEach((dateStr, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'phd-tag';
+                tag.innerHTML = `${dateStr}<button class="remove-phd" data-index="${index}">×</button>`;
+                phdList.appendChild(tag);
+            });
+        }
+        
+        function handlePhdListClick(e) {
+            if (e.target.classList.contains('remove-phd')) {
+                const index = parseInt(e.target.dataset.index);
+                if (!isNaN(index) && index >= 0 && index < publicHolidays.length) {
+                    publicHolidays.splice(index, 1);
+                    renderPhdList();
+                    showStatus('Public holiday removed', false);
+                }
+            }
+        }
+        
+        function handleEmpTableInput(e) {
+            const target = e.target;
+            const index = parseInt(target.dataset.index, 10);
+            if (isNaN(index) || index < 0 || index >= empCodes.length) return;
+            
+            if (target.classList.contains('emp-input')) {
+                const newCode = target.value.trim();
+                empCodes[index].code = newCode;
+                if (empFileLoaded && empData[newCode]) {
+                    empCodes[index].name = empData[newCode].name || '';
+                } else {
+                    empCodes[index].name = '';
+                }
+                renderEmpTable();
+            } else if (target.classList.contains('not-input')) {
+                empCodes[index].not = target.value;
+                updateGenerateButton();
+            } else if (target.classList.contains('wot-input')) {
+                empCodes[index].wot = target.value;
+                updateGenerateButton();
+            }
+        }
+        
+        function handleEmpTableClick(e) {
+            if (e.target.closest('.btn-remove')) {
+                const button = e.target.closest('.btn-remove');
+                const idx = parseInt(button.dataset.index, 10);
+                if (!isNaN(idx)) {
+                    removeEmpCode(idx);
+                }
+            }
+        }
+        
+        function addNewEmpRow() {
+            empCodes.push({ code: '', name: '', not: '', wot: '' });
+            renderEmpTable();
+        }
+        
+        function removeEmpCode(index) {
+            empCodes.splice(index, 1);
+            renderEmpTable();
+        }
+        
+        function checkDuplicates() {
+            renderEmpTable();
+            const hasDuplicates = empCodes.some((empData, i) => {
+                const code = empData.code || '';
+                return isDuplicateEmpCode(code, i);
+            });
+            const hasDuplicateNames = empCodes.some((empData, i) => {
+                const name = empData.name || '';
+                return isDuplicateEmpName(name, i);
+            });
+            if (hasDuplicates) {
+                showStatus('There are duplicate employee codes. Please resolve duplicates before generating.', true);
+            } else if (hasDuplicateNames) {
+                showStatus('There are duplicate employee names. Please resolve duplicates before generating.', true);
+            } else {
+                showStatus('No duplicate employee codes or names found. Ready to generate.', false);
+            }
+        }
+        
+        function renderEmpTable() {
+            const tbody = document.getElementById('empTableBody');
+            tbody.innerHTML = '';
+            empCodes.forEach((empEntry, i) => {
+                const code = (empEntry.code || '').trim();
+                const name = (empEntry.name || '').trim();
+                const not = empEntry.not !== undefined ? empEntry.not : '';
+                const wot = empEntry.wot !== undefined ? empEntry.wot : '';
+                const empInfo = empData[code] || { name: '' };
+                const autoName = empInfo.name || name;
+                empCodes[i].name = autoName;
+                
+                const duplicateCode = isDuplicateEmpCode(code, i);
+                const duplicateName = isDuplicateEmpName(autoName, i);
+                const codeInputClass = duplicateCode ? 'emp-input invalid' : 'emp-input';
+                const nameInputClass = duplicateName ? 'emp-input invalid' : 'emp-input';
+                const codeWarning = duplicateCode ? '<span class="duplicate-warning">Duplicate!</span>' : '';
+                const nameWarning = duplicateName ? '<span class="duplicate-warning">Duplicate!</span>' : '';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <input type="text" value="${code}" data-index="${i}" class="${codeInputClass}" placeholder="Enter employee code" />
+                        ${codeWarning}
+                    </td>
+                    <td>
+                        <input type="text" value="${autoName}" data-index="${i}" class="${nameInputClass}" placeholder="Name" style="background:#f1f5f9;" disabled />
+                        ${nameWarning}
+                    </td>
+                    <td>
+                        <input type="number" min="0" max="999" value="${not}" data-index="${i}" class="overtime-input not-input" placeholder="NOT" />
+                        <span class="overtime-warning" id="not-warning-${i}" style="display:none;"></span>
+                    </td>
+                    <td>
+                        <input type="number" min="0" max="999" value="${wot}" data-index="${i}" class="overtime-input wot-input" placeholder="WOT" />
+                        <span class="overtime-warning" id="wot-warning-${i}" style="display:none;"></span>
+                    </td>
+                    <td>
+                        <button class="action-btn btn-remove" data-index="${i}">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            updateEmpCounter();
+            updateGenerateButton();
+        }
+        
+        function showStatus(msg, isError = false, isWarning = false, isInfo = false) {
+            const el = document.getElementById('status');
+            let icon = 'fa-check-circle';
+            let className = 'success';
+            if (isError) {
+                icon = 'fa-exclamation-circle';
+                className = 'error';
+            } else if (isWarning) {
+                icon = 'fa-exclamation-triangle';
+                className = 'warning';
+            } else if (isInfo) {
+                icon = 'fa-info-circle';
+                className = 'info';
+            }
+            el.innerHTML = `<i class="fas ${icon}"></i> ${msg}`;
+            el.className = `status ${className}`;
+            el.style.display = 'flex';
+        }
+        
+        function hideStatus() {
+            document.getElementById('status').style.display = 'none';
+        }
+        
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'flex';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+        
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function isPublicHoliday(date) {
+            const dateStr = formatDate(date);
+            return publicHolidays.includes(dateStr);
+        }
+        
+        function isDuplicateEmpCode(value, excludeIndex = -1) {
+            const normalized = String(value).trim();
+            if (!normalized) return false;
+            return empCodes.some((empData, idx) => {
+                const code = empData.code || '';
+                return idx !== excludeIndex && String(code).trim() === normalized;
+            });
+        }
+        
+        function isDuplicateEmpName(value, excludeIndex = -1) {
+            const normalized = String(value).trim();
+            if (!normalized) return false;
+            return empCodes.some((empData, idx) => {
+                const name = empData.name || '';
+                return idx !== excludeIndex && String(name).trim() === normalized;
+            });
+        }
+        
+        function updateEmpCounter() {
+            const counterEl = document.getElementById('empCounter');
+            const validCount = empCodes.filter(empData => String(empData.code || '').trim() !== '').length;
+            const totalCount = empCodes.length;
+            counterEl.textContent = `${totalCount} Employee${totalCount !== 1 ? 's' : ''} (${validCount} valid)`;
+        }
+        
+        function validateOvertimeInputs() {
+            let isValid = true;
+            document.querySelectorAll('.not-input').forEach(input => {
+                const val = parseInt(input.value) || 0;
+                if (val < 0 || val > 999) {
+                    input.classList.add('invalid');
+                    isValid = false;
+                } else {
+                    input.classList.remove('invalid');
+                }
+            });
+            document.querySelectorAll('.wot-input').forEach(input => {
+                const val = parseInt(input.value) || 0;
+                if (val < 0 || val > 999) {
+                    input.classList.add('invalid');
+                    isValid = false;
+                } else {
+                    input.classList.remove('invalid');
+                }
+            });
+            return isValid;
+        }
+        
+        function updateGenerateButton() {
+            const hasDuplicates = empCodes.some((empData, i) => {
+                const code = empData.code || '';
+                return isDuplicateEmpCode(code, i);
+            });
+            const hasDuplicateNames = empCodes.some((empData, i) => {
+                const name = empData.name || '';
+                return isDuplicateEmpName(name, i);
+            });
+            const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
+            const hasInvalidOvertime = !validateOvertimeInputs();
+            const canGenerate = empCodes.length > 0 && !hasDuplicates && !hasDuplicateNames && !hasEmpty && !hasInvalidOvertime;
+            const canShowReport = canGenerate && empFileLoaded;
+            document.getElementById('generateBtn').disabled = !canGenerate;
+            document.getElementById('showReportBtn').disabled = !canShowReport;
+        }
+        
+        function dateToExcelSerial(date) {
+            if (!(date instanceof Date) || isNaN(date)) {
+                throw new Error("Invalid Date object");
+            }
+            const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+            const diffInMs = date.getTime() - excelEpoch.getTime();
+            let serial = diffInMs / (1000 * 60 * 60 * 24);
+            if (serial >= 61) serial += 1;
+            return Math.floor(serial);
+        }
+        
+        function calculateOvertimeAmount(empCode, not, wot) {
+            const empInfo = empData[empCode] || { salary: 0 };
+            const basicSalary = empInfo.salary || 0;
+            const rate = basicSalary / 200;
+            const amount = (rate * not) + (rate * wot * 1.25);
+            return amount;
+        }
+        
+        function generateTimesheet() {
+            if (empCodes.length === 0) {
+                showStatus('No employee codes to generate.', true);
+                return;
+            }
+            
+            const wplaceValue = document.getElementById('wplaceInput').value.trim();
+            if (!wplaceValue) {
+                showStatus('Workplace code (Wplace) cannot be empty.', true);
+                return;
+            }
+            
+            const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
+            if (hasEmpty) {
+                showStatus('Employee code cannot be empty.', true);
+                return;
+            }
+            
+            const hasDuplicates = empCodes.some((empData, i) => {
+                const code = empData.code || '';
+                return isDuplicateEmpCode(code, i);
+            });
+            if (hasDuplicates) {
+                showStatus('Duplicate employee codes are not allowed.', true);
+                return;
+            }
+            
+            const hasDuplicateNames = empCodes.some((empData, i) => {
+                const name = empData.name || '';
+                return isDuplicateEmpName(name, i);
+            });
+            if (hasDuplicateNames) {
+                showStatus('Duplicate employee names are not allowed.', true);
+                return;
+            }
+            
+            if (!validateOvertimeInputs()) {
+                showStatus('Invalid overtime values. Please check your inputs.', true);
+                return;
+            }
+            
+            hideStatus();
+            showLoading();
+            
+            try {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
+                const startDate = new Date(year, month - 1, 15);
+                const endDate = new Date(year, month, 14);
+                
+                const dates = [];
+                let currentDate = new Date(startDate);
+                while (currentDate <= endDate) {
+                    dates.push({
+                        date: new Date(currentDate),
+                        isSunday: currentDate.getDay() === 0,
+                        isPhd: isPublicHoliday(currentDate)
+                    });
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                
+                const rows = [];
+                empCodes.forEach(empData => {
+                    const empCodeStr = String(empData.code).trim();
+                    const notTotal = parseInt(empData.not) || 0;
+                    const wotTotal = parseInt(empData.wot) || 0;
+                    
+                    const nonSundayRows = dates.filter(d => !d.isSunday && !d.isPhd).length;
+                    const notDistribution = new Array(dates.length).fill(0);
+                    let remainingNOT = notTotal;
+                    
+                    if (nonSundayRows > 0) {
+                        for (let i = 0; i < dates.length && remainingNOT > 0; i++) {
+                            if (!dates[i].isSunday && !dates[i].isPhd) {
+                                const allocation = Math.min(2, remainingNOT);
+                                notDistribution[i] = allocation;
+                                remainingNOT -= allocation;
+                            }
+                        }
+                    }
+                    
+                    const sundayOrPhdRows = dates.filter(d => d.isSunday || d.isPhd).length;
+                    const wotDistribution = new Array(dates.length).fill(0);
+                    let remainingWOT = wotTotal;
+                    
+                    if (sundayOrPhdRows > 0 && remainingWOT > 0) {
+                        const idealAllocation = Math.min(8, Math.floor(remainingWOT / sundayOrPhdRows));
+                        for (let i = 0; i < dates.length; i++) {
+                            if (dates[i].isSunday || dates[i].isPhd) {
+                                const allocation = Math.min(idealAllocation, remainingWOT);
+                                wotDistribution[i] = allocation;
+                                remainingWOT -= allocation;
+                            }
+                        }
+                        if (remainingWOT > 0) {
+                            for (let i = 0; i < dates.length && remainingWOT > 0; i++) {
+                                if ((dates[i].isSunday || dates[i].isPhd) && wotDistribution[i] < 10) {
+                                    const canAllocate = Math.min(10 - wotDistribution[i], remainingWOT);
+                                    wotDistribution[i] += canAllocate;
+                                    remainingWOT -= canAllocate;
+                                }
+                            }
+                        }
+                    }
+                    
+                    dates.forEach((dateInfo, index) => {
+                        let event, worked, finalNOT;
+                        if (dateInfo.isPhd) {
+                            event = 'PHD';
+                            worked = 0;
+                            finalNOT = 0;
+                        } else if (dateInfo.isSunday) {
+                            event = 'OFF';
+                            worked = 0;
+                            finalNOT = 0;
+                        } else {
+                            event = 'P';
+                            worked = 8;
+                            finalNOT = notDistribution[index];
+                        }
+                        
+                        rows.push({
+                            DATE: dateToExcelSerial(dateInfo.date),
+                            EmpCode: empCodeStr,
+                            Event: event,
+                            Wplace: wplaceValue,
+                            Worked: worked,
+                            NOT: finalNOT,
+                            WOT: wotDistribution[index]
+                        });
+                    });
+                });
+                
+                if (templateArrayBuffer && templateWorkBook && templateColumnMap) {
+                    generateWithTemplatePreservation(rows, wplaceValue, headerRowIdx, templateColumnMap);
+                } else {
+                    generateNewSheet(rows, wplaceValue);
+                }
+            } catch (error) {
+                console.error('Generation error:', error);
+                hideLoading();
+                showStatus('Error generating timesheet: ' + error.message, true);
+            }
+        }
+        
+        // 🔑 CRITICAL FIX: Dynamically extend template with preserved formatting
+        function generateWithTemplatePreservation(rows, wplaceValue, headerRow, columnMap) {
+            try {
+                const workbook = XLSX.read(templateArrayBuffer, { 
+                    type: 'array', 
+                    cellStyles: true, 
+                    cellNF: true,
+                    cellDates: true
+                });
+                
+                const ws = workbook.Sheets[workbook.SheetNames[0]];
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                
+                // Data starts AFTER header row (row 0 = headers, row 1+ = data)
+                const firstDataRow = headerRow + 1;
+                const totalRowsNeeded = rows.length;
+                
+                // 🔑 KEY FIX: If template has insufficient rows, extend it by copying formatting from first data row
+                if (range.e.r < (firstDataRow + totalRowsNeeded - 1)) {
+                    showStatus(`⚠️ Template has only ${range.e.r - firstDataRow + 1} data rows. Extending to ${totalRowsNeeded} rows with preserved formatting...`, false, true);
+                    
+                    // Get formatting reference from first data row
+                    const refRow = firstDataRow;
+                    const refCells = {};
+                    
+                    // Capture formatting from reference row for all 7 columns
+                    for (let c = 0; c < 7; c++) {
+                        const cellRef = XLSX.utils.encode_cell({ r: refRow, c: c });
+                        const cell = ws[cellRef];
+                        refCells[c] = {
+                            z: cell?.z || getDefaultFormat(c),
+                            s: cell?.s || null,
+                            t: cell?.t || (c === 0 ? 'n' : 's')
+                        };
+                    }
+                    
+                    // Extend worksheet range to accommodate all needed rows
+                    range.e.r = firstDataRow + totalRowsNeeded - 1;
+                    ws['!ref'] = XLSX.utils.encode_range(range);
+                    
+                    // Apply formatting to all new rows
+                    for (let r = firstDataRow; r <= range.e.r; r++) {
+                        for (let c = 0; c < 7; c++) {
+                            const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+                            let cell = ws[cellRef];
+                            
+                            if (!cell) {
+                                cell = { v: '', t: refCells[c].t };
+                                ws[cellRef] = cell;
+                            }
+                            
+                            // Apply preserved formatting
+                            cell.z = refCells[c].z;
+                            if (refCells[c].s) {
+                                cell.s = JSON.parse(JSON.stringify(refCells[c].s)); // Deep copy style
+                            }
+                        }
+                    }
+                }
+                
+                // Clear existing data values but preserve formatting
+                for (let r = firstDataRow; r <= range.e.r; r++) {
+                    for (let c = 0; c < 7; c++) {
+                        const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+                        if (ws[cellRef]) {
+                            ws[cellRef].v = ''; // Clear value only
+                        }
+                    }
+                }
+                
+                // Write new data while preserving formatting
+                for (let i = 0; i < totalRowsNeeded; i++) {
+                    const row = rows[i];
+                    const rowIndex = firstDataRow + i;
+                    
+                    // Map data to correct columns using columnMap
+                    const cols = [
+                        { c: columnMap.DATE, v: row.DATE, t: 'n' },
+                        { c: columnMap.EmpCode, v: row.EmpCode, t: 's' },
+                        { c: columnMap.Event, v: row.Event, t: 's' },
+                        { c: columnMap.Wplace, v: row.Wplace, t: 's' },
+                        { c: columnMap.Worked, v: row.Worked, t: 'n' },
+                        { c: columnMap.NOT, v: row.NOT, t: 'n' },
+                        { c: columnMap.WOT, v: row.WOT, t: 'n' }
+                    ];
+                    
+                    cols.forEach(col => {
+                        if (col.c === undefined || col.c === -1) return; // Skip missing columns
+                        
+                        const cellRef = XLSX.utils.encode_cell({ r: rowIndex, c: col.c });
+                        let cell = ws[cellRef];
+                        
+                        if (!cell) {
+                            // Create cell with formatting from first data row
+                            const refCell = ws[XLSX.utils.encode_cell({ r: firstDataRow, c: col.c })];
+                            cell = {
+                                v: col.v,
+                                t: col.t,
+                                z: refCell?.z || getDefaultFormat(col.c),
+                                s: refCell?.s ? JSON.parse(JSON.stringify(refCell.s)) : null
+                            };
+                            ws[cellRef] = cell;
+                        } else {
+                            // Update value and type, preserve formatting
+                            cell.v = col.v;
+                            cell.t = col.t;
+                            if (!cell.z) cell.z = getDefaultFormat(col.c);
+                        }
+                    });
+                }
+                
+                // Update worksheet range if needed
+                if (totalRowsNeeded > 0) {
+                    range.e.r = firstDataRow + totalRowsNeeded - 1;
+                    ws['!ref'] = XLSX.utils.encode_range(range);
+                }
+                
+                // Generate filename
+                const wplaceSanitized = wplaceValue.replace(/[^a-z0-9]/gi, '_').substring(0, 10);
+                const now = new Date();
+                const monthName = now.toLocaleString('en-US', { month: 'long' });
+                const year = now.getFullYear();
+                const filename = `${monthName} ${year} ${wplaceSanitized} Timesheet.xlsx`;
+                
+                XLSX.writeFile(workbook, filename);
+                
+                hideLoading();
+                showStatus(`✅ Timesheet successfully generated with <strong>preserved formatting</strong>! Saved as: ${filename}`, false, false, true);
+                document.getElementById('templateStatus').innerHTML = `<i class="fas fa-check-circle"></i> Format preservation successful! Template extended with ${totalRowsNeeded} rows while maintaining all styles.`;
+            } catch (error) {
+                console.error('Template preservation error:', error);
+                hideLoading();
+                showStatus('⚠️ Error preserving template format: ' + error.message + '. Generating new sheet instead.', true);
+                generateNewSheet(rows, wplaceValue);
+            }
+        }
+        
+        function generateNewSheet(rows, wplaceValue) {
+            try {
+                const ws = XLSX.utils.json_to_sheet(rows);
+                ws['!cols'] = [
+                    { wch: 15 }, { wch: 15 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }
+                ];
+                
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+                    const dateCell = ws[XLSX.utils.encode_cell({ r: R, c: 0 })];
+                    if (dateCell) {
+                        dateCell.t = 'n';
+                        dateCell.z = 'm/d/yy';
+                    }
+                    const empCodeCell = ws[XLSX.utils.encode_cell({ r: R, c: 1 })];
+                    if (empCodeCell) empCodeCell.t = 's';
+                }
+                
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Timesheet');
+                
+                const wplaceSanitized = wplaceValue.replace(/[^a-z0-9]/gi, '_').substring(0, 10);
+                const now = new Date();
+                const monthName = now.toLocaleString('en-US', { month: 'long' });
+                const year = now.getFullYear();
+                const filename = `${monthName} ${year} ${wplaceSanitized} Timesheet.xlsx`;
+                
+                XLSX.writeFile(wb, filename);
+                
+                hideLoading();
+                showStatus(`⚠️ Timesheet generated <strong>without format preservation</strong>. Saved as: ${filename}`, false, true);
+            } catch (error) {
+                hideLoading();
+                throw error;
+            }
+        }
+        
+        function getDefaultFormat(colIndex) {
+            switch(colIndex) {
+                case 0: return 'm/d/yy';
+                case 4: case 5: case 6: return '0';
+                default: return '@';
+            }
+        }
+        
+        // Overtime report functions (unchanged)
+        function showOvertimeReport() {
+            const reportTableBody = document.getElementById('reportTableBody');
+            reportTableBody.innerHTML = '';
+            let totalAmount = 0;
+            empCodes.forEach((empEntry, index) => {
+                const empCode = (empEntry.code || '').trim();
+                if (!empCode) return;
+                const not = parseInt(empEntry.not) || 0;
+                const wot = parseInt(empEntry.wot) || 0;
+                const empInfo = empData[empCode] || { name: '', salary: 0 };
+                const empName = empInfo.name || 'N/A';
+                const overtimeAmount = calculateOvertimeAmount(empCode, not, wot);
+                totalAmount += overtimeAmount;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${empCode}</td>
+                    <td style="text-align:left; padding-left: 10px;">${empName}</td>
+                    <td>${not}</td>
+                    <td>${wot}</td>
+                    <td>${overtimeAmount.toFixed(2)}</td>
+                `;
+                reportTableBody.appendChild(row);
+            });
+            document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+            const wplaceValue = document.getElementById('wplaceInput').value.trim() || 'WPLACE';
+            const now = new Date();
+            const monthName = now.toLocaleString('en-US', { month: 'long' });
+            const year = now.getFullYear();
+            document.querySelector('.report-title').textContent = `${wplaceValue} - Over Time Report - ${monthName} ${year}`;
+            document.getElementById('fitToOnePage').checked = empCodes.filter(e => (e.code || '').trim()).length > 15;
+            document.getElementById('reportPopup').classList.add('active');
+        }
+        
+        function closeReport() {
+            document.getElementById('reportPopup').classList.remove('active');
+        }
+        
+        function printReport() {
+            const fitToOnePage = document.getElementById('fitToOnePage').checked;
+            const reportTable = document.querySelector('.report-table').cloneNode(true);
+            const totalAmount = document.getElementById('totalAmount').textContent;
+            const reportTitle = document.querySelector('.report-title').textContent;
+            
+            const printContent = `
+            <div class="report-title" style="font-size:18pt; font-weight:bold; text-align:center; margin-bottom:10mm; margin-right:10mm;margin-left:10mm">${reportTitle}</div>
+            <table class="report-table">${reportTable.innerHTML}</table>
+            <div class="report-total" style="font-weight:bold; text-align:right; padding-top:5mm; margin-top:5mm; border-top:2px solid black;">
+            Total Overtime Amount: ${totalAmount}
+            </div>
+            `;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <title>Overtime Report - Print</title>
+            <meta charset="UTF-8" />
+            <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 2mm; color: #000; width: 210mm; min-height: 297mm; box-sizing: border-box; }
+            .report-title { font-size: 15pt; font-weight: bold; text-align: center; margin-bottom: 5mm; }
+            table { width: 100%; border-collapse: collapse; font-size: 7pt; }
+            th, td { padding: .5mm .5mm; text-align: center; border: 1px solid #000; }
+            th { background: #3b82f6; color: white; }
+            .report-total { font-weight: bold; text-align: right; padding-top: 5mm; margin-top: 5mm; border-top: 2px solid black; }
+            @page { size: A4; margin: 0; }
+            @media print { html, body { width: 210mm; height: 297mm; } .scaled { transform-origin: top left; position: center; left: auto; top: 0; } }
+            <\/style>
+            <\/head>
+            <body>
+            <div id="printRoot">${printContent}</div>
+            ${fitToOnePage ? `<script>window.onload=function(){const r=document.getElementById('printRoot');let w=r.offsetWidth,h=r.offsetHeight,sx=190/(w/3.7795275591),sy=277/(h/3.7795275591),s=Math.min(sx,sy,1);if(s<1){r.classList.add('scaled');r.style.transform='scale('+s+')';r.style.width=(w/s)+'px';r.style.height=(h/s)+'px';}};<\/script>` : ''}
+            <\/body>
+            <\/html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.onload = () => setTimeout(() => printWindow.print(), 300);
+        }
+        
+        function exportReport() {
+            const reportData = [['SN', 'Emp Code', 'Name', 'NOT', 'WOT', 'Overtime Amount']];
+            empCodes.forEach((empData, index) => {
+                const empCode = empData.code || '';
+                if (!empCode.trim()) return;
+                const not = parseInt(empData.not) || 0;
+                const wot = parseInt(empData.wot) || 0;
+                const overtimeAmount = calculateOvertimeAmount(empCode, not, wot);
+                reportData.push([index + 1, empCode, empData.name || '', not, wot, overtimeAmount.toFixed(2)]);
+            });
+            const totalAmount = reportData.slice(1).reduce((sum, row) => sum + parseFloat(row[5] || 0), 0);
+            reportData.push(['', '', '', '', 'Total:', totalAmount.toFixed(2)]);
+            
+            const ws = XLSX.utils.aoa_to_sheet(reportData);
+            ws['!cols'] = [{ wch: 8 }, { wch: 15 }, { wch: 25 }, { wch: 8 }, { wch: 8 }, { wch: 15 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Overtime Report');
+            
+            const now = new Date();
+            const monthName = now.toLocaleString('en-US', { month: 'long' });
+            const year = now.getFullYear();
+            XLSX.writeFile(wb, `Overtime_Report_${monthName}_${year}.xlsx`);
+        }
+        
+        function extractEmpDataFromSheet(sheet) {
+            const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            if (json.length === 0) throw new Error('Empty sheet');
+            
+            const headers = json[0].map(h => String(h || '').trim());
+            const codeIndex = headers.findIndex(h => h.toLowerCase().includes('code') || h.toLowerCase().includes('emp'));
+            const basicSalaryIndex = headers.findIndex(h => h.toLowerCase().includes('salary') || h.toLowerCase().includes('basic'));
+            const empNameIndex = headers.findIndex(h => h.includes('NameEng'));
+            
+            if (codeIndex === -1 || basicSalaryIndex === -1) {
+                throw new Error('Required columns "code" and "Basic Salary" not found in emp.xlsx');
+            }
+            
+            const empData = {};
+            for (let i = 1; i < json.length; i++) {
+                const code = json[i][codeIndex];
+                const name = empNameIndex !== -1 ? json[i][empNameIndex] : '';
+                const salary = json[i][basicSalaryIndex];
+                if (code !== undefined && code !== null && code !== '' && salary !== undefined && salary !== null && !isNaN(salary)) {
+                    empData[String(code).trim()] = { name: String(name || '').trim(), salary: parseFloat(salary) };
+                }
+            }
+            return empData;
+        }
+    </script>
 </body>
 </html>
-
