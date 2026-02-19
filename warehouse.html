@@ -13,374 +13,430 @@
 <!-- Chart.js for Reports -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-    /* Custom Scrollbar */
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-    /* Loader */
-    .loader {
-        border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3b82f6;
-        width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    /* View Management */
-    .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
-    .view-section.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* Searchable Dropdown */
-    .custom-select-container { position: relative; }
-    .custom-select-input {
-        width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem;
-        outline: none; transition: all 0.2s; background: #fff;
-    }
-    .custom-select-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-    .custom-select-list {
-        position: absolute; top: 100%; left: 0; right: 0;
-        background: white; border: 1px solid #cbd5e1; border-radius: 0.5rem;
-        max-height: 250px; overflow-y: auto; z-index: 100;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        display: none; margin-top: 4px;
-    }
-    .custom-select-list.active { display: block; }
-    .custom-select-option {
-        padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9;
-        font-size: 0.9rem; transition: background 0.2s;
-    }
-    .custom-select-option:last-child { border-bottom: none; }
-    .custom-select-option:hover { background-color: #eff6ff; color: #1d4ed8; }
-    .custom-select-option.selected { background-color: #dbeafe; color: #1e40af; font-weight: 600; }
-
-    /* Mobile Sidebar */
-    #mobileSidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .sidebar-overlay { display: none; opacity: 0; transition: opacity 0.3s; }
-    .sidebar-overlay.active { display: block; opacity: 1; }
-
-    /* Modal Animation */
-    .modal-animate { animation: modalFadeIn 0.2s ease-out; }
-    @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-
-    /* Touch Friendly */
-    input, select, button { touch-action: manipulation; }
-
-    /* All options always enabled - no disabled styles */
-    .transaction-type-option { cursor: pointer; }
-    .transaction-type-option:hover { opacity: 0.9; }
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+/* Loader */
+.loader {
+border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3b82f6;
+width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+/* View Management */
+.view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+.view-section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+/* Searchable Dropdown */
+.custom-select-container { position: relative; }
+.custom-select-input {
+width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem;
+outline: none; transition: all 0.2s; background: #fff;
+}
+.custom-select-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.custom-select-list {
+position: absolute; top: 100%; left: 0; right: 0;
+background: white; border: 1px solid #cbd5e1; border-radius: 0.5rem;
+max-height: 250px; overflow-y: auto; z-index: 100;
+box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+display: none; margin-top: 4px;
+}
+.custom-select-list.active { display: block; }
+.custom-select-option {
+padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9;
+font-size: 0.9rem; transition: background 0.2s;
+}
+.custom-select-option:last-child { border-bottom: none; }
+.custom-select-option:hover { background-color: #eff6ff; color: #1d4ed8; }
+.custom-select-option.selected { background-color: #dbeafe; color: #1e40af; font-weight: 600; }
+/* Mobile Sidebar */
+#mobileSidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.sidebar-overlay { display: none; opacity: 0; transition: opacity 0.3s; }
+.sidebar-overlay.active { display: block; opacity: 1; }
+/* Modal Animation */
+.modal-animate { animation: modalFadeIn 0.2s ease-out; }
+@keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+/* Touch Friendly */
+input, select, button { touch-action: manipulation; }
+/* Transaction Type Highlighting */
+.transaction-type-option { cursor: pointer; transition: all 0.2s; }
+.transaction-type-option:hover { opacity: 0.9; }
+.transaction-type-option.active-in { background-color: #dcfce7; border-color: #22c55e !important; }
+.transaction-type-option.active-out { background-color: #fef3c7; border-color: #f59e0b !important; }
+/* Permission Badge */
+.permission-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; }
+.permission-badge.allowed { background-color: #dcfce7; color: #166534; }
+.permission-badge.denied { background-color: #fee2e2; color: #991b1b; }
 </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
-
 <!-- Navbar -->
 <nav class="bg-slate-900 text-white p-4 shadow-lg flex justify-between items-center z-40 shrink-0 h-16">
-    <div class="flex items-center gap-3">
-        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-300 hover:text-white focus:outline-none p-2">
-            <i class="fas fa-bars text-xl"></i>
-        </button>
-        <div class="bg-blue-600 p-2 rounded-lg">
-            <i class="fas fa-warehouse text-white text-lg"></i>
-        </div>
-        <span class="font-bold text-lg tracking-wide hidden sm:inline">SiteStock</span>
-        <span class="font-bold text-lg tracking-wide sm:hidden">Stock</span>
-    </div>
-    <div id="authSection">
-        <div class="loader !border-white !border-t-transparent !w-5 !h-5"></div>
-    </div>
-</nav>
-
-<div class="flex flex-1 overflow-hidden relative">
-    <!-- Sidebar Overlay (Mobile) -->
-    <div id="sidebarOverlay" onclick="toggleMobileSidebar()" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-60 z-30 md:hidden backdrop-blur-sm"></div>
-
-    <!-- Sidebar -->
-    <aside id="mobileSidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 shadow-xl md:shadow-none">
-        <div class="p-4 space-y-2 mt-4 md:mt-0">
-            <button onclick="switchView('dashboard')" class="nav-btn w-full text-left p-3 bg-blue-50 text-blue-700 rounded-lg font-medium transition flex items-center gap-3 hover:bg-blue-100">
-                <i class="fas fa-home w-6 text-center"></i> <span>Dashboard</span>
-            </button>
-            <button onclick="switchView('inventory')" class="nav-btn w-full text-left p-3 text-slate-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-3">
-                <i class="fas fa-boxes w-6 text-center"></i> <span>Inventory</span>
-            </button>
-            <button onclick="switchView('reports')" class="nav-btn w-full text-left p-3 text-slate-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-3">
-                <i class="fas fa-chart-line w-6 text-center"></i> <span>Reports</span>
-            </button>
-        </div>
-        <div class="mt-auto p-4 border-t border-slate-100 bg-slate-50">
-            <p class="text-xs text-slate-400 font-medium">Site Warehouse v2.1</p>
-            <p class="text-xs text-slate-300 mt-1">Permission Check on Submit</p>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 relative w-full pb-20 md:pb-8">
-        
-        <!-- VIEW 1: DASHBOARD -->
-        <div id="view-dashboard" class="view-section active">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-slate-800">Dashboard Overview</h1>
-                <span class="text-xs font-mono bg-slate-200 px-2 py-1 rounded text-slate-600" id="currentDateDisplay"></span>
-            </div>
-
-            <!-- Stats Row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Total Materials</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="dashTotalItems">-</h3>
-                    </div>
-                    <div class="bg-blue-50 p-3 rounded-lg text-blue-600"><i class="fas fa-cubes"></i></div>
-                </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Low Stock</p>
-                        <h3 class="text-2xl font-bold text-danger mt-1" id="dashLowStock">-</h3>
-                    </div>
-                    <div class="bg-red-50 p-3 rounded-lg text-danger"><i class="fas fa-exclamation-triangle"></i></div>
-                </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Today's In</p>
-                        <h3 class="text-2xl font-bold text-success mt-1" id="dashTodayIn">-</h3>
-                    </div>
-                    <div class="bg-green-50 p-3 rounded-lg text-success"><i class="fas fa-arrow-down"></i></div>
-                </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Today's Out</p>
-                        <h3 class="text-2xl font-bold text-warning mt-1" id="dashTodayOut">-</h3>
-                    </div>
-                    <div class="bg-orange-50 p-3 rounded-lg text-warning"><i class="fas fa-arrow-up"></i></div>
-                </div>
-            </div>
-
-            <!-- Quick Transaction Form -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-1">
-                    <div class="bg-white rounded-xl shadow-md border border-slate-200 p-6 sticky top-4">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                <i class="fas fa-plus-circle text-blue-500"></i> Quick Transaction
-                            </h2>
-                            <span id="roleBadge" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
-                                <i class="fas fa-user"></i> <span id="userRoleDisplay">-</span>
-                            </span>
-                        </div>
-                        <form id="transactionForm" onsubmit="handleTransactionSubmit(event)">
-                            <!-- FIXED: Both IN and OUT always enabled visually -->
-                            <div class="mb-5">
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Transaction Type</label>
-                                <div class="flex gap-2 bg-slate-100 p-1 rounded-lg">
-                                    <label class="flex-1 cursor-pointer transaction-type-option" id="inLabel">
-                                        <input type="radio" name="type" value="IN" checked class="peer sr-only">
-                                        <div class="text-center py-2 rounded-md border border-transparent peer-checked:bg-white peer-checked:shadow-sm peer-checked:text-success peer-checked:border-success transition-all font-medium">
-                                            <i class="fas fa-arrow-down mr-1"></i> IN
-                                        </div>
-                                    </label>
-                                    <label class="flex-1 cursor-pointer transaction-type-option" id="outLabel">
-                                        <input type="radio" name="type" value="OUT" class="peer sr-only">
-                                        <div class="text-center py-2 rounded-md border border-transparent peer-checked:bg-white peer-checked:shadow-sm peer-checked:text-warning peer-checked:border-warning transition-all font-medium">
-                                            <i class="fas fa-arrow-up mr-1"></i> OUT
-                                        </div>
-                                    </label>
-                                </div>
-                                <!-- Permission info shown but doesn't disable options -->
-                                <p id="roleInfo" class="text-xs text-slate-500 mt-2">
-                                    <i class="fas fa-info-circle"></i> <span id="roleInfoText">Select transaction type</span>
-                                </p>
-                            </div>
-
-                            <!-- Material Search Dropdown -->
-                            <div class="mb-5 custom-select-container">
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Material <span class="text-danger">*</span></label>
-                                <input type="text" id="materialSearchInput" class="custom-select-input" placeholder="Search materials..." autocomplete="off" onkeyup="filterMaterials()" onclick="toggleMaterialList(true)">
-                                <select id="materialSelect" class="hidden"></select>
-                                <div id="materialList" class="custom-select-list custom-scrollbar"></div>
-                                <div id="stockInfoBox" class="hidden mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-sm flex justify-between items-center">
-                                    <span class="text-slate-500">Current Stock:</span>
-                                    <span class="font-bold text-slate-800" id="currentStockDisplay">-</span>
-                                </div>
-                                <p id="materialError" class="text-danger text-xs mt-1 hidden">Please select a material from the list</p>
-                            </div>
-
-                            <div class="mb-6">
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Quantity <span class="text-danger">*</span></label>
-                                <input type="number" id="qtyInput" min="1" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" required>
-                            </div>
-
-                            <input type="hidden" id="notesInput" value="Mobile Entry">
-                            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 rounded-lg shadow-md transition transform active:scale-95 flex justify-center items-center gap-2">
-                                <span>Record Transaction</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="lg:col-span-2">
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
-                        <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                            <h2 class="font-bold text-slate-700"><i class="fas fa-history mr-2 text-slate-400"></i>Recent Activity</h2>
-                            <button onclick="loadDashboardTransactions()" class="text-blue-600 hover:text-blue-800 text-sm"><i class="fas fa-sync-alt"></i> Refresh</button>
-                        </div>
-                        <div class="overflow-x-auto flex-1">
-                            <table class="w-full text-left text-sm text-slate-600">
-                                <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0">
-                                    <tr>
-                                        <th class="px-6 py-3">Date</th>
-                                        <th class="px-6 py-3">Material</th>
-                                        <th class="px-6 py-3">Type</th>
-                                        <th class="px-6 py-3">Qty</th>
-                                        <th class="px-6 py-3 text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="dashboardTableBody" class="divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- VIEW 2: INVENTORY -->
-        <div id="view-inventory" class="view-section">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                <h1 class="text-2xl font-bold text-slate-800">Inventory Management</h1>
-                <button onclick="loadInventory()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm shadow-sm transition">
-                    <i class="fas fa-sync-alt mr-2"></i> Refresh
-                </button>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-4 border-b border-slate-100 flex gap-4">
-                    <div class="relative flex-1">
-                        <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
-                        <input type="text" id="inventorySearch" onkeyup="filterInventory()" placeholder="Search materials..." class="w-full pl-10 p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                </div>
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left text-sm text-slate-600 min-w-[600px]">
-                        <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
-                            <tr>
-                                <th class="px-6 py-3">Material Name</th>
-                                <th class="px-6 py-3">Category</th>
-                                <th class="px-6 py-3">Current Stock</th>
-                                <th class="px-6 py-3">Min Threshold</th>
-                                <th class="px-6 py-3">Status</th>
-                                <th class="px-6 py-3 text-right">Settings</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventoryTableBody" class="divide-y divide-slate-100"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- VIEW 3: REPORTS -->
-        <div id="view-reports" class="view-section">
-            <h1 class="text-2xl font-bold text-slate-800 mb-6">Stock Reports</h1>
-            <!-- Filters -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col sm:flex-row gap-4 items-end">
-                <div class="flex-1 w-full">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Start Date</label>
-                    <input type="date" id="reportStart" class="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div class="flex-1 w-full">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">End Date</label>
-                    <input type="date" id="reportEnd" class="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div class="flex gap-2 w-full sm:w-auto">
-                    <button onclick="generateReport()" class="flex-1 bg-blue-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-blue-700 shadow-md transition">
-                        Generate
-                    </button>
-                    <button onclick="exportReport()" class="flex-1 bg-green-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-green-700 shadow-md transition">
-                        <i class="fas fa-file-csv mr-2"></i> CSV
-                    </button>
-                </div>
-            </div>
-
-            <!-- Report Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-green-500">
-                    <p class="text-xs text-slate-500 uppercase font-bold">Total In</p>
-                    <h3 class="text-2xl font-bold text-slate-800" id="reportTotalIn">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-orange-500">
-                    <p class="text-xs text-slate-500 uppercase font-bold">Total Out</p>
-                    <h3 class="text-2xl font-bold text-slate-800" id="reportTotalOut">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-blue-500">
-                    <p class="text-xs text-slate-500 uppercase font-bold">Net Movement</p>
-                    <h3 class="text-2xl font-bold text-slate-800" id="reportNet">0</h3>
-                </div>
-            </div>
-
-            <!-- Chart -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
-                <h3 class="font-bold text-slate-700 mb-4">Activity Trend</h3>
-                <div class="relative h-64 w-full">
-                    <canvas id="activityChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Report Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-4 border-b border-slate-100 bg-slate-50">
-                    <h3 class="font-bold text-slate-700">Detailed Transactions</h3>
-                </div>
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left text-sm text-slate-600 min-w-[600px]">
-                        <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
-                            <tr>
-                                <th class="px-6 py-3">Date</th>
-                                <th class="px-6 py-3">Material</th>
-                                <th class="px-6 py-3">Type</th>
-                                <th class="px-6 py-3">Quantity</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reportTableBody" class="divide-y divide-slate-100"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </main>
+<div class="flex items-center gap-3">
+<button onclick="toggleMobileSidebar()" class="md:hidden text-slate-300 hover:text-white focus:outline-none p-2">
+<i class="fas fa-bars text-xl"></i>
+</button>
+<div class="bg-blue-600 p-2 rounded-lg">
+<i class="fas fa-warehouse text-white text-lg"></i>
 </div>
-
+<span class="font-bold text-lg tracking-wide hidden sm:inline">4378M Project Warehouse Management System</span>
+<span class="font-bold text-lg tracking-wide sm:hidden">Stock</span>
+</div>
+<div id="authSection">
+<div class="loader !border-white !border-t-transparent !w-5 !h-5"></div>
+</div>
+</nav>
+<div class="flex flex-1 overflow-hidden relative">
+<!-- Sidebar Overlay (Mobile) -->
+<div id="sidebarOverlay" onclick="toggleMobileSidebar()" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-60 z-30 md:hidden backdrop-blur-sm"></div>
+<!-- Sidebar -->
+<aside id="mobileSidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 shadow-xl md:shadow-none" style="background-color: rgba(206, 233, 217, 0.616);">
+<div class="p-4 space-y-2 mt-4 md:mt-0">
+<button onclick="switchView('dashboard')" class="nav-btn w-full text-left p-3 bg-blue-50 text-blue-700 rounded-lg font-medium transition flex items-center gap-3 hover:bg-blue-100">
+<i class="fas fa-home w-6 text-center"></i> <span>Dashboard</span>
+</button>
+<button onclick="switchView('inventory')" class="nav-btn w-full text-left p-3 text-slate-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-3">
+<i class="fas fa-boxes w-6 text-center"></i> <span>Inventory</span>
+</button>
+<button onclick="switchView('reports')" class="nav-btn w-full text-left p-3 text-slate-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-3">
+<i class="fas fa-chart-line w-6 text-center"></i> <span>Reports</span>
+</button>
+</div>
+<div class="mt-auto p-4 border-t border-slate-100 bg-slate-50"style="border-radius: 20px 20px 20px 20px; background-color: rgb(200, 230, 200); transition: background-color 0.3s;">
+<p class="text-xs text-slate-400 font-medium" style="color: black;">Designed By : Mostafa Ahmed Hamdy</p>
+<p class="text-xs text-slate-300 mt-1"style="color: black;">تصميم وبرمجة : مصطفي النجار</p>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 relative w-full pb-20 md:pb-8" style="background-color: rgb(21, 190, 190);">
+<!-- VIEW 1: DASHBOARD -->
+<div id="view-dashboard" class="view-section active" style="background-color: rgb(21, 190, 190);">
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-2xl font-bold text-slate-800">Dashboard Overview</h1>
+<span class="text-xs font-mono bg-slate-200 px-2 py-1 rounded text-slate-600" id="currentDateDisplay"></span>
+</div>
+<!-- Stats Row -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+<div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+<div>
+<p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Total Materials</p>
+<h3 class="text-2xl font-bold text-slate-800 mt-1" id="dashTotalItems">-</h3>
+</div>
+<div class="bg-blue-50 p-3 rounded-lg text-blue-600"><i class="fas fa-cubes"></i></div>
+</div>
+<div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+<div>
+<p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Low Stock</p>
+<h3 class="text-2xl font-bold text-danger mt-1" id="dashLowStock">-</h3>
+</div>
+<div class="bg-red-50 p-3 rounded-lg text-danger"><i class="fas fa-exclamation-triangle"></i></div>
+</div>
+<div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+<div>
+<p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Today's In</p>
+<h3 class="text-2xl font-bold text-success mt-1" id="dashTodayIn">-</h3>
+</div>
+<div class="bg-green-50 p-3 rounded-lg text-success"><i class="fas fa-arrow-down"></i></div>
+</div>
+<div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+<div>
+<p class="text-xs text-slate-500 uppercase font-bold tracking-wider">Today's Out</p>
+<h3 class="text-2xl font-bold text-warning mt-1" id="dashTodayOut">-</h3>
+</div>
+<div class="bg-orange-50 p-3 rounded-lg text-warning"><i class="fas fa-arrow-up"></i></div>
+</div>
+</div>
+<!-- Quick Transaction Form -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-1">
+<div class="bg-white rounded-xl shadow-md border border-slate-200 p-6 sticky top-4">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+<i class="fas fa-plus-circle text-blue-500"></i> Quick Transaction
+</h2>
+<span id="roleBadge" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
+<i class="fas fa-user"></i> <span id="userRoleDisplay">-</span>
+</span>
+</div>
+<form id="transactionForm" onsubmit="handleTransactionSubmit(event)">
+<!-- Transaction Type with Highlighting -->
+<div class="mb-5">
+<label class="block text-sm font-semibold text-slate-700 mb-2">Transaction Type</label>
+<div class="flex gap-2 bg-slate-100 p-1 rounded-lg">
+<label class="flex-1 cursor-pointer transaction-type-option active-in" id="inLabel" onclick="highlightTransactionType('IN')">
+<input type="radio" name="type" value="IN" checked class="peer sr-only">
+<div class="text-center py-2 rounded-md border-2 border-success bg-white shadow-sm text-success transition-all font-medium">
+<i class="fas fa-arrow-down mr-1"></i> IN
+</div>
+</label>
+<label class="flex-1 cursor-pointer transaction-type-option" id="outLabel" onclick="highlightTransactionType('OUT')">
+<input type="radio" name="type" value="OUT" class="peer sr-only">
+<div class="text-center py-2 rounded-md border-2 border-transparent text-slate-600 transition-all font-medium">
+<i class="fas fa-arrow-up mr-1"></i> OUT
+</div>
+</label>
+</div>
+<p id="roleInfo" class="text-xs text-slate-500 mt-2">
+<i class="fas fa-info-circle"></i> <span id="roleInfoText">Select transaction type</span>
+</p>
+</div>
+<!-- Material Search Dropdown -->
+<div class="mb-5 custom-select-container">
+<label class="block text-sm font-semibold text-slate-700 mb-2">Material <span class="text-danger">*</span></label>
+<input type="text" id="materialSearchInput" class="custom-select-input" placeholder="Search materials..." autocomplete="off" onkeyup="filterMaterials()" onclick="toggleMaterialList(true)">
+<select id="materialSelect" class="hidden"></select>
+<div id="materialList" class="custom-select-list custom-scrollbar"></div>
+<div id="stockInfoBox" class="hidden mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-sm flex justify-between items-center">
+<span class="text-slate-500">Current Stock:</span>
+<span class="font-bold text-slate-800" id="currentStockDisplay">-</span>
+</div>
+<div id="oracleCodeBox" class="hidden mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+<span class="text-slate-500">Oracle Code:</span>
+<span class="font-bold text-blue-700 ml-2" id="oracleCodeDisplay">-</span>
+</div>
+<p id="materialError" class="text-danger text-xs mt-1 hidden">Please select a material from the list</p>
+</div>
+<div class="mb-6">
+<label class="block text-sm font-semibold text-slate-700 mb-2">Quantity <span class="text-danger">*</span></label>
+<input type="number" id="qtyInput" min="1" placeholder="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" required>
+</div>
+<input type="hidden" id="notesInput" value="Mobile Entry">
+<button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 rounded-lg shadow-md transition transform active:scale-95 flex justify-center items-center gap-2">
+<span>Record Transaction</span>
+</button>
+</form>
+</div>
+</div>
+<!-- Recent Activity -->
+<div class="lg:col-span-2">
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col">
+<div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+<h2 class="font-bold text-slate-700"><i class="fas fa-history mr-2 text-slate-400"></i>Recent Activity</h2>
+<button onclick="loadDashboardTransactions()" class="text-blue-600 hover:text-blue-800 text-sm"><i class="fas fa-sync-alt"></i> Refresh</button>
+</div>
+<div class="overflow-x-auto flex-1">
+<table class="w-full text-left text-sm text-slate-600">
+<thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0">
+<tr>
+<th class="px-6 py-3">Date</th>
+<th class="px-6 py-3">Material</th>
+<th class="px-6 py-3">Oracle Code</th>
+<th class="px-6 py-3">Type</th>
+<th class="px-6 py-3">Qty</th>
+<th class="px-6 py-3 text-right">Action</th>
+</tr>
+</thead>
+<tbody id="dashboardTableBody" class="divide-y divide-slate-100"></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- VIEW 2: INVENTORY -->
+<div id="view-inventory" class="view-section">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+<h1 class="text-2xl font-bold text-slate-800">Inventory Management</h1>
+<div class="flex gap-2">
+<button onclick="loadInventory()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm shadow-sm transition">
+<i class="fas fa-sync-alt mr-2"></i> Refresh
+</button>
+<button id="addMaterialBtn" onclick="openAddMaterialModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm shadow-sm transition hidden">
+<i class="fas fa-plus mr-2"></i> Add Material
+</button>
+</div>
+</div>
+<!-- Permissions Display -->
+<div id="inventoryPermissions" class="mb-4 flex gap-2 flex-wrap">
+<span class="permission-badge allowed" id="permAdd"><i class="fas fa-check"></i> Add</span>
+<span class="permission-badge allowed" id="permEdit"><i class="fas fa-check"></i> Edit</span>
+<span class="permission-badge allowed" id="permDelete"><i class="fas fa-check"></i> Delete</span>
+</div>
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+<div class="p-4 border-b border-slate-100 flex gap-4">
+<div class="relative flex-1">
+<i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+<input type="text" id="inventorySearch" onkeyup="filterInventory()" placeholder="Search materials..." class="w-full pl-10 p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+</div>
+</div>
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left text-sm text-slate-600 min-w-[900px]">
+<thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+<tr>
+<th class="px-6 py-3">Material Name</th>
+<th class="px-6 py-3">Oracle Code</th>
+<th class="px-6 py-3">Category</th>
+<th class="px-6 py-3">Unit</th>
+<th class="px-6 py-3">Current Stock</th>
+<th class="px-6 py-3">Min Threshold</th>
+<th class="px-6 py-3">Status</th>
+<th class="px-6 py-3 text-right">Actions</th>
+</tr>
+</thead>
+<tbody id="inventoryTableBody" class="divide-y divide-slate-100"></tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- VIEW 3: REPORTS -->
+<div id="view-reports" class="view-section">
+<h1 class="text-2xl font-bold text-slate-800 mb-6">Stock Reports</h1>
+<!-- Filters -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col sm:flex-row gap-4 items-end">
+<div class="flex-1 w-full">
+<label class="block text-xs font-bold text-slate-500 uppercase mb-1">Start Date</label>
+<input type="date" id="reportStart" class="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+</div>
+<div class="flex-1 w-full">
+<label class="block text-xs font-bold text-slate-500 uppercase mb-1">End Date</label>
+<input type="date" id="reportEnd" class="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+</div>
+<div class="flex gap-2 w-full sm:w-auto">
+<button onclick="generateReport()" class="flex-1 bg-blue-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-blue-700 shadow-md transition">
+Generate
+</button>
+<button onclick="exportReport()" class="flex-1 bg-green-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-green-700 shadow-md transition">
+<i class="fas fa-file-csv mr-2"></i> CSV
+</button>
+</div>
+</div>
+<!-- Report Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+<div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-green-500">
+<p class="text-xs text-slate-500 uppercase font-bold">Total In</p>
+<h3 class="text-2xl font-bold text-slate-800" id="reportTotalIn">0</h3>
+</div>
+<div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-orange-500">
+<p class="text-xs text-slate-500 uppercase font-bold">Total Out</p>
+<h3 class="text-2xl font-bold text-slate-800" id="reportTotalOut">0</h3>
+</div>
+<div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 border-l-4 border-l-blue-500">
+<p class="text-xs text-slate-500 uppercase font-bold">Net Movement</p>
+<h3 class="text-2xl font-bold text-slate-800" id="reportNet">0</h3>
+</div>
+</div>
+<!-- Chart -->
+<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
+<h3 class="font-bold text-slate-700 mb-4">Activity Trend</h3>
+<div class="relative h-64 w-full">
+<canvas id="activityChart"></canvas>
+</div>
+</div>
+<!-- Report Table -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+<div class="p-4 border-b border-slate-100 bg-slate-50">
+<h3 class="font-bold text-slate-700">Detailed Transactions</h3>
+</div>
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left text-sm text-slate-600 min-w-[700px]">
+<thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+<tr>
+<th class="px-6 py-3">Date</th>
+<th class="px-6 py-3">Material</th>
+<th class="px-6 py-3">Oracle Code</th>
+<th class="px-6 py-3">Type</th>
+<th class="px-6 py-3">Quantity</th>
+</tr>
+</thead>
+<tbody id="reportTableBody" class="divide-y divide-slate-100"></tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
 <!-- Login Modal -->
 <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
-    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md modal-animate">
-        <div class="text-center mb-6">
-            <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600">
-                <i class="fas fa-user-lock text-xl"></i>
-            </div>
-            <h2 class="text-xl font-bold text-slate-800">Warehouse Login</h2>
-            <p class="text-slate-500 text-sm">Access your inventory dashboard</p>
-        </div>
-        <input type="email" id="loginEmail" placeholder="Email Address" class="w-full mb-3 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-        <input type="password" id="loginPass" placeholder="Password" class="w-full mb-6 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-        <div class="flex gap-3">
-            <button onclick="performLogin()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Sign In</button>
-            <button onclick="toggleLoginModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition">Cancel</button>
-        </div>
-    </div>
+<div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md modal-animate">
+<div class="text-center mb-6">
+<div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600">
+<i class="fas fa-user-lock text-xl"></i>
 </div>
-
+<h2 class="text-xl font-bold text-slate-800">Warehouse Login</h2>
+<p class="text-slate-500 text-sm">Access your inventory dashboard</p>
+</div>
+<input type="email" id="loginEmail" placeholder="Email Address" class="w-full mb-3 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+<input type="password" id="loginPass" placeholder="Password" class="w-full mb-6 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+<div class="flex gap-3">
+<button onclick="performLogin()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Sign In</button>
+<button onclick="toggleLoginModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition">Cancel</button>
+</div>
+</div>
+</div>
+<!-- Add/Edit Material Modal -->
+<div id="materialModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+<div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg modal-animate">
+<h3 class="font-bold text-lg mb-4 text-slate-800" id="materialModalTitle">Add New Material</h3>
+<input type="hidden" id="editMatId">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+<div>
+<label class="block text-sm text-slate-600 mb-2 font-medium">Material Name <span class="text-danger">*</span></label>
+<input type="text" id="matName" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+</div>
+<div>
+<label class="block text-sm text-slate-600 mb-2 font-medium">Oracle Code</label>
+<input type="text" id="matOracleCode" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+<div>
+<label class="block text-sm text-slate-600 mb-2 font-medium">Category</label>
+<input type="text" id="matCategory" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+</div>
+<div>
+<label class="block text-sm text-slate-600 mb-2 font-medium">Unit <span class="text-danger">*</span></label>
+<input type="text" id="matUnit" placeholder="e.g., PCS, KG, M" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+<div>
+<label class="block text-sm text-slate-600 mb-2 font-medium">Current Stock</label>
+<input type="number" id="matStock" value="0" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+</div>
+<div>
+<label class="block text-sm text-slate-600 mb-2 font-medium">Min Threshold</label>
+<input type="number" id="matThreshold" value="5" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+</div>
+</div>
+<div class="flex gap-3">
+<button onclick="saveMaterial()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Save Material</button>
+<button onclick="closeMaterialModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition">Cancel</button>
+</div>
+</div>
+</div>
 <!-- Edit Threshold Modal -->
 <div id="thresholdModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
-    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm modal-animate">
-        <h3 class="font-bold text-lg mb-4 text-slate-800">Update Min Threshold</h3>
-        <input type="hidden" id="editMatId">
-        <div class="mb-6">
-            <label class="block text-sm text-slate-600 mb-2 font-medium">New Minimum Stock Level</label>
-            <input type="number" id="editThresholdVal" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-        </div>
-        <div class="flex gap-3">
-            <button onclick="saveThreshold()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Save Changes</button>
-            <button onclick="document.getElementById('thresholdModal').classList.add('hidden'); document.getElementById('thresholdModal').classList.remove('flex')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition">Cancel</button>
-        </div>
-    </div>
+<div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm modal-animate">
+<h3 class="font-bold text-lg mb-4 text-slate-800">Update Min Threshold</h3>
+<input type="hidden" id="editThresholdMatId">
+<div class="mb-6">
+<label class="block text-sm text-slate-600 mb-2 font-medium">New Minimum Stock Level</label>
+<input type="number" id="editThresholdVal" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
 </div>
-
+<div class="flex gap-3">
+<button onclick="saveThreshold()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">Save Changes</button>
+<button onclick="document.getElementById('thresholdModal').classList.add('hidden'); document.getElementById('thresholdModal').classList.remove('flex')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition">Cancel</button>
+</div>
+</div>
+</div>
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+<div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm modal-animate">
+<div class="text-center mb-4">
+<div class="bg-red-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-red-600">
+<i class="fas fa-exclamation-triangle text-xl"></i>
+</div>
+<h3 class="font-bold text-lg text-slate-800">Delete Material?</h3>
+<p class="text-slate-500 text-sm mt-2">This action cannot be undone. All transaction history will remain.</p>
+</div>
+<input type="hidden" id="deleteMatId">
+<div class="flex gap-3">
+<button onclick="confirmDeleteMaterial()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition">Delete</button>
+<button onclick="document.getElementById('deleteConfirmModal').classList.add('hidden'); document.getElementById('deleteConfirmModal').classList.remove('flex')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition">Cancel</button>
+</div>
+</div>
+</div>
 <script>
 // ==========================================
 // 1. CONFIGURATION
@@ -388,7 +444,6 @@
 const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 let currentUser = null;
 let userRole = null;
 let canStockIn = false;
@@ -396,768 +451,917 @@ const todayStr = new Date().toISOString().split('T')[0];
 let chartInstance = null;
 let allMaterials = [];
 let reportData = [];
-let canDeleteIn = false;      // NEW
-let canDeleteOut = false;     // NEW
+let canDeleteIn = false;
+let canDeleteOut = false;
+// NEW: Inventory CRUD Permissions
+let canAddMaterial = false;
+let canEditMaterial = false;
+let canDeleteMaterial = false;
 // ==========================================
 // 2. NAVIGATION & INIT
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
-    // Set Date Display
-    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('en-US', dateOptions);
-
-    // Set default report dates
-    const date = new Date();
-    document.getElementById('reportStart').value = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
-    document.getElementById('reportEnd').value = todayStr;
-
-    await checkSession();
-
-    // Close dropdown if clicked outside
-    document.addEventListener('click', function(e) {
-        const container = document.querySelector('.custom-select-container');
-        const list = document.getElementById('materialList');
-        if (container && list && !container.contains(e.target)) {
-            toggleMaterialList(false);
-        }
-    });
+const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('en-US', dateOptions);
+const date = new Date();
+document.getElementById('reportStart').value = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+document.getElementById('reportEnd').value = todayStr;
+await checkSession();
+document.addEventListener('click', function(e) {
+const container = document.querySelector('.custom-select-container');
+const list = document.getElementById('materialList');
+if (container && list && !container.contains(e.target)) {
+toggleMaterialList(false);
+}
 });
-
-// Mobile Sidebar Toggle
+});
 function toggleMobileSidebar() {
-    const sidebar = document.getElementById('mobileSidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const isClosed = sidebar.classList.contains('-translate-x-full');
-    if (isClosed) {
-        sidebar.classList.remove('-translate-x-full');
-        overlay.classList.add('active');
-    } else {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.remove('active');
-    }
+const sidebar = document.getElementById('mobileSidebar');
+const overlay = document.getElementById('sidebarOverlay');
+const isClosed = sidebar.classList.contains('-translate-x-full');
+if (isClosed) {
+sidebar.classList.remove('-translate-x-full');
+overlay.classList.add('active');
+} else {
+sidebar.classList.add('-translate-x-full');
+overlay.classList.remove('active');
 }
-
+}
 function switchView(viewName) {
-    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-    document.getElementById(`view-${viewName}`).classList.add('active');
-    if(window.innerWidth < 768) toggleMobileSidebar();
-    
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('bg-blue-50', 'text-blue-700');
-        btn.classList.add('text-slate-600');
-    });
-    
-    const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick').includes(viewName));
-    if(activeBtn) {
-        activeBtn.classList.remove('text-slate-600');
-        activeBtn.classList.add('bg-blue-50', 'text-blue-700');
-    }
-
-    if (viewName === 'inventory') loadInventory();
-    if (viewName === 'reports') generateReport();
-    if (viewName === 'dashboard') {
-        loadDashboardStats();
-        loadDashboardTransactions();
-    }
+document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+document.getElementById(`view-${viewName}`).classList.add('active');
+if(window.innerWidth < 768) toggleMobileSidebar();
+document.querySelectorAll('.nav-btn').forEach(btn => {
+btn.classList.remove('bg-blue-50', 'text-blue-700');
+btn.classList.add('text-slate-600');
+});
+const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick').includes(viewName));
+if(activeBtn) {
+activeBtn.classList.remove('text-slate-600');
+activeBtn.classList.add('bg-blue-50', 'text-blue-700');
 }
-
+if (viewName === 'inventory') {
+loadInventory();
+updateInventoryPermissions();
+}
+if (viewName === 'reports') generateReport();
+if (viewName === 'dashboard') {
+loadDashboardStats();
+loadDashboardTransactions();
+}
+}
 // ==========================================
 // 3. AUTHENTICATION WITH ROLES
 // ==========================================
 async function checkSession() {
-    console.log("Checking session...");
-    const { data, error } = await supabaseClient.auth.getSession();
-    
-    if (error) {
-        console.error('Session error:', error);
-        updateAuthUI(false);
-        return;
-    }
-    
-    if (data.session) {
-        console.log("Session found for:", data.session.user.email);
-        currentUser = data.session.user;
-        await loadUserRole();
-        updateAuthUI(true);
-        await initApp();
-    } else {
-        console.log("No session found");
-        updateAuthUI(false);
-    }
+console.log("Checking session...");
+const { data, error } = await supabaseClient.auth.getSession();
+if (error) {
+console.error('Session error:', error);
+updateAuthUI(false);
+return;
 }
-
+if (data.session) {
+console.log("Session found for:", data.session.user.email);
+currentUser = data.session.user;
+await loadUserRole();
+updateAuthUI(true);
+await initApp();
+} else {
+console.log("No session found");
+updateAuthUI(false);
+}
+}
 async function loadUserRole() {
-    console.log("Loading user role...");
-    const { data, error } = await supabaseClient
-        .from('user_roles')
-        .select('role, can_stock_in, can_delete_in_transactions, can_delete_out_transactions')
-        .eq('user_id', currentUser.id)
-        .single();
-    console.log("Role query result:", { data, error });
-    if (error) {
-        console.error("Role load error:", error);
-        userRole = 'Storekeeper';
-        canStockIn = false;
-        canDeleteIn = false;
-        canDeleteOut = false;
-    } else {
-        userRole = data?.role || 'Storekeeper';
-        canStockIn = data?.can_stock_in || false;
-        canDeleteIn = data?.can_delete_in_transactions || false;      // ✅ NEW
-        canDeleteOut = data?.can_delete_out_transactions || false;    // ✅ NEW
-    }
-    console.log(`User Role: ${userRole}, Can Stock In: ${canStockIn}, Can Delete IN: ${canDeleteIn}, Can Delete OUT: ${canDeleteOut}`);
-    updateRoleInfo();
+console.log("Loading user role...");
+const { data, error } = await supabaseClient
+.from('user_roles')
+.select('role, can_stock_in, can_delete_in_transactions, can_delete_out_transactions, can_add_material, can_edit_material, can_delete_material')
+.eq('user_id', currentUser.id)
+.single();
+console.log("Role query result:", { data, error });
+if (error) {
+console.error("Role load error:", error);
+userRole = 'Storekeeper';
+canStockIn = false;
+canDeleteIn = false;
+canDeleteOut = false;
+canAddMaterial = false;
+canEditMaterial = false;
+canDeleteMaterial = false;
+} else {
+userRole = data?.role || 'Storekeeper';
+canStockIn = data?.can_stock_in || false;
+canDeleteIn = data?.can_delete_in_transactions || false;
+canDeleteOut = data?.can_delete_out_transactions || false;
+// NEW: Inventory CRUD Permissions
+canAddMaterial = data?.can_add_material || false;
+canEditMaterial = data?.can_edit_material || false;
+canDeleteMaterial = data?.can_delete_material || false;
 }
-
-// FIXED: Only show info, don't disable options
+console.log(`User Role: ${userRole}`);
+console.log(`Stock In: ${canStockIn}, Delete IN: ${canDeleteIn}, Delete OUT: ${canDeleteOut}`);
+console.log(`Add Material: ${canAddMaterial}, Edit Material: ${canEditMaterial}, Delete Material: ${canDeleteMaterial}`);
+updateRoleInfo();
+updateInventoryPermissions();
+}
+function updateInventoryPermissions() {
+// Update permission badges
+const permAdd = document.getElementById('permAdd');
+const permEdit = document.getElementById('permEdit');
+const permDelete = document.getElementById('permDelete');
+permAdd.className = `permission-badge ${canAddMaterial ? 'allowed' : 'denied'}`;
+permAdd.innerHTML = `<i class="fas fa-${canAddMaterial ? 'check' : 'times'}"></i> Add`;
+permEdit.className = `permission-badge ${canEditMaterial ? 'allowed' : 'denied'}`;
+permEdit.innerHTML = `<i class="fas fa-${canEditMaterial ? 'check' : 'times'}"></i> Edit`;
+permDelete.className = `permission-badge ${canDeleteMaterial ? 'allowed' : 'denied'}`;
+permDelete.innerHTML = `<i class="fas fa-${canDeleteMaterial ? 'check' : 'times'}"></i> Delete`;
+// Show/hide Add Material button
+const addBtn = document.getElementById('addMaterialBtn');
+if (canAddMaterial) {
+addBtn.classList.remove('hidden');
+} else {
+addBtn.classList.add('hidden');
+}
+}
 function updateRoleInfo() {
-    const roleInfoText = document.getElementById('roleInfoText');
-    if (canStockIn) {
-        roleInfoText.innerText = 'You can perform both IN and OUT transactions';
-        document.getElementById('roleInfo').className = 'text-xs text-green-600 mt-2';
-    } else {
-        roleInfoText.innerText = 'You can perform OUT transactions (IN requires admin permission)';
-        document.getElementById('roleInfo').className = 'text-xs text-slate-500 mt-2';
-    }
+const roleInfoText = document.getElementById('roleInfoText');
+if (canStockIn) {
+roleInfoText.innerText = 'You can perform both IN and OUT transactions';
+document.getElementById('roleInfo').className = 'text-xs text-green-600 mt-2';
+} else {
+roleInfoText.innerText = 'You can perform OUT transactions (IN requires admin permission)';
+document.getElementById('roleInfo').className = 'text-xs text-slate-500 mt-2';
 }
-
+}
 function toggleLoginModal() {
-    const modal = document.getElementById('loginModal');
-    if (modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    } else {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-    document.getElementById('loginEmail').value = '';
-    document.getElementById('loginPass').value = '';
+const modal = document.getElementById('loginModal');
+if (modal.classList.contains('hidden')) {
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+} else {
+modal.classList.add('hidden');
+modal.classList.remove('flex');
 }
-
+document.getElementById('loginEmail').value = '';
+document.getElementById('loginPass').value = '';
+}
 function handleLogin() { toggleLoginModal(); }
-
 async function performLogin() {
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPass').value;
-    const btn = event.target;
-    const originalText = btn.innerText;
-    
-    if (!email || !password) {
-        alert('Please enter email and password');
-        return;
-    }
-    
-    btn.disabled = true;
-    btn.innerText = 'Signing In...';
-
-    console.log("Attempting login for:", email);
-    
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    
-    if (error) { 
-        console.error('Login error:', error);
-        alert('Login failed: ' + error.message); 
-        btn.disabled = false;
-        btn.innerText = originalText;
-    } else {
-        console.log("Login successful!");
-        currentUser = data.user;
-        await loadUserRole();
-        updateAuthUI(true);
-        toggleLoginModal();
-        await initApp();
-        btn.disabled = false;
-        btn.innerText = originalText;
-    }
+const email = document.getElementById('loginEmail').value;
+const password = document.getElementById('loginPass').value;
+const btn = event.target;
+const originalText = btn.innerText;
+if (!email || !password) {
+alert('Please enter email and password');
+return;
 }
-
+btn.disabled = true;
+btn.innerText = 'Signing In...';
+console.log("Attempting login for:", email);
+const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+if (error) {
+console.error('Login error:', error);
+alert('Login failed: ' + error.message);
+btn.disabled = false;
+btn.innerText = originalText;
+} else {
+console.log("Login successful!");
+currentUser = data.user;
+await loadUserRole();
+updateAuthUI(true);
+toggleLoginModal();
+await initApp();
+btn.disabled = false;
+btn.innerText = originalText;
+}
+}
 async function handleLogout() {
-    console.log("Logging out...");
-    await supabaseClient.auth.signOut();
-    currentUser = null;
-    userRole = null;
-    canStockIn = false;
-    canDeleteIn = false;      // Reset NEW
-    canDeleteOut = false;     // Reset NEW
-    updateAuthUI(false);
-    location.reload();
+console.log("Logging out...");
+await supabaseClient.auth.signOut();
+currentUser = null;
+userRole = null;
+canStockIn = false;
+canDeleteIn = false;
+canDeleteOut = false;
+canAddMaterial = false;
+canEditMaterial = false;
+canDeleteMaterial = false;
+updateAuthUI(false);
+location.reload();
 }
-
 function updateAuthUI(isLoggedIn) {
-    const authSection = document.getElementById('authSection');
-    if (isLoggedIn) {
-        authSection.innerHTML = `
-            <div class="flex items-center gap-3">
-                <span class="text-xs px-2 py-1 rounded ${userRole === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}">
-                    ${userRole?.toUpperCase()}
-                </span>
-                <span class="text-sm text-slate-300 hidden sm:inline">${currentUser.email}</span>
-                <button onclick="handleLogout()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded transition">Logout</button>
-            </div>`;
-        
-        document.getElementById('userRoleDisplay').innerText = userRole?.toUpperCase() || 'USER';
-        document.getElementById('roleBadge').className = `text-xs px-2 py-1 rounded ${userRole === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`;
-    } else {
-        authSection.innerHTML = `<button onclick="handleLogin()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition shadow-lg">Login</button>`;
-    }
+const authSection = document.getElementById('authSection');
+if (isLoggedIn) {
+authSection.innerHTML = `
+<div class="flex items-center gap-3">
+<span class="text-xs px-2 py-1 rounded ${userRole === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}">
+${userRole?.toUpperCase()}
+</span>
+<span class="text-sm text-slate-300 hidden sm:inline">${currentUser.email}</span>
+<button onclick="handleLogout()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded transition">Logout</button>
+</div>`;
+document.getElementById('userRoleDisplay').innerText = userRole?.toUpperCase() || 'USER';
+document.getElementById('roleBadge').className = `text-xs px-2 py-1 rounded ${userRole === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`;
+} else {
+authSection.innerHTML = `<button onclick="handleLogin()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition shadow-lg">Login</button>`;
 }
-
+}
 async function initApp() {
-    console.log("Initializing App...");
-    try {
-        await loadMaterials();
-        await loadDashboardStats();
-        await loadDashboardTransactions();
-        console.log("App initialized successfully!");
-    } catch (error) {
-        console.error("Init error:", error);
-        alert("Failed to load data. Please check your connection.");
-    }
+console.log("Initializing App...");
+try {
+await loadMaterials();
+await loadDashboardStats();
+await loadDashboardTransactions();
+console.log("App initialized successfully!");
+} catch (error) {
+console.error("Init error:", error);
+alert("Failed to load data. Please check your connection.");
 }
-
+}
 // ==========================================
 // 4. MATERIAL DROPDOWN (FETCHES FROM SUPABASE)
 // ==========================================
 async function loadMaterials() {
-    console.log("Loading materials from database...");
-    
-    const { data, error } = await supabaseClient.from('materials').select('*').order('name');
-    
-    if (error) {
-        console.error("Error loading materials:", error);
-        alert("Failed to load materials: " + error.message);
-        return;
-    }
-    
-    if (!data || data.length === 0) {
-        console.warn("No materials found in database");
-        allMaterials = [];
-        const list = document.getElementById('materialList');
-        list.innerHTML = '<div class="p-3 text-slate-500 text-center">No materials in database</div>';
-        return;
-    }
-    
-    allMaterials = data;
-    console.log(`Loaded ${allMaterials.length} materials from database`);
-    
-    // 1. Populate Hidden Select
-    const select = document.getElementById('materialSelect');
-    select.innerHTML = '<option value="">Select a material</option>';
-    data.forEach(mat => {
-        const option = document.createElement('option');
-        option.value = mat.id;
-        option.textContent = `${mat.name} (${mat.unit})`;
-        option.dataset.stock = mat.current_stock;
-        select.appendChild(option);
-    });
-
-    // 2. Populate Custom Dropdown List
-    const list = document.getElementById('materialList');
-    list.innerHTML = '';
-    
-    data.forEach(mat => {
-        const div = document.createElement('div');
-        div.className = 'custom-select-option';
-        div.textContent = `${mat.name} (${mat.unit}) - Stock: ${mat.current_stock}`;
-        div.dataset.id = mat.id;
-        div.dataset.name = mat.name;
-        div.dataset.unit = mat.unit;
-        div.dataset.stock = mat.current_stock;
-        div.onclick = () => selectMaterial(mat.id, mat.name, mat.unit, mat.current_stock);
-        list.appendChild(div);
-    });
+console.log("Loading materials from database...");
+const { data, error } = await supabaseClient.from('materials').select('*').order('name');
+if (error) {
+console.error("Error loading materials:", error);
+alert("Failed to load materials: " + error.message);
+return;
 }
-
+if (!data || data.length === 0) {
+console.warn("No materials found in database");
+allMaterials = [];
+const list = document.getElementById('materialList');
+list.innerHTML = '<div class="p-3 text-slate-500 text-center">No materials in database</div>';
+return;
+}
+allMaterials = data;
+console.log(`Loaded ${allMaterials.length} materials from database`);
+const select = document.getElementById('materialSelect');
+select.innerHTML = '<option value="">Select a material</option>';
+data.forEach(mat => {
+const option = document.createElement('option');
+option.value = mat.id;
+option.textContent = `${mat.name} (${mat.unit})`;
+option.dataset.stock = mat.current_stock;
+option.dataset.oracleCode = mat.oracle_code || '-';
+select.appendChild(option);
+});
+const list = document.getElementById('materialList');
+list.innerHTML = '';
+data.forEach(mat => {
+const div = document.createElement('div');
+div.className = 'custom-select-option';
+const oracleCode = mat.oracle_code || 'N/A';
+div.textContent = `${mat.name} (${mat.unit}) - Code: ${oracleCode} - Stock: ${mat.current_stock}`;
+div.dataset.id = mat.id;
+div.dataset.name = mat.name;
+div.dataset.unit = mat.unit;
+div.dataset.stock = mat.current_stock;
+div.dataset.oracleCode = oracleCode;
+div.onclick = () => selectMaterial(mat.id, mat.name, mat.unit, mat.current_stock, oracleCode);
+list.appendChild(div);
+});
+}
 function toggleMaterialList(show) {
-    const list = document.getElementById('materialList');
-    if(show) {
-        list.classList.add('active');
-        filterMaterials();
-    } else {
-        list.classList.remove('active');
-    }
+const list = document.getElementById('materialList');
+if(show) {
+list.classList.add('active');
+filterMaterials();
+} else {
+list.classList.remove('active');
 }
-
+}
 function filterMaterials() {
-    const input = document.getElementById('materialSearchInput');
-    const filter = input.value.toLowerCase().trim();
-    const list = document.getElementById('materialList');
-    
-    list.innerHTML = '';
-    
-    if(allMaterials.length === 0) {
-        list.innerHTML = '<div class="p-3 text-slate-500 text-center">No materials available</div>';
-        return;
-    }
-    
-    const filtered = allMaterials.filter(mat => 
-        mat.name.toLowerCase().includes(filter) || 
-        (mat.category && mat.category.toLowerCase().includes(filter))
-    );
-    
-    if(filtered.length === 0) {
-        list.innerHTML = '<div class="p-3 text-slate-500 text-center text-sm">No matching materials</div>';
-    } else {
-        filtered.forEach(mat => {
-            const div = document.createElement('div');
-            div.className = 'custom-select-option';
-            div.textContent = `${mat.name} (${mat.unit}) - Stock: ${mat.current_stock}`;
-            div.dataset.id = mat.id;
-            div.dataset.name = mat.name;
-            div.dataset.unit = mat.unit;
-            div.dataset.stock = mat.current_stock;
-            div.onclick = () => selectMaterial(mat.id, mat.name, mat.unit, mat.current_stock);
-            list.appendChild(div);
-        });
-    }
+const input = document.getElementById('materialSearchInput');
+const filter = input.value.toLowerCase().trim();
+const list = document.getElementById('materialList');
+list.innerHTML = '';
+if(allMaterials.length === 0) {
+list.innerHTML = '<div class="p-3 text-slate-500 text-center">No materials available</div>';
+return;
 }
-
-function selectMaterial(id, name, unit, stock) {
-    const select = document.getElementById('materialSelect');
-    select.value = id;
-    document.getElementById('materialSearchInput').value = `${name} (${unit})`;
-    document.getElementById('currentStockDisplay').innerText = `${stock} ${unit}`;
-    document.getElementById('stockInfoBox').classList.remove('hidden');
-    document.getElementById('materialError').classList.add('hidden');
-    toggleMaterialList(false);
+const filtered = allMaterials.filter(mat =>
+mat.name.toLowerCase().includes(filter) ||
+(mat.category && mat.category.toLowerCase().includes(filter)) ||
+(mat.oracle_code && mat.oracle_code.toLowerCase().includes(filter))
+);
+if(filtered.length === 0) {
+list.innerHTML = '<div class="p-3 text-slate-500 text-center text-sm">No matching materials</div>';
+} else {
+filtered.forEach(mat => {
+const div = document.createElement('div');
+div.className = 'custom-select-option';
+const oracleCode = mat.oracle_code || 'N/A';
+div.textContent = `${mat.name} (${mat.unit}) - Code: ${oracleCode} - Stock: ${mat.current_stock}`;
+div.dataset.id = mat.id;
+div.dataset.name = mat.name;
+div.dataset.unit = mat.unit;
+div.dataset.stock = mat.current_stock;
+div.dataset.oracleCode = oracleCode;
+div.onclick = () => selectMaterial(mat.id, mat.name, mat.unit, mat.current_stock, oracleCode);
+list.appendChild(div);
+});
 }
-
+}
+function selectMaterial(id, name, unit, stock, oracleCode) {
+const select = document.getElementById('materialSelect');
+select.value = id;
+document.getElementById('materialSearchInput').value = `${name} (${unit})`;
+document.getElementById('currentStockDisplay').innerText = `${stock} ${unit}`;
+document.getElementById('stockInfoBox').classList.remove('hidden');
+document.getElementById('oracleCodeDisplay').innerText = oracleCode || 'N/A';
+document.getElementById('oracleCodeBox').classList.remove('hidden');
+document.getElementById('materialError').classList.add('hidden');
+toggleMaterialList(false);
+}
 // ==========================================
 // 5. DASHBOARD LOGIC
 // ==========================================
 async function loadDashboardStats() {
-    if(!allMaterials || allMaterials.length === 0) {
-        document.getElementById('dashTotalItems').innerText = "0";
-        return;
-    }
-    document.getElementById('dashTotalItems').innerText = allMaterials.length;
-    const lowCount = allMaterials.filter(m => m.current_stock <= m.min_stock_threshold).length;
-    document.getElementById('dashLowStock').innerText = lowCount;
-
-    const { data: todayTx, error } = await supabaseClient.from('transactions').select('type, quantity').eq('transaction_date', todayStr);
-    if (error) {
-        console.error("Stats Error:", error);
-        return;
-    }
-
-    let tIn = 0, tOut = 0;
-    if (todayTx) {
-        todayTx.forEach(tx => { if (tx.type === 'IN') tIn += tx.quantity; else tOut += tx.quantity; });
-    }
-    document.getElementById('dashTodayIn').innerText = tIn;
-    document.getElementById('dashTodayOut').innerText = tOut;
+if(!allMaterials || allMaterials.length === 0) {
+document.getElementById('dashTotalItems').innerText = "0";
+return;
 }
-
+document.getElementById('dashTotalItems').innerText = allMaterials.length;
+const lowCount = allMaterials.filter(m => m.current_stock <= m.min_stock_threshold).length;
+document.getElementById('dashLowStock').innerText = lowCount;
+const { data: todayTx, error } = await supabaseClient.from('transactions').select('type, quantity').eq('transaction_date', todayStr);
+if (error) {
+console.error("Stats Error:", error);
+return;
+}
+let tIn = 0, tOut = 0;
+if (todayTx) {
+todayTx.forEach(tx => { if (tx.type === 'IN') tIn += tx.quantity; else tOut += tx.quantity; });
+}
+document.getElementById('dashTodayIn').innerText = tIn;
+document.getElementById('dashTodayOut').innerText = tOut;
+}
 async function loadDashboardTransactions() {
-    const tbody = document.getElementById('dashboardTableBody');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8"><div class="loader"></div></td></tr>';
-    
-    const { data, error } = await supabaseClient.from('transactions').select('*').order('created_at', { ascending: false }).limit(10);
-    
-    if (error) {
-        console.error("Transaction Load Error:", error);
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500 py-4">Error loading data</td></tr>';
-        return;
-    }
-    tbody.innerHTML = '';
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-slate-400 py-8">No recent activity</td></tr>';
-        return;
-    }
-    
-    data.forEach(tx => {
-        const mat = allMaterials.find(m => m.id === tx.material_id);
-        const matName = mat ? mat.name : 'Unknown Material';
-        const isLocked = tx.transaction_date !== todayStr;
-        const color = tx.type === 'IN' ? 'text-success' : 'text-warning';
-        const sign = tx.type === 'IN' ? '+' : '-';
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition";
-        tr.innerHTML = `
-            <td class="px-6 py-4 text-xs whitespace-nowrap">${tx.transaction_date}</td>
-            <td class="px-6 py-4 font-medium">${matName}</td>
-            <td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs font-bold ${tx.type === 'IN' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${tx.type}</span></td>
-            <td class="px-6 py-4 font-bold ${color}">${sign}${tx.quantity}</td>
-            <td class="px-6 py-4 text-right">
-                ${isLocked ? '<span class="text-slate-300 text-xs"><i class="fas fa-lock"></i></span>' : `<button onclick="deleteTransaction('${tx.id}')" class="text-red-500 hover:text-red-700 p-2"><i class="fas fa-trash"></i></button>`}
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+const tbody = document.getElementById('dashboardTableBody');
+tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8"><div class="loader"></div></td></tr>';
+const { data, error } = await supabaseClient.from('transactions').select('*').order('created_at', { ascending: false }).limit(10);
+if (error) {
+console.error("Transaction Load Error:", error);
+tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-4">Error loading data</td></tr>';
+return;
 }
-
+tbody.innerHTML = '';
+if (!data || data.length === 0) {
+tbody.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400 py-8">No recent activity</td></tr>';
+return;
+}
+data.forEach(tx => {
+const mat = allMaterials.find(m => m.id === tx.material_id);
+const matName = mat ? mat.name : 'Unknown Material';
+const oracleCode = mat ? (mat.oracle_code || 'N/A') : 'N/A';
+const isLocked = tx.transaction_date !== todayStr;
+const color = tx.type === 'IN' ? 'text-success' : 'text-warning';
+const sign = tx.type === 'IN' ? '+' : '-';
+const tr = document.createElement('tr');
+tr.className = "hover:bg-slate-50 transition";
+tr.innerHTML = `
+<td class="px-6 py-4 text-xs whitespace-nowrap">${tx.transaction_date}</td>
+<td class="px-6 py-4 font-medium">${matName}</td>
+<td class="px-6 py-4 text-xs font-mono text-slate-500">${oracleCode}</td>
+<td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs font-bold ${tx.type === 'IN' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${tx.type}</span></td>
+<td class="px-6 py-4 font-bold ${color}">${sign}${tx.quantity}</td>
+<td class="px-6 py-4 text-right">
+${isLocked ? '<span class="text-slate-300 text-xs"><i class="fas fa-lock"></i></span>' : `<button onclick="deleteTransaction('${tx.id}')" class="text-red-500 hover:text-red-700 p-2"><i class="fas fa-trash"></i></button>`}
+</td>
+`;
+tbody.appendChild(tr);
+});
+}
 // ==========================================
-// 6. TRANSACTION LOGIC - PERMISSION CHECK ON SUBMIT
+// 6. TRANSACTION LOGIC
 // ==========================================
+function highlightTransactionType(type) {
+const inLabel = document.getElementById('inLabel');
+const outLabel = document.getElementById('outLabel');
+if (type === 'IN') {
+inLabel.classList.add('active-in');
+inLabel.querySelector('div').classList.add('border-success', 'bg-white', 'shadow-sm', 'text-success');
+inLabel.querySelector('div').classList.remove('border-transparent', 'text-slate-600');
+outLabel.classList.remove('active-out');
+outLabel.querySelector('div').classList.remove('border-warning', 'bg-white', 'shadow-sm', 'text-warning');
+outLabel.querySelector('div').classList.add('border-transparent', 'text-slate-600');
+} else {
+outLabel.classList.add('active-out');
+outLabel.querySelector('div').classList.add('border-warning', 'bg-white', 'shadow-sm', 'text-warning');
+outLabel.querySelector('div').classList.remove('border-transparent', 'text-slate-600');
+inLabel.classList.remove('active-in');
+inLabel.querySelector('div').classList.remove('border-success', 'bg-white', 'shadow-sm', 'text-success');
+inLabel.querySelector('div').classList.add('border-transparent', 'text-slate-600');
+}
+}
 async function handleTransactionSubmit(e) {
-    e.preventDefault();
-    if (!currentUser) return alert('Please login first');
-
-    const btn = document.getElementById('submitBtn');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<div class="loader !border-white !border-t-transparent !w-5 !h-5"></div> Processing...';
-
-    const matId = document.getElementById('materialSelect').value;
-    const type = document.querySelector('input[name="type"]:checked')?.value;
-    const qty = parseInt(document.getElementById('qtyInput').value);
-    const notes = document.getElementById('notesInput')?.value || '';
-
-    // Validate material selection
-    if (!matId) {
-        document.getElementById('materialError').classList.remove('hidden');
-        document.getElementById('materialSearchInput').focus();
-        resetBtn(btn, originalText);
-        return;
-    }
-    document.getElementById('materialError').classList.add('hidden');
-
-    // ✅ PERMISSION CHECK ON SUBMIT (Not on form load)
-    if (type === 'IN' && !canStockIn) {
-        alert('⛔ Permission Denied\n\nYou do not have permission to add stock (IN transactions).\n\nPlease contact your administrator to request IN stock permissions.\n\nYou can still perform OUT transactions.');
-        resetBtn(btn, originalText);
-        return;
-    }
-
-    if (!qty || qty <= 0) {
-        alert('Please enter a valid quantity');
-        resetBtn(btn, originalText);
-        return;
-    }
-
-    try {
-        // STEP 1: Fetch FRESH stock data from Supabase
-        const { data: freshMat, error: fetchError } = await supabaseClient
-            .from('materials')
-            .select('current_stock, unit')
-            .eq('id', matId)
-            .single();
-
-        if (fetchError || !freshMat) {
-            alert('Error fetching current stock data. Please refresh.');
-            resetBtn(btn, originalText);
-            return;
-        }
-
-        // STEP 2: Validate stock for OUT transactions
-        if (type === 'OUT') {
-            if (qty > freshMat.current_stock) {
-                alert(`Insufficient Stock! Available: ${freshMat.current_stock} ${freshMat.unit}`);
-                resetBtn(btn, originalText);
-                return;
-            }
-        }
-
-        // STEP 3: Insert transaction record
-        const { error: txError } = await supabaseClient.from('transactions').insert([{
-            material_id: matId, type, quantity: qty, notes, transaction_date: todayStr
-        }]);
-
-        if (txError) throw new Error('Transaction Record Failed: ' + txError.message);
-
-        // STEP 4: Update material stock
-        const newStock = type === 'IN' ? freshMat.current_stock + qty : freshMat.current_stock - qty;
-        
-        const { error: stockError } = await supabaseClient
-            .from('materials')
-            .update({ current_stock: newStock })
-            .eq('id', matId);
-
-        if (stockError) throw new Error('Stock Update Failed: ' + stockError.message);
-
-        // STEP 5: Success - Reset form and refresh
-        document.getElementById('transactionForm').reset();
-        document.getElementById('materialSearchInput').value = '';
-        document.getElementById('currentStockDisplay').innerText = '-';
-        document.getElementById('stockInfoBox').classList.add('hidden');
-        
-        await initApp();
-        alert('✅ Success! Stock updated.');
-
-    } catch (err) {
-        alert('Error: ' + err.message);
-    } finally {
-        resetBtn(btn, originalText);
-    }
+e.preventDefault();
+if (!currentUser) return alert('Please login first');
+const btn = document.getElementById('submitBtn');
+const originalText = btn.innerHTML;
+btn.disabled = true;
+btn.innerHTML = '<div class="loader !border-white !border-t-transparent !w-5 !h-5"></div> Processing...';
+const matId = document.getElementById('materialSelect').value;
+const type = document.querySelector('input[name="type"]:checked')?.value;
+const qty = parseInt(document.getElementById('qtyInput').value);
+const notes = document.getElementById('notesInput')?.value || '';
+if (!matId) {
+document.getElementById('materialError').classList.remove('hidden');
+document.getElementById('materialSearchInput').focus();
+resetBtn(btn, originalText);
+return;
 }
-
+document.getElementById('materialError').classList.add('hidden');
+if (type === 'IN' && !canStockIn) {
+alert('⛔ Permission Denied\nYou do not have permission to add stock (IN transactions).\nPlease contact your administrator.');
+resetBtn(btn, originalText);
+return;
+}
+if (!qty || qty <= 0) {
+alert('Please enter a valid quantity');
+resetBtn(btn, originalText);
+return;
+}
+try {
+const { data: freshMat, error: fetchError } = await supabaseClient
+.from('materials')
+.select('current_stock, unit')
+.eq('id', matId)
+.single();
+if (fetchError || !freshMat) {
+alert('Error fetching current stock data. Please refresh.');
+resetBtn(btn, originalText);
+return;
+}
+if (type === 'OUT') {
+if (qty > freshMat.current_stock) {
+alert(`Insufficient Stock! Available: ${freshMat.current_stock} ${freshMat.unit}`);
+resetBtn(btn, originalText);
+return;
+}
+}
+const { error: txError } = await supabaseClient.from('transactions').insert([{
+material_id: matId, type, quantity: qty, notes, transaction_date: todayStr
+}]);
+if (txError) throw new Error('Transaction Record Failed: ' + txError.message);
+const newStock = type === 'IN' ? freshMat.current_stock + qty : freshMat.current_stock - qty;
+const { error: stockError } = await supabaseClient
+.from('materials')
+.update({ current_stock: newStock })
+.eq('id', matId);
+if (stockError) throw new Error('Stock Update Failed: ' + stockError.message);
+document.getElementById('transactionForm').reset();
+document.getElementById('materialSearchInput').value = '';
+document.getElementById('currentStockDisplay').innerText = '-';
+document.getElementById('stockInfoBox').classList.add('hidden');
+document.getElementById('oracleCodeDisplay').innerText = '-';
+document.getElementById('oracleCodeBox').classList.add('hidden');
+await initApp();
+alert('✅ Success! Stock updated.');
+} catch (err) {
+alert('Error: ' + err.message);
+} finally {
+resetBtn(btn, originalText);
+}
+}
 function resetBtn(btn, text) {
-    btn.disabled = false;
-    btn.innerHTML = text;
+btn.disabled = false;
+btn.innerHTML = text;
 }
-
 async function deleteTransaction(id) {
-    if(!confirm('Delete this entry? This cannot be undone.')) return;
-    
-    // STEP 1: Fetch transaction details to check type
-   const { data: txData, error: fetchError } = await supabaseClient
+if(!confirm('Delete this entry? This cannot be undone.')) return;
+const { data: txData, error: fetchError } = await supabaseClient
 .from('transactions')
 .select('type, transaction_date, material_id, quantity')
 .eq('id', id)
 .single();
-    
-    if (fetchError || !txData) {
-        alert('Error fetching transaction details');
-        console.error('Fetch error:', fetchError);
-        return;
-    }
-    
-    // STEP 2: Check if transaction is locked (older than today)
-    if (txData.transaction_date !== todayStr) {
-        alert('🔒 Cannot delete transactions older than today');
-        return;
-    }
-    
-    // STEP 3: Check permission based on transaction type
-    if (txData.type === 'IN' && !canDeleteIn) {
-        alert('⛔ Permission Denied\n\nYou do not have permission to delete IN stock transactions.\n\nPlease contact your administrator.');
-        return;
-    }
-    
-    if (txData.type === 'OUT' && !canDeleteOut) {
-        alert('⛔ Permission Denied\n\nYou do not have permission to delete OUT stock transactions.\n\nPlease contact your administrator.');
-        return;
-    }
-    
-    // STEP 4: Proceed with deletion
-    const { error } = await supabaseClient.from('transactions').delete().eq('id', id);
-    
-    if (error) {
-        alert('Delete Error: ' + error.message);
-        console.error('Delete error:', error);
-    } else {
-        // STEP 5: Restore stock based on transaction type
-        if (txData.type === 'IN') {
-            // Fetch current stock
-            const {  mat, error: matError } = await supabaseClient
-                .from('materials')
-                .select('current_stock')
-                .eq('id', txData.material_id)
-                .single();
-            
-            if (!matError && mat) {
-                // Subtract the IN quantity to restore previous stock
-                const restoredStock = mat.current_stock - txData.quantity;
-                await supabaseClient
-                    .from('materials')
-                    .update({ current_stock: restoredStock })
-                    .eq('id', txData.material_id);
-            }
-        } else if (txData.type === 'OUT') {
-            // Fetch current stock
-            const {  mat, error: matError } = await supabaseClient
-                .from('materials')
-                .select('current_stock')
-                .eq('id', txData.material_id)
-                .single();
-            
-            if (!matError && mat) {
-                // Add back the OUT quantity to restore previous stock
-                const restoredStock = mat.current_stock + txData.quantity;
-                await supabaseClient
-                    .from('materials')
-                    .update({ current_stock: restoredStock })
-                    .eq('id', txData.material_id);
-            }
-        }
-        
-        await initApp();
-        alert('✅ Transaction deleted successfully');
-    }
+if (fetchError || !txData) {
+alert('Error fetching transaction details');
+console.error('Fetch error:', fetchError);
+return;
+}
+if (txData.transaction_date !== todayStr) {
+alert('🔒 Cannot delete transactions older than today');
+return;
+}
+if (txData.type === 'IN' && !canDeleteIn) {
+alert('⛔ Permission Denied\nYou do not have permission to delete IN stock transactions.');
+return;
+}
+if (txData.type === 'OUT' && !canDeleteOut) {
+alert('⛔ Permission Denied\nYou do not have permission to delete OUT stock transactions.');
+return;
+}
+const { error } = await supabaseClient.from('transactions').delete().eq('id', id);
+if (error) {
+alert('Delete Error: ' + error.message);
+console.error('Delete error:', error);
+} else {
+if (txData.type === 'IN') {
+const { data: mat, error: matError } = await supabaseClient
+.from('materials')
+.select('current_stock')
+.eq('id', txData.material_id)
+.single();
+if (!matError && mat) {
+const restoredStock = mat.current_stock - txData.quantity;
+await supabaseClient
+.from('materials')
+.update({ current_stock: restoredStock })
+.eq('id', txData.material_id);
+}
+} else if (txData.type === 'OUT') {
+const { data: mat, error: matError } = await supabaseClient
+.from('materials')
+.select('current_stock')
+.eq('id', txData.material_id)
+.single();
+if (!matError && mat) {
+const restoredStock = mat.current_stock + txData.quantity;
+await supabaseClient
+.from('materials')
+.update({ current_stock: restoredStock })
+.eq('id', txData.material_id);
+}
+}
+await initApp();
+alert('✅ Transaction deleted successfully');
+}
 }
 // ==========================================
-// 7. INVENTORY LOGIC
+// 7. INVENTORY CRUD LOGIC (FIXED DELETE)
 // ==========================================
 async function loadInventory() {
-    const tbody = document.getElementById('inventoryTableBody');
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8"><div class="loader"></div></td></tr>';
-    
-    const { data, error } = await supabaseClient.from('materials').select('*').order('name');
-    if (error) {
-        console.error("Inventory Load Error:", error);
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-8">Error loading inventory</td></tr>';
-        return;
-    }
-    
-    allMaterials = data;
-    tbody.innerHTML = '';
-    
-    if(data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400 py-8">No materials found</td></tr>';
-        return;
-    }
-
-    data.forEach(mat => {
-        const isLow = mat.current_stock <= mat.min_stock_threshold;
-        const statusHtml = isLow
-            ? `<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold"><i class="fas fa-exclamation-circle mr-1"></i>Low Stock</span>`
-            : `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold"><i class="fas fa-check-circle mr-1"></i>OK</span>`;
-        const rowClass = isLow ? 'bg-red-50' : 'hover:bg-slate-50 transition';
-        
-        const tr = document.createElement('tr');
-        tr.className = rowClass;
-        tr.innerHTML = `
-            <td class="px-6 py-4 font-medium text-slate-900">${mat.name}</td>
-            <td class="px-6 py-4">${mat.category || '<span class="text-slate-400">-</span>'}</td>
-            <td class="px-6 py-4 font-bold ${isLow ? 'text-red-600' : 'text-slate-700'}">${mat.current_stock} <span class="text-xs font-normal text-slate-500">${mat.unit}</span></td>
-            <td class="px-6 py-4">${mat.min_stock_threshold}</td>
-            <td class="px-6 py-4">${statusHtml}</td>
-            <td class="px-6 py-4 text-right">
-                <button onclick="openThresholdModal('${mat.id}', ${mat.min_stock_threshold})" class="text-blue-600 hover:text-blue-800 text-sm font-medium bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition">Edit</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+const tbody = document.getElementById('inventoryTableBody');
+tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8"><div class="loader"></div></td></tr>';
+const { data, error } = await supabaseClient.from('materials').select('*').order('name');
+if (error) {
+console.error("Inventory Load Error:", error);
+tbody.innerHTML = '<tr><td colspan="8" class="text-center text-red-500 py-8">Error loading inventory</td></tr>';
+return;
 }
-
+allMaterials = data;
+tbody.innerHTML = '';
+if(data.length === 0) {
+tbody.innerHTML = '<tr><td colspan="8" class="text-center text-slate-400 py-8">No materials found</td></tr>';
+return;
+}
+data.forEach(mat => {
+const isLow = mat.current_stock <= mat.min_stock_threshold;
+const statusHtml = isLow
+? `<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold"><i class="fas fa-exclamation-circle mr-1"></i>Low Stock</span>`
+: `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold"><i class="fas fa-check-circle mr-1"></i>OK</span>`;
+const rowClass = isLow ? 'bg-red-50' : 'hover:bg-slate-50 transition';
+const oracleCode = mat.oracle_code || 'N/A';
+// Build action buttons based on permissions
+let actionButtons = '<span class="text-slate-400 text-xs">No access</span>';
+if (canEditMaterial || canDeleteMaterial) {
+actionButtons = '<div class="flex justify-end gap-2">';
+if (canEditMaterial) {
+actionButtons += `<button onclick="openEditMaterialModal('${mat.id}')" class="text-blue-600 hover:text-blue-800 p-2" title="Edit"><i class="fas fa-edit"></i></button>`;
+}
+if (canDeleteMaterial) {
+actionButtons += `<button onclick="openDeleteConfirmModal('${mat.id}')" class="text-red-600 hover:text-red-800 p-2" title="Delete"><i class="fas fa-trash"></i></button>`;
+}
+actionButtons += '</div>';
+}
+const tr = document.createElement('tr');
+tr.className = rowClass;
+tr.innerHTML = `
+<td class="px-6 py-4 font-medium text-slate-900">${mat.name}</td>
+<td class="px-6 py-4 text-xs font-mono text-slate-500">${oracleCode}</td>
+<td class="px-6 py-4">${mat.category || '<span class="text-slate-400">-</span>'}</td>
+<td class="px-6 py-4">${mat.unit}</td>
+<td class="px-6 py-4 font-bold ${isLow ? 'text-red-600' : 'text-slate-700'}">${mat.current_stock}</td>
+<td class="px-6 py-4">${mat.min_stock_threshold}</td>
+<td class="px-6 py-4">${statusHtml}</td>
+<td class="px-6 py-4 text-right">${actionButtons}</td>
+`;
+tbody.appendChild(tr);
+});
+}
 function filterInventory() {
-    const term = document.getElementById('inventorySearch').value.toLowerCase();
-    const rows = document.getElementById('inventoryTableBody').querySelectorAll('tr');
-    rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(term) ? '' : 'none';
-    });
+const term = document.getElementById('inventorySearch').value.toLowerCase();
+const rows = document.getElementById('inventoryTableBody').querySelectorAll('tr');
+rows.forEach(row => {
+const text = row.innerText.toLowerCase();
+row.style.display = text.includes(term) ? '' : 'none';
+});
 }
-
-function openThresholdModal(id, currentVal) {
-    document.getElementById('editMatId').value = id;
-    document.getElementById('editThresholdVal').value = currentVal;
-    const modal = document.getElementById('thresholdModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+// Add Material Modal
+function openAddMaterialModal() {
+if (!canAddMaterial) {
+alert('⛔ Permission Denied\nYou do not have permission to add materials.');
+return;
 }
-
+document.getElementById('materialModalTitle').innerText = 'Add New Material';
+document.getElementById('editMatId').value = '';
+document.getElementById('matName').value = '';
+document.getElementById('matOracleCode').value = '';
+document.getElementById('matCategory').value = '';
+document.getElementById('matUnit').value = '';
+document.getElementById('matStock').value = '0';
+document.getElementById('matThreshold').value = '5';
+const modal = document.getElementById('materialModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+}
+// Edit Material Modal
+async function openEditMaterialModal(id) {
+if (!canEditMaterial) {
+alert('⛔ Permission Denied\nYou do not have permission to edit materials.');
+return;
+}
+const mat = allMaterials.find(m => m.id === id);
+if (!mat) {
+alert('Material not found');
+return;
+}
+document.getElementById('materialModalTitle').innerText = 'Edit Material';
+document.getElementById('editMatId').value = id;
+document.getElementById('matName').value = mat.name || '';
+document.getElementById('matOracleCode').value = mat.oracle_code || '';
+document.getElementById('matCategory').value = mat.category || '';
+document.getElementById('matUnit').value = mat.unit || '';
+document.getElementById('matStock').value = mat.current_stock || 0;
+document.getElementById('matThreshold').value = mat.min_stock_threshold || 5;
+const modal = document.getElementById('materialModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+}
+function closeMaterialModal() {
+const modal = document.getElementById('materialModal');
+modal.classList.add('hidden');
+modal.classList.remove('flex');
+}
+async function saveMaterial() {
+const id = document.getElementById('editMatId').value;
+const name = document.getElementById('matName').value.trim();
+const oracleCode = document.getElementById('matOracleCode').value.trim();
+const category = document.getElementById('matCategory').value.trim();
+const unit = document.getElementById('matUnit').value.trim();
+const stock = parseInt(document.getElementById('matStock').value) || 0;
+const threshold = parseInt(document.getElementById('matThreshold').value) || 5;
+// Validation
+if (!name) {
+alert('Material name is required');
+return;
+}
+if (!unit) {
+alert('Unit is required');
+return;
+}
+try {
+if (id) {
+// UPDATE existing material
+if (!canEditMaterial) {
+alert('⛔ Permission Denied\nYou do not have permission to edit materials.');
+return;
+}
+const { error } = await supabaseClient
+.from('materials')
+.update({
+name,
+oracle_code: oracleCode,
+category,
+unit,
+current_stock: stock,
+min_stock_threshold: threshold
+})
+.eq('id', id);
+if (error) throw error;
+alert('✅ Material updated successfully!');
+} else {
+// INSERT new material
+if (!canAddMaterial) {
+alert('⛔ Permission Denied\nYou do not have permission to add materials.');
+return;
+}
+const { error } = await supabaseClient
+.from('materials')
+.insert([{
+name,
+oracle_code: oracleCode,
+category,
+unit,
+current_stock: stock,
+min_stock_threshold: threshold
+}]);
+if (error) throw error;
+alert('✅ Material added successfully!');
+}
+closeMaterialModal();
+await loadMaterials();
+await loadInventory();
+await loadDashboardStats();
+} catch (err) {
+alert('Error: ' + err.message);
+console.error('Save material error:', err);
+}
+}
+// Delete Material - FIXED WITH BETTER ERROR HANDLING
+function openDeleteConfirmModal(id) {
+if (!canDeleteMaterial) {
+alert('⛔ Permission Denied\nYou do not have permission to delete materials.');
+return;
+}
+document.getElementById('deleteMatId').value = id;
+const modal = document.getElementById('deleteConfirmModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+}
+async function confirmDeleteMaterial() {
+const id = document.getElementById('deleteMatId').value;
+console.log("Attempting to delete material ID:", id);
+console.log("canDeleteMaterial permission:", canDeleteMaterial);
+if (!canDeleteMaterial) {
+alert('⛔ Permission Denied\nYou do not have permission to delete materials.');
+return;
+}
+try {
+// Check if material has transactions
+const { data: transactions, error: txError } = await supabaseClient
+.from('transactions')
+.select('id')
+.eq('material_id', id)
+.limit(1);
+if (txError) {
+console.error("Transaction check error:", txError);
+throw txError;
+}
+if (transactions && transactions.length > 0) {
+const confirmed = confirm('⚠️ This material has transaction history.\nDeleting will remove it from inventory but transactions will remain.\n\nContinue?');
+if (!confirmed) {
+document.getElementById('deleteConfirmModal').classList.add('hidden');
+document.getElementById('deleteConfirmModal').classList.remove('flex');
+return;
+}
+}
+// FIXED: Better delete with detailed error logging
+console.log("Executing delete for material ID:", id);
+const { data: deleteData, error: deleteError } = await supabaseClient
+.from('materials')
+.delete()
+.eq('id', id)
+.select();
+if (deleteError) {
+console.error("Delete error details:", deleteError);
+console.error("Error code:", deleteError.code);
+console.error("Error message:", deleteError.message);
+console.error("Error hint:", deleteError.hint);
+console.error("Error details:", deleteError.details);
+// Check for specific error types
+if (deleteError.code === 'PGRST116') {
+alert('❌ Delete Failed: Row Level Security (RLS) is blocking this operation.\n\nPlease contact your administrator to enable DELETE permissions on the materials table.');
+} else if (deleteError.code === '23503') {
+alert('❌ Delete Failed: Foreign key constraint violation.\nThis material is referenced by other records.\n\nError: ' + deleteError.message);
+} else {
+alert('❌ Delete Failed: ' + deleteError.message + '\n\nCheck console for detailed error information.');
+}
+throw deleteError;
+}
+console.log("Delete successful:", deleteData);
+// Close modal
+document.getElementById('deleteConfirmModal').classList.add('hidden');
+document.getElementById('deleteConfirmModal').classList.remove('flex');
+// Refresh all data
+await loadMaterials();
+await loadInventory();
+await loadDashboardStats();
+alert('✅ Material deleted successfully!');
+} catch (err) {
+console.error("Delete material error:", err);
+// Error already shown in the delete block above
+}
+}
+async function openThresholdModal(id, currentVal) {
+document.getElementById('editThresholdMatId').value = id;
+document.getElementById('editThresholdVal').value = currentVal;
+const modal = document.getElementById('thresholdModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
+}
 async function saveThreshold() {
-    const id = document.getElementById('editMatId').value;
-    const val = parseInt(document.getElementById('editThresholdVal').value);
-    const { error } = await supabaseClient.from('materials').update({ min_stock_threshold: val }).eq('id', id);
-    if (error) alert(error.message);
-    else {
-        document.getElementById('thresholdModal').classList.add('hidden');
-        document.getElementById('thresholdModal').classList.remove('flex');
-        loadInventory();
-        loadDashboardStats();
-    }
+const id = document.getElementById('editThresholdMatId').value;
+const val = parseInt(document.getElementById('editThresholdVal').value);
+const { error } = await supabaseClient.from('materials').update({ min_stock_threshold: val }).eq('id', id);
+if (error) alert(error.message);
+else {
+document.getElementById('thresholdModal').classList.add('hidden');
+document.getElementById('thresholdModal').classList.remove('flex');
+loadInventory();
+loadDashboardStats();
 }
-
+}
 // ==========================================
 // 8. REPORTS LOGIC
 // ==========================================
 async function generateReport() {
-    const start = document.getElementById('reportStart').value;
-    const end = document.getElementById('reportEnd').value;
-    if (!start || !end) return alert('Select dates');
-    
-    const btn = event.target;
-    const originalText = btn.innerText;
-    btn.disabled = true;
-    btn.innerText = 'Generating...';
-
-    const { data, error } = await supabaseClient
-        .from('transactions')
-        .select('*')
-        .gte('transaction_date', start)
-        .lte('transaction_date', end)
-        .order('transaction_date', { ascending: true });
-    
-    btn.disabled = false;
-    btn.innerText = originalText;
-
-    if (error) {
-        console.error("Report Error:", error);
-        alert('Error generating report: ' + error.message);
-        return;
-    }
-    reportData = data || [];
-    
-    let totalIn = 0, totalOut = 0;
-    const dailyStats = {};
-    
-    reportData.forEach(tx => {
-        if (tx.type === 'IN') totalIn += tx.quantity;
-        else totalOut += tx.quantity;
-        
-        if (!dailyStats[tx.transaction_date]) dailyStats[tx.transaction_date] = { in: 0, out: 0 };
-        if (tx.type === 'IN') dailyStats[tx.transaction_date].in += tx.quantity;
-        else dailyStats[tx.transaction_date].out += tx.quantity;
-    });
-    
-    document.getElementById('reportTotalIn').innerText = totalIn;
-    document.getElementById('reportTotalOut').innerText = totalOut;
-    document.getElementById('reportNet').innerText = totalIn - totalOut;
-    
-    const tbody = document.getElementById('reportTableBody');
-    tbody.innerHTML = '';
-    if(reportData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-400">No transactions in this period</td></tr>';
-    } else {
-        reportData.forEach(tx => {
-            const mat = allMaterials.find(m => m.id === tx.material_id);
-            const matName = mat ? mat.name : tx.material_id;
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-50";
-            tr.innerHTML = `
-                <td class="px-6 py-4">${tx.transaction_date}</td>
-                <td class="px-6 py-4">${matName}</td>
-                <td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs font-bold ${tx.type === 'IN' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${tx.type}</span></td>
-                <td class="px-6 py-4 font-bold">${tx.quantity}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-    
-    renderChart(dailyStats);
+const start = document.getElementById('reportStart').value;
+const end = document.getElementById('reportEnd').value;
+if (!start || !end) return alert('Select dates');
+const btn = event.target;
+const originalText = btn.innerText;
+btn.disabled = true;
+btn.innerText = 'Generating...';
+const { data, error } = await supabaseClient
+.from('transactions')
+.select('*')
+.gte('transaction_date', start)
+.lte('transaction_date', end)
+.order('transaction_date', { ascending: true });
+btn.disabled = false;
+btn.innerText = originalText;
+if (error) {
+console.error("Report Error:", error);
+alert('Error generating report: ' + error.message);
+return;
 }
-
+reportData = data || [];
+let totalIn = 0, totalOut = 0;
+const dailyStats = {};
+reportData.forEach(tx => {
+if (tx.type === 'IN') totalIn += tx.quantity;
+else totalOut += tx.quantity;
+if (!dailyStats[tx.transaction_date]) dailyStats[tx.transaction_date] = { in: 0, out: 0 };
+if (tx.type === 'IN') dailyStats[tx.transaction_date].in += tx.quantity;
+else dailyStats[tx.transaction_date].out += tx.quantity;
+});
+document.getElementById('reportTotalIn').innerText = totalIn;
+document.getElementById('reportTotalOut').innerText = totalOut;
+document.getElementById('reportNet').innerText = totalIn - totalOut;
+const tbody = document.getElementById('reportTableBody');
+tbody.innerHTML = '';
+if(reportData.length === 0) {
+tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400">No transactions in this period</td></tr>';
+} else {
+reportData.forEach(tx => {
+const mat = allMaterials.find(m => m.id === tx.material_id);
+const matName = mat ? mat.name : tx.material_id;
+const oracleCode = mat ? (mat.oracle_code || 'N/A') : 'N/A';
+const tr = document.createElement('tr');
+tr.className = "hover:bg-slate-50";
+tr.innerHTML = `
+<td class="px-6 py-4">${tx.transaction_date}</td>
+<td class="px-6 py-4">${matName}</td>
+<td class="px-6 py-4 text-xs font-mono text-slate-500">${oracleCode}</td>
+<td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs font-bold ${tx.type === 'IN' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${tx.type}</span></td>
+<td class="px-6 py-4 font-bold">${tx.quantity}</td>
+`;
+tbody.appendChild(tr);
+});
+}
+renderChart(dailyStats);
+}
 function renderChart(dataObj) {
-    const ctx = document.getElementById('activityChart').getContext('2d');
-    const labels = Object.keys(dataObj);
-    const inData = labels.map(d => dataObj[d].in);
-    const outData = labels.map(d => dataObj[d].out);
-    
-    if (chartInstance) chartInstance.destroy();
-    
-    if(labels.length === 0) return;
-
-    chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                { label: 'Stock In', data: inData, backgroundColor: '#10b981', borderRadius: 4 },
-                { label: 'Stock Out', data: outData, backgroundColor: '#f59e0b', borderRadius: 4 }
-            ]
-        },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false,
-            scales: { 
-                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                x: { grid: { display: false } }
-            },
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
+const ctx = document.getElementById('activityChart').getContext('2d');
+const labels = Object.keys(dataObj);
+const inData = labels.map(d => dataObj[d].in);
+const outData = labels.map(d => dataObj[d].out);
+if (chartInstance) chartInstance.destroy();
+if(labels.length === 0) return;
+chartInstance = new Chart(ctx, {
+type: 'bar',
+data: {
+labels: labels,
+datasets: [
+{ label: 'Stock In', data: inData, backgroundColor: '#10b981', borderRadius: 4 },
+{ label: 'Stock Out', data: outData, backgroundColor: '#f59e0b', borderRadius: 4 }
+]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+scales: {
+y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+x: { grid: { display: false } }
+},
+plugins: { legend: { position: 'bottom' } }
 }
-
+});
+}
 function exportReport() {
-    if (!reportData || reportData.length === 0) return alert('No data to export');
-    let csv = "Date,Material,Type,Quantity\n";
-    reportData.forEach(row => {
-        const mat = allMaterials.find(m => m.id === row.material_id);
-        const matName = mat ? mat.name : row.material_id;
-        csv += `${row.transaction_date},"${matName}",${row.type},${row.quantity}\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', `report_${todayStr}.csv`);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+if (!reportData || reportData.length === 0) return alert('No data to export');
+let csv = "Date,Material,Oracle Code,Type,Quantity\n";
+reportData.forEach(row => {
+const mat = allMaterials.find(m => m.id === row.material_id);
+const matName = mat ? mat.name : row.material_id;
+const oracleCode = mat ? (mat.oracle_code || 'N/A') : 'N/A';
+csv += `${row.transaction_date},"${matName}","${oracleCode}",${row.type},${row.quantity}\n`;
+});
+const blob = new Blob([csv], { type: 'text/csv' });
+const url = window.URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.setAttribute('hidden', '');
+a.setAttribute('href', url);
+a.setAttribute('download', `report_${todayStr}.csv`);
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
 }
 </script>
 </body>
