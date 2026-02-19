@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,6 +69,64 @@ input, select, button { touch-action: manipulation; }
 .permission-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; }
 .permission-badge.allowed { background-color: #dcfce7; color: #166534; }
 .permission-badge.denied { background-color: #fee2e2; color: #991b1b; }
+#Desho {
+      background: linear-gradient(90deg, #02da05 0%, #06e7c2 50%, #cff705 100%);
+      color: rgb(0, 0, 0);
+      border-radius: 20px;
+      font-weight: bold;
+      animation: pulse 5s infinite;
+    }
+    .urgent {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      25% { box-shadow: 0 0 0 0 rgb(0, 204, 255); }
+      50% { box-shadow: 0 0 0 10px rgba(255, 0, 230, 0.338); }
+      75% { box-shadow: 0 0 0 10px rgba(255, 234, 0, 0.297); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 225, 0, 0.873); }
+    }
+    .notification-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #5bf005;
+      color: white;
+      border-radius: 50%;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: bold;
+      min-width: 24px;
+      text-align: center;
+    }
+    .notification-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      border: 2px solid #ef4444;
+      border-radius: 8px;
+      padding: 16px;
+      max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      display: none;
+    }
+    .notification-panel.show {
+      display: block;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .notification-item {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    .notification-item:last-child {
+      border-bottom: none;
+    }
 </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
@@ -91,7 +150,7 @@ input, select, button { touch-action: manipulation; }
 <!-- Sidebar Overlay (Mobile) -->
 <div id="sidebarOverlay" onclick="toggleMobileSidebar()" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-60 z-30 md:hidden backdrop-blur-sm"></div>
 <!-- Sidebar -->
-<aside id="mobileSidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 shadow-xl md:shadow-none" style="background-color: rgba(206, 233, 217, 0.616);">
+<aside id="mobileSidebar" class="w-64 bg-white border-r border-slate-200 flex flex-col fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 shadow-xl md:shadow-none" style="background: linear-gradient(to bottom, #03dde1, #68e11d);">
 <div class="p-4 space-y-2 mt-4 md:mt-0">
 <button onclick="switchView('dashboard')" class="nav-btn w-full text-left p-3 bg-blue-50 text-blue-700 rounded-lg font-medium transition flex items-center gap-3 hover:bg-blue-100">
 <i class="fas fa-home w-6 text-center"></i> <span>Dashboard</span>
@@ -103,9 +162,9 @@ input, select, button { touch-action: manipulation; }
 <i class="fas fa-chart-line w-6 text-center"></i> <span>Reports</span>
 </button>
 </div>
-<div class="mt-auto p-4 border-t border-slate-100 bg-slate-50"style="border-radius: 20px 20px 20px 20px; background-color: rgb(200, 230, 200); transition: background-color 0.3s;">
-<p class="text-xs text-slate-400 font-medium" style="color: black;">Designed By : Mostafa Ahmed Hamdy</p>
-<p class="text-xs text-slate-300 mt-1"style="color: black;">تصميم وبرمجة : مصطفي النجار</p>
+<div class="mt-auto p-4 border-t border-slate-100 bg-slate-50" id="Desho" style="border-radius: 20px 20px 20px 20px; background-color: rgb(200, 230, 227); transition: background-color 0.3s;">
+<p class="text-xs text-slate-400 font-medium" style="color: black; font-size: 14px;font-weight:bold; text-align:center;" >Designed By : Mostafa Ahmed Hamdy</p>
+<p class="text-xs text-slate-300 mt-1"style="color: black; font-size: 14px;font-weight:bold; text-align:center;">تصميم وبرمجة : مصطفي النجار</p>
 </div>
 </aside>
 <!-- Main Content -->
