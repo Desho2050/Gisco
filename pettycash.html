@@ -480,6 +480,7 @@ input:focus, select:focus, textarea:focus {
     .summary { grid-template-columns: 1fr; }
     .card { padding: 1rem; }
 }
+ html { scroll-behavior: smooth; }
 </style>
 </head>
 <body>
@@ -556,21 +557,21 @@ input:focus, select:focus, textarea:focus {
             <p id="totalAmount">0.00</p>
         </div>
         <div class="card pending-card">
-            <h3><i class="fa-solid fa-clock"></i> Approved (Pending Cash)</h3>
+            <h3 style="color: rgb(1, 103, 187);"><i class="fa-solid fa-clock"></i> Approved (Pending Cash)</h3>
             <p id="pendingAmount" class="text-warning">0.00</p>
         </div>
         <div class="card approval-card">
-            <h3><i class="fa-solid fa-hourglass-half"></i> Pending Approval</h3>
+            <h3 style="color: rgb(145, 130, 1);"><i class="fa-solid fa-hourglass-half"></i> Pending Approval</h3>
             <p id="notApprovedAmount" class="text-info">0.00</p>
         </div>
         <div class="card received-card">
-            <h3><i class="fa-solid fa-check-circle"></i> Fully Received</h3>
+            <h3 style="color: rgb(27, 114, 0);"><i class="fa-solid fa-check-circle"></i> Fully Received</h3>
             <p id="fullyReceivedAmount" class="text-success">0.00</p>
         </div>
-        <div class="card rejected-card">
-            <h3><i class="fa-solid fa-circle-xmark"></i> Rejected</h3>
-            <p id="rejectedAmount" class="text-danger">0.00</p>
-        </div>
+       <div class="card rejected-card">
+  <h3 style="color: red;"><i class="fa-solid fa-circle-xmark"></i><a style="text-decoration: none;" href="#" onclick="scrollToRejectedRow(); return false;">Rejected</a></h3>
+  <p id="rejectedAmount" class="text-danger">0.00</p>
+</div>
         <div class="card">
             <h3><i class="fa-solid fa-list"></i> Total Vouchers</h3>
             <p id="totalCount">0</p>
@@ -1417,6 +1418,28 @@ document.getElementById('clearFiltersBtn').addEventListener('click', () => {
 // === Initial Load ===
 fetchData();
 attachSortListeners();
+function scrollToRejectedRow() {
+  const rows = document.querySelectorAll('#tableBody tr');
+  
+  for (let row of rows) {
+    if (row.classList.contains('rejected-row')) {
+      row.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      
+      // Highlight effect
+      row.style.backgroundColor = '#fecaca';
+      setTimeout(() => {
+        row.style.backgroundColor = '';
+      }, 2000);
+      
+      return; // Stop after first rejected row
+    }
+  }
+  
+  alert('No rejected rows found');
+}
 </script>
 </body>
 </html>
