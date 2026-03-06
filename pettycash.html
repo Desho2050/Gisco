@@ -1152,7 +1152,7 @@ function sortData(data, field, direction) {
 function getBadgeClass(status, type = 'default') {
     if (!status) return 'badge-gray';
     const s = status.toLowerCase();
-    if (s.includes('approved') || s.includes('paid in full') || s==='received' ) return 'badge-success';
+    if (s.includes('finance approved') || s.includes('paid in full') || s==='received' ) return 'badge-success';
     if (s.includes('not paid') || s.includes('pending') || s.includes('submitted') ) return 'badge-warning';
     if (s.includes('reject')) return 'badge-danger';
     if (s==='not received') return 'badge-warning';
