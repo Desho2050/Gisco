@@ -1,1375 +1,1261 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Petty Cash 4378M</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
- <!-- Excel Export -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Petty Cash 4378M</title>
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-<!-- PDF Export (jsPDF + html2canvas) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <style>
-    :root {
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f97316;
-      --light: #f9fafb;
-      --dark: #1f2937;
-      --gray: #6b7280;
-      --border: #e5e7eb;
-      --shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
+
+<style>
+:root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-light: #e0e7ff;
+    --success: #035038;
+    --success-bg: #d1fae5;
+    --danger: #dc2626;
+    --danger-bg: #fee2e2;
+    --warning: #d97706;
+    --warning-bg: #fef3c7;
+    --info: #2563eb;
+    --info-bg: #dbeafe;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #bebaba;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --radius: 0.5rem;
+    --transition: all 0.2s ease-in-out;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--gray-100);
+    color: var(--gray-700);
+    line-height: 1.5;
+    padding: 0.5rem;
+    width: 100%;
+
+}
+
+.container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    background: white;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    width: 100%;
+}
+
+header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+header h1 i { color: var(--primary); }
+
+header h5 {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    font-weight: 400;
+    margin-top: 0.25rem;
+}
+
+/* Action Bar */
+.action-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.btn-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Buttons */
+button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: var(--transition);
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover { background-color: var(--primary-hover); }
+
+.btn-secondary {
+    background-color: white;
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+    box-shadow: var(--shadow-sm);
+}
+.btn-secondary:hover { background-color: var(--gray-50); }
+
+.btn-danger { background-color: var(--danger); color: white; }
+.btn-success { background-color: var(--success); color: white; }
+
+/* Search & Filters */
+.filters-section {
+    background: white;
+    padding: 1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1rem;
+    border: 1px solid var(--gray-200);
+    width: 100%;
+}
+
+.search-wrapper {
+    position: relative;
+    margin-bottom: 0.75rem;
+    flex: 1;
+    min-width: 200px;
+}
+.search-wrapper i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    font-size: 0.875rem;
+}
+.search-wrapper input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+}
+.search-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.filter-item label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.filter-item select, .filter-item button {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    background: white;
+    font-size: 0.8rem;
+}
+
+/* Summary Cards - Compact */
+.summary {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.card {
+    background: white;
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 3px; height: 100%;
+}
+.card.total-amount-card::before { background: var(--primary); }
+.card.rejected-card::before { background: var(--danger); }
+.card.received-card::before { background: var(--success); }
+.card.pending-card::before { background: var(--warning); }
+.card.approval-card::before { background: var(--info); }
+
+.card h3 {
+    font-size: 0.65rem;
+    color: var(--gray-500);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+.card p {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+/* Table - Fit All Columns */
+.table-container {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-200);
+    width: 100%;
+
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+}
+thead {
+    background-color: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+th {
+    text-align: left;
+    padding: 0.05rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+th:hover { color: var(--gray-700); background-color: var(--gray-100); }
+
+td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-700);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover { background-color: var(--gray-50); }
+
+/* Status Badges */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.badge-success { background: var(--success-bg); color: var(--success); }
+.badge-danger { background: var(--danger-bg); color: var(--danger); }
+.badge-warning { background: var(--warning-bg); color: var(--warning); }
+.badge-info { background: var(--info-bg); color: var(--info); }
+.badge-gray { background: var(--gray-100); color: var(--gray-600); }
+
+/* Row Highlights */
+tr.paid-received { background-color: #00fa4b7a; }
+tr.paid-received td { border-bottom-color: #bbf7d0; }
+tr.rejected-row { background-color: #f7cece; }
+tr.rejected-row td { border-bottom-color: #fecaca; color: var(--danger); }
 
 .amount-mismatch {
-  background-color: #fee2e2 !important; /* Light red background */
-  color: var(--danger) !important;
-  font-weight: bold;
+    color: var(--danger);
+    font-weight: 700;
+    background: var(--danger-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: #f3f4f6;
-      color: var(--dark);
-      padding: 1rem;
-      line-height: 1.5;
-    }
-
-   .container {
-  width: 100%;
-  max-width: none; /* Allow container to expand to fit contents */
-  margin: 0 auto;
-  padding: 0 0.5rem; /* Compensate for reduced body padding */
-}
-
-    header {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-
-    h1 {
-      font-size: 1.875rem;
-      font-weight: 700;
-      color: var(--dark);
-    }
-
-    .search-bar {
-      margin-bottom: 10px;
-    }
-
-    .search-bar input {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: 0.375rem;
-      font-size: 1rem;
-    }
-
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 10px;
-    }
-
-    .card {
-      background: white;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      box-shadow: var(--shadow);
-    }
-
-    .card h3 {
-      font-size: 0.875rem;
-      color: var(--gray);
-      margin-bottom: 0.25rem;
-    }
-
-    .pending { color: var(--danger); font-weight: bold; font-size: 1.25rem; }
-    .received { color: var(--success); font-weight: bold; font-size: 1.25rem; }
-    .rejected { color: var(--danger); font-weight: bold; font-size: 1.25rem; }
-    .total-count { color: var(--gray); font-weight: bold; font-size: 1.25rem; }
-    .total-amount { color: var(--primary); font-weight: bold; font-size: 1.25rem; }
-    .balance { color: var(--success); font-weight: bold; font-size: 1.25rem; }
-
-    .table-container {
-      background: white;
-      border-radius: 0.5rem;
-      box-shadow: var(--shadow);
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-    }
-
-    th {
-      background-color: #f9fafb;
-      text-align: left;
-      padding: 0.75rem;
-      font-weight: 600;
-      color: var(--gray);
-      text-transform: uppercase;
-      letter-spacing: 0.025em;
-    }
-
-   td {
-  padding: 0.75rem;
-  border-top: 1px solid var(--border);
-  vertical-align: top;
-}
-
-
-
-/* Keep critical IDs compact */
-td:nth-child(1), /* Voucher # */
-td:nth-child(10), /* Project # */
-td:nth-child(8),
-td:nth-child(9) , /* JVR & JVR Date */
-td:nth-child(11),  /* Created */
-td:nth-child(6)  /* Created */
- {
-  white-space: nowrap;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-td:nth-child(4) {
-  white-space: nowrap;
-}
+/* Actions */
 .actions-cell {
-  white-space: nowrap;
-  min-width: 130px; /* Ensures enough space for both buttons */
+    display: flex;
+    gap: 0.5rem;
+}
+.btn-action {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.btn-edit { background: var(--info-bg); color: var(--info); }
+.btn-edit:hover { background: var(--info); color: white; }
+.btn-delete { background: var(--danger-bg); color: var(--danger); }
+.btn-delete:hover { background: var(--danger); color: white; }
+.btn-attachment { background: var(--gray-100); color: var(--gray-600); }
+.btn-attachment:hover { background: var(--gray-200); color: var(--gray-900); }
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.modal.active {
+    display: flex;
+    opacity: 1;
+}
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 1000px; /* Increased for full width feel */
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+.modal.active .modal-content { transform: scale(1); }
+
+.modal h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    color: var(--gray-900);
+    border-bottom: 1px solid var(--gray-200);
+    padding-bottom: 1rem;
 }
 
-.actions-cell .btn-edit,
-.actions-cell .btn-delete {
-  margin: 2px;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
 }
-    tr:hover {
-      background-color: #f9fafb;
-    }
 
-    button {
-      padding: 0.375rem 0.75rem;
-      border: none;
-      border-radius: 0.25rem;
-      cursor: pointer;
-      font-size: 0.875rem;
-    }
-
-    .btn-add {
-      background-color: var(--primary);
-      color: white;
-      margin-bottom: 2px;
-    }
-
-    .btn-add:hover {
-      background-color: var(--primary-hover);
-    }
-
-    .btn-edit {
-      background-color: #dbeafe;
-      color: var(--primary);
-      margin-right: 0.25rem;
-    }
-
-    .btn-delete {
-      background-color: #fee2e2;
-      color: var(--danger);
-    }
-
-    .btn-edit:hover { background-color: #bfdbfe; }
-    .btn-delete:hover { background-color: #fecaca; }
-
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    .modal.active {
-      display: flex;
-    }
-
-    .modal-content {
-      background: white;
-      width: 90%;
-      max-width: 800px;
-      max-height: 90vh;
-      overflow-y: auto;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-    }
-
-    .modal h2 {
-      margin-bottom: 1rem;
-      font-size: 1.25rem;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 0.25rem;
-      font-size: 0.875rem;
-      color: var(--gray);
-    }
-
-    input, select {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: 0.25rem;
-      font-size: 0.875rem;
-    }
-
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.5rem;
-      margin-top: 1.5rem;
-    }
-
-    .btn-cancel {
-      background: #e5e7eb;
-      color: var(--dark);
-    }
-
-    .btn-save {
-      background: var(--primary);
-      color: white;
-    }
-
-    .btn-cancel:hover { background: #d1d5db; }
-    .btn-save:hover { background: var(--primary-hover); }
-
-    @media (max-width: 768px) {
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-      th, td {
-        padding: 0.5rem;
-        font-size: 0.75rem;
-      }
-    }
-    /* Improve modal on small screens */
-@media (max-width: 600px) {
-  .modal-content {
-    width: 95%;
-    padding: 1rem;
+label {
+    display: block;
+    margin-bottom: 0.5rem;
     font-size: 0.875rem;
-  }
-
-  .form-grid {
-    gap: 0.75rem;
-  }
-/* Add to your <style> */
-.btn-print, .btn-excel, .btn-pdf {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  border: none;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  color: white;
+    font-weight: 500;
+    color: var(--gray-700);
 }
-  input, select {
-    font-size: 1rem; /* Prevents iOS zoom on input focus */
+
+input, select, textarea {
+    width: 100%;
     padding: 0.625rem;
-  }
-
-  .btn-edit, .btn-delete {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-  }
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-family: 'Inter', sans-serif;
+    transition: var(--transition);
 }
-@media (max-width: 480px) {
-  body {
-    padding: 0.75rem;
-  }
-
-  .card h3 {
-    font-size: 0.75rem;
-  }
-
-   .received, .rejected, .total-count, .total-amount {
-    font-size: 1.1rem;
-  }
-}
-.pending{
-  color:#28da04; /* RED */
- 
-}
-.btn-attachment {
-  background-color: #f9fafb;
-  color: var(--primary);
-  border: 1px solid var(--border);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  font-size: 0.75rem;
-  margin: 0;
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-.btn-attachment:hover {
-  background-color: #e5e7eb;
-}
-.submitted-amount { 
-  color: var(--warning); 
-  font-weight: bold; 
-  font-size: 1.25rem; 
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-200);
 }
 
-/* Row highlighting */
-tr.paid-received {
-  background-color: #58f085; /* light green */
-  border-left: 4px solid #16a34a;
-}
-tr.rejected {
-  background-color: #fae1d5; /* light orange */
-  border-left: 4px solid #000000;
-  font-size: medium; font-weight: normal;color: rgb(255, 0, 0);
-}
-.not-approved {
-  color:#10b981; /* GREEN */
-  font-weight: bold;
-  font-size: 1.25rem;
-}
 /* Attachment Modal */
 .attachment-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.8);
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
 }
-
-.attachment-modal.active {
-  display: flex;
-}
-
+.attachment-modal.active { display: flex; }
 .attachment-content {
-  width: 90%;
-  max-width: 1000px;
-  height: 90vh;
-  background: white;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  position: relative;
+    width: 95%;
+    max-width: 1200px;
+    height: 90vh;
+    background: white;
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
 }
-
-.attachment-content iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
+.attachment-content iframe { width: 100%; height: 100%; border: none; }
 .close-attachment {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  background: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  font-size: 18px;
-  cursor: pointer;
-  z-index: 10;
+    position: absolute;
+    top: 1rem; right: 1rem;
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 36px; height: 36px;
+    font-size: 1.25rem;
+    cursor: pointer;
+    z-index: 10;
+    display: flex; align-items: center; justify-content: center;
 }
 
-.no-attachment {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  color: var(--gray);
-  font-size: 1.25rem;
+/* Responsive */
+@media (max-width: 768px) {
+    header { flex-direction: column; text-align: center; gap: 1rem; }
+    .action-bar { flex-direction: column; align-items: stretch; }
+    .btn-group { justify-content: center; }
+   
+    .summary { grid-template-columns: repeat(2, 1fr); }
 }
-  </style>
+
+@media (max-width: 480px) {
+    body { padding: 0.5rem; }
+    .summary { grid-template-columns: 1fr; }
+    .card { padding: 1rem; }
+}
+</style>
 </head>
 <body>
-  <div style="height: fit-content;margin-bottom: 0px;">
-    <header >
-      <h1>4378M Petty Cash Management </h1>
-      <h5>تصميم و برمجة م : مصطفي النجار </h5>
-    <!--  <img id="brandImage" src="https://raw.githubusercontent.com/Desho2050/Gisco/9ad3ea3b2d8a877c7527d351681ca364b11ee30f/Desho.png" alt="Designed By: Mostafa Alnajar" style="max-height: 100px; max-width: 100px; object-fit: contain;">     -->
+
+<div class="container">
+    <header>
+        <div>
+            <h1><i class="fa-solid fa-wallet"></i> 4378M Petty Cash</h1>
+            <h5>Designed & Developed by: Mostafa Alnajar</h5>
+        </div>
+        <div class="btn-group">
+            <button id="addBtn" class="btn-primary">
+                <i class="fa-solid fa-plus"></i> Add New Voucher
+            </button>
+        </div>
     </header>
 
-    <button id="addBtn" class="btn-add">+ Add New Voucher</button>
-<!-- Export & Print Buttons -->
-<div style="display: flex; gap: 0.75rem; margin: 1rem 0;">
-  <button id="printBtn" class="btn-add" style="background-color: #6b7280;">🖨️ Print</button>
-  <button id="exportExcelBtn" class="btn-add" style="background-color: #10b981;">📊 Export Excel</button>
-  <button id="exportPdfBtn" class="btn-add" style="background-color: #ef4444;">📄 Export PDF</button>
-</div >
-
-    <!-- Search Bar -->
-    <div style="margin-top: 0px; text-align: center;font-weight: bold;" > Search any text
-      <input type="text" id="searchInput" placeholder="Search any field..." style="background-color: rgba(0, 255, 255, 0.377);"/>
+    <!-- Export Buttons -->
+    <div class="action-bar">
+        <div class="search-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search vouchers, invoices, projects..." />
+        </div>
+        <div class="btn-group">
+            <button id="printBtn" class="btn-secondary" title="Print Report">
+                <i class="fa-solid fa-print"></i> Print
+            </button>
+            <button id="exportExcelBtn" class="btn-success" title="Export to Excel">
+                <i class="fa-solid fa-file-excel"></i> Excel
+            </button>
+            <button id="exportPdfBtn" class="btn-danger" title="Export to PDF">
+                <i class="fa-solid fa-file-pdf"></i> PDF
+            </button>
+        </div>
     </div>
 
     <!-- Filters -->
-    <div style="margin-bottom: 1.5rem;">
-      <table style="width:100%; border-collapse:collapse; background:white; border-radius:0.5rem; box-shadow:var(--shadow);">
-        <tbody>
-          <tr>
-            <td style="padding:0.75rem; border-bottom:1px solid var(--border); border-right:1px solid var(--border);">
-              <div style="font-weight:600;text-align: center;font-weight: bold;">Receiving Date</div>
-              <select id="dateFilter" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.375rem; font-size:1rem; background-color: rgba(0, 255, 255, 0.377);">
-                <option value="">All</option>
-              </select>
-            </td>
-            <td style="padding:0.75rem; border-bottom:1px solid var(--border);">
-              <div style="font-weight:600;text-align: center;font-weight: bold;">Petty Cash Status</div>
-              <select id="pettyCashFilter" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.375rem; font-size:1rem;background-color: rgba(0, 255, 255, 0.377);">
-                <option value="">All</option>
-                <option value="Received">Received</option>
-                <option value="Not Received">Not Received</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0.75rem; border-right:1px solid var(--border);">
-              <div style="font-weight:600;text-align: center;font-weight: bold;">Payment Status</div>
-              <select id="paymentStatusFilter" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.375rem; font-size:1rem;background-color: rgba(0, 255, 255, 0.377);">
-                <option value="">All</option>
-                <option value="Paid in Full">Paid in Full</option>
-                <option value="Not Paid">Not Paid</option>
-              </select>
-            </td>
-            <td style="padding:0.75rem;">
-              <button id="clearFiltersBtn" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.375rem; font-size:1rem; background-color:#b700ff27; color:var(--dark); cursor:pointer;">Clear All Filters</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="filters-section">
+        <div class="filter-grid">
+            <div class="filter-item">
+                <label><i class="fa-regular fa-calendar"></i> Receiving Date</label>
+                <select id="dateFilter">
+                    <option value="">All Dates</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label><i class="fa-solid fa-hand-holding-dollar"></i> Petty Cash Status</label>
+                <select id="pettyCashFilter">
+                    <option value="">All</option>
+                    <option value="Received">Received</option>
+                    <option value="Not Received">Not Received</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label><i class="fa-solid fa-money-bill-transfer"></i> Payment Status</label>
+                <select id="paymentStatusFilter">
+                    <option value="">All</option>
+                    <option value="Paid in Full">Paid in Full</option>
+                    <option value="Not Paid">Not Paid</option>
+                </select>
+            </div>
+            <div class="filter-item" style="display:flex; align-items:flex-end;">
+                <button id="clearFiltersBtn" class="btn-secondary" style="border-color: var(--danger); color: var(--danger);">
+                    <i class="fa-solid fa-eraser"></i> Clear Filters
+                </button>
+            </div>
+        </div>
     </div>
-</div>
+
     <!-- Summary Cards -->
     <div class="summary">
-    <div class="card">
-        <h3>Total Submitted Amount</h3>
-        <p class="total-amount" id="totalAmount">0.00</p>
-      </div>
-      <div class="card">
-        <h3>Rejected Amount</h3>
-        <p class="rejected" id="rejectedAmount">0.00</p>
-      </div>
-      <div class="card">
-        <h3>Fully Received Amount</h3>
-        <p class="received" id="fullyReceivedAmount">0.00</p>
-      </div>
-
-
-      
-      <div class="card">
-        <h3>Count of Submitted Vouchers</h3>
-        <p class="total-count" id="totalCount" >0</p>
-      </div>
-      
-       <div class="card">
-        <h3>APPROVED Amount</h3>
-        <p class="pending" id="pendingAmount">0.00</p>
-      </div>
-      <div class="card">
-  <h3>Pending Approval Amount</h3>
- <p class="not-approved" id="notApprovedAmount">0.00</p>
-</div>
-      <div class="card">
-        <h3>Balance Check</h3>
-        <p class="balance" id="balanceAmount">0.00</p>
-      </div>
+        <div class="card total-amount-card">
+            <h3><i class="fa-solid fa-coins"></i> Total Submitted</h3>
+            <p id="totalAmount">0.00</p>
+        </div>
+        <div class="card pending-card">
+            <h3><i class="fa-solid fa-clock"></i> Approved (Pending Cash)</h3>
+            <p id="pendingAmount" class="text-warning">0.00</p>
+        </div>
+        <div class="card approval-card">
+            <h3><i class="fa-solid fa-hourglass-half"></i> Pending Approval</h3>
+            <p id="notApprovedAmount" class="text-info">0.00</p>
+        </div>
+        <div class="card received-card">
+            <h3><i class="fa-solid fa-check-circle"></i> Fully Received</h3>
+            <p id="fullyReceivedAmount" class="text-success">0.00</p>
+        </div>
+        <div class="card rejected-card">
+            <h3><i class="fa-solid fa-circle-xmark"></i> Rejected</h3>
+            <p id="rejectedAmount" class="text-danger">0.00</p>
+        </div>
+        <div class="card">
+            <h3><i class="fa-solid fa-list"></i> Total Vouchers</h3>
+            <p id="totalCount">0</p>
+        </div>
     </div>
 
     <!-- Table -->
     <div class="table-container">
-      <table id="vouchersTable">
-  <thead>
-  <tr>
-    <th data-sort="voucher_number">Voucher # ▲</th>
-    <th data-sort="voucher_type">Type ▲</th>
-    <th>Total</th>
-    <th>Status</th>
-    <th data-sort="saas_invoice">SAAS Invoice ▲</th>
-    <th data-sort="payment_status">Payment Status ▲</th>
-    <th>Line</th>
-    <th>JVR</th>
-    <th>JVR Date</th>
-    <th>Project #</th>
-    <th>Created</th>
-    <th>Petty Cash</th>
-    <th data-sort="receiving_date">Receiving Date ▲</th>
-    <th>Received Amt</th>
-    <th>Notes</th>
-    <th>Attachment</th>
-    <th>Actions</th>
-  </tr>
-</thead>
-        <tbody id="tableBody">
-          <!-- Rows inserted by JS -->
-        </tbody>
-      </table>
+        <table id="vouchersTable">
+            <thead>
+                <tr>
+                    <th data-sort="voucher_number">Voucher # <i class="fa-solid fa-sort"></i></th>
+                    <th data-sort="voucher_type">Type <i class="fa-solid fa-sort"></i></th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th data-sort="saas_invoice">SAAS Invoice <i class="fa-solid fa-sort"></i></th>
+                    <th data-sort="payment_status">Payment <i class="fa-solid fa-sort"></i></th>
+                    <th>Line</th>
+                    <th>JVR</th>
+                    <th>JVR Date</th>
+                    <th>Project #</th>
+                    <th>Created</th>
+                    <th>Petty Cash</th>
+                    <th data-sort="receiving_date">Rec. Date <i class="fa-solid fa-sort"></i></th>
+                    <th>Received Amt</th>
+                    <th>Notes</th>
+                    <th>Attachment</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Rows inserted by JS -->
+            </tbody>
+        </table>
     </div>
-  </div>
+</div>
 
-  <!-- Edit/Add Modal -->
-  <div id="editModal" class="modal">
+<!-- Edit/Add Modal -->
+<div id="editModal" class="modal">
     <div class="modal-content">
-      <h2 id="modalTitle">Add New Voucher</h2>
-      <form id="editForm">
-        <div class="form-grid">
-          <div><label>Voucher Number</label><input type="text" id="editVoucherNumber" name="editVoucherNumber" required /></div>
-          <div>
-            <label>Voucher Type</label>
-            <select id="editVoucherType" name="editVoucherType" required>
-              <option value="">-- Select --</option>
-              <option value="MATERIAL">MATERIAL</option>
-              <option value="VEHICLE">VEHICLE</option>
-              <option value="NON-MATERIAL">NON-MATERIAL</option>
-            </select>
-          </div>
-          <div><label>Voucher Total</label><input type="number" step="0.01" id="editVoucherTotal" name="editVoucherTotal" required /></div>
-          <div>
-            <label>Voucher Status</label>
-            <select id="editVoucherStatus" name="editVoucherStatus" required>
-              <option value="">-- Select --</option>
-              <option value="FINANCE APPROVED">FINANCE APPROVED</option>
-              <option value="Submitted">Submitted</option>
-              <option value="AWAITING PROCUREMENT">AWAITING PROCUREMENT</option>
-              <option value="AWAITING VEHICLE COORDINATOR">AWAITING VEHICLE COORDINATOR</option>
-              <option value="PROCUREMENT APPROVED">PROCUREMENT APPROVED</option>
-              <option value="AWAITING HR LEVEL2">AWAITING HR LEVEL2</option>
-              <option value="AWAITING HR LEVEL1">AWAITING HR LEVEL1</option>
-              <option value="HR APPROVED">HR APPROVED</option>
-              <option value="FINANCE REJECTED">FINANCE REJECTED</option>
-              <option value="HR REJECTED">HR REJECTED</option>
-              <option value="HR1 REJECTED">HR1 REJECTED</option>
-            </select>
-          </div>
-          <div><label>SAAS Invoice</label><input type="text" id="editSaasInvoice" name="editSaasInvoice" /></div>
-          <div>
-            <label>Payment Status</label>
-            <select id="editPaymentStatus" name="editPaymentStatus" required>
-              <option value="">-- Select --</option>
-              <option value="Paid in Full">Paid in Full</option>
-              <option value="Not Paid">Not Paid</option>
-            </select>
-          </div>
-          <div><label>Voucher Line</label><input type="text" id="editVoucherLine" name="editVoucherLine" /></div>
-          <div><label>JVR</label><input type="text" id="editJvr" name="editJvr" /></div>
-          <div><label>JVR Date</label><input type="date" id="editJvrDate" name="editJvrDate" /></div>
-          <div><label>Project Number</label><input type="text" id="editProjectNumber" name="editProjectNumber" /></div>
-          <div><label>Created Date</label><input type="date" id="editCreatedDate" name="editCreatedDate" required /></div>
-          <div>
-            <label>Received Petty Cash</label>
-            <select id="editReceivedPettyCash" name="editReceivedPettyCash" required>
-              <option value="">-- Select --</option>
-              <option value="Received">Received</option>
-              <option value="Not Received">Not Received</option>
-            </select>
-          </div>
-          <div><label>Receiving Date</label><input type="date" id="editReceivingDate" name="editReceivingDate" /></div>
-          <div><label>Received Amount</label><input type="number" step="0.01" id="editReceivedAmount" name="editReceivedAmount" /></div>
-          <div><label>Notes</label><textarea id="editNotes" name="editNotes" rows="3" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:0.25rem; font-size:0.875rem;"></textarea></div>
-        </div>
-        <div class="form-actions">
-          <button type="button" id="cancelEdit" class="btn-cancel">Cancel</button>
-          <button type="submit" class="btn-save">Save</button>
-        </div>
-      </form>
+        <h2 id="modalTitle"><i class="fa-solid fa-pen-to-square"></i> Voucher Details</h2>
+        <form id="editForm">
+            <div class="form-grid">
+                <div><label>Voucher Number</label><input type="text" id="editVoucherNumber" name="editVoucherNumber" required /></div>
+                <div>
+                    <label>Voucher Type</label>
+                    <select id="editVoucherType" name="editVoucherType" required>
+                        <option value="">-- Select --</option>
+                        <option value="MATERIAL">MATERIAL</option>
+                        <option value="VEHICLE">VEHICLE</option>
+                        <option value="NON-MATERIAL">NON-MATERIAL</option>
+                    </select>
+                </div>
+                <div><label>Voucher Total</label><input type="number" step="0.01" id="editVoucherTotal" name="editVoucherTotal" required /></div>
+                <div>
+                    <label>Voucher Status</label>
+                    <select id="editVoucherStatus" name="editVoucherStatus" required>
+                        <option value="">-- Select --</option>
+                        <option value="FINANCE APPROVED">FINANCE APPROVED</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="AWAITING PROCUREMENT">AWAITING PROCUREMENT</option>
+                        <option value="AWAITING VEHICLE COORDINATOR">AWAITING VEHICLE COORDINATOR</option>
+                        <option value="PROCUREMENT APPROVED">PROCUREMENT APPROVED</option>
+                        <option value="AWAITING HR LEVEL2">AWAITING HR LEVEL2</option>
+                        <option value="AWAITING HR LEVEL1">AWAITING HR LEVEL1</option>
+                        <option value="HR APPROVED">HR APPROVED</option>
+                        <option value="FINANCE REJECTED">FINANCE REJECTED</option>
+                        <option value="HR REJECTED">HR REJECTED</option>
+                        <option value="HR1 REJECTED">HR1 REJECTED</option>
+                    </select>
+                </div>
+                <div><label>SAAS Invoice</label><input type="text" id="editSaasInvoice" name="editSaasInvoice" /></div>
+                <div>
+                    <label>Payment Status</label>
+                    <select id="editPaymentStatus" name="editPaymentStatus" required>
+                        <option value="">-- Select --</option>
+                        <option value="Paid in Full">Paid in Full</option>
+                        <option value="Not Paid">Not Paid</option>
+                    </select>
+                </div>
+                <div><label>Voucher Line</label><input type="text" id="editVoucherLine" name="editVoucherLine" /></div>
+                <div><label>JVR</label><input type="text" id="editJvr" name="editJvr" /></div>
+                <div><label>JVR Date</label><input type="date" id="editJvrDate" name="editJvrDate" /></div>
+                <div><label>Project Number</label><input type="text" id="editProjectNumber" name="editProjectNumber" /></div>
+                <div><label>Created Date</label><input type="date" id="editCreatedDate" name="editCreatedDate" required /></div>
+                <div>
+                    <label>Received Petty Cash</label>
+                    <select id="editReceivedPettyCash" name="editReceivedPettyCash" required>
+                        <option value="">-- Select --</option>
+                        <option value="Received">Received</option>
+                        <option value="Not Received">Not Received</option>
+                    </select>
+                </div>
+                <div><label>Receiving Date</label><input type="date" id="editReceivingDate" name="editReceivingDate" /></div>
+                <div><label>Received Amount</label><input type="number" step="0.01" id="editReceivedAmount" name="editReceivedAmount" /></div>
+                <div style="grid-column: 1 / -1;">
+                    <label>Notes</label>
+                    <textarea id="editNotes" name="editNotes" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" id="cancelEdit" class="btn-secondary">Cancel</button>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
     </div>
-  </div>
- <!-- Attachment Modal -->
+</div>
+
+<!-- Attachment Modal -->
 <div id="attachmentModal" class="attachment-modal">
-  <div class="attachment-content">
-    <button class="close-attachment" id="closeAttachment">&times;</button>
-    <div id="attachmentPlaceholder" class="no-attachment">No attachment available</div>
-  </div> <!-- Attachment Modal -->
-<div id="attachmentModal" class="attachment-modal">
-  <div class="attachment-content">
-    <button class="close-attachment" id="closeAttachment">&times;</button>
-    <div id="attachmentPlaceholder" class="no-attachment">No attachment available</div>
-  </div>
+    <div class="attachment-content">
+        <button class="close-attachment" id="closeAttachment"><i class="fa-solid fa-times"></i></button>
+        <div id="attachmentPlaceholder" style="display:flex; justify-content:center; align-items:center; height:100%; color:var(--gray-500);">No attachment available</div>
+    </div>
 </div>
 
 <script>
-  // ... your JavaScript code
-</script>
- 
-<!-- Code injected by live-server -->
-<script>
-	// <![CDATA[  <-- For SVG support
-	if ('WebSocket' in window) {
-		(function () {
-			function refreshCSS() {
-				var sheets = [].slice.call(document.getElementsByTagName("link"));
-				var head = document.getElementsByTagName("head")[0];
-				for (var i = 0; i < sheets.length; ++i) {
-					var elem = sheets[i];
-					var parent = elem.parentElement || head;
-					parent.removeChild(elem);
-					var rel = elem.rel;
-					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
-						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
-						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
-					}
-					parent.appendChild(elem);
-				}
-			}
-			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
-			var address = protocol + window.location.host + window.location.pathname + '/ws';
-			var socket = new WebSocket(address);
-			socket.onmessage = function (msg) {
-				if (msg.data == 'reload') window.location.reload();
-				else if (msg.data == 'refreshcss') refreshCSS();
-			};
-			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
-				console.log('Live reload enabled.');
-				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
-			}
-		})();
-	}
-	else {
-		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
-	}
-	// ]]>
-</script>
-</body>
-  <script>
-    // Supabase config (cleaned)
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Supabase config
+const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DOM Elements
-    const tableBody = document.getElementById('tableBody');
-    const searchInput = document.getElementById('searchInput');
-    const addBtn = document.getElementById('addBtn');
-    const editModal = document.getElementById('editModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const editForm = document.getElementById('editForm');
-    const cancelEditBtn = document.getElementById('cancelEdit');
-    const pendingAmountEl = document.getElementById('pendingAmount');
-    const fullyReceivedAmountEl = document.getElementById('fullyReceivedAmount');
-    const rejectedAmountEl = document.getElementById('rejectedAmount');
-    const totalCountEl = document.getElementById('totalCount');
-    const totalAmountEl = document.getElementById('totalAmount');
+// DOM Elements
+const tableBody = document.getElementById('tableBody');
+const searchInput = document.getElementById('searchInput');
+const addBtn = document.getElementById('addBtn');
+const editModal = document.getElementById('editModal');
+const modalTitle = document.getElementById('modalTitle');
+const editForm = document.getElementById('editForm');
+const cancelEditBtn = document.getElementById('cancelEdit');
+const pendingAmountEl = document.getElementById('pendingAmount');
+const fullyReceivedAmountEl = document.getElementById('fullyReceivedAmount');
+const rejectedAmountEl = document.getElementById('rejectedAmount');
+const totalCountEl = document.getElementById('totalCount');
+const totalAmountEl = document.getElementById('totalAmount');
 const notApprovedAmountEl = document.getElementById('notApprovedAmount');
-const balanceAmountEl = document.getElementById('balanceAmount');
 
-    let editingId = null;
-    let allVouchers = [];
-    let currentSortField = null;
-    let currentSortDirection = 'asc';
+let editingId = null;
+let allVouchers = [];
+let currentSortField = null;
+let currentSortDirection = 'asc';
 
-    // === Fetch & render data ===
-    async function fetchData(searchTerm = '') {
-      try {
+// === Fetch & render data ===
+async function fetchData(searchTerm = '') {
+    try {
         const { data, error } = await supabaseClient
-          .from('vouchers')
-          .select('*')
-          .order('created_date', { ascending: false });
-
+            .from('vouchers')
+            .select('*')
+            .order('created_date', { ascending: false });
+            
         if (error) throw error;
-
         allVouchers = data;
         populateDateFilter(data);
-        let filtered = applyFilters(data, searchTerm, document.getElementById('dateFilter').value, document.getElementById('pettyCashFilter').value, document.getElementById('paymentStatusFilter').value);
+        
+        let filtered = applyFilters(data, searchTerm, 
+            document.getElementById('dateFilter').value, 
+            document.getElementById('pettyCashFilter').value, 
+            document.getElementById('paymentStatusFilter').value);
+            
         const sorted = sortData(filtered, currentSortField, currentSortDirection);
         renderTable(sorted);
         calculateSummary(sorted);
-      } catch (err) {
+    } catch (err) {
         console.error('Fetch error:', err);
-        alert('Failed to load data: ' + (err.message || err.toString()));
-      }
+        alert('Failed to load  ' + (err.message || err.toString()));
     }
-// Global variable for attachment modal
+}
+
+// Attachment Modal Logic
 const attachmentModal = document.getElementById('attachmentModal');
 const attachmentPlaceholder = document.getElementById('attachmentPlaceholder');
 const closeAttachmentBtn = document.getElementById('closeAttachment');
 
-// Function to open attachment modal
 window.openAttachment = function(saasInvoice) {
-  // Clear previous content
-  attachmentPlaceholder.innerHTML = '';
-  
-  // Create iframe for PDF
-  const iframe = document.createElement('iframe');
-  const noCacheUrl = `${saasInvoice}.pdf?t=${new Date().getTime()}`;
-iframe.src = noCacheUrl;
-  iframe.style.width = '100%';
-  iframe.style.height = '100%';
-  iframe.style.border = 'none';
-  
-  // Handle PDF not found
-  iframe.onerror = function() {
-    attachmentPlaceholder.innerHTML = '<div class="no-attachment">PDF file not found</div>';
-  };
-  
-  attachmentPlaceholder.appendChild(iframe);
-  attachmentModal.classList.add('active');
+    attachmentPlaceholder.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    const noCacheUrl = `${saasInvoice}.pdf?t=${new Date().getTime()}`;
+    iframe.src = noCacheUrl;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    
+    iframe.onerror = function() {
+        attachmentPlaceholder.innerHTML = '<div style="text-align:center; padding:2rem;"><i class="fa-solid fa-file-circle-xmark" style="font-size:3rem; color:var(--danger)"></i><p>PDF file not found</p></div>';
+    };
+    
+    attachmentPlaceholder.appendChild(iframe);
+    attachmentModal.classList.add('active');
 };
 
-// Close attachment modal
 closeAttachmentBtn.addEventListener('click', () => {
-  attachmentModal.classList.remove('active');
-  // Clear iframe to stop loading
-  attachmentPlaceholder.innerHTML = '<div class="no-attachment">No attachment available</div>';
-});
-
-// Close modal when clicking outside
-attachmentModal.addEventListener('click', (e) => {
-  if (e.target === attachmentModal) {
     attachmentModal.classList.remove('active');
-    attachmentPlaceholder.innerHTML = '<div class="no-attachment">No attachment available</div>';
-  }
+    attachmentPlaceholder.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:var(--gray-500);">No attachment available</div>';
 });
-    function populateDateFilter(data) {
-      const dateSet = new Set();
-      data.forEach(row => {
-        if (row.receiving_date) dateSet.add(row.receiving_date);
-      });
 
-      const dateFilter = document.getElementById('dateFilter');
-      const currentSelection = dateFilter.value; // Preserve current selection
-      dateFilter.innerHTML = '<option value="">All Dates</option>';
-      const sortedDates = Array.from(dateSet).sort((a, b) => new Date(a) - new Date(b)); // Sort ascending (oldest first)
-      sortedDates.forEach(date => {
+attachmentModal.addEventListener('click', (e) => {
+    if (e.target === attachmentModal) {
+        attachmentModal.classList.remove('active');
+        attachmentPlaceholder.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:var(--gray-500);">No attachment available</div>';
+    }
+});
+
+function populateDateFilter(data) {
+    const dateSet = new Set();
+    data.forEach(row => {
+        if (row.receiving_date) dateSet.add(row.receiving_date);
+    });
+    const dateFilter = document.getElementById('dateFilter');
+    const currentSelection = dateFilter.value;
+    dateFilter.innerHTML = '<option value="">All Dates</option>';
+    const sortedDates = Array.from(dateSet).sort((a, b) => new Date(a) - new Date(b));
+    
+    sortedDates.forEach(date => {
         const option = document.createElement('option');
         option.value = date;
-        // Format date for better readability (assuming YYYY-MM-DD format)
         const formattedDate = new Date(date).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
+            year: 'numeric', month: 'short', day: 'numeric'
         });
         option.textContent = formattedDate;
         dateFilter.appendChild(option);
-      });
-      dateFilter.value = currentSelection; // Restore selection
-    }
+    });
+    dateFilter.value = currentSelection;
+}
 
 // ===== PRINT =====
 document.getElementById('printBtn').addEventListener('click', () => {
-  const printWindow = window.open('', '_blank');
-  
-  // Clone the table and remove specific columns for printing
-  const tableClone = document.querySelector('.table-container table').cloneNode(true);
-  const headerRow = tableClone.querySelector('thead tr');
-  const dataRows = tableClone.querySelectorAll('tbody tr');
-  
-  // Find column indices to remove based on header text
-  const headers = Array.from(headerRow.querySelectorAll('th'));
-  const columnsToRemove = [];
-  
-  headers.forEach((header, index) => {
-    const headerText = header.textContent.trim().toLowerCase();
-    // Check for columns to exclude
-    if (headerText.includes('project #') || 
-        headerText.includes('attachment') || 
-        headerText.includes('actions')) {
-      columnsToRemove.push(index);
-    }
-  });
-  
-  // Remove columns from right to left to maintain correct indices
-  columnsToRemove.sort((a, b) => b - a); // Sort in descending order
-  
-  // Remove from header row
-  columnsToRemove.forEach(colIndex => {
-    const headerCells = headerRow.querySelectorAll('th');
-    if (headerCells[colIndex]) {
-      headerCells[colIndex].remove();
-    }
-  });
-  
-  // Remove from data rows
-  dataRows.forEach(row => {
-    columnsToRemove.forEach(colIndex => {
-      const dataCells = row.querySelectorAll('td');
-      if (dataCells[colIndex]) {
-        dataCells[colIndex].remove();
-      }
-    });
-  });
-  
-  // Clone and modify summary section to exclude "Count of Submitted Voucher"
-  const summaryClone = document.querySelector('.summary').cloneNode(true);
-  const summaryCards = summaryClone.querySelectorAll('.card');
-  
-  summaryCards.forEach(card => {
-    const cardTitle = card.querySelector('h3');
-    if (cardTitle && cardTitle.textContent.trim() === 'Count of Submitted Vouchers') {
-      card.remove();
-    }
-  });
-  
-  const tableHtml = tableClone.outerHTML;
-  const summaryHtml = summaryClone.outerHTML;
-  const title = document.querySelector('h1').outerHTML;
-
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Print Vouchers</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-          .card { background: #f9fafb; padding: 0.75rem; border-radius: 0.375rem; }
-          table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-          th { background-color: #f1f1f1; }
-          @media print {
-            body { padding: 0; }
-            button { display: none; }
-          }
-        <\/style>
-      <\/head>
-      <body>
-        ${title}
-        ${summaryHtml}
-        ${tableHtml}
-        <script>
-          window.onload = () => window.print();
-        <\/script>
-      <\/body>
-    <\/html>
-  `);
-  printWindow.document.close();
-});
-// ===== EXPORT TO EXCEL (with enhanced formatting and totals) =====
-document.getElementById('exportExcelBtn').addEventListener('click', () => {
-  // Clone the table for modification
-  const table = document.getElementById('vouchersTable');
-  const tableClone = table.cloneNode(true);
-  
-  // Remove columns: Project #, Attachment, Actions (same as print)
-  const headerRow = tableClone.querySelector('thead tr');
-  const dataRows = tableClone.querySelectorAll('tbody tr');
-  
-  // Find column indices to remove based on header text
-  const headers = Array.from(headerRow.querySelectorAll('th'));
-  const columnsToRemove = [];
-  
-  headers.forEach((header, index) => {
-    const headerText = header.textContent.trim().toLowerCase();
-    if (headerText.includes('project #') || 
-        headerText.includes('attachment') || 
-        headerText.includes('actions')) {
-      columnsToRemove.push(index);
-    }
-  });
-  
-  // Remove columns from right to left
-  columnsToRemove.sort((a, b) => b - a);
-  
-  // Remove from header row
-  columnsToRemove.forEach(colIndex => {
-    const headerCells = headerRow.querySelectorAll('th');
-    if (headerCells[colIndex]) {
-      headerCells[colIndex].remove();
-    }
-  });
-  
-  // Remove from data rows and collect numeric data for totals
-  const numericColumns = [2, 12]; // Total (index 2) and Received Amt (index 12) after column removal
-  const columnTotals = {};
-  numericColumns.forEach(col => columnTotals[col] = 0);
-  
-  dataRows.forEach(row => {
-    columnsToRemove.forEach(colIndex => {
-      const dataCells = row.querySelectorAll('td');
-      if (dataCells[colIndex]) {
-        dataCells[colIndex].remove();
-      }
-    });
-    
-    // Calculate totals for numeric columns
-    numericColumns.forEach(colIndex => {
-      const cells = row.querySelectorAll('td');
-      if (cells[colIndex]) {
-        const cellText = cells[colIndex].textContent.trim();
-        if (cellText && cellText !== '-' && !isNaN(cellText)) {
-          columnTotals[colIndex] += parseFloat(cellText);
-        }
-      }
-    });
-  });
-  
-  // Create total row
-  const totalRow = document.createElement('tr');
-  const totalCells = headerRow.querySelectorAll('th');
-  
-  totalCells.forEach((header, index) => {
-    const cell = document.createElement('td');
-    if (index === 0) {
-      cell.textContent = 'TOTAL';
-    } else if (numericColumns.includes(index)) {
-      cell.textContent = columnTotals[index].toFixed(2);
-    } else {
-      cell.textContent = '';
-    }
-    totalRow.appendChild(cell);
-  });
-  
-  // Add total row to table
-  tableClone.querySelector('tbody').appendChild(totalRow);
-  
-  // Convert to workbook
-  const wb = XLSX.utils.table_to_book(tableClone, { sheet: "Vouchers" });
-  
-  // Get the first worksheet
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  
-  // Apply number formatting to numeric columns
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  
-  // Format Total column (column C, index 2)
-  for (let R = range.s.r + 1; R <= range.e.r - 1; R++) { // Exclude total row from this loop
-    const cellAddress = XLSX.utils.encode_cell({ c: 2, r: R });
-    if (ws[cellAddress]) {
-      ws[cellAddress].z = '#,##0.00'; // Number format with 2 decimals
-    }
-  }
-  
-  // Format Received Amt column (column M, index 12)
-  for (let R = range.s.r + 1; R <= range.e.r - 1; R++) { // Exclude total row from this loop
-    const cellAddress = XLSX.utils.encode_cell({ c: 12, r: R });
-    if (ws[cellAddress]) {
-      ws[cellAddress].z = '#,##0.00'; // Number format with 2 decimals
-    }
-  }
-  
-  // Get total row index
-  const totalRowIndex = range.e.r;
-  
-  // Apply formatting to header row (first row)
-  const headerRowIndex = range.s.r;
-  for (let C = range.s.c; C <= range.e.c; C++) {
-    const cellAddress = XLSX.utils.encode_cell({ c: C, r: headerRowIndex });
-    if (!ws[cellAddress]) {
-      ws[cellAddress] = { t: 's', v: '' };
-    }
-    ws[cellAddress].s = {
-      font: {
-        bold: true,
-        color: { rgb: "FFFFFF" }, // White text
-        sz: 14 // Font size 14
-      },
-      fill: {
-        fgColor: { rgb: "000000" } // Black background
-      }
-    };
-  }
-  
-  // Apply formatting to total row (last row)
-  for (let C = range.s.c; C <= range.e.c; C++) {
-    const cellAddress = XLSX.utils.encode_cell({ c: C, r: totalRowIndex });
-    if (!ws[cellAddress]) {
-      ws[cellAddress] = { t: 's', v: '' };
-    }
-    // Apply number formatting to numeric columns in total row
-    if (numericColumns.includes(C)) {
-      ws[cellAddress].z = '#,##0.00';
-    }
-    ws[cellAddress].s = {
-      font: {
-        bold: true,
-        color: { rgb: "FFFFFF" }, // White text
-        sz: 14 // Font size 14
-      },
-      fill: {
-        fgColor: { rgb: "000000" } // Black background
-      }
-    };
-  }
-  
-  // Auto-fit column widths (basic implementation)
-  const colWidths = [];
-  for (let C = range.s.c; C <= range.e.c; C++) {
-    let maxWidth = 12; // Minimum width to accommodate larger font
-    for (let R = range.s.r; R <= range.e.r; R++) {
-      const cellAddress = XLSX.utils.encode_cell({ c: C, r: R });
-      if (ws[cellAddress] && ws[cellAddress].v) {
-        const cellWidth = String(ws[cellAddress].v).length;
-        maxWidth = Math.max(maxWidth, cellWidth);
-      }
-    }
-    colWidths.push({ wch: Math.min(maxWidth + 2, 50) }); // Max width of 50
-  }
-  ws['!cols'] = colWidths;
-  
-  // Save file
-  XLSX.writeFile(wb, `PettyCash_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
-});
-
-// ===== EXPORT TO PDF (Printable Report) =====
-document.getElementById('exportPdfBtn').addEventListener('click', async () => {
-  // Show loading message
-  alert('Generating PDF report... This may take a few seconds.');
-  
-  try {
-    // Create a clean container for PDF content
-    const pdfContainer = document.createElement('div');
-    pdfContainer.style.fontFamily = 'Arial, sans-serif';
-    pdfContainer.style.padding = '20px';
-    pdfContainer.style.width = '100%';
-    
-    // Add title
-    const title = document.querySelector('h1').cloneNode(true);
-    pdfContainer.appendChild(title);
-    
-    // Clone and modify summary section (exclude "Count of Submitted Vouchers")
-    const summaryClone = document.querySelector('.summary').cloneNode(true);
-    const summaryCards = summaryClone.querySelectorAll('.card');
-    
-    summaryCards.forEach(card => {
-      const cardTitle = card.querySelector('h3');
-      if (cardTitle && cardTitle.textContent.trim() === 'Count of Submitted Vouchers') {
-        card.remove();
-      }
-    });
-    
-    // Style summary for PDF
-    summaryClone.style.display = 'grid';
-    summaryClone.style.gridTemplateColumns = 'repeat(auto-fit, minmax(150px, 1fr))';
-    summaryClone.style.gap = '1rem';
-    summaryClone.style.marginBottom = '1.5rem';
-    
-    summaryCards.forEach(card => {
-      card.style.background = '#f9fafb';
-      card.style.padding = '0.75rem';
-      card.style.borderRadius = '0.375rem';
-    });
-    
-    pdfContainer.appendChild(summaryClone);
-    
-    // Clone and modify table (exclude Project #, Attachment, Actions columns)
+    const printWindow = window.open('', '_blank');
     const tableClone = document.querySelector('.table-container table').cloneNode(true);
     const headerRow = tableClone.querySelector('thead tr');
     const dataRows = tableClone.querySelectorAll('tbody tr');
     
-    // Find column indices to remove based on header text
     const headers = Array.from(headerRow.querySelectorAll('th'));
     const columnsToRemove = [];
-    
     headers.forEach((header, index) => {
-      const headerText = header.textContent.trim().toLowerCase();
-      if (headerText.includes('project #') || 
-          headerText.includes('attachment') || 
-          headerText.includes('actions')) {
-        columnsToRemove.push(index);
-      }
-    });
-    
-    // Remove columns from right to left
-    columnsToRemove.sort((a, b) => b - a);
-    
-    // Remove from header row
-    columnsToRemove.forEach(colIndex => {
-      const headerCells = headerRow.querySelectorAll('th');
-      if (headerCells[colIndex]) {
-        headerCells[colIndex].remove();
-      }
-    });
-    
-    // Remove from data rows
-    dataRows.forEach(row => {
-      columnsToRemove.forEach(colIndex => {
-        const dataCells = row.querySelectorAll('td');
-        if (dataCells[colIndex]) {
-          dataCells[colIndex].remove();
+        const headerText = header.textContent.trim().toLowerCase();
+        if (headerText.includes('project #') || headerText.includes('attachment') || headerText.includes('actions')) {
+            columnsToRemove.push(index);
         }
-      });
     });
     
-    // Style table for PDF
-    tableClone.style.width = '100%';
-    tableClone.style.borderCollapse = 'collapse';
-    tableClone.style.marginTop = '1rem';
- 
-    
-    const allCells = tableClone.querySelectorAll('th, td');
-    allCells.forEach(cell => {
-      cell.style.border = '1px solid #ddd';
-      cell.style.padding = '8px';
-      cell.style.textAlign = 'left';
-      cell.style.fontSize = '12px';
+    columnsToRemove.sort((a, b) => b - a);
+    columnsToRemove.forEach(colIndex => {
+        const headerCells = headerRow.querySelectorAll('th');
+        if (headerCells[colIndex]) headerCells[colIndex].remove();
     });
     
-    const headerCells = tableClone.querySelectorAll('th');
-    headerCells.forEach(cell => {
-      cell.style.backgroundColor = '#f1f1f1';
+    dataRows.forEach(row => {
+        columnsToRemove.forEach(colIndex => {
+            const dataCells = row.querySelectorAll('td');
+            if (dataCells[colIndex]) dataCells[colIndex].remove();
+        });
     });
     
-    pdfContainer.appendChild(tableClone);
-    
-    // Create a temporary container in the document for html2canvas
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'flex';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.top = '0';
-    tempContainer.appendChild(pdfContainer);
-    document.body.appendChild(tempContainer);
-    
-    // Generate canvas from the clean content
-    const canvas = await html2canvas(tempContainer, {
-      scale: 1,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff'
+    const summaryClone = document.querySelector('.summary').cloneNode(true);
+    const summaryCards = summaryClone.querySelectorAll('.card');
+    summaryCards.forEach(card => {
+        const cardTitle = card.querySelector('h3');
+        if (cardTitle && cardTitle.textContent.trim() === 'Total Vouchers') {
+            card.remove();
+        }
     });
     
-    // Clean up temporary container
-    document.body.removeChild(tempContainer);
+    const tableHtml = tableClone.outerHTML;
+    const summaryHtml = summaryClone.outerHTML;
+    const title = "<h1 style='font-family:Arial; margin-bottom:20px;'>4378M Petty Cash Report</h1>";
     
-    // Create PDF
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jspdf.jsPDF('p', 'mm', [320, 800]); // A4 landscape
-    
-    const imgWidth = 320; // A4 width in mm
-    const pageHeight = 800; // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    
-    let heightLeft = imgHeight;
-    let position = 0;
-    
-    // Add first page
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-    
-    // Add additional pages if needed
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight ;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
-    
-    // Save PDF
-    pdf.save(`PettyCash_Report_${new Date().toISOString().slice(0,10)}.pdf`);
-    
-  } catch (error) {
-    console.error('PDF generation error:', error);
-    alert('Failed to generate PDF report. Please try again.');
-  }
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <title>Print Vouchers</title>
+        <style>
+            body { font-family: 'Inter', Arial, sans-serif; padding: 20px; color: #333; }
+            .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+            .card { background: #f9fafb; padding: 1rem; border: 1px solid #ddd; border-radius: 4px; }
+            .card h3 { font-size: 12px; color: #666; margin-bottom: 5px; }
+            .card p { font-size: 18px; font-weight: bold; }
+            table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 11px; }
+            th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+            th { background-color: #f1f1f1; }
+            @media print { body { padding: 0; } button { display: none; } }
+        </style>
+        </head>
+        <body>
+        ${title}
+        ${summaryHtml}
+        ${tableHtml}
+        <script>window.onload = () => window.print();<\/script>
+        <\/body>
+        <\/html>
+    `);
+    printWindow.document.close();
 });
 
-    function applyFilters(data, searchTerm, selectedDate, selectedPettyCash, selectedPayment) {
-      return data.filter(row => {
+// ===== EXPORT TO EXCEL =====
+document.getElementById('exportExcelBtn').addEventListener('click', () => {
+    const table = document.getElementById('vouchersTable');
+    const tableClone = table.cloneNode(true);
+    const headerRow = tableClone.querySelector('thead tr');
+    const dataRows = tableClone.querySelectorAll('tbody tr');
+    
+    const headers = Array.from(headerRow.querySelectorAll('th'));
+    const columnsToRemove = [];
+    headers.forEach((header, index) => {
+        const headerText = header.textContent.trim().toLowerCase();
+        if (headerText.includes('project #') || headerText.includes('attachment') || headerText.includes('actions')) {
+            columnsToRemove.push(index);
+        }
+    });
+    
+    columnsToRemove.sort((a, b) => b - a);
+    columnsToRemove.forEach(colIndex => {
+        const headerCells = headerRow.querySelectorAll('th');
+        if (headerCells[colIndex]) headerCells[colIndex].remove();
+    });
+    
+    const numericColumns = [2, 12]; 
+    const columnTotals = {};
+    numericColumns.forEach(col => columnTotals[col] = 0);
+    
+    dataRows.forEach(row => {
+        columnsToRemove.forEach(colIndex => {
+            const dataCells = row.querySelectorAll('td');
+            if (dataCells[colIndex]) dataCells[colIndex].remove();
+        });
+        numericColumns.forEach(colIndex => {
+            const cells = row.querySelectorAll('td');
+            if (cells[colIndex]) {
+                const cellText = cells[colIndex].textContent.trim().replace(/[^0-9.-]/g, '');
+                if (cellText && !isNaN(cellText)) {
+                    columnTotals[colIndex] += parseFloat(cellText);
+                }
+            }
+        });
+    });
+    
+    const totalRow = document.createElement('tr');
+    const totalCells = headerRow.querySelectorAll('th');
+    totalCells.forEach((header, index) => {
+        const cell = document.createElement('td');
+        if (index === 0) {
+            cell.textContent = 'TOTAL';
+            cell.style.fontWeight = 'bold';
+        } else if (numericColumns.includes(index)) {
+            cell.textContent = columnTotals[index].toFixed(2);
+            cell.style.fontWeight = 'bold';
+        } else {
+            cell.textContent = '';
+        }
+        totalRow.appendChild(cell);
+    });
+    
+    tableClone.querySelector('tbody').appendChild(totalRow);
+    
+    const wb = XLSX.utils.table_to_book(tableClone, { sheet: "Vouchers" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    
+    const headerRowIndex = range.s.r;
+    for (let C = range.s.c; C <= range.e.c; C++) {
+        const cellAddress = XLSX.utils.encode_cell({ c: C, r: headerRowIndex });
+        if (!ws[cellAddress]) ws[cellAddress] = { t: 's', v: '' };
+        ws[cellAddress].s = {
+            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+            fill: { fgColor: { rgb: "4F46E5" } },
+            alignment: { horizontal: "center" }
+        };
+    }
+    
+    const totalRowIndex = range.e.r;
+    for (let C = range.s.c; C <= range.e.c; C++) {
+        const cellAddress = XLSX.utils.encode_cell({ c: C, r: totalRowIndex });
+        if (!ws[cellAddress]) ws[cellAddress] = { t: 's', v: '' };
+        if (numericColumns.includes(C)) ws[cellAddress].z = '#,##0.00';
+        ws[cellAddress].s = {
+            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+            fill: { fgColor: { rgb: "1F2937" } }
+        };
+    }
+    
+    const colWidths = [];
+    for (let C = range.s.c; C <= range.e.c; C++) {
+        let maxWidth = 15;
+        for (let R = range.s.r; R <= range.e.r; R++) {
+            const cellAddress = XLSX.utils.encode_cell({ c: C, r: R });
+            if (ws[cellAddress] && ws[cellAddress].v) {
+                maxWidth = Math.max(maxWidth, String(ws[cellAddress].v).length);
+            }
+        }
+        colWidths.push({ wch: Math.min(maxWidth + 2, 40) });
+    }
+    ws['!cols'] = colWidths;
+    
+    XLSX.writeFile(wb, `PettyCash_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+});
+
+// ===== EXPORT TO PDF =====
+document.getElementById('exportPdfBtn').addEventListener('click', async () => {
+    alert('Generating PDF report... This may take a few seconds.');
+    try {
+        const pdfContainer = document.createElement('div');
+        pdfContainer.style.fontFamily = 'Arial, sans-serif';
+        pdfContainer.style.padding = '20px';
+        pdfContainer.style.width = '100%';
+        
+        const title = document.createElement('h1');
+        title.textContent = '4378M Petty Cash Report';
+        title.style.fontSize = '24px';
+        title.style.marginBottom = '20px';
+        pdfContainer.appendChild(title);
+        
+        const summaryClone = document.querySelector('.summary').cloneNode(true);
+        const summaryCards = summaryClone.querySelectorAll('.card');
+        summaryCards.forEach(card => {
+            const cardTitle = card.querySelector('h3');
+            if (cardTitle && cardTitle.textContent.trim() === 'Total Vouchers') card.remove();
+            card.style.background = '#f9fafb';
+            card.style.padding = '10px';
+            card.style.border = '1px solid #ddd';
+            card.style.margin = '5px';
+            card.style.display = 'inline-block';
+            card.style.width = '22%';
+            card.style.verticalAlign = 'top';
+        });
+        pdfContainer.appendChild(summaryClone);
+        
+        const tableClone = document.querySelector('.table-container table').cloneNode(true);
+        const headerRow = tableClone.querySelector('thead tr');
+        const dataRows = tableClone.querySelectorAll('tbody tr');
+        
+        const headers = Array.from(headerRow.querySelectorAll('th'));
+        const columnsToRemove = [];
+        headers.forEach((header, index) => {
+            const headerText = header.textContent.trim().toLowerCase();
+            if (headerText.includes('project #') || headerText.includes('attachment') || headerText.includes('actions')) {
+                columnsToRemove.push(index);
+            }
+        });
+        
+        columnsToRemove.sort((a, b) => b - a);
+        columnsToRemove.forEach(colIndex => {
+            const headerCells = headerRow.querySelectorAll('th');
+            if (headerCells[colIndex]) headerCells[colIndex].remove();
+        });
+        
+        dataRows.forEach(row => {
+            columnsToRemove.forEach(colIndex => {
+                const dataCells = row.querySelectorAll('td');
+                if (dataCells[colIndex]) dataCells[colIndex].remove();
+            });
+        });
+        
+        tableClone.style.width = '100%';
+        tableClone.style.borderCollapse = 'collapse';
+        tableClone.style.marginTop = '20px';
+        tableClone.style.fontSize = '10px';
+        
+        const allCells = tableClone.querySelectorAll('th, td');
+        allCells.forEach(cell => {
+            cell.style.border = '1px solid #ddd';
+            cell.style.padding = '5px';
+            cell.style.textAlign = 'left';
+        });
+        const headerCells = tableClone.querySelectorAll('th');
+        headerCells.forEach(cell => {
+            cell.style.backgroundColor = '#f1f1f1';
+            cell.style.fontWeight = 'bold';
+        });
+        
+        pdfContainer.appendChild(tableClone);
+        
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.top = '0';
+        tempContainer.appendChild(pdfContainer);
+        document.body.appendChild(tempContainer);
+        
+        const canvas = await html2canvas(tempContainer, {
+            scale: 1.5,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+        });
+        
+        document.body.removeChild(tempContainer);
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+        const imgWidth = 210; 
+        const pageHeight = 295; 
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+        
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+        
+        pdf.save(`PettyCash_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        alert('Failed to generate PDF report.');
+    }
+});
+
+function applyFilters(data, searchTerm, selectedDate, selectedPettyCash, selectedPayment) {
+    return data.filter(row => {
         let textMatch = true;
         if (searchTerm) {
-          const term = searchTerm.toLowerCase();
-          // Format dates like in populateDateFilter for search
-          const formatDate = (dateStr) => {
-            if (!dateStr) return '';
-            return new Date(dateStr).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            }).toLowerCase();
-          };
-          // Format numbers like in renderTable
-          const formatNumber = (num) => {
-            if (num == null || num === '') return '';
-            return parseFloat(num).toFixed(2);
-          };
-          textMatch =
-            (row.voucher_number && row.voucher_number.toLowerCase().includes(term)) ||
-            (row.voucher_type && row.voucher_type.toLowerCase().includes(term)) ||
-            (row.voucher_status && row.voucher_status.toLowerCase().includes(term)) ||
-            (row.saas_invoice && row.saas_invoice.toLowerCase().includes(term)) ||
-            (row.payment_status && row.payment_status.toLowerCase().includes(term)) ||
-            (row.voucher_line && row.voucher_line.toLowerCase().includes(term)) ||
-            (row.jvr && row.jvr.toLowerCase().includes(term)) ||
-            (row.project_number && row.project_number.toLowerCase().includes(term)) ||
-            (row.received_petty_cash && row.received_petty_cash.toLowerCase().includes(term)) ||
-            (row.notes && row.notes.toLowerCase().includes(term)) ||
-            (formatNumber(row.voucher_total).includes(term)) ||
-            (formatNumber(row.received_amount).includes(term)) ||
-            (formatDate(row.created_date).includes(term)) ||
-            (formatDate(row.jvr_date).includes(term)) ||
-            (formatDate(row.receiving_date).includes(term));
+            const term = searchTerm.toLowerCase();
+            const formatDate = (dateStr) => {
+                if (!dateStr) return '';
+                return new Date(dateStr).toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                }).toLowerCase();
+            };
+            const formatNumber = (num) => {
+                if (num == null || num === '') return '';
+                return parseFloat(num).toFixed(2);
+            };
+            textMatch =
+                (row.voucher_number && row.voucher_number.toLowerCase().includes(term)) ||
+                (row.voucher_type && row.voucher_type.toLowerCase().includes(term)) ||
+                (row.voucher_status && row.voucher_status.toLowerCase().includes(term)) ||
+                (row.saas_invoice && row.saas_invoice.toLowerCase().includes(term)) ||
+                (row.payment_status && row.payment_status.toLowerCase().includes(term)) ||
+                (row.voucher_line && row.voucher_line.toLowerCase().includes(term)) ||
+                (row.jvr && row.jvr.toLowerCase().includes(term)) ||
+                (row.project_number && row.project_number.toLowerCase().includes(term)) ||
+                (row.received_petty_cash && row.received_petty_cash.toLowerCase().includes(term)) ||
+                (row.notes && row.notes.toLowerCase().includes(term)) ||
+                (formatNumber(row.voucher_total).includes(term)) ||
+                (formatNumber(row.received_amount).includes(term)) ||
+                (formatDate(row.created_date).includes(term)) ||
+                (formatDate(row.jvr_date).includes(term)) ||
+                (formatDate(row.receiving_date).includes(term));
         }
         const dateMatch = !selectedDate || row.receiving_date === selectedDate;
         const pettyCashMatch = !selectedPettyCash || row.received_petty_cash === selectedPettyCash;
         const paymentMatch = !selectedPayment || row.payment_status === selectedPayment;
         return textMatch && dateMatch && pettyCashMatch && paymentMatch;
-      });
-    }
+    });
+}
 
-    function sortData(data, field, direction) {
-      if (!field) return data;
-      return [...data].sort((a, b) => {
+function sortData(data, field, direction) {
+    if (!field) return data;
+    return [...data].sort((a, b) => {
         let valA = a[field] ?? '';
         let valB = b[field] ?? '';
-
         if (field === 'voucher_total' || field === 'received_amount') {
-          valA = parseFloat(valA) || 0;
-          valB = parseFloat(valB) || 0;
-          return direction === 'asc' ? valA - valB : valB - valA;
+            valA = parseFloat(valA) || 0;
+            valB = parseFloat(valB) || 0;
+            return direction === 'asc' ? valA - valB : valB - valA;
         }
-
         if (['receiving_date', 'created_date', 'jvr_date'].includes(field)) {
-          if (!valA && !valB) return 0;
-          if (!valA) return 1;
-          if (!valB) return -1;
-          return direction === 'asc'
-            ? new Date(valA) - new Date(valB)
-            : new Date(valB) - new Date(valA);
+            if (!valA && !valB) return 0;
+            if (!valA) return 1;
+            if (!valB) return -1;
+            return direction === 'asc'
+                ? new Date(valA) - new Date(valB)
+                : new Date(valB) - new Date(valA);
         }
-
         valA = String(valA).toLowerCase();
         valB = String(valB).toLowerCase();
         if (valA < valB) return direction === 'asc' ? -1 : 1;
         if (valA > valB) return direction === 'asc' ? 1 : -1;
         return 0;
-      });
+    });
+}
+
+function getBadgeClass(status, type = 'default') {
+    if (!status) return 'badge-gray';
+    const s = status.toLowerCase();
+    if (s.includes('approved') || s.includes('paid in full') || s==='received' ) return 'badge-success';
+    if (s.includes('not paid') || s.includes('pending') || s.includes('submitted') ) return 'badge-warning';
+    if (s.includes('reject')) return 'badge-danger';
+    if (s==='not received') return 'badge-warning';
+    return 'badge-info';
+}
+
+function renderTable(data) {
+    tableBody.innerHTML = '';
+    if (data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="17" style="text-align:center;padding:2rem;color:var(--gray-500);">No records found.</td></tr>`;
+        return;
     }
+    data.forEach(v => {
+        let rowClass = '';
+        const paymentStatus = (v.payment_status || '').trim();
+        const pettyCashStatus = (v.received_petty_cash || '').trim();
+        const voucherStatus = (v.voucher_status || '').trim();
+        
+        if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
+            rowClass = 'paid-received';
+        } else if (/reject/i.test(paymentStatus) || /reject/i.test(voucherStatus)) {
+            rowClass = 'rejected-row';
+        }
+        
+        const total = parseFloat(v.voucher_total) || 0;
+        const received = parseFloat(v.received_amount) || 0;
+        const amountMismatch = received !== total && received !== null && received > 0;
+        
+        const saasInvoice = v.saas_invoice || '';
+        let attachmentCell = '<td><span style="color:var(--gray-300)"><i class="fa-solid fa-paperclip"></i></span></td>';
+        if (saasInvoice.trim() !== '') {
+            attachmentCell = `<td><button class="btn-action btn-attachment" onclick="openAttachment('${saasInvoice.trim()}')" title="View Attachment"><i class="fa-solid fa-eye"></i></button></td>`;
+        }
+        
+        const row = document.createElement('tr');
+        row.className = rowClass;
+        row.innerHTML = `
+            <td style="font-weight:600; color:var(--primary)">${v.voucher_number || '-'}</td>
+            <td>${v.voucher_type || '-'}</td>
+            <td style="font-weight:600">${total.toFixed(2)}</td>
+            <td><span class="badge ${getBadgeClass(voucherStatus)}">${v.voucher_status || '-'}</span></td>
+            <td>${saasInvoice || '-'}</td>
+            <td><span class="badge ${getBadgeClass(paymentStatus)}">${v.payment_status || '-'}</span></td>
+            <td>${v.voucher_line || '-'}</td>
+            <td>${v.jvr || '-'}</td>
+            <td>${v.jvr_date || '-'}</td>
+            <td>${v.project_number || '-'}</td>
+            <td>${v.created_date || '-'}</td>
+            <td><span class="badge ${pettyCashStatus === 'Received' ? 'badge-success' : 'badge-gray'}">${v.received_petty_cash || '-'}</span></td>
+            <td>${v.receiving_date || '-'}</td>
+            <td class="${amountMismatch ? 'amount-mismatch' : ''}" style="${amountMismatch ? '' : 'font-weight:600'}">
+                ${received > 0 ? received.toFixed(2) : '-'}
+            </td>
+            <td style="max-width:150px;  text-overflow:ellipsis;" title="${v.notes || ''}">${v.notes || '-'}</td>
+            ${attachmentCell}
+            <td class="actions-cell">
+                <button class="btn-action btn-edit" onclick="openEditModal(${v.id})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-action btn-delete" onclick="deleteVoucher(${v.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
 
-    function renderTable(data) {
-  tableBody.innerHTML = '';
-  if (data.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="17" style="text-align:center;padding:1rem;color:#6b7280;">No records found.</td></tr>`;
-    return;
-  }
-
-  data.forEach(v => {
-    let rowClass = '';
-    const paymentStatus = (v.payment_status || '').trim();
-    const pettyCashStatus = (v.received_petty_cash || '').trim();
-    const voucherStatus = (v.voucher_status || '').trim();
-
-    if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
-      rowClass = 'paid-received';
-    } else if (/reject/i.test(paymentStatus) || /reject/i.test(voucherStatus)) {
-      rowClass = 'rejected';
-    }
-
-    const total = parseFloat(v.voucher_total) || 0;
-    const received = parseFloat(v.received_amount) || 0;
-    const amountMismatch = received !== total && received !== null && received > "";
-
-    // Check if SAAS Invoice exists and create attachment button
-    const saasInvoice = v.saas_invoice || '';
-    let attachmentCell = '<td>-</td>';
+function calculateSummary(data) {
+    let pending = 0;
+    let received = 0;
+    let rejected = 0;
+    let notApproved = 0;
+    let totalCount = data.length;
+    let totalAmount = 0;
     
-    if (saasInvoice.trim() !== '') {
-      attachmentCell = `<td><button class="btn-attachment" onclick="openAttachment('${saasInvoice.trim()}')">📄 View</button></td>`;
-    }
-
-    const row = document.createElement('tr');
-    row.className = rowClass;
-    row.innerHTML = `
-      <td>${v.voucher_number || '-'}</td>
-      <td>${v.voucher_type || '-'}</td>
-      <td>${total.toFixed(2)}</td>
-      <td>${v.voucher_status || '-'}</td>
-      <td>${saasInvoice || '-'}</td>
-      <td>${v.payment_status || '-'}</td>
-      <td>${v.voucher_line || '-'}</td>
-      <td>${v.jvr || '-'}</td>
-      <td>${v.jvr_date || '-'}</td>
-      <td>${v.project_number || '-'}</td>
-      <td>${v.created_date || '-'}</td>
-      <td>${v.received_petty_cash || '-'}</td>
-      <td>${v.receiving_date || '-'}</td>
-      <td class="${amountMismatch ? 'amount-mismatch' : ''}">
-        ${received > 0 ? received.toFixed(2) : '-'}
-      </td>
-      <td>${v.notes || '-'}</td>
-      ${attachmentCell}
-      <td class="actions-cell">
-        <button class="btn-edit" onclick="openEditModal(${v.id})">Edit</button>
-        <button class="btn-delete" onclick="deleteVoucher(${v.id})">Delete</button>
-      </td>
-    `;
-    tableBody.appendChild(row);
-  });
+    data.forEach(v => {
+        const total = parseFloat(v.voucher_total || 0);
+        const receivedAmt = parseFloat(v.received_amount || 0);
+        const paymentStatus = (v.payment_status || '').trim();
+        const voucherStatus = (v.voucher_status || '').trim();
+        const pettyCashStatus = v.received_petty_cash;
+        
+        totalAmount += total;
+        
+        const isRejected = /reject/i.test(paymentStatus) || /reject/i.test(voucherStatus);
+        if (isRejected) {
+            rejected += total;
+        } else if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
+            received += receivedAmt || total;
+        } else if (voucherStatus === 'FINANCE APPROVED' && pettyCashStatus !== 'Received') {
+            pending += total;
+        } else {
+            notApproved += total;
+        }
+    });
+    
+    pendingAmountEl.textContent = pending.toFixed(2);
+    fullyReceivedAmountEl.textContent = received.toFixed(2);
+    rejectedAmountEl.textContent = rejected.toFixed(2);
+    notApprovedAmountEl.textContent = notApproved.toFixed(2);
+    totalCountEl.textContent = totalCount;
+    totalAmountEl.textContent = totalAmount.toFixed(2);
 }
 
- function calculateSummary(data) {
-  let pending = 0;
-  let received = 0;
-  let rejected = 0;
-  let notApproved = 0;
-
-  let totalCount = data.length;
-  let totalAmount = 0;
-
- data.forEach(v => {
-  const total = parseFloat(v.voucher_total || 0);
-  const receivedAmt = parseFloat(v.received_amount || 0);
-  const paymentStatus = (v.payment_status || '').trim();
-  const voucherStatus = (v.voucher_status || '').trim();
-  const pettyCashStatus = v.received_petty_cash;
-  totalAmount += total;
-
-  const isRejected = /reject/i.test(paymentStatus) || /reject/i.test(voucherStatus);
-
-  if (isRejected) {
-    rejected += total;
-  } else if (paymentStatus === 'Paid in Full' && pettyCashStatus === 'Received') {
-    received += receivedAmt || total;
-  } else if (voucherStatus === 'FINANCE APPROVED' && pettyCashStatus !== 'Received') {
-    pending += total;
-  } else {
-    // All other non-rejected, non-paid, non-FINANCE-APPROVED records = Pending Approval
-    notApproved += total;
-  }
-});
-
-  pendingAmountEl.textContent = pending.toFixed(2);
-  fullyReceivedAmountEl.textContent = received.toFixed(2);
-  rejectedAmountEl.textContent = rejected.toFixed(2);
-  notApprovedAmountEl.textContent = notApproved.toFixed(2);
-  totalCountEl.textContent = totalCount;
-  totalAmountEl.textContent = totalAmount.toFixed(2);
-
-  // Calculate balance: (Total Submitted Amount - Rejected Amount) - (Fully Received Amount + APPROVED Amount + Pending Approval Amount)
-  const balance = (totalAmount - rejected) - (received + pending + notApproved);
-  balanceAmountEl.textContent = balance.toFixed(2);
-
-}
-    // === CRUD ===
-    async function saveVoucher(formData) {
-      const fieldMap = {
+// === CRUD ===
+async function saveVoucher(formData) {
+    const fieldMap = {
         editVoucherNumber: 'voucher_number',
         editVoucherType: 'voucher_type',
         editVoucherTotal: 'voucher_total',
@@ -1385,46 +1271,44 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
         editReceivingDate: 'receiving_date',
         editReceivedAmount: 'received_amount',
         editNotes: 'notes'
-      };
-
-      const data = {};
-      for (let [formId, value] of formData.entries()) {
+    };
+    const data = {};
+    for (let [formId, value] of formData.entries()) {
         if (formId in fieldMap) {
-          data[fieldMap[formId]] = value === '' ? null : value;
+            data[fieldMap[formId]] = value === '' ? null : value;
         }
-      }
-
-      try {
+    }
+    try {
         let promise = editingId
-          ? supabaseClient.from('vouchers').update(data).eq('id', editingId)
-          : supabaseClient.from('vouchers').insert([data]);
+            ? supabaseClient.from('vouchers').update(data).eq('id', editingId)
+            : supabaseClient.from('vouchers').insert([data]);
         const { error } = await promise;
         if (error) throw error;
         await fetchData(searchInput.value.trim());
         editModal.classList.remove('active');
-      } catch (err) {
+    } catch (err) {
         console.error('Save error:', err);
         alert('Failed to save voucher: ' + (err.message || err.toString()));
-      }
     }
+}
 
-    async function deleteVoucher(id) {
-      if (!confirm('Delete this voucher?')) return;
-      try {
+async function deleteVoucher(id) {
+    if (!confirm('Are you sure you want to delete this voucher?')) return;
+    try {
         const { error } = await supabaseClient.from('vouchers').delete().eq('id', id);
         if (error) throw error;
         await fetchData(searchInput.value.trim());
-      } catch (err) {
+    } catch (err) {
         console.error('Delete error:', err);
         alert('Failed to delete voucher.');
-      }
     }
+}
 
-    window.openEditModal = async function(id = null) {
-      editingId = id;
-      modalTitle.textContent = id ? 'Edit Voucher' : 'Add New Voucher';
-
-      const resetForm = () => {
+window.openEditModal = async function(id = null) {
+    editingId = id;
+    modalTitle.innerHTML = id ? '<i class="fa-solid fa-pen-to-square"></i> Edit Voucher' : '<i class="fa-solid fa-plus"></i> Add New Voucher';
+    
+    const resetForm = () => {
         document.getElementById('editVoucherNumber').value = '';
         document.getElementById('editVoucherType').value = '';
         document.getElementById('editVoucherTotal').value = '';
@@ -1440,107 +1324,99 @@ document.getElementById('exportPdfBtn').addEventListener('click', async () => {
         document.getElementById('editReceivingDate').value = '';
         document.getElementById('editReceivedAmount').value = '';
         document.getElementById('editNotes').value = '';
-      };
-
-      resetForm();
-
-      if (id) {
-        try {
-          const { data, error } = await supabaseClient.from('vouchers').select('*').eq('id', id).single();
-          if (error) throw error;
-
-          document.getElementById('editVoucherNumber').value = data.voucher_number || '';
-          document.getElementById('editVoucherType').value = data.voucher_type || '';
-          document.getElementById('editVoucherTotal').value = data.voucher_total || '';
-          document.getElementById('editVoucherStatus').value = data.voucher_status || '';
-          document.getElementById('editSaasInvoice').value = data.saas_invoice || '';
-          document.getElementById('editPaymentStatus').value = data.payment_status || 'Not Paid';
-          document.getElementById('editVoucherLine').value = data.voucher_line || '';
-          document.getElementById('editJvr').value = data.jvr || '';
-          document.getElementById('editJvrDate').value = data.jvr_date || '';
-          document.getElementById('editProjectNumber').value = data.project_number || '';
-          document.getElementById('editCreatedDate').value = data.created_date || '';
-          document.getElementById('editReceivedPettyCash').value = data.received_petty_cash || 'Not Received';
-          document.getElementById('editReceivingDate').value = data.receiving_date || '';
-          document.getElementById('editReceivedAmount').value = data.received_amount || '';
-          document.getElementById('editNotes').value = data.notes || '';
-        } catch (err) {
-          console.error('Load voucher error:', err);
-          alert('Failed to load voucher for editing.');
-          return;
-        }
-      }
-
-      editModal.classList.add('active');
     };
-
-    // === Sorting UI ===
-    function attachSortListeners() {
-      document.querySelectorAll('th[data-sort]').forEach(th => {
-        th.addEventListener('click', () => {
-          const field = th.dataset.sort;
-          if (currentSortField === field) {
-            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-          } else {
-            currentSortField = field;
-            currentSortDirection = 'asc';
-          }
-          updateSortIndicators();
-          fetchData(searchInput.value.trim());
-        });
-      });
-    }
-
-    function updateSortIndicators() {
-      document.querySelectorAll('th[data-sort]').forEach(th => {
-        const field = th.dataset.sort;
-        th.textContent = th.textContent.replace(/ [▲▼]$/, '');
-        if (currentSortField === field) {
-          th.textContent += currentSortDirection === 'asc' ? ' ▲' : ' ▼';
+    
+    resetForm();
+    if (id) {
+        try {
+            const { data, error } = await supabaseClient.from('vouchers').select('*').eq('id', id).single();
+            if (error) throw error;
+            document.getElementById('editVoucherNumber').value = data.voucher_number || '';
+            document.getElementById('editVoucherType').value = data.voucher_type || '';
+            document.getElementById('editVoucherTotal').value = data.voucher_total || '';
+            document.getElementById('editVoucherStatus').value = data.voucher_status || '';
+            document.getElementById('editSaasInvoice').value = data.saas_invoice || '';
+            document.getElementById('editPaymentStatus').value = data.payment_status || 'Not Paid';
+            document.getElementById('editVoucherLine').value = data.voucher_line || '';
+            document.getElementById('editJvr').value = data.jvr || '';
+            document.getElementById('editJvrDate').value = data.jvr_date || '';
+            document.getElementById('editProjectNumber').value = data.project_number || '';
+            document.getElementById('editCreatedDate').value = data.created_date || '';
+            document.getElementById('editReceivedPettyCash').value = data.received_petty_cash || 'Not Received';
+            document.getElementById('editReceivingDate').value = data.receiving_date || '';
+            document.getElementById('editReceivedAmount').value = data.received_amount || '';
+            document.getElementById('editNotes').value = data.notes || '';
+        } catch (err) {
+            console.error('Load voucher error:', err);
+            alert('Failed to load voucher for editing.');
+            return;
         }
-      });
     }
+    editModal.classList.add('active');
+};
 
-    // === Event Listeners ===
-    cancelEditBtn.addEventListener('click', () => {
-      editModal.classList.remove('active');
+// === Sorting UI ===
+function attachSortListeners() {
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+            const field = th.dataset.sort;
+            if (currentSortField === field) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortField = field;
+                currentSortDirection = 'asc';
+            }
+            updateSortIndicators();
+            fetchData(searchInput.value.trim());
+        });
     });
+}
 
-    editForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      saveVoucher(new FormData(editForm));
+function updateSortIndicators() {
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+        const field = th.dataset.sort;
+        const text = th.textContent.replace(/[▲▼]/g, '').trim();
+        th.innerHTML = `${text} <i class="fa-solid fa-sort"></i>`;
+        
+        if (currentSortField === field) {
+            const iconClass = currentSortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+            th.innerHTML = `${text} <i class="fa-solid ${iconClass}" style="color:var(--primary)"></i>`;
+        }
     });
+}
 
-    addBtn.addEventListener('click', () => openEditModal());
+// === Event Listeners ===
+cancelEditBtn.addEventListener('click', () => {
+    editModal.classList.remove('active');
+});
+editForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveVoucher(new FormData(editForm));
+});
+addBtn.addEventListener('click', () => openEditModal());
+searchInput.addEventListener('input', (e) => {
+    fetchData(e.target.value.trim());
+});
+document.getElementById('dateFilter').addEventListener('change', (e) => {
+    fetchData(searchInput.value.trim());
+});
+document.getElementById('pettyCashFilter').addEventListener('change', (e) => {
+    fetchData(searchInput.value.trim());
+});
+document.getElementById('paymentStatusFilter').addEventListener('change', (e) => {
+    fetchData(searchInput.value.trim());
+});
+document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+    searchInput.value = '';
+    document.getElementById('dateFilter').value = '';
+    document.getElementById('pettyCashFilter').value = '';
+    document.getElementById('paymentStatusFilter').value = '';
+    fetchData('');
+});
 
-    searchInput.addEventListener('input', (e) => {
-      fetchData(e.target.value.trim());
-    });
-
-    document.getElementById('dateFilter').addEventListener('change', (e) => {
-      fetchData(searchInput.value.trim());
-    });
-
-    document.getElementById('pettyCashFilter').addEventListener('change', (e) => {
-      fetchData(searchInput.value.trim());
-    });
-
-    document.getElementById('paymentStatusFilter').addEventListener('change', (e) => {
-      fetchData(searchInput.value.trim());
-    });
-
-    document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-      searchInput.value = '';
-      document.getElementById('dateFilter').value = '';
-      document.getElementById('pettyCashFilter').value = '';
-      document.getElementById('paymentStatusFilter').value = '';
-      fetchData('');
-    });
-
-    // === Initial Load ===
-    fetchData();
-    attachSortListeners();
-  </script>
- 
-</div>
-<!-- Code injected
+// === Initial Load ===
+fetchData();
+attachSortListeners();
+</script>
+</body>
+</html>
