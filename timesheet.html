@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -815,6 +816,21 @@
             border-radius: 0 6px 6px 0;
             display: none;
         }
+
+        .ramadan-active {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+    border-color: #f59e0b !important;
+}
+
+.ramadan-badge {
+    background: #f59e0b;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 10px;
+}
     </style>
     
 </head>
@@ -903,7 +919,35 @@
                 </div>
             </div>
         </div>
-        
+      
+<div class="phd-container" style="margin-top: 15px;">
+    <h3 class="card-title" style="margin: 10px 0;">
+        <i class="fas fa-moon"></i> Ramadan Configuration
+    </h3>
+    <div class="input-group" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <label for="ramadanCheckbox" style="display: flex; align-items: center; gap: 8px; font-weight: 600;">
+            <input type="checkbox" id="ramadanCheckbox" style="width: 20px; height: 20px;" />
+            Enable Ramadan Working Hours (6 hours)
+        </label>
+    </div>
+    <div id="ramadanDatesContainer" style="display: none; margin-top: 15px; padding: 15px; background: #f0f9ff; border-radius: 10px; border: 1px solid var(--border);">
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+            <div>
+                <label for="ramadanStartDate" style="font-weight: 600; font-size: 14px;">Ramadan Start Date</label>
+                <input type="date" id="ramadanStartDate" style="font-size: 16px; border-radius: 10px; padding: 8px; margin-left: 10px; width: 200px; font-weight: bold;" />
+            </div>
+            <div>
+                <label for="ramadanEndDate" style="font-weight: 600; font-size: 14px;">Ramadan End Date</label>
+                <input type="date" id="ramadanEndDate" style="font-size: 16px; border-radius: 10px; padding: 8px; margin-left: 10px; width: 200px; font-weight: bold;" />
+            </div>
+        </div>
+        <div id="ramadanWarning" class="status warning" style="display: none; margin-top: 10px;">
+            <i class="fas fa-exclamation-triangle"></i> Please select both start and end dates for Ramadan
+        </div>
+    </div>
+</div>
+
+
         <div id="status" class="status" style="display:none;"></div>
         
         <div id="empList" style="display:none;">
@@ -1006,7 +1050,9 @@
         let publicHolidays = [];
         let headerRowIdx = 0;
         let templateColumnMap = null;
-        
+       let isRamadanEnabled = false;
+        let ramadanStartDate = null;
+        let ramadanEndDate = null;
         document.addEventListener('DOMContentLoaded', function() {
             hideStatus();
             updateEmpCounter();
@@ -1048,6 +1094,7 @@
             document.getElementById('closeReport').addEventListener('click', closeReport);
             document.getElementById('printReport').addEventListener('click', printReport);
             document.getElementById('exportReport').addEventListener('click', exportReport);
+             initRamadanListeners(); // Initialize Ramadan listeners
         }
         
         function handleTemplateFile(e) {
@@ -1158,6 +1205,77 @@
             
             reader.readAsArrayBuffer(file);
         }
+
+
+
+
+    function initRamadanListeners() {
+    const ramadanCheckbox = document.getElementById('ramadanCheckbox');
+    const ramadanDatesContainer = document.getElementById('ramadanDatesContainer');
+    const ramadanStartInput = document.getElementById('ramadanStartDate');  // ✅ Renamed
+    const ramadanEndInput = document.getElementById('ramadanEndDate');      // ✅ Renamed
+    
+    ramadanCheckbox.addEventListener('change', function() {
+        isRamadanEnabled = this.checked;
+        if (isRamadanEnabled) {
+            ramadanDatesContainer.style.display = 'block';
+            document.querySelector('.phd-container').classList.add('ramadan-active');
+        } else {
+            ramadanDatesContainer.style.display = 'none';
+            document.querySelector('.phd-container').classList.remove('ramadan-active');
+            // ✅ Reset dates when disabled
+            ramadanStartDate = null;
+            ramadanEndDate = null;
+            ramadanStartInput.value = '';
+            ramadanEndInput.value = '';
+        }
+        validateRamadanDates();  // ✅ Call validation to update warning
+        updateGenerateButton();
+    });
+    
+    ramadanStartInput.addEventListener('change', function() {
+        ramadanStartDate = this.value ? new Date(this.value) : null;  // ✅ Now updates GLOBAL variable
+        validateRamadanDates();
+        updateGenerateButton();  // ✅ Update button state
+    });
+    
+    ramadanEndInput.addEventListener('change', function() {
+        ramadanEndDate = this.value ? new Date(this.value) : null;  // ✅ Now updates GLOBAL variable
+        validateRamadanDates();
+        updateGenerateButton();  // ✅ Update button state
+    });
+}
+
+function validateRamadanDates() {
+    const warning = document.getElementById('ramadanWarning');
+    if (isRamadanEnabled && (!ramadanStartDate || !ramadanEndDate)) {
+        warning.style.display = 'flex';
+        return false;
+    }
+    if (isRamadanEnabled && ramadanStartDate && ramadanEndDate && ramadanStartDate > ramadanEndDate) {
+        warning.style.display = 'flex';
+        warning.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Start date must be before end date';
+        return false;
+    }
+    warning.style.display = 'none';
+    return true;
+}
+
+
+function isRamadanDate(date) {
+    if (!isRamadanEnabled || !ramadanStartDate || !ramadanEndDate) {
+        return false;
+    }
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    const start = new Date(ramadanStartDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(ramadanEndDate);
+    end.setHours(0, 0, 0, 0);
+    return checkDate >= start && checkDate <= end;
+}
+
+
         
         function extractDataFromSheetDirect(sheet) {
             const range = XLSX.utils.decode_range(sheet['!ref']);
@@ -1588,9 +1706,10 @@
                 const name = empData.name || '';
                 return isDuplicateEmpName(name, i);
             });
+            const hasInvalidRamadan = isRamadanEnabled && !validateRamadanDates();
             const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
             const hasInvalidOvertime = !validateOvertimeInputs();
-            const canGenerate = empCodes.length > 0 && !hasDuplicates && !hasDuplicateNames && !hasEmpty && !hasInvalidOvertime;
+            const canGenerate = empCodes.length > 0 && !hasDuplicates && !hasDuplicateNames && !hasEmpty && !hasInvalidOvertime && !hasInvalidRamadan; // Ensure all conditions are met before enabling generate button (and Ramdhan also must be valid if enabled)
             const canShowReport = canGenerate && empFileLoaded;
             document.getElementById('generateBtn').disabled = !canGenerate;
             document.getElementById('showReportBtn').disabled = !canShowReport;
@@ -1721,32 +1840,35 @@
                         }
                     }
                     
-                    dates.forEach((dateInfo, index) => {
-                        let event, worked, finalNOT;
-                        if (dateInfo.isPhd) {
-                            event = 'PHD';
-                            worked = 0;
-                            finalNOT = 0;
-                        } else if (dateInfo.isSunday) {
-                            event = 'OFF';
-                            worked = 0;
-                            finalNOT = 0;
-                        } else {
-                            event = 'P';
-                            worked = 8;
-                            finalNOT = notDistribution[index];
-                        }
-                        
-                        rows.push({
-                            DATE: dateToExcelSerial(dateInfo.date),
-                            EmpCode: empCodeStr,
-                            Event: event,
-                            Wplace: wplaceValue,
-                            Worked: worked,
-                            NOT: finalNOT,
-                            WOT: wotDistribution[index]
-                        });
-                    });
+                   dates.forEach((dateInfo, index) => {
+    let event, worked, finalNOT;
+    const isRamadanDay = isRamadanDate(dateInfo.date);  // ✅ Check if this specific date is in Ramadan
+    
+    if (dateInfo.isPhd) {
+        event = 'PHD';
+        worked = 0;
+        finalNOT = 0;
+    } else if (dateInfo.isSunday) {
+        event = 'OFF';
+        worked = 0;
+        finalNOT = 0;
+    } else {
+        event = 'P';
+        // Ramadan working hours: 6 hours, Regular: 8 hours
+        worked = isRamadanDay ? 6 : 8;  // ✅ Use the date-specific check
+        finalNOT = notDistribution[index];
+    }
+    
+    rows.push({
+        DATE: dateToExcelSerial(dateInfo.date),
+        EmpCode: empCodeStr,
+        Event: event,
+        Wplace: wplaceValue,
+        Worked: worked,
+        NOT: finalNOT,
+        WOT: wotDistribution[index]
+    });
+});
                 });
                 
                 if (templateArrayBuffer && templateWorkBook && templateColumnMap) {
