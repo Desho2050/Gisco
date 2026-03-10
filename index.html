@@ -305,20 +305,7 @@ font-size: 14px;
 color: var(--muted);
 font-weight: 500;
 }
-.credit {
-margin: 10px;
-text-align: center;
-font-size: 32px;
-font-weight: 800;
-letter-spacing: 0.8px;
-background: linear-gradient(135deg, rgb(255), var(--accent));
--webkit-background-clip: text;
--webkit-text-fill-color: rgb(255, 255, 255);
-background-clip: text;
-padding: 5px;
-border-radius: 25px;
-box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
+
 /* Responsive tweaks */
 .title { font-size: clamp(20px, 4vw, 28px); }
 .logo { height: clamp(100px, 12vw, 165px); width: auto; }
@@ -332,7 +319,7 @@ box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 .grid { grid-template-columns: 1fr; }
 .actions { flex-direction: column; align-items: stretch; }
 .actions .btn { width: 100%; min-width: 0; }
-.credit { font-size: 24px; padding: 20px;}
+.Desho { font-size: 24px; padding: 20px;}
 .logo { height: 120px; }
 }
 /* Arabic font for date/time */
@@ -584,6 +571,22 @@ color: var(--dark);
 min-height: 100vh;
 padding: 20px;
 }
+.Desho {
+margin: 10px;
+text-align: center;
+font-size: 32px;
+font-weight: 800;
+letter-spacing: 0.8px;
+background: linear-gradient(135deg, rgba(251, 255, 1, 0.308), rgba(1, 255, 22, 0.308));
+-webkit-background-clip: text;
+-webkit-text-fill-color: rgb(255, 255, 255);
+background-clip: text;
+padding: 5px;
+border-radius: 25px;
+box-shadow: 0 8px 25px rgb(236, 161, 0);
+animation: pulse 5s infinite;
+}
+
 </style>
 </head>
 <body class="theme-modern" >
@@ -633,7 +636,7 @@ padding: 20px;
 </div>
 </div>
 </header>
-<div class="credit" style="color: #f1f5f9;">Programmed By Mostafa Al-Najar<br>تصميم وبرمجة م: مصطفي النجار</div>
+<div class="Desho" style="color: #f1f5f9;">Programmed By Mostafa Al-Najar<br>تصميم وبرمجة م: مصطفي النجار</div>
 <main class="container">
 <div class="grid">
 <section class="card">
