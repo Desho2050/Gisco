@@ -133,6 +133,16 @@
             <span id="notification-count" class="notification-badge hidden">0</span>
           </button>
         </div>
+        <!-- Add these three buttons after the existing action buttons -->
+<button id="btn-sort-gatepass" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm" title="Sort by GatePass Expiry">
+  🎫 GatePass Expiry
+</button>
+<button id="btn-sort-passport" class="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 text-sm" title="Sort by Passport Expiry">
+  📘 Passport Expiry
+</button>
+<button id="btn-sort-visa" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 text-sm" title="Sort by Visa Expiry">
+  🛂 Visa Expiry
+</button>
       </div>
     </div>
 
@@ -314,7 +324,11 @@
         urgent: "Urgent",
         warning: "Warning",
         daysRemaining: "days remaining",
-        noNotifications: "No expiring documents"
+        noNotifications: "No expiring documents",
+        sortGatePass: "🎫 Sort by GatePass",
+        sortPassport: "📘 Sort by Passport", 
+        sortVisa: "🛂 Sort by Visa",
+
       },
       ar: {
         title: "إدارة جوازات السفر وتصاريح الدخول",
@@ -352,35 +366,103 @@
         urgent: "عاجل",
         warning: "تحذير",
         daysRemaining: "أيام متبقية",
-        noNotifications: "لا توجد مستندات منتهية"
+        noNotifications: "لا توجد مستندات منتهية",
+        sortGatePass: "🎫 ترتيب حسب تصريح الدخول",
+        sortPassport: "📘 ترتيب حسب الجواز",
+        sortVisa: "🛂 ترتيب حسب التأشيرة",
       }
     };
+// ======================
+// SORTING FUNCTIONS
+// ======================
 
+// Helper: Get numeric value for sorting (lower = more urgent)
+function getSortValue(dateStr) {
+  if (!dateStr) return Infinity;
+  const expDate = new Date(dateStr);
+  const today = new Date();
+  if (isNaN(expDate)) return Infinity;
+  const diffTime = expDate - today;
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+// Sort by GatePass expiry (nearest first)
+function sortByGatePass() {
+  allData.sort((a, b) => {
+    const aVal = getSortValue(a.gatepass_exp_date);
+    const bVal = getSortValue(b.gatepass_exp_date);
+    return aVal - bVal;
+  });
+  renderTable();
+  updateSortIndicators('gatepass');
+}
+
+// Sort by Passport expiry (nearest first)
+function sortByPassport() {
+  allData.sort((a, b) => {
+    const aVal = getSortValue(a.passport_exp_date);
+    const bVal = getSortValue(b.passport_exp_date);
+    return aVal - bVal;
+  });
+  renderTable();
+  updateSortIndicators('passport');
+}
+
+// Sort by Visa expiry (nearest first)
+function sortByVisa() {
+  allData.sort((a, b) => {
+    const aVal = getSortValue(a.visa_exp_date);
+    const bVal = getSortValue(b.visa_exp_date);
+    return aVal - bVal;
+  });
+  renderTable();
+  updateSortIndicators('visa');
+}
+
+// Visual indicator for active sort
+function updateSortIndicators(activeType) {
+  // Remove all indicators first
+  ['gatepass', 'passport', 'visa'].forEach(type => {
+    const btn = document.getElementById(`btn-sort-${type}`);
+    if (btn) btn.classList.remove('ring-2', 'ring-white', 'scale-105');
+  });
+  
+  // Add indicator to active button
+  const activeBtn = document.getElementById(`btn-sort-${activeType}`);
+  if (activeBtn) {
+    activeBtn.classList.add('ring-2', 'ring-white', 'scale-105');
+  }
+}
     function updateUI() {
-      const t = translations[currentLang];
-      document.getElementById('page-title').textContent = t.title;
-      document.getElementById('search-input').placeholder = t.search;
-      document.getElementById('btn-add').textContent = t.addNew;
-      document.getElementById('btn-export-csv').textContent = t.exportCSV;
-      document.getElementById('btn-export-pdf').textContent = t.exportPDF;
-      document.getElementById('btn-print').textContent = t.print;
-      document.getElementById('lang-toggle').textContent = t.langToggle;
-      document.getElementById('theme-toggle').textContent = isDarkMode ? t.lightMode : t.darkMode;
-      document.getElementById('btn-back').textContent = t.backToHome;
-      document.getElementById('btn-notifications').innerHTML = `<span>${t.notifications}</span><span id="notification-count" class="notification-badge hidden">0</span>`;
-      
-      // Update modal label for visa field
-      document.getElementById('label-visa-exp-date').textContent = t.visaExpiryDate;
+  const t = translations[currentLang];
+  document.getElementById('page-title').textContent = t.title;
+  document.getElementById('search-input').placeholder = t.search;
+  document.getElementById('btn-add').textContent = t.addNew;
+  document.getElementById('btn-export-csv').textContent = t.exportCSV;
+  document.getElementById('btn-export-pdf').textContent = t.exportPDF;
+  document.getElementById('btn-print').textContent = t.print;
+  document.getElementById('lang-toggle').textContent = t.langToggle;
+  document.getElementById('theme-toggle').textContent = isDarkMode ? t.lightMode : t.darkMode;
+  document.getElementById('btn-back').textContent = t.backToHome;
+  document.getElementById('btn-notifications').innerHTML = `<span>${t.notifications}</span><span id="notification-count" class="notification-badge hidden">0</span>`;
+  
+  // ✅ FIXED: Update sort button labels HERE where 't' is defined
+  document.getElementById('btn-sort-gatepass').textContent = t.sortGatePass;
+  document.getElementById('btn-sort-passport').textContent = t.sortPassport;
+  document.getElementById('btn-sort-visa').textContent = t.sortVisa;
+  
+  // Update modal label for visa field
+  document.getElementById('label-visa-exp-date').textContent = t.visaExpiryDate;
 
-      const headers = document.querySelectorAll('thead th');
-      const texts = [
-        t.sn, t.fileNo, t.name, t.nameAr, 
-        t.gatepassExp, t.passportExp, t.visaExpiry,
-        t.gatepassRemaining, t.passportRemaining, t.visaRemaining, // Added visaRemaining
-        t.passportBeforeGatepass, t.actions
-      ];
-      texts.forEach((txt, i) => headers[i] && (headers[i].textContent = txt));
-    }
+  const headers = document.querySelectorAll('thead th');
+  const texts = [
+    t.sn, t.fileNo, t.name, t.nameAr, 
+    t.gatepassExp, t.passportExp, t.visaExpiry,
+    t.gatepassRemaining, t.passportRemaining, t.visaRemaining,
+    t.passportBeforeGatepass, t.actions
+  ];
+  texts.forEach((txt, i) => headers[i] && (headers[i].textContent = txt));
+}
 
     // ======================
     // NOTIFICATION SYSTEM
@@ -751,7 +833,8 @@
 
     // ======================
     // EVENTS
-    // ======================
+
+
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
     document.getElementById('lang-toggle').addEventListener('click', () => {
       setLanguage(currentLang === 'en' ? 'ar' : 'en');
@@ -759,7 +842,12 @@
     document.getElementById('btn-back').addEventListener('click', () => {
       window.location.href = 'index.html';
     });
+  
     document.getElementById('btn-add').addEventListener('click', () => openModal());
+    // ✅ Sort button event listeners (was missing!)
+document.getElementById('btn-sort-gatepass').addEventListener('click', sortByGatePass);
+document.getElementById('btn-sort-passport').addEventListener('click', sortByPassport);
+document.getElementById('btn-sort-visa').addEventListener('click', sortByVisa);
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
     document.getElementById('modal-save').addEventListener('click', saveRecord);
     document.getElementById('btn-export-csv').addEventListener('click', exportToCSV);
