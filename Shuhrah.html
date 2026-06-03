@@ -1,448 +1,491 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GISCO Purchase Summary</title>
-  <style>
-    :root {
-      --primary: #6c3483;
-      --primary-dark: #512e5f;
-      --accent: #2e86de;
-      --bg: #f6f7fb;
-      --surface: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --success: #117a65;
-      --danger: #b00020;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
-    header { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 28px 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-    header h2 { margin: 0; text-align: center; letter-spacing: 0.4px; color: #ffffff !important; }
-    .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); padding: 18px; }
-    .search-box { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
-    .search-box input { padding: 10px 12px; width: 180px; border: 1px solid var(--border); border-radius: 10px; outline: none; transition: box-shadow 0.2s, border-color 0.2s; color: #000; }
-    .search-box input::placeholder { color: #000; opacity: 1; }
-    .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(108,52,131,0.12); }
-    .actions { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .btn { padding: 10px 16px; border-radius: 10px; border: 1px solid transparent; cursor: pointer; font-weight: 600; transition: transform 0.05s ease, box-shadow 0.2s ease, background 0.2s; }
-    .btn:active { transform: translateY(1px); }
-    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 6px 16px rgba(108,52,131,0.25); }
-    .btn-primary:hover { background: var(--primary-dark); }
-    .btn-outline { background: #fff; color: var(--text); border-color: var(--border); }
-    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-    .btn-success { background: var(--success); color: #fff; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 12px; overflow: hidden; }
-    thead th { background: var(--primary); color: white; position: sticky; top: 0; z-index: 1; }
-    th, td { border: 1px solid var(--border); padding: 10px; text-align: center; }
-    tbody tr:nth-child(odd) { background: #fafafa; }
-    tbody tr:hover { background: #f0f7ff; }
-    td[contenteditable="true"] { background-color: #fcfcff; }
-    .summary { margin-top: 18px; font-size: 16px; font-weight: 600; color: var(--text); display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; align-items: center; margin-bottom: 30px; }
-    .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
-    .error { color: var(--danger); margin-top: 10px; padding: 10px 12px; background: #fde7ea; border: 1px solid #f6c3cb; border-radius: 10px; display:none; }
-    .loader { display: none; align-items: center; gap: 10px; color: var(--muted); font-weight: 600; }
-    .spinner { width: 18px; height: 18px; border: 3px solid #d1d5db; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.9s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    /* Responsive layout tweaks */
-    .search-box input { flex: 1 1 220px; min-width: 160px; }
-    @media (max-width: 900px){
-      header { padding: 20px 14px; }
-    }
-    @media (max-width: 640px){
-      .search-box { gap: 8px; }
-      .search-box input { flex: 1 1 100%; min-width: 100%; }
-      .actions { flex-direction: column; align-items: stretch; gap: 8px; }
-      .btn { width: 100%; min-width: 0; }
-    }
-    .card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table { min-width: 900px; }
-  </style>
-
+  <title>GISCO – Procurement Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
   <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: rgba(30, 41, 59, 0.7);
+      --brand: #00bfa5; /* GISCO Teal */
+      --brand-glow: rgba(0, 191, 165, 0.4);
+      --accent: #3b82f6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: rgba(148, 163, 184, 0.1);
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 191, 165, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Glassmorphism Utilities */
+    .glass {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    /* Header */
+    header {
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-area { display: flex; align-items: center; gap: 15px; }
+    .logo-mark {
+      min-width: 80px; height: 40px; padding: 0 10px;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-weight: 800; font-size: 16px; letter-spacing: 1px; color: white;
+    }
+    .titles h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px; }
+    .titles p { font-size: 0.85rem; color: var(--text-muted); }
+
+    .actions-top { display: flex; gap: 10px; }
+    .btn {
+      padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05); color: var(--text-main);
+      cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+    .btn.primary { background: var(--brand); border-color: var(--brand); color: #000; font-weight: 700; }
+    .btn.primary:hover { background: #00e6c5; box-shadow: 0 0 15px var(--brand-glow); }
+
+    /* Main Layout */
+    main {
+      flex: 1; padding: 30px; max-width: 1600px; margin: 0 auto; width: 100%;
+      display: flex; flex-direction: column; gap: 24px;
+    }
+
+    /* Dashboard Summary Cards */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--brand);
+    }
+    .stat-label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .stat-sub { font-size: 0.9rem; color: var(--brand); margin-top: 5px; }
+
+    /* The Arabic Words Display */
+    .words-card {
+      grid-column: 1 / -1;
+      background: linear-gradient(90deg, rgba(0, 191, 165, 0.1), rgba(0, 0, 0, 0));
+      border: 1px solid var(--brand);
+      text-align: center;
+      padding: 15px;
+    }
+    .words-text {
+      font-size: 1.2rem;
+      color: var(--brand);
+      font-weight: 700;
+      text-shadow: 0 0 10px var(--brand-glow);
+    }
+
+    /* Controls & Search */
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .search-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+    .modern-input {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
+      padding: 10px 15px;
+      border-radius: 8px;
+      color: white;
+      font-family: 'Inter', sans-serif;
+      min-width: 180px;
+      flex: 1;
+    }
+    .modern-input:focus { outline: none; border-color: var(--brand); }
+
+    /* Data Table */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.4);
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+    th {
+      text-align: left; padding: 16px;
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text-muted);
+      background: rgba(0,0,0,0.3);
+      position: sticky; top: 0;
+    }
+    td {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      font-size: 0.9rem; vertical-align: middle;
+    }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+    
+    .col-code { font-family: 'JetBrains Mono'; color: var(--accent); }
+    .col-money { font-family: 'JetBrains Mono'; color: var(--success); }
+    
+    .status-badge {
+      padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Loader */
+    .loader-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.9);
+      display: none; align-items: center; justify-content: center; z-index: 999;
+      flex-direction: column; gap: 15px;
+    }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid var(--border);
+      border-top-color: var(--brand); border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      header { flex-direction: column; gap: 15px; align-items: flex-start; }
+      .actions-top { width: 100%; justify-content: space-between; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Print Styles */
+    @media print {
+      body { background: white; color: black; }
+      .glass { background: white; border: 1px solid #ccc; backdrop-filter: none; }
+      .actions-top, .search-group, .btn { display: none !important; }
+      .stat-card { border: 1px solid #eee; color: black; }
+      .stat-value { color: black; }
+      .words-text { color: black; text-shadow: none; }
+      table { min-width: 100%; }
+      th { background: #f0f0f0 !important; color: black !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      td { color: black !important; border-bottom: 1px solid #ddd; }
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h2 id="title" data-i18n="brand_title">GISCO - Gulf Industrial Services Co.</h2>
-  </header>
-  <div class="container">
-  <style>
-    .back-link { display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 14px; border:1px solid #1d4ed8; border-radius:10px; background:#2563eb; color:#fff; text-decoration:none; }
-    .btn { text-decoration: none; }
-  </style>
-    <a class="btn back-link" href="index.html" data-i18n="back_main" title="Back to Main Page">Back to Main Page</a>
-  <div class="summary" style="display: list-item;">
-  التكلفة بدون ضريبة: <span id="totalWithoutVAT">0</span> درهم إماراتي<br>
-  التكلفة مع الضريبة: <span id="totalWithVAT">0</span> درهم إماراتي
-  <span id="totalWithVATWords" style="font-weight: bold;font-size: 20px; color: rgb(0, 0, 0); align-items: center; display: flex; justify-content: center;box-shadow: 0 0 10px rgb(19, 255, 35); margin-top: 7px;margin-bottom: 7px;background-color: chartreuse;">صفر درهماً</span>
-  العدد: <span id="totalQty">0</span> كمبرريسور
-</div>
 
-    <div class="card">
-  <div class="search-box">
-    <input type="text" id="search1" placeholder="النص الأول / First Text" onkeyup="filterTable()">
-    <input type="text" id="search2" placeholder="النص الثاني / Second Text" onkeyup="filterTable()">
-    <input type="text" id="search3" placeholder="النص الثالث / Third Text" onkeyup="filterTable()">
-    <input type="text" id="search4" placeholder="النص الرابع / Fourth Text" onkeyup="filterTable()">
-  </div>
-
-  <div class="actions">
-    <input type="file" id="localFile" accept=".xlsx,.xls" style="display:none" />
-    <button id="btnLocal" class="btn btn-success" style="display:none" onclick="document.getElementById('localFile').click()">Load Excel</button>
-    <input type="text" id="pathSelector" placeholder="Selected file path" readonly style="height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;min-width:220px;display:none" />
-    <button class="btn btn-outline" onclick="refreshData()">Refresh Data</button>
-    <button class="btn btn-primary" onclick="window.print()">Print</button>
-    <button class="btn btn-success" onclick="exportExcel()">Save Excel</button>
-    <button class="btn btn-outline" onclick="exportPDF()">Export PDF</button>
-    <button class="btn btn-outline" onclick="toggleLanguage()">Toggle Arabic/English</button>
-  </div>
-
-  <div class="loader" id="loader">
+  <div class="loader-overlay" id="loader">
     <div class="spinner"></div>
-    <span>Loading data...</span>
+    <div style="color: var(--brand); font-weight: 600;">Processing Data...</div>
   </div>
 
-  <table id="data-table">
-    <thead>
-      <tr>
-        <th>REQUEST</th>
-        <th>Item Code</th>
-        <th>Description</th>
-        <th>Qty</th>
-        <th>Price</th>
-        <th>Job No</th>
-        <th>Total Amount</th>
-        <th>Status</th>
-        <th>Order</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <header class="glass">
+    <div class="brand-area">
+      <div class="logo-mark">GISCO</div>
+      <div class="titles">
+        <h1>Procurement Summary</h1>
+        <p>Gulf Industrial Services Co.</p>
+      </div>
+    </div>
+    <div class="actions-top">
+      <input type="file" id="localFile" accept=".xlsx,.xls" style="display:none" />
+      <button class="btn" onclick="document.getElementById('localFile').click()">📂 Load Excel</button>
+      <button class="btn primary" onclick="exportExcel()">💾 Save</button>
+      <button class="btn" onclick="window.print()">🖨️ Print</button>
+      <a href="index.html" class="btn">⬅ Home</a>
+    </div>
+  </header>
 
- 
-  <div id="error" class="error"></div>
+  <main>
+    <!-- Financial Dashboard -->
+    <div class="dashboard-grid">
+      <div class="glass stat-card">
+        <span class="stat-label">Total Quantity</span>
+        <span class="stat-value" id="totalQty">0</span>
+        <span class="stat-sub">Compressors / Units</span>
+      </div>
+      <div class="glass stat-card">
+        <span class="stat-label">Net Cost (No VAT)</span>
+        <span class="stat-value" id="totalWithoutVAT">0.00</span>
+        <span class="stat-sub">AED</span>
+      </div>
+      <div class="glass stat-card" style="border-color: var(--success);">
+        <span class="stat-label">Total with VAT (5%)</span>
+        <span class="stat-value" style="color: var(--success);" id="totalWithVAT">0.00</span>
+        <span class="stat-sub">AED</span>
+      </div>
+      
+      <!-- Arabic Words Display -->
+      <div class="glass words-card">
+        <span class="stat-label">Total Amount in Words</span>
+        <div class="words-text" id="totalWithVATWords">صفر درهماً</div>
+      </div>
+    </div>
 
-  </div>
-  </div>
+    <!-- Search & Actions -->
+    <div class="glass controls-bar" style="padding: 15px;">
+      <div class="search-group">
+        <input id="search1" class="modern-input" type="text" placeholder="Search Request..." onkeyup="filterTable()">
+        <input id="search2" class="modern-input" type="text" placeholder="Item Code..." onkeyup="filterTable()">
+        <input id="search3" class="modern-input" type="text" placeholder="Description..." onkeyup="filterTable()">
+        <input id="search4" class="modern-input" type="text" placeholder="Job No..." onkeyup="filterTable()">
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container glass">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th>Request</th>
+            <th>Item Code</th>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Job No</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Order</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
 
   <script>
-    // i18n and language persistence
-    const I18N = {
-      en: {
-        brand_title: 'GISCO - Gulf Industrial Services Co.',
-        back_main: 'Back to Main Page'
-      },
-      ar: {
-        brand_title: 'GISCO - شركة خدمات الخليج الصناعية',
-        back_main: 'العودة إلى الصفحة الرئيسية'
-      }
-    };
-    const getLang = () => localStorage.getItem('lang') || 'ar';
-    const applyLang = (lang) => {
-      document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-      const dict = I18N[lang] || I18N.ar;
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (dict[key]) el.textContent = dict[key];
-      });
-    };
-    const setLang = (lang) => { localStorage.setItem('lang', lang); applyLang(lang); };
     let data = [];
-    let isArabic = true;
+    const vatRate = 1.05;
 
-    // Utility UI helpers
+    // --- Helpers ---
     function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
-    function showError(msg) { const el = document.getElementById('error'); el.textContent = msg || ''; el.style.display = msg ? 'block' : 'none'; }
+    
+    function formatCurrency(value) { 
+      return Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
+    }
 
-    // Search helpers: build a hidden index combining all fields
     function normalizeValue(v) { return String(v ?? '').toLowerCase().trim(); }
     function buildSearchIndex(item) {
-      const fields = ['REQUEST','Item Code','Description','Qty','Price','Job No','Status','Order'];
-      return fields.map(f => normalizeValue(item[f])).join(' ');
+      return Object.values(item).map(v => normalizeValue(v)).join(' ');
     }
 
-    // Auto-load sh.xlsx from the same folder when the page opens
-    async function autoLoadExcel() {
-      try {
-        showLoader(true); showError('');
-        const res = await fetch('sh.xlsx?ts=' + Date.now());
-        if (!res.ok) throw new Error('Failed to fetch sh.xlsx');
-        const arrayBuffer = await res.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        // add hidden search index for each row
-        data = data.map((item) => ({ ...item, searchIndex: buildSearchIndex(item) }));
-        if (data.length === 0) {
-          showError('No data found in sh.xlsx. Check headers and format.');
-        }
-        renderTable();
-      } catch (err) {
-        console.error('Auto-load failed:', err);
-        showError('Auto-load failed. If running without a server, use "Load Local Excel".');
-        // reveal local file button as fallback when fetch fails
-        const btn = document.getElementById('btnLocal'); if (btn) btn.style.display = 'inline-block';
-      } finally {
-        showLoader(false);
+    // --- Arabic Number to Words Logic (Optimized) ---
+    function numberToArabicWords(num) {
+      if (num === 0) return 'صفر درهماً';
+      if (num < 0) return 'سالب ' + numberToArabicWords(-num);
+      
+      const ones = ['',' واحد',' اثنان ','ثلاثة ','أربعة ','خمسة ','ستة','سبعة','ثمانية','تسعة','عشرة',
+                    'أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
+      const tens = ['','عشرة','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
+      const hundreds = ['','مائة','مئتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];
+      
+      function convertGroup(n) {
+        let res = '';
+        if (n >= 100) { res += hundreds[Math.floor(n / 100)] + ' و '; n %= 100; }
+        if (n >= 20) { res += (ones[n % 10] ? ones[n % 10] + ' و ' : '') + tens[Math.floor(n / 10)]; }
+        else if (n > 0) { res += ones[n]; }
+        return res.replace(/\s+و\s*$/, ''); // Clean trailing 'and'
       }
-    }
 
-    // Local file fallback (no server required)
-    async function loadLocalFile(file){
-      try {
-        if (!file) return;
-        const ps = document.getElementById('pathSelector');
-        const input = document.getElementById('localFile');
-        const fname = String(file.name || '').toLowerCase();
-        if (fname !== 'sh.xlsx') {
-          showError('Please select the file named "sh.xlsx" only.');
-          if (ps) { ps.value = ''; }
-          if (input) { input.value = ''; }
-          return;
-        }
-        if (ps) { ps.style.display = 'inline-block'; ps.value = file.name; }
-        showLoader(true); showError('');
-        const buf = await file.arrayBuffer();
-        const workbook = XLSX.read(buf, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        data = data.map((item) => ({ ...item, searchIndex: buildSearchIndex(item) }));
-        renderTable();
-      } catch (e) {
-        console.error('Local load failed:', e);
-        showError('Local load failed. Ensure the file is a valid .xlsx');
-      } finally {
-        showLoader(false);
-      }
-    }
-
-    function refreshData() { autoLoadExcel(); }
-
-
-function numberToArabicWords(num) {
-  if (num === 0) return 'صفر';
-
-  const ones = [
-    '   ', ' واحد', '   اثنان ', 'ثلاثة ', 'أربعة ', 'خمسة ',
-    'ستة', 'سبعة', 'ثمانية', 'تسعة', 'عشرة',
-    'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر',
-    'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'
-  ];
-
-  const tens = [
-    '', 'عشرة', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون',
-    'ستون', 'سبعون', 'ثمانون', 'تسعون'
-  ];
-
-  const hundreds = [
-    '', 'مائة', 'مئتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة',
-    'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'
-  ];
-
-  const scales = [' ', 'ألف', 'مليون', 'مليار'];
-
-  function convertGroup(n) {
-    let result = '';
-
-    // Hundreds
-    if (n >= 100) {
-      result += hundreds[Math.floor(n / 100)] +' و ';
-      n %= 100;
-    }
-
-    // Tens and ones
-    if (n >= 20) {
-      result += (ones[n % 10] ? ones[n % 10] + '  و   ' : '') + tens[Math.floor(n / 10)];
-    } else if (n > 0) {
-      result +=  ones[n] ;
-    }
-
-    return result;
-  }
-
-  if (num < 0) return 'سالب ' + numberToArabicWords(-num);
-  if (num >= 1000000000) return 'الرقم كبير جداً';
-
-  let parts = [];
-  let scaleIndex = 0;
-
-  while (num > 0) {
-    let group = num % 1000;
-    if (group !== 0) {
-      let groupText = convertGroup(group);
-      if (scaleIndex > 0) {
-        if (group === 1) {
-          groupText = scales[scaleIndex];
-        } else if (group === 2) {
-          groupText = 'ألفان';
-        } else {
-          if (scaleIndex === 1) { // Thousands
-            if (group > 2 && group < 11) groupText += ' آلاف';
-            else groupText +=  '  ألف   ';
-          } else if (scaleIndex === 2) { // Millions
-            if (group > 2 && group < 11) groupText += ' ملايين';
-            else groupText += ' مليون';
-          } else {
-            groupText += ' ' + scales[scaleIndex];
+      if (num >= 1000000000) return 'الرقم كبير جداً';
+      
+      let parts = [];
+      let scaleIndex = 0;
+      const scales = ['','ألف','مليون','مليار'];
+      
+      while (num > 0) {
+        let group = num % 1000;
+        if (group !== 0) {
+          let groupText = convertGroup(group);
+          if (scaleIndex > 0) {
+            if (group === 1) groupText = scales[scaleIndex];
+            else if (group === 2) groupText = (scaleIndex === 1) ? 'ألفان' : 'مليونان';
+            else {
+               if (scaleIndex === 1) groupText += (group > 2 && group < 11) ? ' آلاف' : ' ألف';
+               else if (scaleIndex === 2) groupText += (group > 2 && group < 11) ? ' ملايين' : ' مليون';
+               else groupText += ' ' + scales[scaleIndex];
+            }
           }
+          parts.unshift(groupText);
         }
+        num = Math.floor(num / 1000);
+        scaleIndex++;
       }
-      parts.unshift(groupText);
+      return parts.join(' و ') + ' درهماً';
     }
-    num = Math.floor(num / 1000);
-    scaleIndex++;
-  }
 
-  return parts.join('  و  ') + ' درهماً';
-}
-    function renderTable() {
+    // --- Core Logic ---
+    function renderTable(rowsToRender = data) {
       const tbody = document.querySelector("#data-table tbody");
       tbody.innerHTML = "";
+      
       let totalQty = 0, totalAmount = 0;
-      data.forEach((item, index) => {
-        const row = `<tr>
-          <td contenteditable="true" onblur="updateData(${index}, 'REQUEST', this.textContent)">${item['REQUEST'] || ''}</td>
-          <td contenteditable="true" onblur="updateData(${index}, 'Item Code', this.textContent)">${item['Item Code'] || ''}</td>
-          <td contenteditable="true" onblur="updateData(${index}, 'Description', this.textContent)">${item['Description'] || ''}</td>
-          <td contenteditable="true" onblur="updateData(${index}, 'Qty', this.textContent)">${item['Qty'] || 0}</td>
-          <td contenteditable="true" onblur="updateData(${index}, 'Price', this.textContent)">${item['Price'] || 0}</td>
-          <td contenteditable="true" onblur="updateData(${index}, 'Job No', this.textContent)">${item['Job No'] || ''}</td>
-          <td>${formatCurrency((Number(item['Qty']) || 0) * (Number(item['Price']) || 0))}</td>
-          <td contenteditable="true" onblur="updateData(${index}, 'Status', this.textContent)"><span class="badge">${item['Status'] || ''}</span></td>
-          <td contenteditable="true" onblur="updateData(${index}, 'Order', this.textContent)">${item['Order'] || ''}</td>
-        </tr>`;
-        tbody.insertAdjacentHTML('beforeend', row);
-        totalQty += Number(item['Qty']) || 0;
-        totalAmount += (Number(item['Qty']) || 0) * (Number(item['Price']) || 0);
-      });
-      document.getElementById("totalQty").textContent = totalQty;
-      document.getElementById("totalWithoutVAT").textContent = formatCurrency(totalAmount);
-      document.getElementById("totalWithVAT").textContent = formatCurrency(totalAmount * 1.05);
-      const totalWithVAT = totalAmount * 1.05;
-      document.getElementById("totalWithoutVAT").textContent = formatCurrency(totalAmount);
-      document.getElementById("totalWithVAT").textContent = formatCurrency(totalWithVAT);
-      document.getElementById("totalWithVATWords").textContent = numberToArabicWords(Math.round(totalWithVAT));
-    }
 
-    function updateData(index, field, value) {
-      data[index][field] = (field === 'Qty' || field === 'Price') ? Number(value) : value;
-      // rebuild search index for the updated row
-      data[index].searchIndex = buildSearchIndex(data[index]);
-      renderTable();
+      rowsToRender.forEach((item, index) => {
+        const qty = Number(item['Qty']) || 0;
+        const price = Number(item['Price']) || 0;
+        const total = qty * price;
+        
+        totalQty += qty;
+        totalAmount += total;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item['REQUEST'] || ''}</td>
+          <td class="col-code">${item['Item Code'] || ''}</td>
+          <td>${item['Description'] || ''}</td>
+          <td style="text-align:center">${qty}</td>
+          <td style="text-align:right">${formatCurrency(price)}</td>
+          <td>${item['Job No'] || ''}</td>
+          <td class="col-money" style="text-align:right">${formatCurrency(total)}</td>
+          <td style="text-align:center"><span class="status-badge">${item['Status'] || '-'}</span></td>
+          <td>${item['Order'] || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Update Dashboard
+      const finalTotal = totalAmount * vatRate;
+      document.getElementById("totalQty").textContent = totalQty.toLocaleString();
+      document.getElementById("totalWithoutVAT").textContent = formatCurrency(totalAmount);
+      document.getElementById("totalWithVAT").textContent = formatCurrency(finalTotal);
+      document.getElementById("totalWithVATWords").textContent = numberToArabicWords(Math.round(finalTotal));
     }
 
     function filterTable() {
-      const s1 = document.getElementById("search1").value.toLowerCase();
-      const s2 = document.getElementById("search2").value.toLowerCase();
-      const s3 = document.getElementById("search3").value.toLowerCase();
-      const s4 = document.getElementById("search4").value.toLowerCase();
-      // Combine all input texts into tokens and ensure each token appears in any part of the row
-      const tokens = [s1, s2, s3, s4]
-        .flatMap(t => t.split(/\s+/))
-        .map(t => t.trim())
-        .filter(Boolean);
-      const tbody = document.querySelector("#data-table tbody");
-      tbody.innerHTML = "";
-      let totalQty = 0, totalAmount = 0;
-      data.filter(item => tokens.every(tok => item.searchIndex.includes(tok))).forEach(item => {
-        const row = `<tr>
-          <td>${item['REQUEST'] || ''}</td>
-          <td>${item['Item Code'] || ''}</td>
-          <td>${item['Description'] || ''}</td>
-          <td>${item['Qty'] || 0}</td>
-          <td>${item['Price'] || 0}</td>
-          <td>${item['Job No'] || ''}</td>
-          <td>${formatCurrency((Number(item['Qty']) || 0) * (Number(item['Price']) || 0))}</td>
-          <td>${item['Status'] || ''}</td>
-          <td>${item['Order'] || ''}</td>
-        </tr>`;
-        tbody.insertAdjacentHTML('beforeend', row);
-        totalQty += Number(item['Qty']) || 0;
-        totalAmount += (Number(item['Qty']) || 0) * (Number(item['Price']) || 0);
+      const s1 = normalizeValue(document.getElementById("search1").value);
+      const s2 = normalizeValue(document.getElementById("search2").value);
+      const s3 = normalizeValue(document.getElementById("search3").value);
+      const s4 = normalizeValue(document.getElementById("search4").value);
+
+      const filtered = data.filter(item => {
+        const idx = item.searchIndex || buildSearchIndex(item);
+        return (!s1 || idx.includes(s1)) &&
+               (!s2 || idx.includes(s2)) &&
+               (!s3 || idx.includes(s3)) &&
+               (!s4 || idx.includes(s4));
       });
-      document.getElementById("totalQty").textContent = totalQty;
-      document.getElementById("totalWithoutVAT").textContent = formatCurrency(totalAmount);
-      document.getElementById("totalWithVAT").textContent = formatCurrency(totalAmount * 1.05);
+      renderTable(filtered);
     }
 
-    function formatCurrency(value) { return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    // --- File Handling ---
+    async function loadLocalFile(file){
+      if (!file) return;
+      showLoader(true);
+      try {
+        const buf = await file.arrayBuffer();
+        const workbook = XLSX.read(buf, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        data.forEach(item => item.searchIndex = buildSearchIndex(item));
+        renderTable();
+      } catch (e) {
+        alert('Error loading file. Ensure it is a valid Excel file.');
+        console.error(e);
+      } finally {
+        showLoader(false);
+      }
+    }
 
     function exportExcel() {
-      // exclude the hidden searchIndex from export
-      const cleaned = data.map(({ searchIndex, ...rest }) => rest);
-      const ws = XLSX.utils.json_to_sheet(cleaned);
+      const ws = XLSX.utils.json_to_sheet(data.map(({searchIndex,...r})=>r));
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Updated Data");
-      XLSX.writeFile(wb, 'updated_sh.xlsx');
+      XLSX.utils.book_append_sheet(wb, ws, "GISCO_Summary");
+      XLSX.writeFile(wb, 'GISCO_Purchase_Summary.xlsx');
     }
 
     function exportPDF() {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('p', 'pt');
-      doc.text('GISCO Purchase Summary', 40, 40);
-      const headers = [['REQUEST','Item Code','Description','Qty','Price','Job No','Total Amount','Status','Order']];
-      const rows = data.map(item => [
-        item['REQUEST'] || '',
-        item['Item Code'] || '',
-        item['Description'] || '',
-        item['Qty'] || 0,
-        item['Price'] || 0,
-        item['Job No'] || '',
-        ((Number(item['Qty']) || 0) * (Number(item['Price']) || 0)).toFixed(2),
-        item['Status'] || '',
-        item['Order'] || ''
+      const doc = new jsPDF('l', 'pt', 'a4'); // Landscape
+      
+      doc.setFontSize(18);
+      doc.text("GISCO Purchase Summary", 40, 40);
+      doc.setFontSize(11);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 40, 60);
+
+      const headers = [['Request','Code','Description','Qty','Price','Job No','Total','Status','Order']];
+      const rows = data.map(i => [
+        i['REQUEST'], i['Item Code'], i['Description'], i['Qty'], 
+        i['Price'], i['Job No'], ((i['Qty']*i['Price'])).toFixed(2), i['Status'], i['Order']
       ]);
-      // Simple table rendering
-      let x = 40, y = 70;
-      headers.concat(rows).forEach((row, i) => {
-        let line = row.join(' | ');
-        doc.text(line, x, y + i * 18);
+
+      doc.autoTable({
+        head: headers,
+        body: rows,
+        startY: 80,
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [0, 191, 165] }
       });
-      doc.save('gisco_summary.pdf');
+
+      doc.save('GISCO_Summary.pdf');
     }
 
-    function toggleLanguage() {
-      const next = getLang() === 'ar' ? 'en' : 'ar';
-      setLang(next);
-    }
-
-    // Robust auto-load trigger: run immediately if DOM is already ready
-    (function initAutoLoad(){
-      const start = () => {
-        // Apply persisted language on load
-        applyLang(getLang());
-        if (!window.XLSX) { showError('Excel parser (XLSX) not loaded. Check CDN connectivity.'); return; }
-        // If opened via file://, show local load option instead of fetching
-        const isFile = location.protocol === 'file:';
-        const btn = document.getElementById('btnLocal');
-        const input = document.getElementById('localFile');
-        const ps = document.getElementById('pathSelector');
-        if (btn && input) {
-          input.addEventListener('change', (e) => loadLocalFile(e.target.files[0]));
-        }
-        if (isFile) {
-          if (btn) btn.style.display = 'inline-block';
-          if (ps) ps.style.display = 'inline-block';
-          showError('Opened without server. Use "Load Local Excel" to select sh.xlsx.');
-        } else {
-          autoLoadExcel();
-        }
-      };
-      if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', start, { once: true });
-      } else {
-        start();
+    // --- Init ---
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('localFile').addEventListener('change', (e) => loadLocalFile(e.target.files[0]));
+      
+      // Auto-load if server is present
+      if (location.protocol !== 'file:') {
+        showLoader(true);
+        fetch('sh.xlsx?ts=' + Date.now())
+          .then(res => res.arrayBuffer())
+          .then(buf => {
+            const wb = XLSX.read(buf, { type: 'array' });
+            data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+            data.forEach(item => item.searchIndex = buildSearchIndex(item));
+            renderTable();
+          })
+          .catch(err => console.log('Auto-load failed, waiting for manual load.'))
+          .finally(() => showLoader(false));
       }
-    })();
+    });
   </script>
-
 </body>
 </html>
