@@ -3,229 +3,240 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Passport & GatePass Manager</title>
+  <title>GISCO – Identity Command Center</title>
+  
   <!-- Suppress Tailwind CDN warning -->
   <script>
     const originalWarn = console.warn;
     console.warn = (...args) => {
-      if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) {
-        return;
-      }
+      if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) return;
       originalWarn.apply(console, args);
     };
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FIXED: Load jsPDF with Unicode support -->
+  
+  <!-- PDF & Supabase -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-  <!-- FIXED: Add Arabic font for PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/polyfills.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .hidden { display: none; }
-    @media print {
-      .no-print { display: none !important; }
-      .print-area { width: 100%; }
-      table { font-size: 12px; }
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --brand: #06b6d4; /* Cyan */
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
     }
-    .visa-cell {
-      background: linear-gradient(90deg, #ff9e9e 0%, #ff6b6b 50%, #ffa500 100%);
-      color: white;
-      border-radius: 4px;
-      font-weight: bold;
+    
+    body { 
+      font-family: 'Inter', system-ui, sans-serif; 
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+      color: #f8fafc;
     }
-    .urgent {
-      animation: pulse 2s infinite;
+
+    .glass {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+    /* Animations */
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
-    .notification-badge {
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      background: #ef4444;
-      color: white;
-      border-radius: 50%;
-      padding: 4px 8px;
-      font-size: 12px;
-      font-weight: bold;
-      min-width: 24px;
-      text-align: center;
+    .urgent-pulse { animation: pulse-red 2s infinite; }
+
+    .visa-alert {
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.05) 100%);
+      border-left: 3px solid var(--warning);
     }
+
+    /* Table Styling */
+    th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
+    td { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+    
+    .status-pill {
+      padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 700;
+      text-align: center; display: inline-block; min-width: 40px;
+    }
+    .pill-safe { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .pill-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .pill-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    /* Notification Panel */
     .notification-panel {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: white;
-      border: 2px solid #ef4444;
-      border-radius: 8px;
-      padding: 16px;
-      max-width: 400px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 1000;
-      display: none;
+      position: fixed; top: 80px; right: 20px; width: 350px;
+      z-index: 50; transform: translateX(120%); transition: transform 0.3s ease;
     }
-    .notification-panel.show {
-      display: block;
-      animation: slideIn 0.3s ease-out;
-    }
-    @keyframes slideIn {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    .notification-item {
-      padding: 8px;
-      border-bottom: 1px solid #eee;
-      font-size: 14px;
-    }
-    .notification-item:last-child {
-      border-bottom: none;
-    }
-    .notification-item.urgent {
-      background: #fef2f2;
-      border-left: 4px solid #ef4444;
-    }
-    .notification-item.warning {
-      background: #fffbeb;
-      border-left: 4px solid #f59e0b;
-    }
+    .notification-panel.show { transform: translateX(0); }
   </style>
+  
   <script>
     tailwind.config = {
       darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            dark: { 800: '#1f2937', 700: '#374151', 600: '#4b5563', 500: '#6b7280' }
-          }
-        }
-      }
+      theme: { extend: { colors: { dark: { 800: '#1f2937', 900: '#0f172a' } } } }
     }
   </script>
 </head>
-<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 p-4" id="body-root">
-  <div id="app" class="max-w-7xl mx-auto">
+<body class="min-h-screen flex flex-col">
 
-    <div class="flex flex-wrap justify-between items-center mb-6 gap-3 no-print">
-      <!-- FIXED: Added back button -->
+  <!-- Header -->
+  <header class="glass sticky top-0 z-40 border-b border-gray-700">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center gap-3">
-        <button id="btn-back" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
-          ← Back to Home
+        <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white">Identity Command</h1>
+          <p class="text-xs text-gray-400">Passport & GatePass Intelligence</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <button id="btn-notifications" class="relative p-2 text-gray-400 hover:text-white transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          <span id="notification-count" class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center hidden">0</span>
         </button>
-        <h1 id="page-title" class="text-2xl font-bold">Passport & GatePass Management</h1>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button id="theme-toggle" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
-          🌙 Dark Mode
-        </button>
-        <button id="lang-toggle" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">العربية</button>
-        <button id="btn-add" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New</button>
-        <button id="btn-export-csv" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Export CSV</button>
-        <button id="btn-export-pdf" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Export PDF</button>
-        <button id="btn-print" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Print</button>
-        <div class="relative">
-          <button id="btn-notifications" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 relative">
-            <span>Notifications</span>
-            <span id="notification-count" class="notification-badge hidden">0</span>
-          </button>
-        </div>
-        <!-- Add these three buttons after the existing action buttons -->
-<button id="btn-sort-gatepass" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm" title="Sort by GatePass Expiry">
-  🎫 GatePass Expiry
-</button>
-<button id="btn-sort-passport" class="px-3 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 text-sm" title="Sort by Passport Expiry">
-  📘 Passport Expiry
-</button>
-<button id="btn-sort-visa" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 text-sm" title="Sort by Visa Expiry">
-  🛂 Visa Expiry
-</button>
+        <button id="theme-toggle" class="p-2 text-gray-400 hover:text-white transition">🌙</button>
+        <button id="lang-toggle" class="px-3 py-1 text-xs font-bold border border-gray-600 rounded hover:bg-gray-700 transition">AR</button>
+        <button id="btn-back" class="ml-2 px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded text-white transition">← Home</button>
       </div>
     </div>
+  </header>
 
-    <div class="mb-4 no-print">
-      <input
-        type="text"
-        id="search-input"
-        placeholder="Search any text..."
-        class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-      />
-    </div>
-
-    <div id="loading" class="text-center py-4 hidden">Loading...</div>
-
-    <div class="overflow-x-auto shadow rounded print-area">
-      <table class="min-w-full bg-white dark:bg-gray-800" id="data-table">
-        <thead class="bg-gray-100 dark:bg-gray-700">
-          <tr>
-            <th class="py-2 px-4 text-left">SN</th>
-            <th class="py-2 px-4 text-left">File No</th>
-            <th class="py-2 px-4 text-left">Name</th>
-            <th class="py-2 px-4 text-left">Name (Arabic)</th>
-            <th class="py-2 px-4 text-left">GatePass Exp.</th>
-            <th class="py-2 px-4 text-left">Passport Exp.</th>
-            <th class="py-2 px-4 text-left">Visa Expiry</th>
-            <th class="py-2 px-4 text-left">GatePass Remaining</th>
-            <th class="py-2 px-4 text-left">Passport Remaining</th>
-            <th class="py-2 px-4 text-left">Visa Remaining</th> <!-- NEW COLUMN -->
-            <th class="py-2 px-4 text-left">Passport Exp. Before GatePass?</th>
-            <th class="py-2 px-4 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="table-body" class="divide-y divide-gray-200 dark:divide-gray-700">
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Modal -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-full max-w-2xl">
-        <h2 id="modal-title" class="text-xl mb-4">Add New Record</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="block text-sm font-medium mb-1">SN</label>
-            <input type="number" id="sn" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-          <div><label class="block text-sm font-medium mb-1">File No</label>
-            <input type="text" id="file_no" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-          <div><label class="block text-sm font-medium mb-1">Name (English)</label>
-            <input type="text" id="name" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-          <div><label class="block text-sm font-medium mb-1">Name (Arabic)</label>
-            <input type="text" id="name_ar" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-          <div><label class="block text-sm font-medium mb-1">GatePass Exp. Date</label>
-            <input type="date" id="gatepass_exp_date" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-          <div><label class="block text-sm font-medium mb-1">Passport Exp. Date</label>
-            <input type="date" id="passport_exp_date" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-          <div><label id="label-visa-exp-date" class="block text-sm font-medium mb-1">Visa Expiry Date</label>
-            <input type="date" id="visa_exp_date" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
-        </div>
-        <div class="mt-6 flex justify-end gap-2">
-          <button id="modal-cancel" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 rounded">Cancel</button>
-          <button id="modal-save" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+  <main class="flex-1 max-w-7xl mx-auto w-full p-4 space-y-6">
+    
+    <!-- Dashboard Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="glass p-4 rounded-xl border-l-4 border-red-500">
+        <div class="text-gray-400 text-xs uppercase font-bold">Critical Alerts</div>
+        <div class="text-2xl font-mono font-bold text-red-400 mt-1" id="stat-critical">0</div>
+      </div>
+      <div class="glass p-4 rounded-xl border-l-4 border-amber-500">
+        <div class="text-gray-400 text-xs uppercase font-bold">Expiring Soon</div>
+        <div class="text-2xl font-mono font-bold text-amber-400 mt-1" id="stat-warning">0</div>
+      </div>
+      <div class="glass p-4 rounded-xl border-l-4 border-cyan-500">
+        <div class="text-gray-400 text-xs uppercase font-bold">Total Records</div>
+        <div class="text-2xl font-mono font-bold text-cyan-400 mt-1" id="stat-total">0</div>
+      </div>
+      <div class="glass p-4 rounded-xl flex items-center justify-between">
+        <div>
+          <div class="text-gray-400 text-xs uppercase font-bold">Actions</div>
+          <div class="flex gap-2 mt-2">
+            <button id="btn-add" class="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs rounded font-bold transition">+ ADD NEW</button>
+            <button id="btn-export-pdf" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded transition">PDF</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Notification Panel -->
-    <div id="notification-panel" class="notification-panel">
-      <div class="flex justify-between items-center mb-2">
-        <h3 class="font-bold text-lg">⚠️ Expiring Soon</h3>
-        <button id="close-notifications" class="text-gray-500 hover:text-gray-700">×</button>
+    <!-- Controls Bar -->
+    <div class="glass p-3 rounded-xl flex flex-wrap gap-3 items-center justify-between">
+      <div class="relative flex-1 min-w-[200px]">
+        <input type="text" id="search-input" placeholder="Search identity..." class="w-full bg-gray-900/50 border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-sm focus:border-cyan-500 focus:outline-none text-white placeholder-gray-500">
+        <svg class="w-4 h-4 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
       </div>
-      <div id="notification-list"></div>
+      
+      <div class="flex gap-2 overflow-x-auto pb-1 md:pb-0">
+        <button id="btn-sort-gatepass" class="px-3 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 transition whitespace-nowrap">🎫 GatePass</button>
+        <button id="btn-sort-passport" class="px-3 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 transition whitespace-nowrap">📘 Passport</button>
+        <button id="btn-sort-visa" class="px-3 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 transition whitespace-nowrap">🛂 Visa</button>
+        <button id="btn-print" class="px-3 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 transition whitespace-nowrap">🖨️ Print</button>
+      </div>
     </div>
 
+    <!-- Data Table -->
+    <div class="glass rounded-xl overflow-hidden shadow-2xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="data-table">
+          <thead class="bg-gray-900/50 text-gray-400 border-b border-gray-700">
+            <tr>
+              <th class="py-4 px-4">SN</th>
+              <th class="py-4 px-4">File No</th>
+              <th class="py-4 px-4">Name</th>
+              <th class="py-4 px-4">GatePass Exp.</th>
+              <th class="py-4 px-4">Passport Exp.</th>
+              <th class="py-4 px-4">Visa Expiry</th>
+              <th class="py-4 px-4 text-center">GP Days</th>
+              <th class="py-4 px-4 text-center">PP Days</th>
+              <th class="py-4 px-4 text-center">Visa Days</th>
+              <th class="py-4 px-4 text-center">PP < GP?</th>
+              <th class="py-4 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-gray-800">
+            <!-- Rows injected via JS -->
+          </tbody>
+        </table>
+      </div>
+      <div id="loading" class="hidden p-8 text-center text-cyan-400">
+        <svg class="animate-spin h-8 w-8 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        Syncing with Secure Database...
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-800 mt-auto py-4 text-center text-xs text-gray-500">
+    Designed & Programmed By: Mostafa Al-Najar | تصميم وبرمجة : مصطفي النجار
+  </footer>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="glass bg-gray-900 p-6 rounded-2xl w-full max-w-2xl shadow-2xl border border-gray-700">
+      <h2 id="modal-title" class="text-xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Add Record</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><label class="block text-xs text-gray-400 mb-1">SN</label><input type="number" id="sn" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1">File No</label><input type="text" id="file_no" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1">Name (English)</label><input type="text" id="name" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1">Name (Arabic)</label><input type="text" id="name_ar" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1">GatePass Exp.</label><input type="date" id="gatepass_exp_date" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1">Passport Exp.</label><input type="date" id="passport_exp_date" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1">Visa Expiry</label><input type="date" id="visa_exp_date" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+      </div>
+      <div class="mt-8 flex justify-end gap-3">
+        <button id="modal-cancel" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition">Cancel</button>
+        <button id="modal-save" class="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold rounded shadow-lg shadow-cyan-500/20 transition">Save Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Panel -->
+  <div id="notification-panel" class="notification-panel glass rounded-xl shadow-2xl border border-red-500/30">
+    <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-red-500/10">
+      <h3 class="font-bold text-red-400 flex items-center gap-2">⚠️ Security Alerts</h3>
+      <button id="close-notifications" class="text-gray-400 hover:text-white">×</button>
+    </div>
+    <div id="notification-list" class="max-h-[60vh] overflow-y-auto p-2"></div>
   </div>
 
   <script>
     // ======================
-    // CONFIG — CLEANED URLS
+    // CONFIG
     // ======================
     const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let allData = [];
+    let currentLang = localStorage.getItem('lang') || 'en';
+    let isDarkMode = true; // Force dark mode for this design
 
     // ======================
     // UTILS
@@ -238,367 +249,64 @@
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    function isPassportBeforeGatepass(gatepass, passport) {
-      if (!gatepass || !passport) return false;
-      return new Date(passport) < new Date(gatepass);
-    }
-
-    // Color gradient helper
-    function getRedToGreenColor(value, min = -30, max = 180) {
-      if (value === null) return 'transparent';
-      const clamped = Math.max(min, Math.min(max, value));
-      const ratio = (clamped - min) / (max - min);
-      const hue = ratio * 120;
-      return `hsl(${hue}, 70%, 45%)`;
-    }
-
-    // Get notification level
     function getNotificationLevel(days) {
       if (days === null) return 'none';
       if (days <= 0) return 'expired';
-      if (days <= 15) return 'urgent';
-      if (days <= 30) return 'warning';
-      return 'none';
+      if (days <= 30) return 'urgent';
+      if (days <= 90) return 'warning';
+      return 'safe';
     }
 
-    // ======================
-    // THEME & LANGUAGE
-    // ======================
-    let isDarkMode = localStorage.getItem('darkMode') === 'true';
-    let currentLang = localStorage.getItem('lang') || 'en';
-
-    if (isDarkMode) document.documentElement.classList.add('dark');
-    if (currentLang === 'ar') document.documentElement.dir = 'rtl';
-
-    function toggleTheme() {
-      isDarkMode = !isDarkMode;
-      document.documentElement.classList.toggle('dark', isDarkMode);
-      localStorage.setItem('darkMode', isDarkMode);
-      updateUI();
-    }
-
-    function setLanguage(lang) {
-      currentLang = lang;
-      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-      localStorage.setItem('lang', lang);
-      updateUI();
+    function getPillClass(days) {
+      if (days === null) return 'bg-gray-700 text-gray-400';
+      if (days <= 0) return 'pill-danger urgent-pulse';
+      if (days <= 30) return 'pill-warn';
+      return 'pill-safe';
     }
 
     // ======================
     // TRANSLATIONS
     // ======================
     const translations = {
-      en: {
-        title: "Passport & GatePass Management",
-        search: "Search any text...",
-        addNew: "Add New",
-        edit: "Edit",
-        delete: "Delete",
-        print: "Print",
-        exportCSV: "Export CSV",
-        exportPDF: "Export PDF",
-        sn: "SN",
-        fileNo: "File No",
-        name: "Name",
-        nameAr: "Name (Arabic)",
-        gatepassExp: "GatePass Exp.",
-        passportExp: "Passport Exp.",
-        visaExpiry: "Visa Expiry",
-        visaRemaining: "Visa Remaining", // NEW TRANSLATION
-        visaExpiryDate: "Visa Expiry Date",
-        gatepassRemaining: "GatePass Remaining",
-        passportRemaining: "Passport Remaining",
-        passportBeforeGatepass: "Passport Exp. Before GatePass?",
-        yes: "Yes",
-        no: "No",
-        actions: "Actions",
-        save: "Save",
-        cancel: "Cancel",
-        confirmDelete: "Are you sure you want to delete this record?",
-        langToggle: "العربية",
-        darkMode: "🌙 Dark Mode",
-        lightMode: "☀️ Light Mode",
-        backToHome: "← Back to Home",
-        notifications: "Notifications",
-        expired: "Expired",
-        urgent: "Urgent",
-        warning: "Warning",
-        daysRemaining: "days remaining",
-        noNotifications: "No expiring documents",
-        sortGatePass: "🎫 Sort by GatePass",
-        sortPassport: "📘 Sort by Passport", 
-        sortVisa: "🛂 Sort by Visa",
-
-      },
-      ar: {
-        title: "إدارة جوازات السفر وتصاريح الدخول",
-        search: "بحث بأي نص...",
-        addNew: "إضافة جديد",
-        edit: "تعديل",
-        delete: "حذف",
-        print: "طباعة",
-        exportCSV: "تصدير CSV",
-        exportPDF: "تصدير PDF",
-        sn: "الرقم",
-        fileNo: "رقم الملف",
-        name: "الاسم (إنجليزي)",
-        nameAr: "الاسم (عربي)",
-        gatepassExp: "انتهاء تصريح الدخول",
-        passportExp: "انتهاء جواز السفر",
-        visaExpiry: "انتهاء التأشيرة",
-        visaRemaining: "أيام متبقية (تأشيرة)", // NEW TRANSLATION
-        visaExpiryDate: "تاريخ انتهاء التأشيرة",
-        gatepassRemaining: "أيام متبقية (تصريح)",
-        passportRemaining: "أيام متبقية (جواز)",
-        passportBeforeGatepass: "هل ينتهي الجواز قبل التصريح؟",
-        yes: "نعم",
-        no: "لا",
-        actions: "إجراءات",
-        save: "حفظ",
-        cancel: "إلغاء",
-        confirmDelete: "هل أنت متأكد من حذف هذا السجل؟",
-        langToggle: "English",
-        darkMode: "🌙 الوضع الليلي",
-        lightMode: "☀️ الوضع النهاري",
-        backToHome: "← العودة للرئيسية",
-        notifications: "الإشعارات",
-        expired: "منتهي",
-        urgent: "عاجل",
-        warning: "تحذير",
-        daysRemaining: "أيام متبقية",
-        noNotifications: "لا توجد مستندات منتهية",
-        sortGatePass: "🎫 ترتيب حسب تصريح الدخول",
-        sortPassport: "📘 ترتيب حسب الجواز",
-        sortVisa: "🛂 ترتيب حسب التأشيرة",
-      }
+      en: { title: "Identity Command", search: "Search identity...", addNew: "+ ADD NEW", edit: "Edit", delete: "Delete", print: "Print", exportPDF: "PDF", sn: "SN", fileNo: "File No", name: "Name", gatepassExp: "GatePass Exp.", passportExp: "Passport Exp.", visaExpiry: "Visa Expiry", gpDays: "GP Days", ppDays: "PP Days", visaDays: "Visa Days", ppBeforeGp: "PP < GP?", actions: "Actions", save: "Save Record", cancel: "Cancel", confirmDelete: "Delete this record?", backToHome: "← Home", notifications: "Security Alerts", expired: "EXPIRED", urgent: "URGENT", warning: "WARNING", daysRemaining: "days left", noNotifications: "All systems normal.", sortGatePass: "🎫 GatePass", sortPassport: "📘 Passport", sortVisa: "🛂 Visa" },
+      ar: { title: "قيادة الهوية", search: "بحث...", addNew: "+ إضافة جديد", edit: "تعديل", delete: "حذف", print: "طباعة", exportPDF: "PDF", sn: "الرقم", fileNo: "رقم الملف", name: "الاسم", gatepassExp: "انتهاء التصريح", passportExp: "انتهاء الجواز", visaExpiry: "انتهاء التأشيرة", gpDays: "أيام التصريح", ppDays: "أيام الجواز", visaDays: "أيام التأشيرة", ppBeforeGp: "الجواز قبل التصريح؟", actions: "إجراءات", save: "حفظ", cancel: "إلغاء", confirmDelete: "حذف هذا السجل؟", backToHome: "← الرئيسية", notifications: "تنبيهات أمنية", expired: "منتهي", urgent: "عاجل", warning: "تحذير", daysRemaining: "يوم متبقي", noNotifications: "النظام آمن.", sortGatePass: "🎫 التصريح", sortPassport: "📘 الجواز", sortVisa: "🛂 التأشيرة" }
     };
-// ======================
-// SORTING FUNCTIONS
-// ======================
 
-// Helper: Get numeric value for sorting (lower = more urgent)
-function getSortValue(dateStr) {
-  if (!dateStr) return Infinity;
-  const expDate = new Date(dateStr);
-  const today = new Date();
-  if (isNaN(expDate)) return Infinity;
-  const diffTime = expDate - today;
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-}
-
-// Sort by GatePass expiry (nearest first)
-function sortByGatePass() {
-  allData.sort((a, b) => {
-    const aVal = getSortValue(a.gatepass_exp_date);
-    const bVal = getSortValue(b.gatepass_exp_date);
-    return aVal - bVal;
-  });
-  renderTable();
-  updateSortIndicators('gatepass');
-}
-
-// Sort by Passport expiry (nearest first)
-function sortByPassport() {
-  allData.sort((a, b) => {
-    const aVal = getSortValue(a.passport_exp_date);
-    const bVal = getSortValue(b.passport_exp_date);
-    return aVal - bVal;
-  });
-  renderTable();
-  updateSortIndicators('passport');
-}
-
-// Sort by Visa expiry (nearest first)
-function sortByVisa() {
-  allData.sort((a, b) => {
-    const aVal = getSortValue(a.visa_exp_date);
-    const bVal = getSortValue(b.visa_exp_date);
-    return aVal - bVal;
-  });
-  renderTable();
-  updateSortIndicators('visa');
-}
-
-// Visual indicator for active sort
-function updateSortIndicators(activeType) {
-  // Remove all indicators first
-  ['gatepass', 'passport', 'visa'].forEach(type => {
-    const btn = document.getElementById(`btn-sort-${type}`);
-    if (btn) btn.classList.remove('ring-2', 'ring-white', 'scale-105');
-  });
-  
-  // Add indicator to active button
-  const activeBtn = document.getElementById(`btn-sort-${activeType}`);
-  if (activeBtn) {
-    activeBtn.classList.add('ring-2', 'ring-white', 'scale-105');
-  }
-}
     function updateUI() {
-  const t = translations[currentLang];
-  document.getElementById('page-title').textContent = t.title;
-  document.getElementById('search-input').placeholder = t.search;
-  document.getElementById('btn-add').textContent = t.addNew;
-  document.getElementById('btn-export-csv').textContent = t.exportCSV;
-  document.getElementById('btn-export-pdf').textContent = t.exportPDF;
-  document.getElementById('btn-print').textContent = t.print;
-  document.getElementById('lang-toggle').textContent = t.langToggle;
-  document.getElementById('theme-toggle').textContent = isDarkMode ? t.lightMode : t.darkMode;
-  document.getElementById('btn-back').textContent = t.backToHome;
-  document.getElementById('btn-notifications').innerHTML = `<span>${t.notifications}</span><span id="notification-count" class="notification-badge hidden">0</span>`;
-  
-  // ✅ FIXED: Update sort button labels HERE where 't' is defined
-  document.getElementById('btn-sort-gatepass').textContent = t.sortGatePass;
-  document.getElementById('btn-sort-passport').textContent = t.sortPassport;
-  document.getElementById('btn-sort-visa').textContent = t.sortVisa;
-  
-  // Update modal label for visa field
-  document.getElementById('label-visa-exp-date').textContent = t.visaExpiryDate;
-
-  const headers = document.querySelectorAll('thead th');
-  const texts = [
-    t.sn, t.fileNo, t.name, t.nameAr, 
-    t.gatepassExp, t.passportExp, t.visaExpiry,
-    t.gatepassRemaining, t.passportRemaining, t.visaRemaining,
-    t.passportBeforeGatepass, t.actions
-  ];
-  texts.forEach((txt, i) => headers[i] && (headers[i].textContent = txt));
-}
-
-    // ======================
-    // NOTIFICATION SYSTEM
-    // ======================
-    function generateNotifications() {
-      const notificationList = document.getElementById('notification-list');
-      const notificationCount = document.getElementById('notification-count');
-      const notificationPanel = document.getElementById('notification-panel');
+      const t = translations[currentLang];
+      document.getElementById('page-title') && (document.getElementById('page-title').textContent = t.title);
+      document.getElementById('search-input').placeholder = t.search;
+      document.getElementById('btn-add').textContent = t.addNew;
+      document.getElementById('btn-export-pdf').textContent = t.exportPDF;
+      document.getElementById('btn-print').textContent = t.print;
+      document.getElementById('lang-toggle').textContent = currentLang === 'en' ? 'AR' : 'EN';
+      document.getElementById('btn-back').textContent = t.backToHome;
+      document.getElementById('btn-sort-gatepass').textContent = t.sortGatePass;
+      document.getElementById('btn-sort-passport').textContent = t.sortPassport;
+      document.getElementById('btn-sort-visa').textContent = t.sortVisa;
       
-      const urgentItems = [];
-      const warningItems = [];
-      const expiredItems = [];
+      // Update Headers
+      const headers = document.querySelectorAll('thead th');
+      const texts = [t.sn, t.fileNo, t.name, t.gatepassExp, t.passportExp, t.visaExpiry, t.gpDays, t.ppDays, t.visaDays, t.ppBeforeGp, t.actions];
+      headers.forEach((h, i) => h.textContent = texts[i]);
       
-      allData.forEach(row => {
-        const gpDays = calculateDaysRemaining(row.gatepass_exp_date);
-        const ppDays = calculateDaysRemaining(row.passport_exp_date);
-        const visaDays = calculateDaysRemaining(row.visa_exp_date);
-        
-        const t = translations[currentLang];
-        
-        // Check GatePass
-        const gpLevel = getNotificationLevel(gpDays);
-        if (gpLevel !== 'none') {
-          const item = {
-            type: gpLevel,
-            message: `${row.name || row.name_ar || 'Unknown'} - GatePass: ${gpDays <= 0 ? t.expired : `${gpDays} ${t.daysRemaining}`}`,
-            days: gpDays
-          };
-          if (gpLevel === 'expired') expiredItems.push(item);
-          else if (gpLevel === 'urgent') urgentItems.push(item);
-          else warningItems.push(item);
-        }
-        
-        // Check Passport
-        const ppLevel = getNotificationLevel(ppDays);
-        if (ppLevel !== 'none') {
-          const item = {
-            type: ppLevel,
-            message: `${row.name || row.name_ar || 'Unknown'} - Passport: ${ppDays <= 0 ? t.expired : `${ppDays} ${t.daysRemaining}`}`,
-            days: ppDays
-          };
-          if (ppLevel === 'expired') expiredItems.push(item);
-          else if (ppLevel === 'urgent') urgentItems.push(item);
-          else warningItems.push(item);
-        }
-        
-        // Check Visa (NEW)
-        const visaLevel = getNotificationLevel(visaDays);
-        if (visaLevel !== 'none') {
-          const item = {
-            type: visaLevel,
-            message: `${row.name || row.name_ar || 'Unknown'} - Visa: ${visaDays <= 0 ? t.expired : `${visaDays} ${t.daysRemaining}`}`,
-            days: visaDays
-          };
-          if (visaLevel === 'expired') expiredItems.push(item);
-          else if (visaLevel === 'urgent') urgentItems.push(item);
-          else warningItems.push(item);
-        }
-      });
-      
-      // Combine all notifications (expired first, then urgent, then warning)
-      const allNotifications = [...expiredItems, ...urgentItems, ...warningItems];
-      
-      // Update notification count
-      if (allNotifications.length > 0) {
-        notificationCount.textContent = allNotifications.length;
-        notificationCount.classList.remove('hidden');
-      } else {
-        notificationCount.classList.add('hidden');
-      }
-      
-      // Render notification list
-      if (allNotifications.length === 0) {
-        notificationList.innerHTML = `<div class="text-center py-4 text-gray-500">${translations[currentLang].noNotifications}</div>`;
-      } else {
-        notificationList.innerHTML = allNotifications.map(item => {
-          const icon = item.days <= 0 ? '❌' : item.days <= 15 ? '⚠️' : '🔔';
-          return `<div class="notification-item ${item.type}">${icon} ${item.message}</div>`;
-        }).join('');
-      }
+      document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
     }
 
     // ======================
-    // DATA + SORTING
+    // DATA LOGIC
     // ======================
-    let allData = [];
-
-    function sortData() {
-      allData.sort((a, b) => {
-        // Helper: calculate remaining days or return Infinity if missing
-        const getDays = (dateStr) => {
-          if (!dateStr) return Infinity;
-          const expDate = new Date(dateStr);
-          const today = new Date();
-          if (isNaN(expDate)) return Infinity;
-          const diffTime = expDate - today;
-          return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-        };
-
-        const ppDaysA = getDays(a.passport_exp_date);
-        const gpDaysA = getDays(a.gatepass_exp_date);
-        const visaDaysA = getDays(a.visa_exp_date);
-        const ppDaysB = getDays(b.passport_exp_date);
-        const gpDaysB = getDays(b.gatepass_exp_date);
-        const visaDaysB = getDays(b.visa_exp_date);
-
-        const sumA = ppDaysA + gpDaysA + visaDaysA;
-        const sumB = ppDaysB + gpDaysB + visaDaysB;
-
-        const beforeA = isPassportBeforeGatepass(a.gatepass_exp_date, a.passport_exp_date);
-        const beforeB = isPassportBeforeGatepass(b.gatepass_exp_date, b.passport_exp_date);
-
-        // Primary: "Yes" (true) comes before "No" (false)
-        if (beforeA !== beforeB) {
-          return beforeA ? -1 : 1;
-        }
-
-        // Secondary: sort by sum ascending (lower sum = more urgent)
-        return sumA - sumB;
-      });
-    }
-
     async function fetchData() {
       document.getElementById('loading').classList.remove('hidden');
-      const { data, error } = await supabaseClient
-        .from('employee_passports')
-        .select('*');
-
-      if (error) {
-        console.error('Supabase error:', error);
-        alert('Failed to load data. Check console.');
-      } else {
+      document.getElementById('table-body').innerHTML = '';
+      
+      const { data, error } = await supabaseClient.from('employee_passports').select('*');
+      if (error) console.error(error);
+      else {
         allData = data || [];
-        sortData();
         renderTable();
-        generateNotifications(); // Generate notifications after data is loaded
+        generateNotifications();
+        updateStats();
       }
       document.getElementById('loading').classList.add('hidden');
     }
@@ -606,90 +314,133 @@ function updateSortIndicators(activeType) {
     function renderTable(searchTerm = '') {
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = '';
+      const t = translations[currentLang];
 
       let filtered = allData;
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
-        filtered = allData.filter(row => {
-          const text = `${row.sn || ''} ${row.file_no || ''} ${row.name || ''} ${row.name_ar || ''} ${row.gatepass_exp_date || ''} ${row.passport_exp_date || ''} ${row.visa_exp_date || ''}`;
-          return text.toLowerCase().includes(term);
-        });
+        filtered = allData.filter(row => JSON.stringify(row).toLowerCase().includes(term));
       }
 
-      const t = translations[currentLang];
       filtered.forEach(row => {
         const gpDays = calculateDaysRemaining(row.gatepass_exp_date);
         const ppDays = calculateDaysRemaining(row.passport_exp_date);
         const visaDays = calculateDaysRemaining(row.visa_exp_date);
-        const before = isPassportBeforeGatepass(row.gatepass_exp_date, row.passport_exp_date);
-
-        // Highlight urgent visa expirations
-        const visaCellClass = visaDays !== null && visaDays <= 30 ? 'visa-cell urgent' : 'py-2 px-4';
+        const before = ppDays !== null && gpDays !== null && ppDays < gpDays;
 
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-700';
+        tr.className = 'hover:bg-gray-800/50 transition border-b border-gray-800 last:border-0';
+        
+        // Visa Highlight Logic
+        if (visaDays !== null && visaDays <= 30) tr.classList.add('visa-alert');
+
         tr.innerHTML = `
-          <td class="py-2 px-4">${row.sn || ''}</td>
-          <td class="py-2 px-4">${row.file_no || ''}</td>
-          <td class="py-2 px-4">${row.name || ''}</td>
-          <td class="py-2 px-4">${row.name_ar || ''}</td>
-          <td class="py-2 px-4">${row.gatepass_exp_date || ''}</td>
-          <td class="py-2 px-4">${row.passport_exp_date || ''}</td>
-          <td class="${visaCellClass}">${row.visa_exp_date || ''}</td>
-          <td class="py-2 px-4 font-medium text-center"
-              style="background: ${getRedToGreenColor(gpDays)}; color: white; border-radius: 4px;">
-            ${gpDays !== null ? gpDays : '—'}
+          <td class="py-3 px-4 text-gray-400">${row.sn || '-'}</td>
+          <td class="py-3 px-4 font-bold text-cyan-400">${row.file_no || '-'}</td>
+          <td class="py-3 px-4">
+            <div class="text-white font-medium">${row.name || '-'}</div>
+            <div class="text-xs text-gray-500">${row.name_ar || ''}</div>
           </td>
-          <td class="py-2 px-4 font-medium text-center"
-              style="background: ${getRedToGreenColor(ppDays)}; color: white; border-radius: 4px;">
-            ${ppDays !== null ? ppDays : '—'}
-          </td>
-          <td class="py-2 px-4 font-medium text-center" 
-              style="background: ${getRedToGreenColor(visaDays)}; color: white; border-radius: 4px;">
-            ${visaDays !== null ? visaDays : '—'}
-          </td>
-          <td class="py-2 px-4">${before ? `<span class="text-red-500 dark:text-red-400 font-bold">${t.yes}</span>` : `<span class="text-green-500 dark:text-green-400">${t.no}</span>`}</td>
-          <td class="py-2 px-4">
-            <button class="edit-btn text-blue-600 dark:text-blue-400 hover:underline mx-1">${t.edit}</button>
-            <button class="delete-btn text-red-600 dark:text-red-400 hover:underline mx-1">${t.delete}</button>
+          <td class="py-3 px-4 text-gray-300">${row.gatepass_exp_date || '-'}</td>
+          <td class="py-3 px-4 text-gray-300">${row.passport_exp_date || '-'}</td>
+          <td class="py-3 px-4 ${visaDays <= 30 ? 'text-amber-400 font-bold' : 'text-gray-300'}">${row.visa_exp_date || '-'}</td>
+          
+          <td class="py-3 px-4 text-center"><span class="status-pill ${getPillClass(gpDays)}">${gpDays !== null ? gpDays : '-'}</span></td>
+          <td class="py-3 px-4 text-center"><span class="status-pill ${getPillClass(ppDays)}">${ppDays !== null ? ppDays : '-'}</span></td>
+          <td class="py-3 px-4 text-center"><span class="status-pill ${getPillClass(visaDays)}">${visaDays !== null ? visaDays : '-'}</span></td>
+          
+          <td class="py-3 px-4 text-center">${before ? '<span class="text-red-500 font-bold">YES</span>' : '<span class="text-green-500">NO</span>'}</td>
+          <td class="py-3 px-4 text-right">
+            <button class="edit-btn text-cyan-400 hover:text-cyan-300 mr-2 text-xs font-bold uppercase">Edit</button>
+            <button class="delete-btn text-red-400 hover:text-red-300 text-xs font-bold uppercase">Del</button>
           </td>
         `;
+        
         tr.querySelector('.edit-btn').onclick = () => openModal(row.id);
         tr.querySelector('.delete-btn').onclick = () => deleteRecord(row.id);
         tbody.appendChild(tr);
       });
     }
 
+    function updateStats() {
+      let critical = 0, warning = 0;
+      allData.forEach(r => {
+        const gp = calculateDaysRemaining(r.gatepass_exp_date);
+        const pp = calculateDaysRemaining(r.passport_exp_date);
+        const vs = calculateDaysRemaining(r.visa_exp_date);
+        
+        [gp, pp, vs].forEach(d => {
+          if (d !== null) {
+            if (d <= 0) critical++;
+            else if (d <= 30) warning++;
+          }
+        });
+      });
+      
+      document.getElementById('stat-critical').textContent = critical;
+      document.getElementById('stat-warning').textContent = warning;
+      document.getElementById('stat-total').textContent = allData.length;
+    }
+
     // ======================
-    // CRUD
+    // NOTIFICATIONS
+    // ======================
+    function generateNotifications() {
+      const list = document.getElementById('notification-list');
+      const countBadge = document.getElementById('notification-count');
+      const alerts = [];
+      const t = translations[currentLang];
+
+      allData.forEach(row => {
+        const checks = [
+          { days: calculateDaysRemaining(row.gatepass_exp_date), type: 'GatePass' },
+          { days: calculateDaysRemaining(row.passport_exp_date), type: 'Passport' },
+          { days: calculateDaysRemaining(row.visa_exp_date), type: 'Visa' }
+        ];
+
+        checks.forEach(c => {
+          if (c.days !== null && c.days <= 30) {
+            alerts.push({
+              level: c.days <= 0 ? 'expired' : 'urgent',
+              msg: `${row.name} - ${c.type}: ${c.days <= 0 ? t.expired : c.days + ' ' + t.daysRemaining}`
+            });
+          }
+        });
+      });
+
+      countBadge.textContent = alerts.length;
+      countBadge.classList.toggle('hidden', alerts.length === 0);
+
+      if (alerts.length === 0) {
+        list.innerHTML = `<div class="p-4 text-center text-gray-500">${t.noNotifications}</div>`;
+      } else {
+        list.innerHTML = alerts.map(a => `
+          <div class="p-3 mb-2 rounded bg-gray-800 border-l-4 ${a.level === 'expired' ? 'border-red-500' : 'border-amber-500'}">
+            <div class="text-xs font-bold ${a.level === 'expired' ? 'text-red-400' : 'text-amber-400'} uppercase mb-1">${a.level === 'expired' ? t.expired : t.urgent}</div>
+            <div class="text-sm text-gray-200">${a.msg}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // ======================
+    // MODAL & CRUD
     // ======================
     let editingId = null;
     const modal = document.getElementById('modal');
 
     function openModal(id = null) {
       editingId = id;
-      const t = translations[currentLang];
-      document.getElementById('modal-title').textContent = id ? t.edit : t.addNew;
-
+      document.getElementById('modal-title').textContent = id ? translations[currentLang].edit : translations[currentLang].addNew;
       if (id) {
         const row = allData.find(r => r.id == id);
-        document.getElementById('sn').value = row.sn || '';
-        document.getElementById('file_no').value = row.file_no || '';
-        document.getElementById('name').value = row.name || '';
-        document.getElementById('name_ar').value = row.name_ar || '';
-        document.getElementById('gatepass_exp_date').value = row.gatepass_exp_date || '';
-        document.getElementById('passport_exp_date').value = row.passport_exp_date || '';
-        document.getElementById('visa_exp_date').value = row.visa_exp_date || '';
-      } else {
-        ['sn','file_no','name','name_ar','gatepass_exp_date','passport_exp_date','visa_exp_date'].forEach(id => {
-          document.getElementById(id).value = '';
+        ['sn','file_no','name','name_ar','gatepass_exp_date','passport_exp_date','visa_exp_date'].forEach(k => {
+          document.getElementById(k).value = row[k] || '';
         });
+      } else {
+        document.querySelectorAll('#modal input').forEach(i => i.value = '');
       }
       modal.classList.remove('hidden');
-    }
-
-    function closeModal() {
-      modal.classList.add('hidden');
     }
 
     async function saveRecord() {
@@ -703,186 +454,67 @@ function updateSortIndicators(activeType) {
         visa_exp_date: document.getElementById('visa_exp_date').value
       };
 
-      if (!formData.file_no || !formData.name) {
-        alert('File No and Name are required.');
-        return;
-      }
+      if (!formData.file_no || !formData.name) return alert('File No and Name required');
 
       try {
-        if (editingId) {
-          const { error } = await supabaseClient
-            .from('employee_passports')
-            .update(formData)
-            .eq('id', editingId);
-          if (error) throw error;
-        } else {
-          const { error } = await supabaseClient
-            .from('employee_passports')
-            .insert([formData]);
-          if (error) throw error;
-        }
-        closeModal();
-        await fetchData();
-      } catch (err) {
-        alert('Save failed: ' + (err.message || 'Unknown error'));
-      }
+        if (editingId) await supabaseClient.from('employee_passports').update(formData).eq('id', editingId);
+        else await supabaseClient.from('employee_passports').insert([formData]);
+        modal.classList.add('hidden');
+        fetchData();
+      } catch (err) { alert('Error: ' + err.message); }
     }
 
     async function deleteRecord(id) {
-      const t = translations[currentLang];
-      if (confirm(t.confirmDelete)) {
+      if (confirm(translations[currentLang].confirmDelete)) {
         await supabaseClient.from('employee_passports').delete().eq('id', id);
-        await fetchData();
+        fetchData();
       }
     }
 
     // ======================
-    // EXPORTS
+    // SORTING
     // ======================
-    function exportToCSV() {
-      const t = translations[currentLang];
-      const headers = [
-        t.sn, t.fileNo, t.name, t.nameAr,
-        t.gatepassExp, t.passportExp, t.visaExpiry,
-        t.gatepassRemaining, t.passportRemaining, t.visaRemaining, // Added visaRemaining
-        t.passportBeforeGatepass
-      ];
-
-      const rows = allData.map(row => {
-        const gpDays = calculateDaysRemaining(row.gatepass_exp_date);
-        const ppDays = calculateDaysRemaining(row.passport_exp_date);
-        const visaDays = calculateDaysRemaining(row.visa_exp_date);
-        const before = isPassportBeforeGatepass(row.gatepass_exp_date, row.passport_exp_date);
-        return [
-          row.sn || '',
-          row.file_no || '',
-          row.name || '',
-          row.name_ar || '',
-          row.gatepass_exp_date || '',
-          row.passport_exp_date || '',
-          row.visa_exp_date || '',
-          gpDays !== null ? gpDays : '—',
-          ppDays !== null ? ppDays : '—',
-          visaDays !== null ? visaDays : '—', // Added visa days
-          before ? t.yes : t.no
-        ];
-      });
-
-      const BOM = '\uFEFF';
-      const csvContent = "text/csv;charset=utf-8," + 
-        BOM + [headers, ...rows].map(e => e.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-      
-      const link = document.createElement("a");
-      link.href = encodeURI(csvContent);
-      link.download = "passport_data.csv";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    function sortBy(type) {
+      const key = type === 'gatepass' ? 'gatepass_exp_date' : type === 'passport' ? 'passport_exp_date' : 'visa_exp_date';
+      allData.sort((a, b) => new Date(a[key] || '9999-12-31') - new Date(b[key] || '9999-12-31'));
+      renderTable();
     }
 
+    // ======================
+    // EXPORT
+    // ======================
     function exportToPDF() {
       const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape' });
       const t = translations[currentLang];
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      
+      const headers = [[t.sn, t.fileNo, t.name, t.gatepassExp, t.passportExp, t.visaExpiry]];
+      const data = allData.map(r => [r.sn, r.file_no, r.name, r.gatepass_exp_date, r.passport_exp_date, r.visa_exp_date]);
 
-      doc.setFont('Helvetica', 'normal');
-
-      const headers = [[
-        t.sn, t.fileNo, t.name, t.nameAr, 
-        t.gatepassExp, t.passportExp, t.visaExpiry,
-        t.gatepassRemaining, t.passportRemaining, t.visaRemaining, // Added visaRemaining
-        t.passportBeforeGatepass
-      ]];
-
-      const data = allData.map(row => {
-        const gpDays = calculateDaysRemaining(row.gatepass_exp_date);
-        const ppDays = calculateDaysRemaining(row.passport_exp_date);
-        const visaDays = calculateDaysRemaining(row.visa_exp_date);
-        const before = isPassportBeforeGatepass(row.gatepass_exp_date, row.passport_exp_date);
-        return [
-          row.sn || '',
-          row.file_no || '',
-          row.name || '',
-          row.name_ar || '',
-          row.gatepass_exp_date || '',
-          row.passport_exp_date || '',
-          row.visa_exp_date || '',
-          gpDays !== null ? gpDays : '—',
-          ppDays !== null ? ppDays : '—',
-          visaDays !== null ? visaDays : '—', // Added visa days
-          before ? t.yes : t.no
-        ];
-      });
-
-      doc.autoTable({
-        head: headers,
-        body: data,
-        startY: 20,
-        theme: 'striped',
-        styles: { font: "helvetica", fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [66, 133, 244] },
-        didParseCell: (data) => {
-          if (currentLang === 'ar' && data.section === 'body') {
-            data.cell.styles.textAlign = 'right';
-          }
-        }
-      });
-
-      doc.save('passport_data.pdf');
+      doc.autoTable({ head: headers, body: data, startY: 20, theme: 'striped' });
+      doc.save('identity_report.pdf');
     }
 
     // ======================
     // EVENTS
-
-
-    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-    document.getElementById('lang-toggle').addEventListener('click', () => {
-      setLanguage(currentLang === 'en' ? 'ar' : 'en');
-    });
-    document.getElementById('btn-back').addEventListener('click', () => {
-      window.location.href = 'index.html';
-    });
-  
-    document.getElementById('btn-add').addEventListener('click', () => openModal());
-    // ✅ Sort button event listeners (was missing!)
-document.getElementById('btn-sort-gatepass').addEventListener('click', sortByGatePass);
-document.getElementById('btn-sort-passport').addEventListener('click', sortByPassport);
-document.getElementById('btn-sort-visa').addEventListener('click', sortByVisa);
-    document.getElementById('modal-cancel').addEventListener('click', closeModal);
-    document.getElementById('modal-save').addEventListener('click', saveRecord);
-    document.getElementById('btn-export-csv').addEventListener('click', exportToCSV);
-    document.getElementById('btn-export-pdf').addEventListener('click', exportToPDF);
-    document.getElementById('btn-print').addEventListener('click', () => window.print());
-    document.getElementById('search-input').addEventListener('input', (e) => {
-      renderTable(e.target.value);
-    });
-    document.getElementById('btn-notifications').addEventListener('click', () => {
-      const panel = document.getElementById('notification-panel');
-      panel.classList.toggle('show');
-    });
-    document.getElementById('close-notifications').addEventListener('click', () => {
-      document.getElementById('notification-panel').classList.remove('show');
-    });
-
-    window.onclick = (e) => {
-      if (e.target === modal) closeModal();
-    };
-
-    // Auto-refresh notifications every 30 seconds
-    setInterval(() => {
-      if (allData.length > 0) {
-        generateNotifications();
-      }
-    }, 30000);
-
     // ======================
-    // INIT
-    // ======================
+    document.getElementById('btn-add').onclick = () => openModal();
+    document.getElementById('modal-cancel').onclick = () => modal.classList.add('hidden');
+    document.getElementById('modal-save').onclick = saveRecord;
+    document.getElementById('search-input').oninput = (e) => renderTable(e.target.value);
+    document.getElementById('btn-notifications').onclick = () => document.getElementById('notification-panel').classList.toggle('show');
+    document.getElementById('close-notifications').onclick = () => document.getElementById('notification-panel').classList.remove('show');
+    document.getElementById('lang-toggle').onclick = () => { currentLang = currentLang === 'en' ? 'ar' : 'en'; updateUI(); renderTable(); };
+    document.getElementById('btn-sort-gatepass').onclick = () => sortBy('gatepass');
+    document.getElementById('btn-sort-passport').onclick = () => sortBy('passport');
+    document.getElementById('btn-sort-visa').onclick = () => sortBy('visa');
+    document.getElementById('btn-export-pdf').onclick = exportToPDF;
+    document.getElementById('btn-print').onclick = () => window.print();
+    document.getElementById('btn-back').onclick = () => window.location.href = 'index.html';
+
+    // Init
     updateUI();
     fetchData();
   </script>
 </body>
-<footer style="display: flex;align-items: center; justify-content: center; padding: 1rem; border-top: 1px solid #eee; margin-top: 1rem;">
-  <div>Designed & Programmed By: Mostafa Al-Najar | تصميم وبرمجة : مصطفي النجار</div>
-</footer>
 </html>
