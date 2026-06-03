@@ -15,14 +15,14 @@
 
   <style>
     :root {
-      --bg-dark: #0f172a;
+      --bg-dark: #024469;
       --bg-card: rgba(30, 41, 59, 0.7);
       --brand: #00bfa5; /* GISCO Teal */
-      --brand-glow: rgba(0, 191, 165, 0.4);
-      --accent: #3b82f6;
+      --brand-glow: rgba(0, 191, 166, 0.637);
+      --accent: #ffffff;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
-      --border: rgba(148, 163, 184, 0.1);
+      --border: rgba(255, 255, 255, 0.1);
       --success: #10b981;
       --danger: #ef4444;
     }
@@ -57,7 +57,7 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border);
-      background: rgba(15, 23, 42, 0.9);
+      background: rgba(36, 15, 42, 0.9);
       position: sticky;
       top: 0;
       z-index: 100;
@@ -117,16 +117,17 @@
     /* The Arabic Words Display */
     .words-card {
       grid-column: 1 / -1;
-      background: linear-gradient(90deg, rgba(0, 191, 165, 0.1), rgba(0, 0, 0, 0));
+      background: linear-gradient(90deg, rgb(32, 0, 51), rgb(255, 255, 255));
       border: 1px solid var(--brand);
       text-align: center;
       padding: 15px;
+
     }
     .words-text {
       font-size: 1.2rem;
-      color: var(--brand);
+      color:#ffffff;
       font-weight: 700;
-      text-shadow: 0 0 10px var(--brand-glow);
+      text-shadow: 0 0 5px rgb(0, 0, 0);
     }
 
     /* Controls & Search */
@@ -144,11 +145,11 @@
       flex: 1;
     }
     .modern-input {
-      background: rgba(0,0,0,0.2);
+      background: rgb(255, 255, 255);
       border: 1px solid var(--border);
       padding: 10px 15px;
       border-radius: 8px;
-      color: white;
+      color: rgb(0, 0, 0);
       font-family: 'Inter', sans-serif;
       min-width: 180px;
       flex: 1;
@@ -181,7 +182,7 @@
     
     .status-badge {
       padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1);
+      background:radial-gradient(at 0% 0%, rgb(2, 255, 221) 0px, transparent 50%); border: 1px solid rgb(7, 243, 46);
     }
 
     /* Loader */
@@ -229,7 +230,7 @@
     <div class="brand-area">
       <div class="logo-mark">GISCO</div>
       <div class="titles">
-        <h1>Procurement Summary</h1>
+        <h1>AL-SHUHRAH SHOP COMPRESSORS</h1>
         <p>Gulf Industrial Services Co.</p>
       </div>
     </div>
@@ -263,7 +264,7 @@
       
       <!-- Arabic Words Display -->
       <div class="glass words-card">
-        <span class="stat-label">Total Amount in Words</span>
+        <span class="stat-label" style="color: #000; font-weight: bold;">Total Amount in Words</span>
         <div class="words-text" id="totalWithVATWords">صفر درهماً</div>
       </div>
     </div>
