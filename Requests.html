@@ -128,6 +128,7 @@
     .total-value { font-weight: 700; font-size: 1.1rem; }
     .not-received-total { color: var(--not-received); }
     .mat-not-received-total { color: var(--warning); }
+    .received-total { color: var(--success); }
 
     .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--brand); text-decoration: none; font-weight: 600; margin-top: 12px; transition: opacity 0.2s; }
     .back-link:hover { opacity: 0.8; }
@@ -214,12 +215,24 @@
             <span class="total-value" id="sumAmount">AED 0.00</span>
           </div>
           <div class="total-item">
+            <div class="total-label"><span class="total-name">Received Materials Cost</span></div>
+            <span class="total-value received-total" id="sumReceived">AED 0.00</span>
+          </div>
+          <div class="total-item">
             <div class="total-label"><span class="total-name">Work Orders (WO)</span></div>
             <span class="total-value" id="sumWO">AED 0.00</span>
           </div>
           <div class="total-item">
-            <div class="total-label"><span class="total-name">Other Materials</span></div>
+            <div class="total-label"><span class="total-name">None Work Order Materials</span></div>
             <span class="total-value" id="sumOther">AED 0.00</span>
+          </div>
+          <div class="total-item">
+            <div class="total-label"><span class="total-name">Store Materials</span></div>
+            <span class="total-value" id="sumStore">AED 0.00</span>
+          </div>
+          <div class="total-item">
+            <div class="total-label"><span class="total-name">L.P.O Materials</span></div>
+            <span class="total-value" id="sumPO">AED 0.00</span>
           </div>
           <div class="total-item">
             <div class="total-label">
@@ -282,15 +295,13 @@
     const excelPath = 'Requests.xlsx';
     let ALL_ROWS = [];
     let MATERIALS_ROWS = [];
-    let GLOBALWO_NOT_RECEIVED_TOTAL = 0;
-    let GLOBALMAT_NOT_RECEIVED_TOTAL = 0;
     let CURRENT_FILTER = 'all';
 
     const COLUMNS = [
       { id: 'not-received', title: 'Not Received', filter: (r) => !isReceived(r.receiptDate) },
-      { id: 'store-order', title: 'Store Orders', filter: (r) => isReceived(r.receiptDate) && String(r.order).length === 6 },
-      { id: 'po-order', title: 'Purchase Orders', filter: (r) => isReceived(r.receiptDate) && String(r.order).length === 12 },
-      { id: 'other-order', title: 'Other Received', filter: (r) => isReceived(r.receiptDate) && String(r.order).length !== 6 && String(r.order).length !== 12 }
+      { id: 'store-order', title: 'Store Materials', filter: (r) => isReceived(r.receiptDate) && String(r.order).length === 6 },
+      { id: 'po-order', title: 'L.P.O Materials', filter: (r) => isReceived(r.receiptDate) && String(r.order).length === 12 },
+     
     ];
 
     function isReceived(val) {
@@ -305,7 +316,7 @@
     const FIELD_ALIASES = {
       request: ['Requisition','req','reqno','req_no','req id','reqid','رقمالطلب','رقم الطلب'],
       requestDate: ['creation_date'],
-      order: ['order','orderno','order_no','po','po no','po_no','store order','storeorder','رقمالامر','رقم الامر'],
+      order: ['order','orderno','order_no','po','po no','po_no','Store Materials','storeorder','رقمالامر','رقم الامر'],
       amount: ['amount','total','cost','المبلغ','value'],
       receiptDate: ['RECEIPT DATE','rec date','receiptdate','تاريخ الاستلام','تاريخالاستلام'],
       receiptOrder: ['Receipt','receiptno','receipt no','رقم امر الاستلام','رقمامرالاستلام'],
@@ -425,7 +436,7 @@
           unitPrice: ['unit price', 'PRICE', 'سعر الوحدة', 'Unit Price'],
           projectNo: ['project no', 'JOB NO', 'رقم المشروع', 'Job No'],
           status: ['status', 'الحالة', 'STATUE', 'Status'],
-          order: ['ORDER','orderno','order_no','po','po no','po_no','store order','storeorder','رقمالامر','رقم الامر']
+          order: ['ORDER','orderno','order_no','po','po no','po_no','Store Materials','storeorder','رقمالامر','رقم الامر']
         };
 
         MATERIALS_ROWS = json.map(item => {
@@ -463,9 +474,6 @@
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
         ALL_ROWS = json.map(buildRow);
        
-        GLOBALWO_NOT_RECEIVED_TOTAL = ALL_ROWS.filter(r => !isReceived(r.receiptDate) && String(r.remark || '').trim().toLowerCase() === 'wo').reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-        GLOBALMAT_NOT_RECEIVED_TOTAL = ALL_ROWS.filter(r => !isReceived(r.receiptDate) && String(r.remark || '').trim().toLowerCase() !== 'wo').reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-
         renderKanbanBoard(ALL_ROWS);
         setStatus(`Loaded ${ALL_ROWS.length} rows from Requests.xlsx`);
         await loadMaterialsExcel(); 
@@ -496,9 +504,6 @@
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
         ALL_ROWS = json.map(buildRow);
         
-        GLOBALWO_NOT_RECEIVED_TOTAL = ALL_ROWS.filter(r => !isReceived(r.receiptDate) && String(r.remark || '').trim().toLowerCase() === 'wo').reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-        GLOBALMAT_NOT_RECEIVED_TOTAL = ALL_ROWS.filter(r => !isReceived(r.receiptDate) && String(r.remark || '').trim().toLowerCase() !== 'wo').reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-
         renderKanbanBoard(ALL_ROWS);
         setStatus(`Loaded ${ALL_ROWS.length} rows from local file`);
       } catch (e) {
@@ -513,14 +518,16 @@
       const board = document.getElementById('kanbanBoard');
       board.innerHTML = '';
 
-      COLUMNS.forEach(colConfig => {
-        let columnRows = rows.filter(colConfig.filter);
+      // Apply tab filter first
+      let filteredRows = rows;
+      if (CURRENT_FILTER === 'wo') {
+        filteredRows = rows.filter(r => String(r.remark || '').trim().toLowerCase() === 'wo');
+      } else if (CURRENT_FILTER === 'm') {
+        filteredRows = rows.filter(r => String(r.remark || '').trim().toLowerCase() === 'm');
+      }
 
-        if (CURRENT_FILTER === 'wo') {
-          columnRows = columnRows.filter(r => String(r.remark || '').trim().toLowerCase() === 'wo');
-        } else if (CURRENT_FILTER === 'm') {
-          columnRows = columnRows.filter(r => String(r.remark || '').trim().toLowerCase() === 'm');
-        }
+      COLUMNS.forEach(colConfig => {
+        let columnRows = filteredRows.filter(colConfig.filter);
 
         const columnEl = document.createElement('div');
         columnEl.className = `column ${colConfig.id}`;
@@ -545,7 +552,7 @@
             statusText = 'Not Received';
             statusColor = 'var(--not-received)';
           } else if (String(row.order).length === 6) {
-            statusText = 'Store Order';
+            statusText = 'Store Materials';
             statusColor = 'var(--store-order)';
           } else if (String(row.order).length === 12) {
             statusText = 'Purchase Order';
@@ -592,31 +599,59 @@
         });
       });
 
-      updateSummary(rows);
+      // Pass the filtered rows to update the summary responsively
+      updateSummary(filteredRows);
     }
 
     function updateSummary(rows) {
       let total = 0, woTotal = 0, otherTotal = 0;
+      let storeTotal = 0, poTotal = 0;
+      let woNotReceived = 0, matNotReceived = 0;
+      let receivedTotal = 0; // 👈 New Variable
+
       for (const r of rows) {
         const amount = Number(r.amount) || 0;
         total += amount;
+        
         const remark = String(r.remark || '').trim().toLowerCase();
-        if (remark === 'wo') woTotal += amount;
-        else otherTotal += amount;
+        const orderLen = String(r.order || '').length;
+        const received = isReceived(r.receiptDate);
+
+        // Calculate Received Total
+        if (received) {
+          receivedTotal += amount;
+        }
+
+        if (remark === 'wo') {
+          woTotal += amount;
+          if (!received) woNotReceived += amount;
+        } else {
+          otherTotal += amount;
+          if (!received) matNotReceived += amount;
+        }
+
+        if (orderLen === 6) {
+          storeTotal += amount;
+        } else if (orderLen === 12) {
+          poTotal += amount;
+        }
       }
 
       document.getElementById('sumAmount').textContent = formatAED(total);
+      document.getElementById('sumReceived').textContent = formatAED(receivedTotal); // 👈 Update UI
       document.getElementById('sumWO').textContent = formatAED(woTotal);
       document.getElementById('sumOther').textContent = formatAED(otherTotal);
-      document.getElementById('sumNotReceived').textContent = formatAED(GLOBALWO_NOT_RECEIVED_TOTAL);
-      document.getElementById('matNotReceived').textContent = formatAED(GLOBALMAT_NOT_RECEIVED_TOTAL);
+      document.getElementById('sumStore').textContent = formatAED(storeTotal);
+      document.getElementById('sumPO').textContent = formatAED(poTotal);
+      document.getElementById('sumNotReceived').textContent = formatAED(woNotReceived);
+      document.getElementById('matNotReceived').textContent = formatAED(matNotReceived);
 
       const ctx = document.getElementById('summaryChart').getContext('2d');
       if (window.summaryChartInstance) window.summaryChartInstance.destroy();
       window.summaryChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['Work Orders', 'Other Materials'],
+          labels: ['Work Orders', 'None Work Order Materials'],
           datasets: [{
             data: [woTotal, otherTotal],
             backgroundColor: ['#6366f1', '#ec4899'],
