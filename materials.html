@@ -18,8 +18,9 @@
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --border: rgba(148, 163, 184, 0.1);
-      --success: #10b981;
-      --warning: #f59e0b;
+      --success: #00ffaa;
+      --warning: #000000;
+      
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -162,10 +163,10 @@
     
     .status-badge {
       padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1);
+      background: rgb(4, 185, 28); border: 1px solid rgba(255,255,255,0.1);
     }
-    .status-received { background: rgba(16, 185, 129, 0.2); color: var(--success); border-color: rgba(16, 185, 129, 0.3); }
-    .status-pending { background: rgba(245, 158, 11, 0.2); color: var(--warning); border-color: rgba(245, 158, 11, 0.3); }
+    .status-received { background: rgb(16, 185, 129); color: var(--success); border-color: rgba(16, 185, 129, 0.3); }
+    .status-pending { background: radial-gradient(at 0% 0%, rgb(0, 191, 25) 0px, transparent 100%); color: var(--warning); border-color: rgba(245, 158, 11, 0.3); }
 
     /* Loader */
     .loader-overlay {
@@ -195,7 +196,7 @@
       .stat-card { border: 1px solid #eee; color: black; }
       .stat-value { color: black; }
       table { min-width: 100%; }
-      th { background: #f0f0f0 !important; color: black !important; -webkit-print-color-adjust: exact; }
+      th { background: #f0f0f0 !important; color: black !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
       td { color: black !important; border-bottom: 1px solid #ddd; }
     }
   </style>
