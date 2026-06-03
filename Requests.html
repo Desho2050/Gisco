@@ -77,7 +77,7 @@
       outline: none;
       transition: border-color 0.2s;
     }
-    .cmd-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+    .cmd-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(20, 24, 241, 0.2); }
     .cmd-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--muted); }
     .cmd-shortcut { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; }
 
@@ -181,10 +181,11 @@
       <img src="Logo.bmp" alt="GISCO" class="logo" />
       <h1 class="title">Gulf Industrial Service Company</h1>
     </div>
-    <div class="title">PROJECT 4378M Costs Dashboard</div>
+    <div class="title" >PROJECT 4378M Costs Dashboard</div>
   </header>
 
   <main class="container">
+    
     <div class="board-section">
       <div class="command-bar">
         <span class="cmd-icon">🔍</span>
@@ -203,7 +204,8 @@
       <div class="kanban-board" id="kanbanBoard"></div>
     </div>
 
-    <div class="summary-section">
+    <div class="summary-section" style="align-items: center;">
+      <div style="align-items: center; font-weight: bold;font-style: italic; text-shadow: #1302fd 1px 1px 2px;">::: تصميم و برمجة : مصطفي النجار :::</div>
       <div class="glass summary-card">
         <h2 class="summary-title">Financial Overview</h2>
         <div class="chart-container">
