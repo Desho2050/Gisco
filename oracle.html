@@ -348,10 +348,24 @@
       return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
     }
 
-    function setStatus(msg, isLoading = false) {
+        function setStatus(msg, isLoading = false) {
       const el = document.getElementById('statusBar');
+      
+      // 1. Update the visual state immediately
       el.innerHTML = isLoading ? `<div class="spinner"></div> ${msg}` : msg;
       document.getElementById('loader').style.display = isLoading ? 'flex' : 'none';
+
+      // 2. If we are NOT loading (action is finished), clear the message after 2 seconds
+      if (!isLoading) {
+        setTimeout(() => {
+          // Optional: Check if the message is still the same one we set, 
+          // so we don't clear a NEW message that appeared in the meantime.
+          if (el.textContent === msg || el.innerHTML.includes(msg)) {
+             el.innerHTML = '' 
+             statusBar.style.display = 'none'; // Hide the status bar after clearing
+          }
+        }, 2000);
+      }
     }
 
     // --- Data Processing ---
