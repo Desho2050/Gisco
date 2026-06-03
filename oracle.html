@@ -233,7 +233,7 @@
 </head>
 <body>
 
-  <header class="glass">
+  <header class="glass" style="background: rgba(0, 0, 0, 0.8);">
     <div class="brand-area" >
       <div class="logo-mark" >GISCO</div>
       <div class="titles">
@@ -249,14 +249,14 @@
     </div>
   </header>
 
-  <main>
+  <main style="background-color: aqua;">
     <!-- Left Sidebar: Controls & Stats -->
     <aside class=">sidebar">
-      <div stye="item-align: center; padding: 10px 20px;">
+      <div stye="item-align: center; padding: 10px 20px;background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
       <p style="font-weight: bold;text-align: center;text-shadow: 1px 1px 4px rgba(252, 195, 7, 0.5);box-shadow: #00ffaa 1px 1px 1px; border-radius: 20px 20px 20px 20px;background-color:#0f172a;padding: 10px 20px;margin-bottom: 10px;">:::تصميم و برمجة: مصطفي النجار :::</p>
         </div>
-      <div class="glass search-panel">
-        <div class="input-group">
+      <div class="glass search-panel" style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
+        <div class="input-group" >
           <label >Search Query 1</label>
           <input id="q1" class="modern-input" type="text"  placeholder="Code or Description..." />
         </div>
@@ -280,7 +280,7 @@
         </label>
       </div>
 
-      <div class="glass stats-panel">
+      <div class="glass stats-panel" style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
         <h3 style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase;">Inventory Mix</h3>
         <div class="chart-container">
           <canvas id="inventoryChart"></canvas>
@@ -293,28 +293,28 @@
 
     <!-- Right Section: Data Display -->
     <section class="data-section">
-      <div class="glass toolbar">
+      <div class="glass toolbar" style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="color:var(--text-muted)">Results:</span>
           <span id="resultCount" class="result-count">0</span>
         </div>
-        <div id="loader" style="display:none; align-items:center; gap:8px; color:var(--brand);">
+        <div id="loader" style="display:none; align-items:center; gap:8px; color:var(--brand); ">
           <div class="spinner"></div> Processing...
         </div>
       </div>
 
-      <div class="table-wrapper glass">
+      <div class="table-wrapper glass" >
         <table id="dataTable">
           <thead>
-            <tr>
-              <th>Oracle Code</th>
-              <th>Description</th>
-              <th>Type</th>
-              <th>Unit</th>
-              <th>Qty</th>
+            <tr style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
+              <th style="color: white;">Oracle Code</th>
+              <th style="color: white;">Description</th>
+              <th style="color: white;">Type</th>
+              <th style="color: white;">Unit</th>
+              <th style="color: white;">Qty</th>
             </tr>
           </thead>
-          <tbody id="tableBody">
+          <tbody id="tableBody" style="background: rgba(0, 17, 14, 0.712); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
             <!-- Rows injected here -->
           </tbody>
         </table>
