@@ -18,30 +18,30 @@
 
 /* Modern Theme */
 .theme-modern {
-  --bg-deep: #0a0a1a;
-  --bg-primary: #0f0f2a;
-  --bg-surface: #141432;
-  --glass: rgba(255, 255, 255, 0.04);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-hover: rgba(255, 255, 255, 0.15);
-  --text-primary: #f0f0f8;
-  --text-secondary: #9090b8;
-  --text-muted: #555578;
+  --bg-deep: #ffffff;
+  --bg-primary: #1de2d8;
+  --bg-surface: #04d686;
+  --glass: rgb(1, 248, 248);
+  --glass-border: rgba(8, 174, 196, 0.747);
+  --glass-border-hover: rgba(8, 217, 224, 0.733);
+  --text-primary: #000000;
+  --text-secondary: #282829;
+  --text-muted: #000000;
   --accent-blue: #3b82f6;
   --accent-cyan: #06b6d4;
-  --accent-purple: #8b5cf6;
+  --accent-purple: #150046;
   --accent-pink: #ec4899;
   --accent-green: #10b981;
   --accent-orange: #f59e0b;
   --accent-red: #ef4444;
-  --gradient-main: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --gradient-main: linear-gradient(135deg, #003791, #4503df);
   --gradient-warm: linear-gradient(135deg, #f59e0b, #ef4444);
-  --gradient-cool: linear-gradient(135deg, #06b6d4, #10b981);
-  --gradient-pink: linear-gradient(135deg, #ec4899, #8b5cf6);
+  --gradient-cool: linear-gradient(135deg, #00191d, #10b981);
+  --gradient-pink: linear-gradient(135deg, #f30c80, #4c05f3);
   --gradient-gold: linear-gradient(135deg, #f59e0b, #d97706);
   --shadow-glow: 0 0 60px rgba(59, 130, 246, 0.08);
   --orb-opacity: 0.22;
-  --grid-opacity: 0.015;
+  --grid-opacity: 0.030;
   --topbar-bg: rgba(15, 15, 42, 0.85);
   --card-bg: rgba(255, 255, 255, 0.03);
   --card-hover: rgba(255, 255, 255, 0.06);
@@ -1012,8 +1012,8 @@ body {
   <div class="brand">
     <img src="Logo.bmp" alt="GISCO" class="logo" onerror="this.style.display='none'">
     <div class="brand-text">
-      <div class="brand-title" data-i18n="brand_title">شركة الخليج للخدمات الصناعية</div>
-      <div class="brand-subtitle">Gulf Industrial Service Company</div>
+      <div class="brand-title" data-i18n="brand_title" style="color: white !important;">شركة الخليج للخدمات الصناعية</div>
+      <div class="brand-subtitle" style="color: white !important;">Gulf Industrial Service Company</div>
     </div>
   </div>
   
@@ -1069,8 +1069,15 @@ body {
 </div>
 
 <!-- Main Container -->
-<main class="container">
+<main class="container" >
   <!-- Welcome Section -->
+  
+    <div  style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 12px;margin-top: 5px;box-shadow: 0 4px 15px rgba(0,0,0,0.3);padding: 5px 5px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; backdrop-filter: blur(10px);">
+    <i class="fas fa-code" style="color: #dc2626;"></i>
+    <span>Programmed By Mostafa Al-Najar | تصميم وبرمجة م: مصطفي النجار</span>
+     <i class="fas fa-code" style="color: #dc2626;"></i>
+    </div>
+   
   <section class="welcome-section">
     <div class="welcome-content">
       <div class="welcome-text">
@@ -1079,16 +1086,16 @@ body {
       </div>
       <div class="welcome-stats">
         <div class="welcome-stat">
-          <div class="welcome-stat-value" id="totalModules">13</div>
+          <div class="welcome-stat-value" id="totalModules" style="color: #0703f0;">13</div>
           <div class="welcome-stat-label" data-i18n="modules_label">الوحدات</div>
         </div>
         <div class="welcome-stat">
-          <div class="welcome-stat-value" id="totalRecords">0</div>
+          <div class="welcome-stat-value" id="totalRecords" style="color: #0703f0;">0</div>
           <div class="welcome-stat-label" data-i18n="records_label">السجلات</div>
         </div>
-        <div class="welcome-stat">
-          <div class="welcome-stat-value" id="activeAlerts">0</div>
-          <div class="welcome-stat-label" data-i18n="alerts_label">التنبيهات</div>
+        <div class="welcome-stat" >
+          <div class="welcome-stat-value" id="activeAlerts" style="color: #0703f0;">0</div>
+          <div class="welcome-stat-label" data-i18n="alerts_label" >التنبيهات</div>
         </div>
       </div>
     </div>
@@ -1374,11 +1381,7 @@ body {
 
 <!-- Footer -->
 <footer class="footer">
-  <div class="footer-credit">
-    <i class="fas fa-code"></i>
-    <span>Programmed By Mostafa Al-Najar | تصميم وبرمجة م: مصطفي النجار</span>
-    <i class="fas fa-heart"></i>
-  </div>
+ 
 </footer>
 
 <!-- Supabase SDK -->
