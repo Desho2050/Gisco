@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,56 +6,589 @@
 <title>Work Orders – Project 4378M RAK & FUJ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root {
---brand: #1e4672;
---accent: #16a34a;
---bg: #f4f6f9;
---surface: #ffffff;
---text: #172b4d;
---muted: #6b778c;
---border: #dde5ef;
---ok-bg: #ecfdf5;
---ok-text: #166534;
-/* group colors */
---col-meta: #000000;
---col-split: #16a34a;
---col-window: #c022c5;
---col-cooler: #00eeff;
---col-used: #d90606;
---col-fridge: #6b7280;
---col-freezer: #9ca3af;
---col-package: #60a5fa;
---col-freestand: #94a3b8;
---col-aircurtain: #f59e0b; /* NEW: Air Curtains color */
---grid: #000000;
---row-hover: #2bf50c;
---progress-zero: #eef2f7;
---rd-zero: #2f36f4;
---rd-high: #06da53;
---rd-mid: #faf615;
---rd-low: #f5610b;
+  /* Category colors (shared) */
+  --col-split: #16a34a;
+  --col-window: #c022c5;
+  --col-cooler: #06b6d4;
+  --col-used: #ef4444;
+  --col-fridge: #64748b;
+  --col-freezer: #94a3b8;
+  --col-package: #3b82f6;
+  --col-freestand: #a855f7;
+  --col-aircurtain: #f59e0b;
+  --gradient-main: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --gradient-cool: linear-gradient(135deg, #06b6d4, #10b981);
+  --rd-high: #10b981;
+  --rd-mid: #f59e0b;
+  --rd-low: #ef4444;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-.topbar { background: var(--brand); color:#fff; padding: 12px 16px; display:flex; align-items:center; justify-content: space-between; }
-.topbar .title { font-weight:700; letter-spacing:0.3px; color:#fff !important; }
-.container { max-width: none; width: 100%; margin: 18px auto; padding: 0 8px; }
-.controls { background: var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.btn { height:36px; padding:0 14px; border:1px solid var(--border); border-radius:8px; background:#fff; color:var(--text); display:inline-flex; align-items:center; gap:8px; cursor:pointer; text-decoration:none; }
-.btn.primary { background: var(--brand); color:#fff; border-color:#173a5a; }
-.btn.print-btn { height: 42px; padding: 0 20px; font-size: 16px; font-weight: 700; background: #10b981; color: #fff; border-color: #059669; min-width: 140px; }
-.btn.print-btn:hover { background: #059669; box-shadow: 0 4px 12px rgba(16, 180, 129, 0.3); }
-.file { height:36px; }
-.table-wrap { background: var(--surface); border:1px solid var(--border); border-radius:10px; overflow:auto; margin-top:5px; }
-table { width: 100%; border-collapse: collapse; table-layout:auto; }
+
+/* ============ DARK THEME (Default) ============ */
+[data-theme="dark"] {
+  --bg-deep: #0a0a1a;
+  --bg-primary: #0f0f2a;
+  --bg-surface: #141432;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.06);
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.15);
+  --text-primary: #f0f0f8;
+  --text-secondary: #9090b8;
+  --text-muted: #555578;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-pink: #ec4899;
+  --col-meta: #1e293b;
+  --grid: rgba(255,255,255,0.08);
+  --progress-zero: rgba(255,255,255,0.05);
+  --shadow-card: 0 4px 20px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 60px rgba(59, 130, 246, 0.08);
+  --orb-opacity: 0.22;
+  --grid-opacity: 0.015;
+  --topbar-bg: rgba(15, 15, 42, 0.85);
+  --input-bg: rgba(255,255,255,0.03);
+  --row-even: rgba(255,255,255,0.015);
+  --row-hover: rgba(59, 130, 246, 0.08);
+  --scrollbar-thumb: rgba(255,255,255,0.1);
+  --scrollbar-thumb-hover: #3b82f6;
+  --modal-bg: #0f0f2a;
+  --toast-bg: rgba(15, 15, 42, 0.95);
+  --tooltip-bg: rgba(15, 15, 42, 0.95);
+}
+
+/* ============ LIGHT THEME ============ */
+[data-theme="light"] {
+  --bg-deep: #f0f2f5;
+  --bg-primary: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --glass: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border-hover: rgba(0, 0, 0, 0.15);
+  --text-primary: #1a1a2e;
+  --text-secondary: #5a6478;
+  --text-muted: #8892a6;
+  --accent-blue: #3b82f6;
+  --accent-green: #059669;
+  --accent-orange: #d97706;
+  --accent-red: #dc2626;
+  --accent-pink: #db2777;
+  --col-meta: #1e293b;
+  --grid: rgba(0,0,0,0.08);
+  --progress-zero: rgba(0,0,0,0.05);
+  --shadow-card: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-glow: 0 4px 30px rgba(59, 130, 246, 0.1);
+  --orb-opacity: 0.08;
+  --grid-opacity: 0.04;
+  --topbar-bg: rgba(255, 255, 255, 0.85);
+  --input-bg: #f8fafc;
+  --row-even: #f8fafc;
+  --row-hover: rgba(59, 130, 246, 0.06);
+  --scrollbar-thumb: rgba(0,0,0,0.15);
+  --scrollbar-thumb-hover: #3b82f6;
+  --modal-bg: #ffffff;
+  --toast-bg: rgba(255, 255, 255, 0.95);
+  --tooltip-bg: rgba(26, 26, 46, 0.95);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* Animated Background */
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-canvas .orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: var(--orb-opacity);
+  animation: orbFloat 25s ease-in-out infinite;
+  transition: opacity 0.4s ease;
+}
+
+.bg-canvas .orb:nth-child(1) { width: 700px; height: 700px; background: #3b82f6; top: -250px; left: -150px; }
+.bg-canvas .orb:nth-child(2) { width: 500px; height: 500px; background: #8b5cf6; top: 40%; right: -200px; animation-delay: -8s; animation-duration: 30s; }
+.bg-canvas .orb:nth-child(3) { width: 450px; height: 450px; background: #ec4899; bottom: -150px; left: 25%; animation-delay: -15s; animation-duration: 35s; }
+.bg-canvas .orb:nth-child(4) { width: 350px; height: 350px; background: #06b6d4; top: 20%; left: 50%; animation-delay: -5s; animation-duration: 28s; }
+
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(128,128,128,var(--grid-opacity)) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(128,128,128,var(--grid-opacity)) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(60px, -40px) scale(1.1); }
+  50% { transform: translate(-40px, 50px) scale(0.9); }
+  75% { transform: translate(30px, 20px) scale(1.05); }
+}
+
+/* Top Bar */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  transition: var(--transition);
+}
+
+.topbar .title {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-primary);
+}
+
+.topbar .title .icon-wrap {
+  width: 38px; height: 38px;
+  background: var(--gradient-main);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: var(--transition);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.theme-toggle .icon {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+.theme-toggle .sun-icon {
+  position: absolute;
+  color: #f59e0b;
+}
+
+.theme-toggle .moon-icon {
+  position: absolute;
+  color: #8b5cf6;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+  transform: rotate(180deg) scale(0);
+  opacity: 0;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+  transform: rotate(0deg) scale(1);
+  opacity: 1;
+}
+
+[data-theme="light"] .theme-toggle .sun-icon {
+  transform: rotate(0deg) scale(1);
+  opacity: 1;
+}
+
+[data-theme="light"] .theme-toggle .moon-icon {
+  transform: rotate(-180deg) scale(0);
+  opacity: 0;
+}
+
+.btn {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: var(--glass);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: var(--transition);
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.btn.primary {
+  background: var(--gradient-main);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+}
+
+.btn.primary:hover {
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+}
+
+.btn.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-orange);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.btn.warning:hover {
+  background: rgba(245, 158, 11, 0.25);
+}
+
+.btn.print-btn {
+  height: 42px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--gradient-cool);
+  color: white;
+  border: none;
+  min-width: 120px;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px 24px 60px;
+}
+
+.controls {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  backdrop-filter: blur(20px);
+  margin-bottom: 16px;
+  transition: var(--transition);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+  flex: 1;
+}
+
+.filter-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-label i {
+  font-size: 10px;
+  color: var(--accent-blue);
+}
+
+.filter-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-select option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.status {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status i {
+  color: var(--accent-blue);
+}
+
+.status-bar-metrics {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.wo-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--gradient-main);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+  transition: var(--transition);
+}
+
+.wo-count-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+}
+
+.wo-count-badge .icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+}
+
+.wo-count-badge .info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wo-count-badge .label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.8);
+}
+
+.wo-count-badge .value {
+  font-size: 20px;
+  font-weight: 800;
+  color: white;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+#selectedCostSum {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-green);
+  padding: 10px 18px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#selectedCostSum::before {
+  content: '\f155';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: var(--accent-green);
+}
+
+.stats-panel {
+  margin-bottom: 20px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 18px;
+  backdrop-filter: blur(20px);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-glow);
+}
+
+.card .card-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: white;
+}
+
+.card .title {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.card .value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cost-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.table-wrap {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  overflow: auto;
+  backdrop-filter: blur(20px);
+  max-height: 70vh;
+  box-shadow: var(--shadow-card);
+  transition: var(--transition);
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
 #dataTable { min-width: 1800px; }
-#dataTable col.col-wo { width: clamp(60px, 22vw, 10%); }
-#dataTable col.col-camp { width: clamp(60px, 22vw, 15%); }
-#dataTable col.col-location { width: clamp(60px, 22vw, 20%); }
+
+#dataTable col.col-wo { width: clamp(140px, 10vw, 180px); }
+#dataTable col.col-camp { width: clamp(100px, 10vw, 160px); }
+#dataTable col.col-location { width: clamp(140px, 12vw, 200px); }
 #dataTable col.col-split-1-5,
 #dataTable col.col-split-2,
 #dataTable col.col-split-2-5,
@@ -74,47 +606,88 @@ table { width: 100%; border-collapse: collapse; table-layout:auto; }
 #dataTable col.col-pkg-25,
 #dataTable col.col-freestand-5,
 #dataTable col.col-freestand-8,
-#dataTable col.col-air-curtains { /* NEW: Air Curtains column width */
-width: 50px;
+#dataTable col.col-air-curtains { width: 60px; }
+#dataTable col.col-amount { width: 120px; }
+#dataTable col.col-start-date,
+#dataTable col.col-end-date { width: 100px; }
+#dataTable col.col-remain-days { width: 100px; }
+#dataTable col.col-percentage { width: 110px; }
+#dataTable col.col-lpo,
+#dataTable col.col-do,
+#dataTable col.col-wo-pdf { width: 90px; }
+#dataTable col.col-cost { width: 130px; }
+
+thead th {
+  background: var(--col-meta);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 12px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--glass-border);
 }
-#dataTable col.col-amount { width: clamp(80px, 13vw, 5%); }
-#dataTable col.col-start-date { width: clamp(70px, 5vw, 5%); }
-#dataTable col.col-end-date { width: clamp(70px, 5vw, 5%); }
-#dataTable col.col-remain-days { width: clamp(85px, 5vw, 5%); }
-#dataTable col.col-percentage { width: clamp(80px, 5vw, 5%); }
-#dataTable col.col-lpo { width: clamp(75px, 12vw, 5%); }
-#dataTable col.col-do { width: clamp(75px, 12vw, 5%); }
-#dataTable col.col-wo-pdf { width: clamp(75px, 12vw, 5%); }
-#dataTable col.col-cost { width: clamp(90px, 14vw, 5%); }
-thead th { background: var(--col-meta); color:#fff; position: sticky; top: 0; z-index: 2; padding:8px; font-size: clamp(12px, 0.9vw, 14px); text-align:center; white-space: normal; overflow-wrap: anywhere; hyphens: auto; border: 1px solid var(--grid); }
-tbody td { border: 1px solid var(--grid); padding: 0 0px; text-align: center; font-size: 11px; font-weight: bold; white-space: normal; overflow-wrap: anywhere; hyphens:auto; height: 3px; }
-#dataTable tbody tr { height: 6px; }
+
 .th-meta { background: var(--col-meta); }
-.th-split { background: var(--col-split); }
-.th-window { background: var(--col-window); }
-.th-cooler { background: var(--col-cooler); }
-.th-used { background: var(--col-used); }
-.th-fridge { background: var(--col-fridge); }
-.th-freezer { background: var(--col-freezer); }
-.th-package { background: var(--col-package); }
-.th-freestand { background: var(--col-freestand); }
-.th-aircurtain { background: var(--col-aircurtain); } /* NEW: Air Curtains header color */
-tbody tr:nth-child(even) { background: #f8fafc; }
-tbody tr:hover { background:rgb(255, 255, 255); }
-tbody tr:hover td { background:#00eeff }
-tbody tr:hover .progress-cell { background: transparent; }
-td.split.is-numeric,
-td.window.is-numeric,
-td.package.is-numeric,
-td.used.is-numeric,
-td.fridge.is-numeric,
-td.cooler.is-numeric,
-td.freezer.is-numeric,
-td.freestand.is-numeric,
-td.aircurtain.is-numeric { /* NEW: Air Curtains numeric class */
-background: transparent; color: inherit; 
+.th-split { background: var(--col-split); color: white; }
+.th-window { background: var(--col-window); color: white; }
+.th-cooler { background: var(--col-cooler); color: white; }
+.th-used { background: var(--col-used); color: white; }
+.th-fridge { background: var(--col-fridge); color: white; }
+.th-freezer { background: var(--col-freezer); color: white; }
+.th-package { background: var(--col-package); color: white; }
+.th-freestand { background: var(--col-freestand); color: white; }
+.th-aircurtain { background: var(--col-aircurtain); color: white; }
+
+tbody td {
+  border-bottom: 1px solid var(--glass-border);
+  padding: 8px 6px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+  transition: background 0.15s;
+  color: var(--text-primary);
 }
-.count-badge { display:inline-flex; align-items:center; justify-content:center; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 6px; font-weight: 700; color:#fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3), 0 1px 2px rgba(0,0,0,0.15); }
+
+#dataTable tbody tr {
+  transition: var(--transition);
+}
+
+#dataTable tbody tr:nth-child(even) {
+  background: var(--row-even);
+}
+
+#dataTable tbody tr:hover {
+  background: var(--row-hover) !important;
+}
+
+#dataTable tbody tr:hover td {
+  background: transparent;
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  color: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
 .count-badge.split { background: var(--col-split); }
 .count-badge.window { background: var(--col-window); }
 .count-badge.package { background: var(--col-package); }
@@ -123,627 +696,927 @@ background: transparent; color: inherit;
 .count-badge.fridge { background: var(--col-fridge); }
 .count-badge.freezer { background: var(--col-freezer); }
 .count-badge.freestand { background: var(--col-freestand); }
-.count-badge.aircurtain { background: var(--col-aircurtain); } /* NEW: Air Curtains badge */
-.lpo-btn { display:inline-flex; align-items:center; justify-content:center; height: 30px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: #09ced5; color: var(--brand); font-weight: 700; font-size: 12px; text-decoration: none; cursor: pointer; }
-.lpo-btn:hover { background: #07de7a; border-color: #08e3e3; }
-.pdf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; z-index: 9999; }
-.pdf-dialog { width: min(90vw, 1000px); height: min(90vh, 800px); background: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden; }
-.pdf-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--brand); color: #fff; font-weight: 700; }
-.pdf-close,
-.pdf-btn {
-background: #fff;
-color: var(--brand);
-border: 1px solid #cfe2f5;
-border-radius: 6px;
-height: 28px;
-padding: 0 10px;
-cursor: pointer;
-font-size: 12px;
-font-weight: 600;
+.count-badge.aircurtain { background: var(--col-aircurtain); }
+
+.lpo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-blue);
+  font-weight: 700;
+  font-size: 11px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition);
 }
-.pdf-btn:hover,
-.pdf-close:hover {
-background: #f0f8ff;
+
+.lpo-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-blue);
+  transform: translateY(-1px);
 }
-.pdf-frame { flex: 1; border: none; width: 100%; }
-.progress-cell { position: relative; height: 24px; border-radius: 6px; background: #eef2f7; overflow: hidden; display:flex; align-items:center; justify-content:center; }
-.progress-bar { position: absolute; left:0; top:0; height:100%; width:0; background: var(--rd-high); }
-.progress-text { position: relative; z-index:1; font-weight:700; font-size: 12px; }
-.remain-badge { display:inline-flex; align-items:center; justify-content:center; min-width: 28px; height: 24px; padding: 0 8px; border-radius: 6px; font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25), 0 1px 2px rgba(0,0,0,0.12); }
-.status { margin-top: 8px; font-size: 13px; color: var(--muted); }
-#selectedCostSum {
-margin-top: 6px;
-font-size: 14px;
-font-weight: 700;
-color: var(--brand);
+
+.lpo-btn::before {
+  content: '\f15b';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 11px;
 }
-.stats { background: var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; margin-top:12px; }
-.cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; }
-.card { border:1px solid var(--border); border-radius:8px; padding:10px; background:#fff; }
-.card .title { font-weight:700; font-size:13px; color: var(--muted); }
-.card .value { margin-top:6px; font-size:20px; font-weight:700; color: var(--brand); }
-.charts {
-display: flex;
-flex-wrap: wrap;
-align-items: stretch;
-gap: 12px;
-margin-top: 12px;
+
+.progress-cell {
+  position: relative;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--progress-zero);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--glass-border);
 }
-.chart-card { border:1px solid var(--border); border-radius:8px; padding:10px; background:#fff; }
-.chart-card .title { font-weight:700; font-size:13px; color: var(--muted); margin-bottom:6px; }
-.separated-wo-charts { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:12px; }
-.mini-card { border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; }
-.mini-title { font-weight:700; font-size:12px; color: var(--muted); margin-bottom:4px; }
-.mini-card canvas { width:100%; }
-.toast-container {
-position: fixed;
-top: 20px;
-right: 20px;
-z-index: 10000;
-max-width: 400px;
-font-family: 'Segoe UI', Tahoma, sans-serif;
+
+.progress-bar {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: 0;
+  background: var(--rd-high);
+  transition: width 0.5s ease;
 }
-.toast {
-display: flex;
-align-items: center;
-gap: 12px;
-background: linear-gradient(135deg, #ffffff, #f9f9f9);
-border-left: 5px solid #f5610b;
-border-radius: 10px;
-padding: 14px 18px;
-margin-bottom: 12px;
-box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-animation: slideIn 0.5s ease-out;
-font-size: 15px;
-color: #333;
-transition: opacity 0.3s ease;
+
+.progress-text {
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
-.toast-icon {
-font-size: 20px;
-color: #f5610b;
+
+.remain-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 13px;
+  font-weight: 700;
+  font-size: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  font-variant-numeric: tabular-nums;
 }
-@keyframes slideIn {
-from { transform: translateX(450px); opacity: 0; }
-to { transform: translateX(0); opacity: 1; }
-}
-@keyframes slideOut {
-from { transform: translateX(0); opacity: 1; }
-to { transform: translateX(450px); opacity: 0; }
-}
-.toast.removing {
-animation: slideOut 0.5s ease-out forwards;
-}
+
 .action-cell {
-padding: 0.25rem !important;
-white-space: nowrap;
-text-align: center;
+  padding: 6px !important;
+  white-space: nowrap;
+  text-align: center;
 }
+
 .action-btn {
-padding: 0.25rem 0.5rem;
-font-size: 0.75rem;
-margin: 0 0.125rem;
-border: none;
-border-radius: 4px;
-cursor: pointer;
-font-weight: bold;
-color: white;
-display: inline-block;
+  padding: 5px 10px;
+  font-size: 11px;
+  margin: 0 2px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: var(--transition);
+  font-family: inherit;
 }
-.edit-btn { background:#03979c; }
-.save-btn { background:#2f36f4; color:white; }
-.cancel-btn { background: var(--muted); }
-.delete-btn { background: var(--col-used); }
-.color-btn { background: #fbbf24; color: #000; font-weight: bold; }
-.modal {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0,0,0,0.6);
-display: none;
-justify-content: center;
-align-items: center;
-z-index: 10000;
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
-.modal-content {
-background: white;
-padding: 2rem;
-border-radius: 12px;
-width: 90%;
-max-width: 600px;
-max-height: 80vh;
-overflow-y: auto;
-}
-.modal h3 {
-margin-top: 0;
-font-size: 1.25rem;
-color: var(--primary);
-}
-.modal label {
-display: block;
-margin-top: 0.75rem;
-font-weight: 600;
-font-size: 0.875rem;
-}
-.modal input,
-.modal select {
-width: 100%;
-padding: 0.5rem;
-margin-top: 0.25rem;
-border: 1px solid var(--border);
-border-radius: 6px;
-font-size: 0.875rem;
-}
-.modal-buttons {
-margin-top: 1.5rem;
-text-align: right;
-}
-.modal-btn {
-padding: 0.5rem 1rem;
-border: none;
-border-radius: 6px;
-margin-left: 0.5rem;
-font-weight: 600;
-}
-.close-modal {
-background: var(--muted);
-color: white;
-}
-.submit-modal {
-background: var(--accent);
-color: white;
-}
-@media (max-width: 768px) {
-.controls {
-flex-direction: column;
-align-items: stretch;
-}
-.btn {
-width: 100%;
-}
-}
-@media (max-width: 640px){
-.controls { flex-direction: column; align-items: stretch; }
-.btn { width: 100%; }
-#dataTable col.col-camp { width: clamp(140px, 40vw, 220px); }
-#dataTable col.col-location { width: clamp(180px, 60vw, 280px); }
-thead th, tbody td { padding: 2px; }
-}
-@media print {
-.topbar,
-.controls {
-display: none !important;
-}
-td.action-cell,
-tr.print-header-row td:last-child,
-th:last-child {
-display: none !important;
-}
-}
-.filter-group {
-display: flex;
-flex-direction: column;
-gap: 4px;
-min-width: 180px;
-}
-.filter-label {
-font-size: 12px;
-font-weight: 600;
-color: var(--text);
-margin: 0;
-text-align: center;
-}
-.filter-select {
-width: 100%;
-text-align: center;
-color: #000 !important;
-font-size: large !important;
-background-color: rgb(209, 250, 107) !important;
-}
-#filterLocation {
-background-color: rgb(243, 245, 179) !important;
-}
-#filterType {
-background-color: rgb(129, 246, 176) !important;
-}
-.cost-sub {
-font-size: 11px;
-color: #ffffff;
-margin-top: 4px;
-opacity: 0.9;
-}
-.card:nth-child(6) .cost-sub {
-color: #000000;
-}
-.custom-tooltip {
-position: fixed;
-z-index: 100000;
-background: rgba(0, 0, 0, 0.9);
-color: #fff;
-padding: 8px 12px;
-border-radius: 6px;
-font-size: 13px;
-font-weight: 600;
-pointer-events: none;
-box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-max-width: 1000px;
-white-space: nowrap;
-text-align: left;
-}
-.hide-btn {
-font-size: 9px !important;
-padding: 2px 4px !important;
-margin-right: 4px;
-min-width: 32px;
-background-color: #c022c5;
-}
+
+.edit-btn { background: var(--accent-orange); }
+.save-btn { background: var(--accent-blue); }
+.cancel-btn { background: var(--text-muted); }
+.delete-btn { background: var(--accent-red); }
+.color-btn { background: var(--accent-pink); font-size: 10px; padding: 5px 8px; }
+.hide-btn { background: var(--text-muted); font-size: 10px; padding: 4px 8px; min-width: 40px; }
+
 .row-selector {
-margin-right: 4px;
-transform: scale(0.9);
-vertical-align: middle;
+  margin-right: 6px;
+  transform: scale(1.1);
+  cursor: pointer;
+  accent-color: var(--accent-blue);
+}
+
+.pdf-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.pdf-dialog {
+  width: min(95vw, 1100px);
+  height: min(92vh, 850px);
+  background: var(--modal-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.pdf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--gradient-main);
+  color: white;
+  font-weight: 700;
+}
+
+.pdf-close, .pdf-btn {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  height: 32px;
+  padding: 0 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.pdf-close:hover, .pdf-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.pdf-frame {
+  flex: 1;
+  border: none;
+  width: 100%;
+  background: white;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.chart-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 20px;
+  backdrop-filter: blur(20px);
+  transition: var(--transition);
+  box-shadow: var(--shadow-card);
+}
+
+.chart-card:hover {
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-glow);
+}
+
+.chart-card .title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chart-card .title::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: var(--gradient-main);
+  border-radius: 2px;
+}
+
+.chart-card canvas {
+  max-height: 280px;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--modal-bg);
+  border: 1px solid var(--glass-border);
+  padding: 28px;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modal h3 {
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal h3::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: var(--gradient-main);
+  border-radius: 2px;
+}
+
+.modal label {
+  display: block;
+  margin-top: 14px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.modal input, .modal select {
+  width: 100%;
+  padding: 10px 14px;
+  margin-top: 6px;
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.modal input:focus, .modal select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.modal select option {
+  background: var(--bg-primary);
+}
+
+input[type="date"] {
+  color-scheme: dark;
+}
+
+[data-theme="light"] input[type="date"] {
+  color-scheme: light;
+}
+
+.modal-buttons {
+  margin-top: 24px;
+  text-align: right;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.close-modal {
+  background: var(--glass);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+}
+
+.close-modal:hover {
+  background: var(--bg-card-hover);
+}
+
+.submit-modal {
+  background: var(--gradient-main);
+  color: white;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+}
+
+.submit-modal:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+}
+
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 10000;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--toast-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-left: 4px solid var(--accent-orange);
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: toastIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.toast::before {
+  content: '\f071';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: var(--accent-orange);
+  font-size: 16px;
+}
+
+@keyframes toastIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastOut {
+  to { transform: translateX(120%); opacity: 0; }
+}
+
+.toast.removing {
+  animation: toastOut 0.3s ease forwards;
+}
+
+.custom-tooltip {
+  position: fixed;
+  z-index: 100000;
+  background: var(--tooltip-bg);
+  backdrop-filter: blur(20px);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  border: 1px solid var(--glass-border);
+  max-width: 500px;
+  white-space: nowrap;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+@media (max-width: 768px) {
+  .topbar { padding: 12px 16px; }
+  .topbar .title { font-size: 15px; }
+  .container { padding: 14px; }
+  .controls { flex-direction: column; align-items: stretch; }
+  .filter-group { min-width: 100%; }
+  .cards { grid-template-columns: repeat(2, 1fr); }
+  .card .value { font-size: 20px; }
+  .charts { grid-template-columns: 1fr; }
+  .status-bar { flex-direction: column; align-items: stretch; }
+  .status-bar-metrics { justify-content: center; }
+}
+
+@media print {
+  .topbar, .controls, .action-cell, .charts, .stats-panel, .status-bar, #selectedCostSum, .wo-count-badge, .theme-toggle {
+    display: none !important;
+  }
+  body { background: white; color: black; }
+  .table-wrap { border: 1px solid #ccc; background: white; max-height: none; }
+  thead th { background: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  tbody td { color: black; border: 1px solid #ccc; }
+  .count-badge, .lpo-btn, .remain-badge, .progress-cell { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
 </head>
-<body>
+<body data-theme="dark">
+
+<div class="bg-canvas">
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+</div>
+<div class="bg-grid"></div>
+
 <header class="topbar">
-<div class="title">WORK ORDER PROJECT 4378M RAK & FUJ</div>
-<div>
-<a class="btn" style="background-color: #6b778c; margin-right: 10px;" id="showAllBtn">Show All Rows</a>
-<a class="btn" style="background-color: var(--accent);" href="index.html">Back to Main Page</a>
-</div>
+  <div class="title">
+    <div class="icon-wrap"><i class="fas fa-hard-hat"></i></div>
+    <div>
+      <div>Work Orders</div>
+      <div style="font-size:11px;font-weight:500;color:var(--text-secondary);margin-top:2px;">Project 4378M • RAK & FUJ</div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <i class="fas fa-sun icon sun-icon"></i>
+      <i class="fas fa-moon icon moon-icon"></i>
+    </button>
+    <button class="btn warning" id="showAllBtn"><i class="fas fa-eye"></i> Show All</button>
+    <button class="btn print-btn" id="printBtn"><i class="fas fa-print"></i> Print</button>
+    <a class="btn" href="index.html"><i class="fas fa-arrow-left"></i> Dashboard</a>
+  </div>
 </header>
+
 <main class="container">
-<section class="controls">
-<button class="btn add-row-btn" id="addRowBtn" style="background-color: yellow;">➕ Add New Work Order</button>
-<button class="btn print-btn" id="printBtn" title="Print this page" style="background-color: turquoise;">🖨️ Print</button>
-<div class="filter-group">
-<label class="filter-label">Filter By Camp</label>
-<select class="btn filter-select" id="filterCamp">
-<option value="">All Camps</option>
-</select>
-</div>
-<div class="filter-group">
-<label class="filter-label">Filter By Location</label>
-<select class="btn filter-select" id="filterLocation">
-<option value="">All Locations</option>
-</select>
-</div>
-<div class="filter-group">
-<label class="filter-label">Filter By Unit Type</label>
-<select class="btn filter-select" id="filterType">
-<option value="">All Types</option>
-</select>
-</div>
-</section>
-<div id="statusBar" class="status"></div>
-<div id="selectedCostSum">Selected Cost Total: AED 0.00</div>
-<section id="statsPanel" class="stats">
-<!-- Stats cards with NEW Air Curtains card -->
-<div class="cards">
-<div class="card" style="background-color: var(--col-split); color: #fff;">
-<div class="title" style="color: #eaf4ff;">Total Splits</div>
-<div id="statTotalSplit" class="value"style="color: #eaf4ff;">0</div>
-<div id="statCostSplit" class="cost-sub"></div>
-</div>
-<div class="card" style="background-color: var(--col-package); color: #fff;">
-<div class="title" style="color: #eaf4ff;">Total Packages</div>
-<div id="statTotalPackage" class="value" style="color: #eaf4ff;">0</div>
-<div id="statCostPackage" class="cost-sub"></div>
-</div>
-<div class="card" style="background-color:#6b778c; color: #fff;">
-<div class="title" style="color: #fafafa;">Total Free Stand</div>
-<div id="statTotalFreestand" class="value" style="color: #ffffff;">0</div>
-<div id="statCostFreestand" class="cost-sub"></div>
-</div>
-<div class="card" style="background-color: var(--col-window); color: #fff;">
-<div class="title" style="color: #eaf4ff;">Total Window</div>
-<div id="statTotalWindow" class="value" style="color: #eaf4ff;">0</div>
-<div id="statCostWindow" class="cost-sub"></div>
-</div>
-<div class="card" style="background-color: var(--col-used); color: #fff;">
-<div class="title" style="color: #eaf4ff;">Total Used AC</div>
-<div id="statTotalUsed" class="value" style="color: #eaf4ff;">0</div>
-<div id="statCostUsed" class="cost-sub"></div>
-</div>
-<div class="card" style="background-color:cyan; color: #fff;">
-<div class="title" style="color: #000000;">Total Cooler</div>
-<div id="statTotalCooler" class="value" style="color: #000000;">0</div>
-<div id="statCostCooler" class="cost-sub"></div>
-</div>
-<div class="card" style="background-color: var(--col-fridge); color: #fff;">
-<div class="title" style="color: #eaf4ff;">Total Fridge</div>
-<div id="statTotalFridge" class="value" style="color: #eaf4ff;">0</div>
-<div id="statCostFridge" class="cost-sub"></div>
-</div>
-<div class="card" style="background-color: var(--col-freezer); color: #fff;">
-<div class="title" style="color: #eaf4ff;">Total Freezer</div>
-<div id="statTotalFreezer" class="value"style="color: #eaf4ff;">0</div>
-<div id="statCostFreezer" class="cost-sub"></div>
-</div>
-<div class="card" style="background-color: var(--col-aircurtain); color: #fff;">
-<div class="title" style="color: #eaf4ff;">Total Air Curtains</div>
-<div id="statTotalAirCurtain" class="value" style="color: #eaf4ff;">0</div>
-<div id="statCostAirCurtain" class="cost-sub"></div>
-</div>
-<div class="card" style="background-color:#172b4d; color: #fff;">
-<div class="title" style="color: #fcfcfc;">Total Cost Without VAT</div>
-<div id="statTotalCostNoVat" class="value" style="color: #ffffff; ">0</div>
-<div id="statCostNoVat" class="cost-sub"></div>
-</div>
-</div>
-<!-- PDF & Modals unchanged -->
-<div id="pdfOverlay" class="pdf-overlay" aria-hidden="true">
-<div class="pdf-dialog" role="dialog" aria-modal="true" aria-label="PDF viewer">
-<div class="pdf-header">
-<span id="pdfTitle">PDF</span>
-<div style="display:flex;gap:6px;">
-<button class="pdf-btn pdf-download" type="button">⬇️ Download</button>
-<button class="pdf-btn pdf-newtab" type="button">↗️ Tab</button>
-<button id="pdfClose" class="pdf-close" type="button">✕</button>
-</div>
-</div>
-<iframe id="pdfFrame" class="pdf-frame" src="about:blank" title="PDF"></iframe>
-</div>
-</div>
-<div id="addModal" class="modal" >
-<div class="modal-content" >
-<h3 >Add New Work Order</h3>
-<form id="addForm">
-</form>
-<div class="modal-buttons">
-<button type="button" class="modal-btn close-modal" id="closeAddModal">Cancel</button>
-<button type="submit" class="modal-btn submit-modal" form="addForm">Add Work Order</button>
-</div>
-</div>
-</div>
-<div id="editModal" class="modal">
-<div class="modal-content">
-<h3>Edit Work Order</h3>
-<form id="editForm">
-</form>
-<div class="modal-buttons">
-<button type="button" class="modal-btn close-modal" id="closeEditModal">Cancel</button>
-<button type="submit" class="modal-btn submit-modal" form="editForm">Save Changes</button>
-</div>
-</div>
-</div>
-<table id="dataTable">
-<colgroup>
-<col class="col-wo" />
-<col class="col-camp" />
-<col class="col-location" />
-<col class="col-split-1-5" />
-<col class="col-split-2" />
-<col class="col-split-2-5" />
-<col class="col-split-3" />
-<col class="col-window" />
-<col class="col-cooler" />
-<col class="col-used" />
-<col class="col-fridge" />
-<col class="col-freezer" />
-<col class="col-pkg-8" />
-<col class="col-pkg-10" />
-<col class="col-pkg-12" />
-<col class="col-pkg-15" />
-<col class="col-pkg-20" />
-<col class="col-pkg-25" />
-<col class="col-freestand-5" />
-<col class="col-freestand-8" />
-<col class="col-air-curtains" /> <!-- NEW: Air Curtains column -->
-<col class="col-amount" />
-<col class="col-start-date" />
-<col class="col-end-date" />
-<col class="col-remain-days" />
-<col class="col-percentage" />
-<col class="col-lpo" />
-<col class="col-do" />
-<col class="col-wo-pdf" />
-<col class="col-cost" />
-<col class="col-actions" />
-</colgroup>
-<thead>
-<tr>
-<th class="th-meta">WO NO.</th>
-<th class="th-meta">CAMP</th>
-<th class="th-meta">LOCATION</th>
-<th class="th-split">Split 1.5TON</th>
-<th class="th-split">Split 2TON</th>
-<th class="th-split">Split 2.5TON</th>
-<th class="th-split">Split 3TON</th>
-<th class="th-window">Window 2TON</th>
-<th class="th-cooler">COOLER</th>
-<th class="th-used">used AC</th>
-<th class="th-fridge">FRIDGE</th>
-<th class="th-freezer">FREEZER</th>
-<th class="th-package">Package 8TON</th>
-<th class="th-package">Package 10TON</th>
-<th class="th-package">Package 12 TON</th>
-<th class="th-package">Package 15TON</th>
-<th class="th-package">Package 20TON</th>
-<th class="th-package">Package 25TON</th>
-<th class="th-freestand">FREE STAND 5TON</th>
-<th class="th-freestand">FREE STAND 8TON</th>
-<th class="th-aircurtain">AIR CURTAINS</th> <!-- NEW: Air Curtains header -->
-<th class="th-meta">WORK ORDER AMOUNT</th>
-<th class="th-meta">START DATE</th>
-<th class="th-meta">END DATE</th>
-<th class="th-meta">REMAINING DAYS</th>
-<th class="th-meta">WO PERCENTAGE</th>
-<th class="th-meta">LPO</th>
-<th class="th-meta">DO</th>
-<th class="th-meta">WO</th>
-<th class="th-meta">Units Cost without VAT</th>
-<th class="th-meta">Actions</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-</section>
-<div class="charts">
-<div class="chart-card">
-<div class="title">Split ACs by Ton</div>
-<canvas id="chartSplit" height="250"></canvas>
-</div>
-<div class="chart-card">
-<div class="title">Package ACs by Ton</div>
-<canvas id="chartPackage" height="250"></canvas>
-</div>
-<div class="chart-card">
-<div class="title">Group Composition</div>
-<canvas id="chartGroups" height="250"></canvas>
-</div>
-<div class="chart-card">
-<div class="title">Total Project Progress</div>
-<div style="position:relative;">
-<canvas id="chartProgress" height="250"></canvas>
-<span class="progress-value" style="position:absolute;left:0;right:0;top:40%;text-align:center;font-size:1.5em;font-weight:bold;color:#16a34a;pointer-events:none;">0%</span>
-</div>
-</div>
-</div>
+  <section class="controls">
+    <button class="btn primary add-row-btn" id="addRowBtn"><i class="fas fa-plus"></i> Add Work Order</button>
+    <div class="filter-group">
+      <label class="filter-label"><i class="fas fa-campground"></i> Camp</label>
+      <select class="filter-select" id="filterCamp">
+        <option value="">All Camps</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label"><i class="fas fa-map-marker-alt"></i> Location</label>
+      <select class="filter-select" id="filterLocation">
+        <option value="">All Locations</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label"><i class="fas fa-snowflake"></i> Unit Type</label>
+      <select class="filter-select" id="filterType">
+        <option value="">All Types</option>
+      </select>
+    </div>
+  </section>
+
+  <div class="status-bar">
+    <div id="statusBar" class="status"><i class="fas fa-circle-info"></i> Ready</div>
+    <div class="status-bar-metrics">
+      <div class="wo-count-badge">
+        <div class="icon"><i class="fas fa-clipboard-list"></i></div>
+        <div class="info">
+          <div class="label">Work Order Count</div>
+          <div class="value" id="woCountValue">0</div>
+        </div>
+      </div>
+      <div id="selectedCostSum">Selected Total: AED 0.00</div>
+    </div>
+  </div>
+
+  <section class="stats-panel">
+    <div class="cards">
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-split);"></div>
+        <div class="card-icon" style="background:var(--col-split);"><i class="fas fa-fan"></i></div>
+        <div class="title">Total Splits</div>
+        <div class="value" id="statTotalSplit">0</div>
+        <div class="cost-sub" id="statCostSplit"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-package);"></div>
+        <div class="card-icon" style="background:var(--col-package);"><i class="fas fa-box"></i></div>
+        <div class="title">Total Packages</div>
+        <div class="value" id="statTotalPackage">0</div>
+        <div class="cost-sub" id="statCostPackage"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-freestand);"></div>
+        <div class="card-icon" style="background:var(--col-freestand);"><i class="fas fa-cube"></i></div>
+        <div class="title">Free Stand</div>
+        <div class="value" id="statTotalFreestand">0</div>
+        <div class="cost-sub" id="statCostFreestand"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-window);"></div>
+        <div class="card-icon" style="background:var(--col-window);"><i class="fas fa-border-all"></i></div>
+        <div class="title">Window</div>
+        <div class="value" id="statTotalWindow">0</div>
+        <div class="cost-sub" id="statCostWindow"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-used);"></div>
+        <div class="card-icon" style="background:var(--col-used);"><i class="fas fa-recycle"></i></div>
+        <div class="title">Used AC</div>
+        <div class="value" id="statTotalUsed">0</div>
+        <div class="cost-sub" id="statCostUsed"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-cooler);"></div>
+        <div class="card-icon" style="background:var(--col-cooler);"><i class="fas fa-temperature-low"></i></div>
+        <div class="title">Cooler</div>
+        <div class="value" id="statTotalCooler">0</div>
+        <div class="cost-sub" id="statCostCooler"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-fridge);"></div>
+        <div class="card-icon" style="background:var(--col-fridge);"><i class="fas fa-snowflake"></i></div>
+        <div class="title">Fridge</div>
+        <div class="value" id="statTotalFridge">0</div>
+        <div class="cost-sub" id="statCostFridge"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-freezer);"></div>
+        <div class="card-icon" style="background:var(--col-freezer);"><i class="fas fa-ice-cream"></i></div>
+        <div class="title">Freezer</div>
+        <div class="value" id="statTotalFreezer">0</div>
+        <div class="cost-sub" id="statCostFreezer"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-aircurtain);"></div>
+        <div class="card-icon" style="background:var(--col-aircurtain);"><i class="fas fa-wind"></i></div>
+        <div class="title">Air Curtains</div>
+        <div class="value" id="statTotalAirCurtain">0</div>
+        <div class="cost-sub" id="statCostAirCurtain"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-main);"></div>
+        <div class="card-icon" style="background:var(--gradient-main);"><i class="fas fa-coins"></i></div>
+        <div class="title">Total Cost (No VAT)</div>
+        <div class="value" id="statTotalCostNoVat" style="font-size:20px;">0</div>
+        <div class="cost-sub" id="statCostNoVat"></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="pdfOverlay" class="pdf-overlay" aria-hidden="true">
+    <div class="pdf-dialog">
+      <div class="pdf-header">
+        <span id="pdfTitle"><i class="fas fa-file-pdf"></i> PDF Viewer</span>
+        <div style="display:flex;gap:6px;">
+          <button class="pdf-btn pdf-download" type="button"><i class="fas fa-download"></i> Download</button>
+          <button class="pdf-btn pdf-newtab" type="button"><i class="fas fa-external-link-alt"></i> New Tab</button>
+          <button id="pdfClose" class="pdf-close" type="button"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <iframe id="pdfFrame" class="pdf-frame" src="about:blank" title="PDF"></iframe>
+    </div>
+  </div>
+
+  <div id="addModal" class="modal">
+    <div class="modal-content">
+      <h3>Add New Work Order</h3>
+      <form id="addForm"></form>
+      <div class="modal-buttons">
+        <button type="button" class="modal-btn close-modal" id="closeAddModal">Cancel</button>
+        <button type="submit" class="modal-btn submit-modal" form="addForm"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h3>Edit Work Order</h3>
+      <form id="editForm"></form>
+      <div class="modal-buttons">
+        <button type="button" class="modal-btn close-modal" id="closeEditModal">Cancel</button>
+        <button type="submit" class="modal-btn submit-modal" form="editForm"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="dataTable">
+      <colgroup>
+        <col class="col-wo" />
+        <col class="col-camp" />
+        <col class="col-location" />
+        <col class="col-split-1-5" />
+        <col class="col-split-2" />
+        <col class="col-split-2-5" />
+        <col class="col-split-3" />
+        <col class="col-window" />
+        <col class="col-cooler" />
+        <col class="col-used" />
+        <col class="col-fridge" />
+        <col class="col-freezer" />
+        <col class="col-pkg-8" />
+        <col class="col-pkg-10" />
+        <col class="col-pkg-12" />
+        <col class="col-pkg-15" />
+        <col class="col-pkg-20" />
+        <col class="col-pkg-25" />
+        <col class="col-freestand-5" />
+        <col class="col-freestand-8" />
+        <col class="col-air-curtains" />
+        <col class="col-amount" />
+        <col class="col-start-date" />
+        <col class="col-end-date" />
+        <col class="col-remain-days" />
+        <col class="col-percentage" />
+        <col class="col-lpo" />
+        <col class="col-do" />
+        <col class="col-wo-pdf" />
+        <col class="col-cost" />
+        <col class="col-actions" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="th-meta">WO NO.</th>
+          <th class="th-meta">CAMP</th>
+          <th class="th-meta">LOCATION</th>
+          <th class="th-split">Split 1.5T</th>
+          <th class="th-split">Split 2T</th>
+          <th class="th-split">Split 2.5T</th>
+          <th class="th-split">Split 3T</th>
+          <th class="th-window">Window 2T</th>
+          <th class="th-cooler">Cooler</th>
+          <th class="th-used">Used AC</th>
+          <th class="th-fridge">Fridge</th>
+          <th class="th-freezer">Freezer</th>
+          <th class="th-package">Pkg 8T</th>
+          <th class="th-package">Pkg 10T</th>
+          <th class="th-package">Pkg 12T</th>
+          <th class="th-package">Pkg 15T</th>
+          <th class="th-package">Pkg 20T</th>
+          <th class="th-package">Pkg 25T</th>
+          <th class="th-freestand">Stand 5T</th>
+          <th class="th-freestand">Stand 8T</th>
+          <th class="th-aircurtain">Air Curtain</th>
+          <th class="th-meta">Amount</th>
+          <th class="th-meta">Start</th>
+          <th class="th-meta">End</th>
+          <th class="th-meta">Days Left</th>
+          <th class="th-meta">Progress</th>
+          <th class="th-meta">LPO</th>
+          <th class="th-meta">DO</th>
+          <th class="th-meta">WO</th>
+          <th class="th-meta">Cost</th>
+          <th class="th-meta">Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="charts">
+    <div class="chart-card">
+      <div class="title">Split ACs by Ton</div>
+      <canvas id="chartSplit" height="250"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="title">Package ACs by Ton</div>
+      <canvas id="chartPackage" height="250"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="title">Group Composition</div>
+      <canvas id="chartGroups" height="250"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="title">Total Project Progress</div>
+      <div style="position:relative;">
+        <canvas id="chartProgress" height="250"></canvas>
+        <span class="progress-value" id="progressValue" style="position:absolute;left:0;right:0;top:40%;text-align:center;font-size:28px;font-weight:800;color:var(--accent-green);pointer-events:none;font-variant-numeric:tabular-nums;">0%</span>
+      </div>
+    </div>
+  </div>
 </main>
+
+<div id="customTooltip" class="custom-tooltip" style="display: none;"></div>
+<div id="toastContainer" class="toast-container"></div>
+
 <script>
 const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const THEME_KEY = 'wo_theme_preference';
 const PDF_CACHE_KEY = 'pdf_url_cache_v3';
 let PDF_URL_CACHE = JSON.parse(localStorage.getItem(PDF_CACHE_KEY) || '{}');
 const CACHE_TTL = 60 * 60 * 1000;
 const HIDDEN_ROWS_KEY = 'hidden_work_orders_v1';
 const ROW_COLORS_KEY = 'row_colors_v1';
-// ✅ Track selected rows
 const selectedWoNos = new Set();
-// --- Helper Functions ---
-function isCacheValid(ts) {
-return Date.now() - ts < CACHE_TTL;
+
+// ============ THEME MANAGEMENT ============
+function getCurrentTheme() {
+  return document.body.getAttribute('data-theme') || 'dark';
 }
+
+function setTheme(theme) {
+  document.body.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_KEY, theme);
+  updateChartsTheme();
+}
+
+function toggleTheme() {
+  const current = getCurrentTheme();
+  const next = current === 'dark' ? 'light' : 'dark';
+  setTheme(next);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved) {
+    document.body.setAttribute('data-theme', saved);
+  } else {
+    // Check system preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.body.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+  }
+}
+
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+// Listen for system theme changes
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  if (!localStorage.getItem(THEME_KEY)) {
+    setTheme(e.matches ? 'dark' : 'light');
+  }
+});
+
+// ============ CHART THEME ============
+function getChartColors() {
+  const isDark = getCurrentTheme() === 'dark';
+  return {
+    text: isDark ? '#9090b8' : '#5a6478',
+    grid: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
+    border: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+    doughnutBorder: isDark ? '#0f0f2a' : '#ffffff'
+  };
+}
+
+function updateChartsTheme() {
+  const colors = getChartColors();
+  Chart.defaults.color = colors.text;
+  Chart.defaults.borderColor = colors.border;
+  
+  // Re-render charts if data exists
+  if (ALL_ROWS.length > 0) {
+    const c = computeCounts(getFilteredRows());
+    renderCharts(c);
+  }
+}
+
+// Initialize theme before anything else
+initTheme();
+
+const chartColors = getChartColors();
+Chart.defaults.color = chartColors.text;
+Chart.defaults.borderColor = chartColors.border;
+Chart.defaults.font.family = 'Inter, sans-serif';
+
+// ============ HELPERS ============
+function isCacheValid(ts) { return Date.now() - ts < CACHE_TTL; }
 function getCachedPdfUrls(filename) {
-const key = filename.toLowerCase();
-const cached = PDF_URL_CACHE[key];
-if (cached && isCacheValid(cached.ts)) {
-return { direct: cached.direct, google: cached.google };
-}
-return null;
+  const key = filename.toLowerCase();
+  const cached = PDF_URL_CACHE[key];
+  if (cached && isCacheValid(cached.ts)) return { direct: cached.direct, google: cached.google };
+  return null;
 }
 function setCachedPdfUrls(filename, direct, google) {
-const key = filename.toLowerCase();
-PDF_URL_CACHE[key] = { direct, google, ts: Date.now() };
-localStorage.setItem(PDF_CACHE_KEY, JSON.stringify(PDF_URL_CACHE));
+  const key = filename.toLowerCase();
+  PDF_URL_CACHE[key] = { direct, google, ts: Date.now() };
+  localStorage.setItem(PDF_CACHE_KEY, JSON.stringify(PDF_URL_CACHE));
 }
 async function resolvePdfUrls(file) {
-const cached = getCachedPdfUrls(file);
-if (cached) return cached;
-if (!file.toLowerCase().endsWith('.pdf')) {
-file += '.pdf';
-}
-const ghPagesUrl = `https://desho2050.github.io/Gisco/${encodeURIComponent(file)}`;
-const googleUrl = `https://docs.google.com/gview?url=${encodeURIComponent(ghPagesUrl)}&embedded=true`;
-setCachedPdfUrls(file, ghPagesUrl, googleUrl);
-return { direct: ghPagesUrl, google: googleUrl };
+  const cached = getCachedPdfUrls(file);
+  if (cached) return cached;
+  if (!file.toLowerCase().endsWith('.pdf')) file += '.pdf';
+  const ghPagesUrl = `https://desho2050.github.io/Gisco/${encodeURIComponent(file)}`;
+  const googleUrl = `https://docs.google.com/gview?url=${encodeURIComponent(ghPagesUrl)}&embedded=true`;
+  setCachedPdfUrls(file, ghPagesUrl, googleUrl);
+  return { direct: ghPagesUrl, google: googleUrl };
 }
 function isNumericOnly(val) {
-if (val === null || val === undefined) return false;
-if (typeof val === 'number') return Number.isFinite(val);
-const s = String(val).trim();
-if (!s) return false;
-return /^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(s);
+  if (val === null || val === undefined) return false;
+  if (typeof val === 'number') return Number.isFinite(val);
+  const s = String(val).trim();
+  if (!s) return false;
+  return /^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(s);
 }
 function parseDate(val) {
-if (!val) return null;
-const d = new Date(val);
-return Number.isNaN(d.getTime()) ? null : d;
+  if (!val) return null;
+  const d = new Date(val);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 function formatDMY(d) {
-if (!d) return '';
-const pad2 = (x) => String(x).padStart(2, '0');
-return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+  if (!d) return '';
+  const pad2 = (x) => String(x).padStart(2, '0');
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 function remainingDays(endDateStr) {
-const end = parseDate(endDateStr);
-if (!end) return '';
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-end.setHours(0, 0, 0, 0);
-const diff = Math.ceil((end - today) / 86400000);
-return Math.max(0, diff);
+  const end = parseDate(endDateStr);
+  if (!end) return '';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  const diff = Math.ceil((end - today) / 86400000);
+  return Math.max(0, diff);
 }
 function remainingColor(days) {
-if (!Number.isFinite(days)) return '';
-if (days === 0) return getComputedStyle(document.documentElement).getPropertyValue('--rd-zero').trim();
-if (days <= 30) return getComputedStyle(document.documentElement).getPropertyValue('--rd-low').trim();
-if (days <= 60) return getComputedStyle(document.documentElement).getPropertyValue('--rd-mid').trim();
-return getComputedStyle(document.documentElement).getPropertyValue('--rd-high').trim();
-}
-function remainingTextColor(days) {
-return (days === 0 || days <= 7) ? '#fff' : '#000';
+  if (!Number.isFinite(days)) return '';
+  if (days === 0) return '#3b82f6';
+  if (days <= 30) return '#ef4444';
+  if (days <= 60) return '#f59e0b';
+  return '#10b981';
 }
 function parsePercentage(val) {
-if (val === null || val === undefined) return null;
-if (typeof val === 'number') { let n = val; if (n <= 1) n = n * 100; return Math.max(0, Math.min(100, Math.round(n))); }
-const s = String(val).trim();
-if (!s) return null;
-const m = s.match(/([0-9]+(?:\.[0-9]+)?)\s*%?/);
-if (!m) return null;
-let n = parseFloat(m[1]);
-if (/%$/.test(s) === false && n <= 1) n = n * 100;
-return Math.max(0, Math.min(100, Math.round(n)));
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'number') { let n = val; if (n <= 1) n = n * 100; return Math.max(0, Math.min(100, Math.round(n))); }
+  const s = String(val).trim();
+  if (!s) return null;
+  const m = s.match(/([0-9]+(?:\.[0-9]+)?)\s*%?/);
+  if (!m) return null;
+  let n = parseFloat(m[1]);
+  if (/%$/.test(s) === false && n <= 1) n = n * 100;
+  return Math.max(0, Math.min(100, Math.round(n)));
 }
 function percentColor(p) {
-const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-if (p === 0) return css('--progress-zero');
-if (p === 100) return css('--rd-zero');
-if (p >= 80) return css('--rd-high');
-if (p >= 40) return css('--rd-mid');
-return css('--rd-low');
+  if (p === 0) return getCurrentTheme() === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  if (p === 100) return '#3b82f6';
+  if (p >= 80) return '#10b981';
+  if (p >= 40) return '#f59e0b';
+  return '#ef4444';
 }
-function percentTextColor(p) {
-if (p === 0 || p <= 25) return '#000';
-return p < 40 ? '#fff' : '#000';
-}
-const AED_FORMATTER = new Intl.NumberFormat('en-AE', {
-style: 'currency',
-currency: 'AED',
-minimumFractionDigits: 2,
-maximumFractionDigits: 2
-});
+
+const AED_FORMATTER = new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 function formatAED(value) {
-const n = Number(value);
-return Number.isFinite(n) ? AED_FORMATTER.format(n) : 'AED 0.00';
+  const n = Number(value);
+  return Number.isFinite(n) ? AED_FORMATTER.format(n) : 'AED 0.00';
 }
 function sortByWoNo(rows) {
-return [...rows].sort((a, b) => {
-const woA = String(a.wo_no || '').trim();
-const woB = String(b.wo_no || '').trim();
-const numA = parseFloat(woA);
-const numB = parseFloat(woB);
-if (!isNaN(numA) && !isNaN(numB)) {
-return numA - numB;
+  return [...rows].sort((a, b) => {
+    const woA = String(a.wo_no || '').trim();
+    const woB = String(b.wo_no || '').trim();
+    const numA = parseFloat(woA);
+    const numB = parseFloat(woB);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return woA.localeCompare(woB, undefined, { numeric: true, sensitivity: 'base' });
+  });
 }
-return woA.localeCompare(woB, undefined, { numeric: true, sensitivity: 'base' });
-});
-}
-// ✅ Row Color Helpers
 function saveRowColor(woNo, color) {
-const colors = JSON.parse(localStorage.getItem(ROW_COLORS_KEY) || '{}');
-colors[String(woNo).trim()] = color;
-localStorage.setItem(ROW_COLORS_KEY, JSON.stringify(colors));
+  const colors = JSON.parse(localStorage.getItem(ROW_COLORS_KEY) || '{}');
+  colors[String(woNo).trim()] = color;
+  localStorage.setItem(ROW_COLORS_KEY, JSON.stringify(colors));
 }
 function getStoredRowColor(woNo) {
-const colors = JSON.parse(localStorage.getItem(ROW_COLORS_KEY) || '{}');
-return colors[String(woNo).trim()] || null;
+  const colors = JSON.parse(localStorage.getItem(ROW_COLORS_KEY) || '{}');
+  return colors[String(woNo).trim()] || null;
 }
-// ✅ Selection Sum
 function updateSelectedCostSum() {
-let total = 0;
-selectedWoNos.forEach(woNo => {
-const row = ALL_ROWS.find(r => String(r.wo_no).trim() === woNo);
-if (row && isNumericOnly(row.cost)) {
-total += Number(row.cost);
+  let total = 0;
+  selectedWoNos.forEach(woNo => {
+    const row = ALL_ROWS.find(r => String(r.wo_no).trim() === woNo);
+    if (row && isNumericOnly(row.cost)) total += Number(row.cost);
+  });
+  document.getElementById('selectedCostSum').textContent = `Selected Total: ${formatAED(total)}`;
 }
-});
-document.getElementById('selectedCostSum').textContent = `Selected Cost Total: ${formatAED(total)}`;
-}
-// --- UI Elements ---
+
 const statusEl = document.getElementById('statusBar');
 const selCamp = document.getElementById('filterCamp');
 const selLocation = document.getElementById('filterLocation');
@@ -761,843 +1634,703 @@ let ALL_ROWS = [];
 let PDF_MAP = {};
 let NOTIFIED_WO = new Set();
 let currentPdfDirectUrl = '';
-// --- Toast & Status ---
+
 function showToast(message, duration = 20000) {
-let container = document.getElementById('toastContainer');
-if (!container) {
-container = document.createElement('div');
-container.id = 'toastContainer';
-container.className = 'toast-container';
-document.body.appendChild(container);
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  const span = document.createElement('span');
+  span.textContent = message;
+  toast.appendChild(span);
+  container.appendChild(toast);
+  const removeToast = () => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 300);
+  };
+  setTimeout(removeToast, duration);
 }
-const toast = document.createElement('div');
-toast.className = 'toast';
-toast.textContent = message;
-container.appendChild(toast);
-const removeToast = () => {
-toast.classList.add('removing');
-setTimeout(() => toast.remove(), 300);
-};
-setTimeout(removeToast, duration);
-}
+
 function setStatus(msg, isError = false) {
-if (statusEl) {
-statusEl.textContent = msg || '';
-statusEl.style.color = isError ? '#b00020' : 'var(--muted)';
+  if (statusEl) {
+    statusEl.innerHTML = `<i class="fas fa-circle-info"></i> ${msg || ''}`;
+    statusEl.style.color = isError ? '#ef4444' : '';
+  }
 }
-}
-// --- PDF Viewer (unchanged) ---
+
 async function loadRemotePdfMap() {
-try {
-const res = await fetch('attachs-remote.json?ts=' + Date.now(), { cache: 'no-store' });
-if (res.ok) {
-const json = await res.json();
-if (json && typeof json === 'object') PDF_MAP = json;
+  try {
+    const res = await fetch('attachs-remote.json?ts=' + Date.now(), { cache: 'no-store' });
+    if (res.ok) {
+      const json = await res.json();
+      if (json && typeof json === 'object') PDF_MAP = json;
+    }
+  } catch (e) {}
 }
-} catch (e) { /* ignore */ }
-}
+
 async function openPdfViewerFromFile(file, title) {
-const urls = await resolvePdfUrls(file);
-currentPdfDirectUrl = urls.direct;
-return openPdfViewer(urls.google, title);
+  const urls = await resolvePdfUrls(file);
+  currentPdfDirectUrl = urls.direct;
+  return openPdfViewer(urls.google, title);
 }
+
 function openPdfViewer(url, title) {
-const overlay = document.getElementById('pdfOverlay');
-const frame = document.getElementById('pdfFrame');
-const titleEl = document.getElementById('pdfTitle');
-if (!overlay || !frame) return true;
-frame.src = 'about:blank';
-titleEl.textContent = 'Loading...';
-overlay.style.display = 'flex';
-overlay.setAttribute('aria-hidden', 'false');
-frame.src = url;
-if (titleEl) titleEl.textContent = title || 'PDF';
-return false;
+  const overlay = document.getElementById('pdfOverlay');
+  const frame = document.getElementById('pdfFrame');
+  const titleEl = document.getElementById('pdfTitle');
+  if (!overlay || !frame) return true;
+  frame.src = 'about:blank';
+  titleEl.innerHTML = `<i class="fas fa-file-pdf"></i> ${title || 'PDF'}`;
+  overlay.style.display = 'flex';
+  overlay.setAttribute('aria-hidden', 'false');
+  frame.src = url;
+  return false;
 }
+
 (function setupPdfOverlay() {
-const overlay = document.getElementById('pdfOverlay');
-const closeBtn = document.getElementById('pdfClose');
-const downloadBtn = document.querySelector('.pdf-download');
-const newTabBtn = document.querySelector('.pdf-newtab');
-function closePdf() {
-overlay.style.display = 'none';
-overlay.setAttribute('aria-hidden', 'true');
-document.getElementById('pdfFrame').src = 'about:blank';
-currentPdfDirectUrl = '';
-}
-if (closeBtn) closeBtn.addEventListener('click', closePdf);
-if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closePdf(); });
-if (downloadBtn) {
-downloadBtn.addEventListener('click', () => {
-if (currentPdfDirectUrl) {
-const a = document.createElement('a');
-a.href = currentPdfDirectUrl;
-a.download = currentPdfDirectUrl.split('/').pop() || 'document.pdf';
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
-}
-});
-}
-if (newTabBtn) {
-newTabBtn.addEventListener('click', () => {
-if (currentPdfDirectUrl) {
-window.open(currentPdfDirectUrl, '_blank');
-}
-});
-}
+  const overlay = document.getElementById('pdfOverlay');
+  const closeBtn = document.getElementById('pdfClose');
+  const downloadBtn = document.querySelector('.pdf-download');
+  const newTabBtn = document.querySelector('.pdf-newtab');
+  function closePdf() {
+    overlay.style.display = 'none';
+    overlay.setAttribute('aria-hidden', 'true');
+    document.getElementById('pdfFrame').src = 'about:blank';
+    currentPdfDirectUrl = '';
+  }
+  if (closeBtn) closeBtn.addEventListener('click', closePdf);
+  if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closePdf(); });
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      if (currentPdfDirectUrl) {
+        const a = document.createElement('a');
+        a.href = currentPdfDirectUrl;
+        a.download = currentPdfDirectUrl.split('/').pop() || 'document.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    });
+  }
+  if (newTabBtn) {
+    newTabBtn.addEventListener('click', () => {
+      if (currentPdfDirectUrl) window.open(currentPdfDirectUrl, '_blank');
+    });
+  }
 })();
-// ✅ Render Actions Cell (with Color button)
+
 function renderActionCell(rowData, rowId) {
-const td = document.createElement('td');
-td.className = 'action-cell';
-const editBtn = document.createElement('button');
-editBtn.className = 'action-btn edit-btn';
-editBtn.textContent = 'Edit';
-editBtn.onclick = () => openEditModal(rowData);
-const deleteBtn = document.createElement('button');
-deleteBtn.className = 'action-btn delete-btn';
-deleteBtn.textContent = 'Del';
-deleteBtn.onclick = () => confirmDelete(rowData.wo_no);
-const colorBtn = document.createElement('button');
-colorBtn.className = 'action-btn color-btn';
-colorBtn.textContent = '🎨';
-colorBtn.title = 'Set row background color';
-colorBtn.style.fontSize = '10px';
-colorBtn.style.padding = '2px 4px';
-colorBtn.onclick = (e) => {
-e.stopPropagation();
-const current = getStoredRowColor(rowData.wo_no) || '#ffeb3b';
-const color = prompt("Enter a color (name, hex, or rgba):", current);
-if (color && color.trim()) {
-saveRowColor(rowData.wo_no, color.trim());
-const tr = Array.from(document.querySelectorAll('#dataTable tbody tr'))
-.find(el => el.dataset.woNo === String(rowData.wo_no));
-if (tr) tr.style.backgroundColor = color.trim();
+  const td = document.createElement('td');
+  td.className = 'action-cell';
+  const editBtn = document.createElement('button');
+  editBtn.className = 'action-btn edit-btn';
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = 'Edit';
+  editBtn.onclick = () => openEditModal(rowData);
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'action-btn delete-btn';
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = 'Delete';
+  deleteBtn.onclick = () => confirmDelete(rowData.wo_no);
+  const colorBtn = document.createElement('button');
+  colorBtn.className = 'action-btn color-btn';
+  colorBtn.innerHTML = '<i class="fas fa-palette"></i>';
+  colorBtn.title = 'Set row color';
+  colorBtn.onclick = (e) => {
+    e.stopPropagation();
+    const current = getStoredRowColor(rowData.wo_no) || '#ffeb3b';
+    const color = prompt("Enter a color (name, hex, or rgba):", current);
+    if (color && color.trim()) {
+      saveRowColor(rowData.wo_no, color.trim());
+      const tr = Array.from(document.querySelectorAll('#dataTable tbody tr'))
+        .find(el => el.dataset.woNo === String(rowData.wo_no));
+      if (tr) tr.style.backgroundColor = color.trim();
+    }
+  };
+  td.appendChild(editBtn);
+  td.appendChild(deleteBtn);
+  td.appendChild(colorBtn);
+  return td;
 }
-};
-td.appendChild(editBtn);
-td.appendChild(deleteBtn);
-td.appendChild(colorBtn);
-return td;
-}
-// --- Form & Edit Logic (unchanged) ---
-function buildEditForm(rowData) {
-editForm.innerHTML = '';
+
 const HEADERS = [
-{ label: 'WO NO.', key: 'wo_no' },
-{ label: 'CAMP', key: 'camp' },
-{ label: 'LOCATION', key: 'location' },
-{ label: 'Split 1.5TON', key: 'split_1_5' },
-{ label: 'Split 2TON', key: 'split_2' },
-{ label: 'Split 2.5TON', key: 'split_2_5' },
-{ label: 'Split 3TON', key: 'split_3' },
-{ label: 'Window 2TON', key: 'window_2' },
-{ label: 'COOLER', key: 'cooler' },
-{ label: 'used AC', key: 'used_ac' },
-{ label: 'FRIDGE', key: 'fridge' },
-{ label: 'FREEZER', key: 'freezer' },
-{ label: 'Package 8TON', key: 'pkg_8' },
-{ label: 'Package 10TON', key: 'pkg_10' },
-{ label: 'Package 12 TON', key: 'pkg_12' },
-{ label: 'Package 15TON', key: 'pkg_15' },
-{ label: 'Package 20TON', key: 'pkg_20' },
-{ label: 'Package 25TON', key: 'pkg_25' },
-{ label: 'FREE STAND 5TON', key: 'free_5ton' },
-{ label: 'FREE STAND 8TON', key: 'free_8ton' },
-{ label: 'AIR CURTAINS', key: 'air_curtains' }, // NEW: Air Curtains field
-{ label: 'WORK ORDER AMOUNT', key: 'amount' },
-{ label: 'START DATE', key: 'start_date' },
-{ label: 'END DATE', key: 'end_date' },
-{ label: 'WO PERCENTAGE', key: 'wo_percentage' },
-{ label: 'LPO', key: 'lpo' },
-{ label: 'DO', key: 'do_doc' },
-{ label: 'WO', key: 'wo_pdf' },
-{ label: 'Spilt Cost without VAT', key: 'cost' }
+  { label: 'WO NO.', key: 'wo_no' },
+  { label: 'CAMP', key: 'camp' },
+  { label: 'LOCATION', key: 'location' },
+  { label: 'Split 1.5TON', key: 'split_1_5' },
+  { label: 'Split 2TON', key: 'split_2' },
+  { label: 'Split 2.5TON', key: 'split_2_5' },
+  { label: 'Split 3TON', key: 'split_3' },
+  { label: 'Window 2TON', key: 'window_2' },
+  { label: 'COOLER', key: 'cooler' },
+  { label: 'used AC', key: 'used_ac' },
+  { label: 'FRIDGE', key: 'fridge' },
+  { label: 'FREEZER', key: 'freezer' },
+  { label: 'Package 8TON', key: 'pkg_8' },
+  { label: 'Package 10TON', key: 'pkg_10' },
+  { label: 'Package 12 TON', key: 'pkg_12' },
+  { label: 'Package 15TON', key: 'pkg_15' },
+  { label: 'Package 20TON', key: 'pkg_20' },
+  { label: 'Package 25TON', key: 'pkg_25' },
+  { label: 'FREE STAND 5TON', key: 'free_5ton' },
+  { label: 'FREE STAND 8TON', key: 'free_8ton' },
+  { label: 'AIR CURTAINS', key: 'air_curtains' },
+  { label: 'WORK ORDER AMOUNT', key: 'amount' },
+  { label: 'START DATE', key: 'start_date' },
+  { label: 'END DATE', key: 'end_date' },
+  { label: 'WO PERCENTAGE', key: 'wo_percentage' },
+  { label: 'LPO', key: 'lpo' },
+  { label: 'DO', key: 'do_doc' },
+  { label: 'WO', key: 'wo_pdf' },
+  { label: 'Cost without VAT', key: 'cost' }
 ];
-HEADERS.forEach(h => {
-if (h.key === null) return;
-const label = document.createElement('label');
-label.textContent = h.label;
-const input = document.createElement('input');
-let val = rowData[h.key] ?? '';
-if (h.key === 'start_date' || h.key === 'end_date') {
-input.type = 'date';
-const d = parseDate(val);
-input.value = d ? d.toISOString().split('T')[0] : '';
-} else if (h.key === 'wo_percentage' || h.key === 'cost') {
-input.type = 'number';
-if (h.key === 'cost') input.step = '0.01';
-input.value = val;
-} else {
-input.type = 'text';
-input.value = String(val);
+
+function buildForm(formEl, rowData = null) {
+  formEl.innerHTML = '';
+  HEADERS.forEach(h => {
+    if (h.key === null) return;
+    const label = document.createElement('label');
+    label.textContent = h.label;
+    const input = document.createElement('input');
+    let val = rowData ? (rowData[h.key] ?? '') : '';
+    if (h.key === 'start_date' || h.key === 'end_date') {
+      input.type = 'date';
+      const d = parseDate(val);
+      input.value = d ? d.toISOString().split('T')[0] : '';
+    } else if (h.key === 'wo_percentage' || h.key === 'cost') {
+      input.type = 'number';
+      if (h.key === 'cost') input.step = '0.01';
+      input.value = val;
+    } else {
+      input.type = 'text';
+      input.value = String(val);
+    }
+    input.name = h.key;
+    formEl.appendChild(label);
+    formEl.appendChild(input);
+  });
 }
-input.name = h.key;
-editForm.appendChild(label);
-editForm.appendChild(input);
-});
-}
+
 function openEditModal(rowData) {
-buildEditForm(rowData);
-editModal.style.display = 'flex';
-editForm.dataset.woNo = rowData.wo_no;
+  buildForm(editForm, rowData);
+  editModal.style.display = 'flex';
+  editForm.dataset.woNo = rowData.wo_no;
 }
-closeEditModal.addEventListener('click', () => {
-editModal.style.display = 'none';
-});
+
+closeEditModal.addEventListener('click', () => { editModal.style.display = 'none'; });
+
 editForm.addEventListener('submit', async (e) => {
-e.preventDefault();
-const woNo = editForm.dataset.woNo;
-if (!woNo) {
-setStatus('Error: Missing work order number.', true);
-return;
-}
-const formData = new FormData(editForm);
-const updatedData = {};
-for (let [key, value] of formData.entries()) {
-if (value === '') {
-updatedData[key] = null;
-} else if (key === 'start_date' || key === 'end_date') {
-updatedData[key] = new Date(value).toISOString();
-} else if (key === 'wo_percentage' || key === 'cost') {
-const num = parseFloat(value);
-updatedData[key] = isNaN(num) ? null : num;
-} else {
-updatedData[key] = value;
-}
-}
-try {
-const { error } = await supabaseClient
-.from('WO')
-.update(updatedData)
-.eq('wo_no', woNo);
-if (error) throw error;
-editModal.style.display = 'none';
-setStatus('Work order updated successfully.');
-await loadFromSupabase();
-} catch (err) {
-console.error(err);
-setStatus('Failed to update work order.', true);
-}
+  e.preventDefault();
+  const woNo = editForm.dataset.woNo;
+  if (!woNo) { setStatus('Error: Missing work order number.', true); return; }
+  const formData = new FormData(editForm);
+  const updatedData = {};
+  for (let [key, value] of formData.entries()) {
+    if (value === '') updatedData[key] = null;
+    else if (key === 'start_date' || key === 'end_date') updatedData[key] = new Date(value).toISOString();
+    else if (key === 'wo_percentage' || key === 'cost') {
+      const num = parseFloat(value);
+      updatedData[key] = isNaN(num) ? null : num;
+    } else updatedData[key] = value;
+  }
+  try {
+    const { error } = await supabaseClient.from('WO').update(updatedData).eq('wo_no', woNo);
+    if (error) throw error;
+    editModal.style.display = 'none';
+    setStatus('Work order updated successfully.');
+    await loadFromSupabase();
+  } catch (err) {
+    console.error(err);
+    setStatus('Failed to update work order.', true);
+  }
 });
-function buildAddForm() {
-addForm.innerHTML = '';
-const HEADERS = [
-{ label: 'WO NO.', key: 'wo_no' },
-{ label: 'CAMP', key: 'camp' },
-{ label: 'LOCATION', key: 'location' },
-{ label: 'Split 1.5TON', key: 'split_1_5' },
-{ label: 'Split 2TON', key: 'split_2' },
-{ label: 'Split 2.5TON', key: 'split_2_5' },
-{ label: 'Split 3TON', key: 'split_3' },
-{ label: 'Window 2TON', key: 'window_2' },
-{ label: 'COOLER', key: 'cooler' },
-{ label: 'used AC', key: 'used_ac' },
-{ label: 'FRIDGE', key: 'fridge' },
-{ label: 'FREEZER', key: 'freezer' },
-{ label: 'Package 8TON', key: 'pkg_8' },
-{ label: 'Package 10TON', key: 'pkg_10' },
-{ label: 'Package 12 TON', key: 'pkg_12' },
-{ label: 'Package 15TON', key: 'pkg_15' },
-{ label: 'Package 20TON', key: 'pkg_20' },
-{ label: 'Package 25TON', key: 'pkg_25' },
-{ label: 'FREE STAND 5TON', key: 'free_5ton' },
-{ label: 'FREE STAND 8TON', key: 'free_8ton' },
-{ label: 'AIR CURTAINS', key: 'air_curtains' }, // NEW: Air Curtains field
-{ label: 'WORK ORDER AMOUNT', key: 'amount' },
-{ label: 'START DATE', key: 'start_date' },
-{ label: 'END DATE', key: 'end_date' },
-{ label: 'WO PERCENTAGE', key: 'wo_percentage' },
-{ label: 'LPO', key: 'lpo' },
-{ label: 'DO', key: 'do_doc' },
-{ label: 'WO', key: 'wo_pdf' },
-{ label: 'Spilt Cost without VAT', key: 'cost' }
-];
-HEADERS.forEach(h => {
-if (h.key === null) return;
-const label = document.createElement('label');
-label.textContent = h.label;
-const input = document.createElement('input');
-if (h.key === 'start_date' || h.key === 'end_date') {
-input.type = 'date';
-} else if (h.key === 'wo_percentage' || h.key === 'cost') {
-input.type = 'number';
-if (h.key === 'cost') input.step = '0.01';
-} else {
-input.type = 'text';
-}
-input.name = h.key;
-addForm.appendChild(label);
-addForm.appendChild(input);
-});
-}
+
 addRowBtn.addEventListener('click', () => {
-buildAddForm();
-addModal.style.display = 'flex';
+  buildForm(addForm);
+  addModal.style.display = 'flex';
 });
-closeAddModal.addEventListener('click', () => {
-addModal.style.display = 'none';
-});
+
+closeAddModal.addEventListener('click', () => { addModal.style.display = 'none'; });
+
 addForm.addEventListener('submit', async (e) => {
-e.preventDefault();
-const formData = new FormData(addForm);
-const newRow = {};
-for (let [key, value] of formData.entries()) {
-if (value === '') newRow[key] = null;
-else if (key === 'start_date' || key === 'end_date') {
-newRow[key] = new Date(value).toISOString();
-} else if (key === 'wo_percentage' || key === 'cost') {
-const num = parseFloat(value);
-newRow[key] = isNaN(num) ? null : num;
-} else {
-newRow[key] = value;
-}
-}
-try {
-const { error } = await supabaseClient
-.from('WO')
-.insert([newRow]);
-if (error) throw error;
-addModal.style.display = 'none';
-setStatus('New work order added.');
-loadFromSupabase();
-} catch (err) {
-console.error(err);
-setStatus('Failed to add work order.', true);
-}
+  e.preventDefault();
+  const formData = new FormData(addForm);
+  const newRow = {};
+  for (let [key, value] of formData.entries()) {
+    if (value === '') newRow[key] = null;
+    else if (key === 'start_date' || key === 'end_date') newRow[key] = new Date(value).toISOString();
+    else if (key === 'wo_percentage' || key === 'cost') {
+      const num = parseFloat(value);
+      newRow[key] = isNaN(num) ? null : num;
+    } else newRow[key] = value;
+  }
+  try {
+    const { error } = await supabaseClient.from('WO').insert([newRow]);
+    if (error) throw error;
+    addModal.style.display = 'none';
+    setStatus('New work order added.');
+    loadFromSupabase();
+  } catch (err) {
+    console.error(err);
+    setStatus('Failed to add work order.', true);
+  }
 });
+
 function confirmDelete(woNo) {
-if (!confirm('Are you sure you want to delete this work order?')) return;
-deleteRow(woNo);
+  if (!confirm('Are you sure you want to delete this work order?')) return;
+  deleteRow(woNo);
 }
+
 async function deleteRow(woNo) {
-try {
-const { error } = await supabaseClient
-.from('WO')
-.delete()
-.eq('wo_no', woNo);
-if (error) throw error;
-setStatus('Row deleted.');
-await loadFromSupabase();
-} catch (err) {
-console.error(err);
-setStatus('Failed to delete row.', true);
+  try {
+    const { error } = await supabaseClient.from('WO').delete().eq('wo_no', woNo);
+    if (error) throw error;
+    setStatus('Row deleted.');
+    await loadFromSupabase();
+  } catch (err) {
+    console.error(err);
+    setStatus('Failed to delete row.', true);
+  }
 }
-}
-// ✅ Show All (clears selection, keeps colors & hidden list)
+
 showAllBtn.addEventListener('click', () => {
-document.querySelectorAll('#dataTable tbody tr').forEach(tr => {
-tr.style.display = '';
-tr.dataset.hidden = '';
+  document.querySelectorAll('#dataTable tbody tr').forEach(tr => {
+    tr.style.display = '';
+    tr.dataset.hidden = '';
+  });
+  selectedWoNos.clear();
+  document.querySelectorAll('.row-selector').forEach(cb => cb.checked = false);
+  updateSelectedCostSum();
+  setStatus('All rows restored.');
 });
-selectedWoNos.clear();
-document.querySelectorAll('.row-selector').forEach(cb => cb.checked = false);
-updateSelectedCostSum();
-setStatus('All rows restored.');
-});
-// ✅ Render Rows (with checkbox, hide, color support)
+
+function updateWoCount(count) {
+  const el = document.getElementById('woCountValue');
+  if (el) {
+    const current = parseInt(el.textContent) || 0;
+    const diff = count - current;
+    const steps = 15;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      el.textContent = Math.round(current + (diff * step / steps));
+      if (step >= steps) {
+        el.textContent = count;
+        clearInterval(timer);
+      }
+    }, 25);
+  }
+}
+
 function renderRows(rows) {
-const tbody = document.querySelector('#dataTable tbody');
-const tooltip = document.getElementById('customTooltip');
-tbody.innerHTML = '';
-rows.forEach((row, idx) => {
-const tr = document.createElement('tr');
-const woNo = row.wo_no || 'N/A';
-const camp = row.camp || 'N/A';
-const location = row.location || 'N/A';
-tr.dataset.woNo = woNo;
-tr.dataset.camp = camp;
-tr.dataset.location = location;
-// Apply stored color
-const savedColor = getStoredRowColor(woNo);
-if (savedColor) {
-tr.style.backgroundColor = savedColor;
+  const tbody = document.querySelector('#dataTable tbody');
+  const tooltip = document.getElementById('customTooltip');
+  tbody.innerHTML = '';
+  
+  updateWoCount(rows.length);
+  
+  rows.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+    const woNo = row.wo_no || 'N/A';
+    const camp = row.camp || 'N/A';
+    const location = row.location || 'N/A';
+    tr.dataset.woNo = woNo;
+    tr.dataset.camp = camp;
+    tr.dataset.location = location;
+    const savedColor = getStoredRowColor(woNo);
+    if (savedColor) tr.style.backgroundColor = savedColor;
+    tr.addEventListener('dblclick', (e) => {
+      if (tooltip) {
+        tooltip.textContent = `${woNo} • Camp: ${camp} • Location: ${location}`;
+        tooltip.style.display = 'block';
+        const left = e.pageX - tooltip.offsetWidth - 10;
+        const top = e.pageY;
+        tooltip.style.left = `${Math.max(0, left)}px`;
+        tooltip.style.top = `${top}px`;
+        clearTimeout(tooltip.hideTimeout);
+        tooltip.hideTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 3000);
+      }
+    });
+    const RENDER_HEADERS = [
+      { label: 'WO NO.', key: 'wo_no' },
+      { label: 'CAMP', key: 'camp' },
+      { label: 'LOCATION', key: 'location' },
+      { label: 'Split 1.5TON', key: 'split_1_5', group: 'split' },
+      { label: 'Split 2TON', key: 'split_2', group: 'split' },
+      { label: 'Split 2.5TON', key: 'split_2_5', group: 'split' },
+      { label: 'Split 3TON', key: 'split_3', group: 'split' },
+      { label: 'Window 2TON', key: 'window_2', group: 'window' },
+      { label: 'COOLER', key: 'cooler', group: 'cooler' },
+      { label: 'used AC', key: 'used_ac', group: 'used' },
+      { label: 'FRIDGE', key: 'fridge', group: 'fridge' },
+      { label: 'FREEZER', key: 'freezer', group: 'freezer' },
+      { label: 'Package 8TON', key: 'pkg_8', group: 'package' },
+      { label: 'Package 10TON', key: 'pkg_10', group: 'package' },
+      { label: 'Package 12 TON', key: 'pkg_12', group: 'package' },
+      { label: 'Package 15TON', key: 'pkg_15', group: 'package' },
+      { label: 'Package 20TON', key: 'pkg_20', group: 'package' },
+      { label: 'Package 25TON', key: 'pkg_25', group: 'package' },
+      { label: 'FREE STAND 5TON', key: 'free_5ton', group: 'freestand' },
+      { label: 'FREE STAND 8TON', key: 'free_8ton', group: 'freestand' },
+      { label: 'AIR CURTAINS', key: 'air_curtains', group: 'aircurtain' },
+      { label: 'WORK ORDER AMOUNT', key: 'amount' },
+      { label: 'START DATE', key: 'start_date' },
+      { label: 'END DATE', key: 'end_date' },
+      { label: 'REMAINING DAYS', key: null, group: 'remain' },
+      { label: 'WO PERCENTAGE', key: 'wo_percentage' },
+      { label: 'LPO', key: 'lpo' },
+      { label: 'DO', key: 'do_doc' },
+      { label: 'WO', key: 'wo_pdf' },
+      { label: 'Cost without VAT', key: 'cost' }
+    ];
+    RENDER_HEADERS.forEach(h => {
+      const td = document.createElement('td');
+      let handled = false;
+      let val = '';
+      if (h.key === 'wo_no') {
+        const woVal = row[h.key] ?? '';
+        const woStr = String(woVal).trim();
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'row-selector';
+        checkbox.dataset.woNo = woStr;
+        checkbox.checked = selectedWoNos.has(woStr);
+        checkbox.addEventListener('change', (e) => {
+          const wo = e.target.dataset.woNo;
+          if (e.target.checked) selectedWoNos.add(wo);
+          else selectedWoNos.delete(wo);
+          updateSelectedCostSum();
+        });
+        const hideBtn = document.createElement('button');
+        hideBtn.textContent = 'Hide';
+        hideBtn.className = 'action-btn hide-btn';
+        hideBtn.onclick = (e) => {
+          e.stopPropagation();
+          tr.style.display = 'none';
+          tr.dataset.hidden = 'true';
+          const wo = String(row.wo_no || '').trim();
+          if (wo) {
+            let hiddenSet = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
+            hiddenSet.add(wo);
+            localStorage.setItem(HIDDEN_ROWS_KEY, JSON.stringify([...hiddenSet]));
+          }
+        };
+        const span = document.createElement('span');
+        span.textContent = woVal;
+        span.style.fontWeight = '700';
+        td.appendChild(checkbox);
+        td.appendChild(hideBtn);
+        td.appendChild(span);
+        handled = true;
+      } else if (h.key === null && h.label === 'REMAINING DAYS') {
+        val = remainingDays(row.end_date);
+        td.classList.add('remain');
+      } else if (h.key === 'start_date' || h.key === 'end_date') {
+        val = formatDMY(parseDate(row[h.key]));
+      } else if (h.key === 'wo_percentage') {
+        const p = parsePercentage(row[h.key]);
+        if (p !== null) {
+          const bg = percentColor(p);
+          td.innerHTML = `<div class="progress-cell"><div class="progress-bar" style="width:${p}%; background:${bg}"></div><span class="progress-text" style="color:#fff">${p}%</span></div>`;
+          handled = true;
+        } else {
+          td.textContent = '';
+          handled = true;
+        }
+      } else if (h.key === 'lpo') {
+        const loc = row.location ?? '';
+        const cam = row.camp ?? '';
+        const raw = row[h.key] ?? '';
+        const name = String(raw).trim();
+        if (name) {
+          const file = name.toLowerCase().endsWith('.pdf') ? name : name + '.pdf';
+          td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
+          handled = true;
+        } else { td.textContent = ''; handled = true; }
+      } else if (h.key === 'do_doc') {
+        const lpoRaw = row.lpo ?? '';
+        const loc = row.location ?? '';
+        const cam = row.camp ?? '';
+        const lpoName = String(lpoRaw).trim();
+        const doLabelRaw = row[h.key] ?? '';
+        const doLabel = String(doLabelRaw).trim();
+        if (lpoName || doLabel) {
+          const base = lpoName ? lpoName.replace(/\.pdf$/i, '') : doLabel.replace(/\.pdf$/i, '');
+          const file = lpoName ? `DO${base}.pdf` : (/^DOPO/.test(base) ? `${base}.pdf` : `DO${base}.pdf`);
+          const label = doLabel || (lpoName ? `DO${base}` : `DO${base}`);
+          td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} ${cam} (${loc})')" title="Open ${file}">${label}</a>`;
+          handled = true;
+        } else { td.textContent = ''; handled = true; }
+      } else if (h.key === 'wo_pdf') {
+        const raw = row.wo_no ?? '';
+        const lpoRaw = row.lpo ?? '';
+        const loc = row.location ?? '';
+        const cam = row.camp ?? '';
+        const name = String(raw).trim();
+        if (name) {
+          let file;
+          if (/\.pdf$/i.test(name)) file = name;
+          else {
+            const m = name.match(/^WO\s+(\d+)$/i);
+            if (m) file = `WO${m[1]}.pdf`;
+            else if (/^WO\d+$/i.test(name)) file = `${name}.pdf`;
+            else file = `${name}.pdf`;
+          }
+          td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} (${lpoRaw}) ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
+          handled = true;
+        } else { td.textContent = ''; handled = true; }
+      } else if (h.key === 'cost') {
+        const v = row[h.key];
+        td.textContent = isNumericOnly(v) ? formatAED(Number(v)) : String(v ?? '');
+        td.style.fontWeight = '700';
+        td.style.color = '#10b981';
+        handled = true;
+      } else {
+        val = row[h.key] ?? '';
+      }
+      const group = h.group || '';
+      if (group) td.classList.add(group);
+      if (group && isNumericOnly(val) && group !== 'remain') {
+        td.classList.add('is-numeric');
+        td.innerHTML = `<span class="count-badge ${group}">${val}</span>`;
+      } else if (group === 'remain' && isNumericOnly(val)) {
+        const num = Number(val);
+        const bg = remainingColor(num);
+        td.innerHTML = `<span class="remain-badge" style="background:${bg}; color:#fff">${num}</span>`;
+      } else if (!handled) {
+        td.textContent = val;
+      }
+      tr.appendChild(td);
+    });
+    tr.appendChild(renderActionCell(row, idx));
+    tbody.appendChild(tr);
+  });
+  const savedHidden = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
+  rows.forEach((row, idx) => {
+    const wo = String(row.wo_no || '').trim();
+    if (wo && savedHidden.has(wo)) {
+      const tr = tbody.children[idx];
+      if (tr) { tr.style.display = 'none'; tr.dataset.hidden = 'true'; }
+    }
+  });
 }
-tr.addEventListener('dblclick', (e) => {
-if (tooltip) {
-tooltip.textContent = ` ${woNo} • Camp: ${camp} • Location: ${location}`;
-tooltip.style.display = 'block';
-const left = e.pageX - tooltip.offsetWidth - 10;
-const top = e.pageY;
-tooltip.style.left = `${Math.max(0, left)}px`;
-tooltip.style.top = `${top}px`;
-clearTimeout(tooltip.hideTimeout);
-tooltip.hideTimeout = setTimeout(() => {
-tooltip.style.display = 'none';
-}, 3000);
-}
-});
-const HEADERS = [
-{ label: 'WO NO.', key: 'wo_no' },
-{ label: 'CAMP', key: 'camp' },
-{ label: 'LOCATION', key: 'location' },
-{ label: 'Split 1.5TON', key: 'split_1_5', group: 'split' },
-{ label: 'Split 2TON', key: 'split_2', group: 'split' },
-{ label: 'Split 2.5TON', key: 'split_2_5', group: 'split' },
-{ label: 'Split 3TON', key: 'split_3', group: 'split' },
-{ label: 'Window 2TON', key: 'window_2', group: 'window' },
-{ label: 'COOLER', key: 'cooler', group: 'cooler' },
-{ label: 'used AC', key: 'used_ac', group: 'used' },
-{ label: 'FRIDGE', key: 'fridge', group: 'fridge' },
-{ label: 'FREEZER', key: 'freezer', group: 'freezer' },
-{ label: 'Package 8TON', key: 'pkg_8', group: 'package' },
-{ label: 'Package 10TON', key: 'pkg_10', group: 'package' },
-{ label: 'Package 12 TON', key: 'pkg_12', group: 'package' },
-{ label: 'Package 15TON', key: 'pkg_15', group: 'package' },
-{ label: 'Package 20TON', key: 'pkg_20', group: 'package' },
-{ label: 'Package 25TON', key: 'pkg_25', group: 'package' },
-{ label: 'FREE STAND 5TON', key: 'free_5ton', group: 'freestand' },
-{ label: 'FREE STAND 8TON', key: 'free_8ton', group: 'freestand' },
-{ label: 'AIR CURTAINS', key: 'air_curtains', group: 'aircurtain' }, // NEW: Air Curtains
-{ label: 'WORK ORDER AMOUNT', key: 'amount' },
-{ label: 'START DATE', key: 'start_date' },
-{ label: 'END DATE', key: 'end_date' },
-{ label: 'REMAINING DAYS', key: null, group: 'remain' },
-{ label: 'WO PERCENTAGE', key: 'wo_percentage' },
-{ label: 'LPO', key: 'lpo' },
-{ label: 'DO', key: 'do_doc' },
-{ label: 'WO', key: 'wo_pdf' },
-{ label: 'Spilt Cost without VAT', key: 'cost' }
-];
-HEADERS.forEach(h => {
-const td = document.createElement('td');
-let handled = false;
-let val = '';
-if (h.key === 'wo_no') {
-const woVal = row[h.key] ?? '';
-const woStr = String(woVal).trim();
-// ✅ Checkbox for selection
-const checkbox = document.createElement('input');
-checkbox.type = 'checkbox';
-checkbox.className = 'row-selector';
-checkbox.dataset.woNo = woStr;
-checkbox.checked = selectedWoNos.has(woStr);
-checkbox.addEventListener('change', (e) => {
-const wo = e.target.dataset.woNo;
-if (e.target.checked) {
-selectedWoNos.add(wo);
-} else {
-selectedWoNos.delete(wo);
-}
-updateSelectedCostSum();
-});
-// Hide button
-const hideBtn = document.createElement('button');
-hideBtn.textContent = 'Hide';
-hideBtn.className = 'action-btn cancel-btn hide-btn';
-hideBtn.onclick = (e) => {
-e.stopPropagation();
-tr.style.display = 'none';
-tr.dataset.hidden = 'true';
-const wo = String(row.wo_no || '').trim();
-if (wo) {
-let hiddenSet = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
-hiddenSet.add(wo);
-localStorage.setItem(HIDDEN_ROWS_KEY, JSON.stringify([...hiddenSet]));
-}
-};
-const span = document.createElement('span');
-span.textContent = woVal;
-td.appendChild(checkbox);
-td.appendChild(hideBtn);
-td.appendChild(span);
-handled = true;
-} else if (h.key === null && h.label === 'REMAINING DAYS') {
-val = remainingDays(row.end_date);
-td.classList.add('remain');
-} else if (h.key === 'start_date' || h.key === 'end_date') {
-val = formatDMY(parseDate(row[h.key]));
-} else if (h.key === 'wo_percentage') {
-const p = parsePercentage(row[h.key]);
-if (p !== null) {
-const bg = percentColor(p);
-const fg = percentTextColor(p);
-td.innerHTML = `<div class="progress-cell"><div class="progress-bar" style="width:${p}%; background:${bg}"></div><span class="progress-text" style="color:${fg}">${p}%</span></div>`;
-handled = true;
-} else {
-td.textContent = '';
-handled = true;
-}
-} else if (h.key === 'lpo') {
-const loc = row.location ?? '';
-const cam = row.camp ?? '';
-const raw = row[h.key] ?? '';
-const name = String(raw).trim();
-if (name) {
-const file = name.toLowerCase().endsWith('.pdf') ? name : name + '.pdf';
-td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
-handled = true;
-} else {
-td.textContent = '';
-handled = true;
-}
-} else if (h.key === 'do_doc') {
-const lpoRaw = row.lpo ?? '';
-const loc = row.location ?? '';
-const cam = row.camp ?? '';
-const lpoName = String(lpoRaw).trim();
-const doLabelRaw = row[h.key] ?? '';
-const doLabel = String(doLabelRaw).trim();
-if (lpoName || doLabel) {
-const base = lpoName ? lpoName.replace(/\.pdf$/i, '') : doLabel.replace(/\.pdf$/i, '');
-const file = lpoName ? `DO${base}.pdf` : (/^DOPO/.test(base) ? `${base}.pdf` : `DO${base}.pdf`);
-const label = doLabel || (lpoName ? `DO${base}` : `DO${base}`);
-td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} ${cam} (${loc})')" title="Open ${file}">${label}</a>`;
-handled = true;
-} else {
-td.textContent = '';
-handled = true;
-}
-} else if (h.key === 'wo_pdf') {
-const raw = row.wo_no ?? '';
-const lpoRaw = row.lpo ?? '';
-const loc = row.location ?? '';
-const cam = row.camp ?? '';
-const name = String(raw).trim();
-if (name) {
-let file;
-if (/\.pdf$/i.test(name)) {
-file = name;
-} else {
-const m = name.match(/^WO\s+(\d+)$/i);
-if (m) {
-file = `WO${m[1]}.pdf`;
-} else if (/^WO\d+$/i.test(name)) {
-file = `${name}.pdf`;
-} else {
-file = `${name}.pdf`;
-}
-}
-td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} (${lpoRaw}) ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
-handled = true;
-} else {
-td.textContent = '';
-handled = true;
-}
-} else if (h.key === 'cost') {
-const v = row[h.key];
-td.textContent = isNumericOnly(v) ? formatAED(Number(v)) : String(v ?? '');
-handled = true;
-} else {
-val = row[h.key] ?? '';
-}
-const group = h.group || '';
-if (group) td.classList.add(group);
-if (group && isNumericOnly(val) && group !== 'remain') {
-td.classList.add('is-numeric');
-td.innerHTML = `<span class="count-badge ${group}">${val}</span>`;
-} else if (group === 'remain' && isNumericOnly(val)) {
-const num = Number(val);
-const bg = remainingColor(num);
-const fg = remainingTextColor(num);
-td.innerHTML = `<span class="remain-badge" style="background:${bg}; color:${fg}">${num}</span>`;
-} else if (!handled) {
-td.textContent = val;
-}
-tr.appendChild(td);
-});
-tr.appendChild(renderActionCell(row, idx));
-tbody.appendChild(tr);
-});
-// ✅ Restore hidden rows
-const savedHidden = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
-rows.forEach((row, idx) => {
-const wo = String(row.wo_no || '').trim();
-if (wo && savedHidden.has(wo)) {
-const tr = tbody.children[idx];
-if (tr) {
-tr.style.display = 'none';
-tr.dataset.hidden = 'true';
-}
-}
-});
-}
-// --- Filter & Stats (UPDATED with Air Curtains) ---
+
 function uniqueSorted(values) {
-const set = new Set(values.filter(v => v !== '' && v !== null && v !== undefined).map(v => String(v).trim()).filter(Boolean));
-return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  const set = new Set(values.filter(v => v !== '' && v !== null && v !== undefined).map(v => String(v).trim()).filter(Boolean));
+  return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
 }
-const TYPE_OPTIONS = ['All', 'split', 'window', 'package', 'used', 'fridge', 'cooler', 'freezer', 'freestand', 'aircurtain']; // UPDATED
+
+const TYPE_OPTIONS = ['All', 'split', 'window', 'package', 'used', 'fridge', 'cooler', 'freezer', 'freestand', 'aircurtain'];
 const GROUP_KEYS = {
-split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
-window: ['window_2'],
-package: ['pkg_8', 'pkg_10', 'pkg_12', 'pkg_15', 'pkg_20', 'pkg_25'],
-used: ['used_ac'],
-fridge: ['fridge'],
-cooler: ['cooler'],
-freezer: ['freezer'],
-freestand: ['free_5ton', 'free_8ton'],
-aircurtain: ['air_curtains'] // NEW: Air Curtains group
+  split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
+  window: ['window_2'],
+  package: ['pkg_8', 'pkg_10', 'pkg_12', 'pkg_15', 'pkg_20', 'pkg_25'],
+  used: ['used_ac'],
+  fridge: ['fridge'],
+  cooler: ['cooler'],
+  freezer: ['freezer'],
+  freestand: ['free_5ton', 'free_8ton'],
+  aircurtain: ['air_curtains']
 };
+
 function initFilters() {
-const camps = uniqueSorted(ALL_ROWS.map(r => r.camp));
-const locs = uniqueSorted(ALL_ROWS.map(r => r.location));
-const fillSelect = (sel, opts) => {
-sel.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
-};
-fillSelect(selCamp, camps);
-fillSelect(selLocation, locs);
-fillSelect(selType, TYPE_OPTIONS);
-selCamp.addEventListener('change', applyFilters);
-selLocation.addEventListener('change', applyFilters);
-selType.addEventListener('change', applyFilters);
+  const camps = uniqueSorted(ALL_ROWS.map(r => r.camp));
+  const locs = uniqueSorted(ALL_ROWS.map(r => r.location));
+  const fillSelect = (sel, opts) => {
+    sel.innerHTML = opts.map(o => `<option value="${o === 'All' ? '' : o}">${o}</option>`).join('');
+  };
+  fillSelect(selCamp, camps);
+  fillSelect(selLocation, locs);
+  fillSelect(selType, TYPE_OPTIONS);
 }
-function sumValues(rows, keys) {
-let total = 0;
-rows.forEach(r => {
-keys.forEach(k => {
-const v = r[k];
-if (isNumericOnly(v)) total += Number(v);
-});
-});
-return total;
-}
+
 function computeCounts(rows) {
-const counts = {
-split: { split_1_5: 0, split_2: 0, split_2_5: 0, split_3: 0, total: 0, cost: 0 },
-window: { window_2: 0, total: 0, cost: 0 },
-package: { pkg_8: 0, pkg_10: 0, pkg_12: 0, pkg_15: 0, pkg_20: 0, pkg_25: 0, total: 0, cost: 0 },
-freestand: { free_5ton: 0, free_8ton: 0, total: 0, cost: 0 },
-used: { used_ac: 0, total: 0, cost: 0 },
-fridge: { fridge: 0, total: 0, cost: 0 },
-cooler: { cooler: 0, total: 0, cost: 0 },
-freezer: { freezer: 0, total: 0, cost: 0 },
-aircurtain: { air_curtains: 0, total: 0, cost: 0 } // NEW: Air Curtains count
-};
-rows.forEach(row => {
-const rowCost = isNumericOnly(row.cost) ? Number(row.cost) : 0;
-for (const [group, keys] of Object.entries(GROUP_KEYS)) {
-let groupHasValue = false;
-let groupQty = 0;
-for (const key of keys) {
-const val = row[key];
-if (isNumericOnly(val)) {
-const num = Number(val);
-if (num > 0) {
-groupHasValue = true;
-groupQty += num;
-counts[group][key] += num;
+  const counts = {
+    split: { split_1_5: 0, split_2: 0, split_2_5: 0, split_3: 0, total: 0, cost: 0 },
+    window: { window_2: 0, total: 0, cost: 0 },
+    package: { pkg_8: 0, pkg_10: 0, pkg_12: 0, pkg_15: 0, pkg_20: 0, pkg_25: 0, total: 0, cost: 0 },
+    freestand: { free_5ton: 0, free_8ton: 0, total: 0, cost: 0 },
+    used: { used_ac: 0, total: 0, cost: 0 },
+    fridge: { fridge: 0, total: 0, cost: 0 },
+    cooler: { cooler: 0, total: 0, cost: 0 },
+    freezer: { freezer: 0, total: 0, cost: 0 },
+    aircurtain: { air_curtains: 0, total: 0, cost: 0 }
+  };
+  rows.forEach(row => {
+    const rowCost = isNumericOnly(row.cost) ? Number(row.cost) : 0;
+    for (const [group, keys] of Object.entries(GROUP_KEYS)) {
+      let groupHasValue = false;
+      let groupQty = 0;
+      for (const key of keys) {
+        const val = row[key];
+        if (isNumericOnly(val)) {
+          const num = Number(val);
+          if (num > 0) { groupHasValue = true; groupQty += num; counts[group][key] += num; }
+        }
+      }
+      if (groupHasValue) { counts[group].total += groupQty; counts[group].cost += rowCost; }
+    }
+  });
+  return counts;
 }
-}
-}
-if (groupHasValue) {
-counts[group].total += groupQty;
-counts[group].cost += rowCost;
-}
-}
-});
-return counts;
-}
+
 function hasGroupValue(row, group) {
-const keys = GROUP_KEYS[group] || [];
-return keys.some(k => {
-const v = row[k];
-if (!isNumericOnly(v)) return false;
-const num = Number(v);
-return Number.isFinite(num) && num > 0;
-});
+  const keys = GROUP_KEYS[group] || [];
+  return keys.some(k => {
+    const v = row[k];
+    if (!isNumericOnly(v)) return false;
+    const num = Number(v);
+    return Number.isFinite(num) && num > 0;
+  });
 }
+
 let charts = { split: null, pkg: null, groups: null, progress: null };
+
 function renderCharts(counts) {
-const splitLabels = ['1.5 TON', '2 TON', '2.5 TON', '3TON'];
-const splitData = [counts.split.split_1_5, counts.split.split_2, counts.split.split_2_5, counts.split.split_3];
-const pkgLabels = ['8 TON', '10 TON', '12 TON', '15 TON', '20 TON', '25 TON'];
-const pkgData = [counts.package.pkg_8, counts.package.pkg_10, counts.package.pkg_12, counts.package.pkg_15, counts.package.pkg_20, counts.package.pkg_25];
-const groupLabels = ['split', 'window', 'package', 'freestand', 'used', 'cooler', 'fridge', 'freezer', 'aircurtain']; // UPDATED
-const groupTotals = [
-counts.split.total,
-counts.window.total,
-counts.package.total,
-counts.freestand.total,
-counts.used.total,
-counts.cooler.total,
-counts.fridge.total,
-counts.freezer.total,
-counts.aircurtain.total // NEW: Air Curtains total
-];
-const bgMeta = getComputedStyle(document.documentElement);
-const colors = {
-split: bgMeta.getPropertyValue('--col-split').trim() || '#16a34a',
-window: bgMeta.getPropertyValue('--col-window').trim() || '#c022c5',
-package: bgMeta.getPropertyValue('--col-package').trim() || '#60a5fa',
-freestand: bgMeta.getPropertyValue('--col-freestand').trim() || '#94a3b8',
-used: bgMeta.getPropertyValue('--col-used').trim() || '#d90606',
-cooler: bgMeta.getPropertyValue('--col-cooler').trim() || '#00eeff',
-fridge: bgMeta.getPropertyValue('--col-fridge').trim() || '#6b7280',
-freezer: bgMeta.getPropertyValue('--col-freezer').trim() || '#9ca3af',
-aircurtain: bgMeta.getPropertyValue('--col-aircurtain').trim() || '#f59e0b' // NEW: Air Curtains color
-};
-const ctxSplit = document.getElementById('chartSplit');
-const ctxPkg = document.getElementById('chartPackage');
-const ctxGroups = document.getElementById('chartGroups');
-const ctxProgress = document.getElementById('chartProgress');
-if (charts.split) charts.split.destroy();
-charts.split = new Chart(ctxSplit, {
-type: 'bar',
-data: { labels: splitLabels, datasets: [{ label: 'Split', data: splitData, backgroundColor: colors.split }] },
-options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-});
-if (charts.pkg) charts.pkg.destroy();
-charts.pkg = new Chart(ctxPkg, {
-type: 'bar',
-data: { labels: pkgLabels, datasets: [{ label: 'Package', data: pkgData, backgroundColor: colors.package }] },
-options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-});
-if (charts.groups) charts.groups.destroy();
-charts.groups = new Chart(ctxGroups, {
-type: 'doughnut',
-data: {
-labels: groupLabels,
-datasets: [{ data: groupTotals, backgroundColor: Object.values(colors) }]
-},
-options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-});
-if (charts.progress) charts.progress.destroy();
-let sum = 0, count = 0;
-ALL_ROWS.forEach(row => {
-const p = parsePercentage(row.wo_percentage);
-if (p !== null) { sum += p; count++; }
-});
-const avg = count > 0 ? Math.round(sum / count) : 0;
-charts.progress = new Chart(ctxProgress, {
-type: 'doughnut',
-data: {
-labels: ['Progress', ''],
-datasets: [{ data: [avg, 100 - avg], backgroundColor: ['#16a34a', '#e5e7eb'] }]
-},
-options: {
-responsive: true,
-plugins: { legend: { display: true, position: 'bottom' } },
-cutout: '70%'
+  const themeColors = getChartColors();
+  const splitLabels = ['1.5 TON', '2 TON', '2.5 TON', '3 TON'];
+  const splitData = [counts.split.split_1_5, counts.split.split_2, counts.split.split_2_5, counts.split.split_3];
+  const pkgLabels = ['8 TON', '10 TON', '12 TON', '15 TON', '20 TON', '25 TON'];
+  const pkgData = [counts.package.pkg_8, counts.package.pkg_10, counts.package.pkg_12, counts.package.pkg_15, counts.package.pkg_20, counts.package.pkg_25];
+  const groupLabels = ['Split', 'Window', 'Package', 'Free Stand', 'Used', 'Cooler', 'Fridge', 'Freezer', 'Air Curtain'];
+  const groupTotals = [
+    counts.split.total, counts.window.total, counts.package.total, counts.freestand.total,
+    counts.used.total, counts.cooler.total, counts.fridge.total, counts.freezer.total, counts.aircurtain.total
+  ];
+  const colors = {
+    split: '#16a34a', window: '#c022c5', package: '#3b82f6', freestand: '#a855f7',
+    used: '#ef4444', cooler: '#06b6d4', fridge: '#64748b', freezer: '#94a3b8', aircurtain: '#f59e0b'
+  };
+
+  if (charts.split) charts.split.destroy();
+  charts.split = new Chart(document.getElementById('chartSplit'), {
+    type: 'bar',
+    data: { labels: splitLabels, datasets: [{ label: 'Split', data: splitData, backgroundColor: colors.split, borderRadius: 8, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0, color: themeColors.text }, grid: { color: themeColors.grid } }, x: { ticks: { color: themeColors.text }, grid: { display: false } } } }
+  });
+
+  if (charts.pkg) charts.pkg.destroy();
+  charts.pkg = new Chart(document.getElementById('chartPackage'), {
+    type: 'bar',
+    data: { labels: pkgLabels, datasets: [{ label: 'Package', data: pkgData, backgroundColor: colors.package, borderRadius: 8, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0, color: themeColors.text }, grid: { color: themeColors.grid } }, x: { ticks: { color: themeColors.text }, grid: { display: false } } } }
+  });
+
+  if (charts.groups) charts.groups.destroy();
+  charts.groups = new Chart(document.getElementById('chartGroups'), {
+    type: 'doughnut',
+    data: { labels: groupLabels, datasets: [{ data: groupTotals, backgroundColor: Object.values(colors), borderColor: themeColors.doughnutBorder, borderWidth: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { color: themeColors.text, font: { family: 'Inter', weight: '600' } } } } }
+  });
+
+  if (charts.progress) charts.progress.destroy();
+  let sum = 0, count = 0;
+  ALL_ROWS.forEach(row => {
+    const p = parsePercentage(row.wo_percentage);
+    if (p !== null) { sum += p; count++; }
+  });
+  const avg = count > 0 ? Math.round(sum / count) : 0;
+  charts.progress = new Chart(document.getElementById('chartProgress'), {
+    type: 'doughnut',
+    data: { labels: ['Progress', ''], datasets: [{ data: [avg, 100 - avg], backgroundColor: ['#10b981', themeColors.grid], borderColor: themeColors.doughnutBorder, borderWidth: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } }
+  });
+  document.getElementById('progressValue').textContent = `${avg}%`;
 }
-});
-ctxProgress.parentNode.querySelector('.progress-value').textContent = `${avg}%`;
-}
+
 function renderStats(rows) {
-const c = computeCounts(rows);
-let totalCostNoVat = 0;
-rows.forEach(r => {
-const v = r.cost;
-if (isNumericOnly(v)) totalCostNoVat += Number(v);
-});
-const byId = (id, val) => {
-const el = document.getElementById(id);
-if (el) el.textContent = String(val);
-};
-byId('statTotalSplit', c.split.total);
-byId('statTotalPackage', c.package.total);
-byId('statTotalFreestand', c.freestand.total);
-byId('statTotalWindow', c.window.total);
-byId('statTotalUsed', c.used.total);
-byId('statTotalCooler', c.cooler.total);
-byId('statTotalFridge', c.fridge.total);
-byId('statTotalFreezer', c.freezer.total);
-byId('statTotalAirCurtain', c.aircurtain.total); // NEW: Air Curtains stat
-byId('statTotalCostNoVat', formatAED(totalCostNoVat));
-byId('statCostSplit', `Cost: ${formatAED(c.split.cost)}`);
-byId('statCostPackage', `Cost: ${formatAED(c.package.cost)}`);
-byId('statCostFreestand', `Cost: ${formatAED(c.freestand.cost)}`);
-byId('statCostWindow', `Cost: ${formatAED(c.window.cost)}`);
-byId('statCostUsed', `Cost: ${formatAED(c.used.cost)}`);
-byId('statCostCooler', `Cost: ${formatAED(c.cooler.cost)}`);
-byId('statCostFridge', `Cost: ${formatAED(c.fridge.cost)}`);
-byId('statCostFreezer', `Cost: ${formatAED(c.freezer.cost)}`);
-byId('statCostAirCurtain', `Cost: ${formatAED(c.aircurtain.cost)}`); // NEW: Air Curtains cost
-renderCharts(c);
+  const c = computeCounts(rows);
+  let totalCostNoVat = 0;
+  rows.forEach(r => {
+    const v = r.cost;
+    if (isNumericOnly(v)) totalCostNoVat += Number(v);
+  });
+  const byId = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = String(val); };
+  byId('statTotalSplit', c.split.total);
+  byId('statTotalPackage', c.package.total);
+  byId('statTotalFreestand', c.freestand.total);
+  byId('statTotalWindow', c.window.total);
+  byId('statTotalUsed', c.used.total);
+  byId('statTotalCooler', c.cooler.total);
+  byId('statTotalFridge', c.fridge.total);
+  byId('statTotalFreezer', c.freezer.total);
+  byId('statTotalAirCurtain', c.aircurtain.total);
+  byId('statTotalCostNoVat', formatAED(totalCostNoVat));
+  byId('statCostSplit', `Cost: ${formatAED(c.split.cost)}`);
+  byId('statCostPackage', `Cost: ${formatAED(c.package.cost)}`);
+  byId('statCostFreestand', `Cost: ${formatAED(c.freestand.cost)}`);
+  byId('statCostWindow', `Cost: ${formatAED(c.window.cost)}`);
+  byId('statCostUsed', `Cost: ${formatAED(c.used.cost)}`);
+  byId('statCostCooler', `Cost: ${formatAED(c.cooler.cost)}`);
+  byId('statCostFridge', `Cost: ${formatAED(c.fridge.cost)}`);
+  byId('statCostFreezer', `Cost: ${formatAED(c.freezer.cost)}`);
+  byId('statCostAirCurtain', `Cost: ${formatAED(c.aircurtain.cost)}`);
+  renderCharts(c);
 }
+
+function getFilteredRows() {
+  const campVal = selCamp.value || 'All';
+  const locVal = selLocation.value || 'All';
+  const typeVal = selType.value || 'All';
+  return ALL_ROWS.filter(r => {
+    if (campVal !== 'All' && String(r.camp).trim() !== campVal) return false;
+    if (locVal !== 'All' && String(r.location).trim() !== locVal) return false;
+    if (typeVal !== 'All' && !hasGroupValue(r, typeVal)) return false;
+    return true;
+  });
+}
+
 function applyFilters() {
-const campVal = selCamp.value || 'All';
-const locVal = selLocation.value || 'All';
-const typeVal = selType.value || 'All';
-const filtered = ALL_ROWS.filter(r => {
-if (campVal !== 'All' && String(r.camp).trim() !== campVal) return false;
-if (locVal !== 'All' && String(r.location).trim() !== locVal) return false;
-if (typeVal !== 'All' && !hasGroupValue(r, typeVal)) return false;
-return true;
-});
-renderRows(filtered);
-renderStats(filtered);
-try {
-filtered.forEach(r => {
-const days = remainingDays(r.end_date);
-const wo = String(r.wo_no ?? '').trim();
-if (wo && Number.isFinite(days) && days < 30 && days > 0 && !NOTIFIED_WO.has(wo)) {
-const msg = `⚠️ : ${wo} امر العمل  بمعسكر: ${r.camp} الموقع: ${r.location} متبقي  ${days}  يوم لانتهاء امر العمل`;
-showToast(msg, 6000);
-NOTIFIED_WO.add(wo);
+  const filtered = getFilteredRows();
+  renderRows(filtered);
+  renderStats(filtered);
+  try {
+    filtered.forEach(r => {
+      const days = remainingDays(r.end_date);
+      const wo = String(r.wo_no ?? '').trim();
+      if (wo && Number.isFinite(days) && days < 30 && days > 0 && !NOTIFIED_WO.has(wo)) {
+        const msg = `⚠️ ${wo} • Camp: ${r.camp} • Location: ${r.location} • ${days} days remaining`;
+        showToast(msg, 6000);
+        NOTIFIED_WO.add(wo);
+      }
+    });
+  } catch (e) { console.warn('Toast error:', e); }
+  setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows`);
 }
-});
-} catch (e) { console.warn('Toast error:', e); }
-setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows.`);
-}
+
 async function loadFromSupabase() {
-setStatus('Loading data from database...');
-try {
-const { data, error } = await supabaseClient.from('WO').select('*');
-if (error) throw error;
-ALL_ROWS = sortByWoNo(data);
-initFilters();
-applyFilters();
-setStatus(`Work Orders Loaded: ${data.length} nos.`);
-} catch (err) {
-console.error('Supabase error:', err);
-setStatus('❌ Failed to load data from database.', true);
+  setStatus('Loading data from database...');
+  try {
+    const { data, error } = await supabaseClient.from('WO').select('*');
+    if (error) throw error;
+    ALL_ROWS = sortByWoNo(data);
+    initFilters();
+    applyFilters();
+    setStatus(`Loaded ${data.length} work orders`);
+  } catch (err) {
+    console.error('Supabase error:', err);
+    setStatus('❌ Failed to load data from database.', true);
+  }
 }
-}
+
 document.addEventListener('DOMContentLoaded', async () => {
-await loadRemotePdfMap();
-loadFromSupabase();
-if (printBtn) {
-printBtn.addEventListener('click', () => window.print());
-}
+  await loadRemotePdfMap();
+  loadFromSupabase();
+  if (printBtn) printBtn.addEventListener('click', () => window.print());
 });
+
 document.addEventListener('click', (e) => {
-const tooltip = document.getElementById('customTooltip');
-if (tooltip && tooltip.style.display === 'block') {
-tooltip.style.display = 'none';
-clearTimeout(tooltip.hideTimeout);
-}
+  const tooltip = document.getElementById('customTooltip');
+  if (tooltip && tooltip.style.display === 'block') {
+    tooltip.style.display = 'none';
+    clearTimeout(tooltip.hideTimeout);
+  }
 });
-</script>
-<div id="customTooltip" class="custom-tooltip" style="display: none;"></div>
-<!-- Code injected by live-server -->
-<script>
-	// <![CDATA[  <-- For SVG support
-	if ('WebSocket' in window) {
-		(function () {
-			function refreshCSS() {
-				var sheets = [].slice.call(document.getElementsByTagName("link"));
-				var head = document.getElementsByTagName("head")[0];
-				for (var i = 0; i < sheets.length; ++i) {
-					var elem = sheets[i];
-					var parent = elem.parentElement || head;
-					parent.removeChild(elem);
-					var rel = elem.rel;
-					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
-						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
-						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
-					}
-					parent.appendChild(elem);
-				}
-			}
-			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
-			var address = protocol + window.location.host + window.location.pathname + '/ws';
-			var socket = new WebSocket(address);
-			socket.onmessage = function (msg) {
-				if (msg.data == 'reload') window.location.reload();
-				else if (msg.data == 'refreshcss') refreshCSS();
-			};
-			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
-				console.log('Live reload enabled.');
-				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
-			}
-		})();
-	}
-	else {
-		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
-	}
-	// ]]>
 </script>
 </body>
 </html>
