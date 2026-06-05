@@ -12,7 +12,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root {
-  /* Category colors (shared) */
   --col-split: #16a34a;
   --col-window: #c022c5;
   --col-cooler: #06b6d4;
@@ -30,7 +29,6 @@
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ============ DARK THEME (Default) ============ */
 [data-theme="dark"] {
   --bg-deep: #0a0a1a;
   --bg-primary: #0f0f2a;
@@ -66,7 +64,6 @@
   --tooltip-bg: rgba(15, 15, 42, 0.95);
 }
 
-/* ============ LIGHT THEME ============ */
 [data-theme="light"] {
   --bg-deep: #f0f2f5;
   --bg-primary: #ffffff;
@@ -114,7 +111,6 @@ body {
   transition: background 0.4s ease, color 0.4s ease;
 }
 
-/* Animated Background */
 .bg-canvas {
   position: fixed;
   inset: 0;
@@ -155,7 +151,6 @@ body {
   75% { transform: translate(30px, 20px) scale(1.05); }
 }
 
-/* Top Bar */
 .topbar {
   position: sticky;
   top: 0;
@@ -202,7 +197,6 @@ body {
   flex-wrap: wrap;
 }
 
-/* Theme Toggle Button */
 .theme-toggle {
   width: 44px;
   height: 44px;
@@ -232,35 +226,13 @@ body {
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
 }
 
-.theme-toggle .sun-icon {
-  position: absolute;
-  color: #f59e0b;
-}
+.theme-toggle .sun-icon { position: absolute; color: #f59e0b; }
+.theme-toggle .moon-icon { position: absolute; color: #8b5cf6; }
 
-.theme-toggle .moon-icon {
-  position: absolute;
-  color: #8b5cf6;
-}
-
-[data-theme="dark"] .theme-toggle .sun-icon {
-  transform: rotate(180deg) scale(0);
-  opacity: 0;
-}
-
-[data-theme="dark"] .theme-toggle .moon-icon {
-  transform: rotate(0deg) scale(1);
-  opacity: 1;
-}
-
-[data-theme="light"] .theme-toggle .sun-icon {
-  transform: rotate(0deg) scale(1);
-  opacity: 1;
-}
-
-[data-theme="light"] .theme-toggle .moon-icon {
-  transform: rotate(-180deg) scale(0);
-  opacity: 0;
-}
+[data-theme="dark"] .theme-toggle .sun-icon { transform: rotate(180deg) scale(0); opacity: 0; }
+[data-theme="dark"] .theme-toggle .moon-icon { transform: rotate(0deg) scale(1); opacity: 1; }
+[data-theme="light"] .theme-toggle .sun-icon { transform: rotate(0deg) scale(1); opacity: 1; }
+[data-theme="light"] .theme-toggle .moon-icon { transform: rotate(-180deg) scale(0); opacity: 0; }
 
 .btn {
   height: 38px;
@@ -295,9 +267,7 @@ body {
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
 }
 
-.btn.primary:hover {
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
-}
+.btn.primary:hover { box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35); }
 
 .btn.warning {
   background: rgba(245, 158, 11, 0.15);
@@ -305,9 +275,7 @@ body {
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
-.btn.warning:hover {
-  background: rgba(245, 158, 11, 0.25);
-}
+.btn.warning:hover { background: rgba(245, 158, 11, 0.25); }
 
 .btn.print-btn {
   height: 42px;
@@ -347,8 +315,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 180px;
+  min-width: 160px;
   flex: 1;
+}
+
+.filter-group.search-group {
+  min-width: 220px;
+  flex: 2;
 }
 
 .filter-label {
@@ -367,7 +340,7 @@ body {
   color: var(--accent-blue);
 }
 
-.filter-select {
+.filter-select, .filter-input {
   width: 100%;
   height: 40px;
   padding: 0 14px;
@@ -381,13 +354,36 @@ body {
   cursor: pointer;
   transition: var(--transition);
   appearance: none;
+}
+
+.filter-select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 32px;
 }
 
-.filter-select:focus {
+.filter-input {
+  cursor: text;
+  padding-left: 36px;
+}
+
+.search-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.search-wrap i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.filter-select:focus, .filter-input:focus {
   outline: none;
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -396,6 +392,29 @@ body {
 .filter-select option {
   background: var(--bg-primary);
   color: var(--text-primary);
+}
+
+.btn-reset {
+  height: 40px;
+  padding: 0 14px;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-red);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-reset:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: translateY(-1px);
 }
 
 .status-bar {
@@ -415,9 +434,7 @@ body {
   gap: 8px;
 }
 
-.status i {
-  color: var(--accent-blue);
-}
+.status i { color: var(--accent-blue); }
 
 .status-bar-metrics {
   display: flex;
@@ -443,8 +460,7 @@ body {
 }
 
 .wo-count-badge .icon {
-  width: 32px;
-  height: 32px;
+  width: 32px; height: 32px;
   background: rgba(255,255,255,0.2);
   border-radius: 8px;
   display: flex;
@@ -454,11 +470,7 @@ body {
   color: white;
 }
 
-.wo-count-badge .info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+.wo-count-badge .info { display: flex; flex-direction: column; gap: 2px; }
 
 .wo-count-badge .label {
   font-size: 10px;
@@ -496,9 +508,7 @@ body {
   color: var(--accent-green);
 }
 
-.stats-panel {
-  margin-bottom: 20px;
-}
+.stats-panel { margin-bottom: 20px; }
 
 .cards {
   display: grid;
@@ -566,13 +576,14 @@ body {
   font-weight: 500;
 }
 
+/* ===== TABLE WRAP — NO INTERNAL SCROLL, PAGE SCROLLS ===== */
 .table-wrap {
   background: var(--glass);
   border: 1px solid var(--glass-border);
   border-radius: 18px;
-  overflow: auto;
+  overflow-x: auto;   /* only horizontal overflow if table is wider than screen */
   backdrop-filter: blur(20px);
-  max-height: 70vh;
+  /* REMOVED: max-height: 70vh; overflow: auto; */
   box-shadow: var(--shadow-card);
   transition: var(--transition);
 }
@@ -623,8 +634,8 @@ thead th {
   position: sticky;
   top: 0;
   z-index: 10;
-  padding: 12px 8px;
-  font-size: 11px;
+  padding: 8px 6px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -645,17 +656,19 @@ thead th {
 .th-freestand { background: var(--col-freestand); color: white; }
 .th-aircurtain { background: var(--col-aircurtain); color: white; }
 
+/* ===== COMPACT ROWS ===== */
 tbody td {
   border-bottom: 1px solid var(--glass-border);
-  padding: 8px 6px;
+  padding: 3px 4px;
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   white-space: normal;
   overflow-wrap: anywhere;
   vertical-align: middle;
   transition: background 0.15s;
   color: var(--text-primary);
+  line-height: 1.25;
 }
 
 #dataTable tbody tr {
@@ -678,12 +691,12 @@ tbody td {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  height: 30px;
-  padding: 0 8px;
-  border-radius: 8px;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11px;
   color: white;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
@@ -702,15 +715,15 @@ tbody td {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 10px;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
   border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(59, 130, 246, 0.1);
   color: var(--accent-blue);
   font-weight: 700;
-  font-size: 11px;
+  font-size: 10px;
   text-decoration: none;
   cursor: pointer;
   transition: var(--transition);
@@ -726,13 +739,13 @@ tbody td {
   content: '\f15b';
   font-family: 'Font Awesome 6 Free';
   font-weight: 900;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .progress-cell {
   position: relative;
-  height: 26px;
-  border-radius: 13px;
+  height: 20px;
+  border-radius: 10px;
   background: var(--progress-zero);
   overflow: hidden;
   display: flex;
@@ -754,7 +767,7 @@ tbody td {
   position: relative;
   z-index: 1;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -762,34 +775,34 @@ tbody td {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
-  height: 26px;
-  padding: 0 10px;
-  border-radius: 13px;
+  min-width: 32px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   font-variant-numeric: tabular-nums;
 }
 
 .action-cell {
-  padding: 6px !important;
+  padding: 2px !important;
   white-space: nowrap;
   text-align: center;
 }
 
 .action-btn {
-  padding: 5px 10px;
-  font-size: 11px;
-  margin: 0 2px;
+  padding: 3px 7px;
+  font-size: 10px;
+  margin: 0 1px;
   border: none;
-  border-radius: 6px;
+  border-radius: 5px;
   cursor: pointer;
   font-weight: 600;
   color: white;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   transition: var(--transition);
   font-family: inherit;
 }
@@ -803,12 +816,12 @@ tbody td {
 .save-btn { background: var(--accent-blue); }
 .cancel-btn { background: var(--text-muted); }
 .delete-btn { background: var(--accent-red); }
-.color-btn { background: var(--accent-pink); font-size: 10px; padding: 5px 8px; }
-.hide-btn { background: var(--text-muted); font-size: 10px; padding: 4px 8px; min-width: 40px; }
+.color-btn { background: var(--accent-pink); font-size: 9px; padding: 3px 6px; }
+.hide-btn { background: var(--text-muted); font-size: 9px; padding: 2px 6px; min-width: 34px; }
 
 .row-selector {
-  margin-right: 6px;
-  transform: scale(1.1);
+  margin-right: 4px;
+  transform: scale(1);
   cursor: pointer;
   accent-color: var(--accent-blue);
 }
@@ -867,9 +880,7 @@ tbody td {
   transition: var(--transition);
 }
 
-.pdf-close:hover, .pdf-btn:hover {
-  background: rgba(255,255,255,0.25);
-}
+.pdf-close:hover, .pdf-btn:hover { background: rgba(255,255,255,0.25); }
 
 .pdf-frame {
   flex: 1;
@@ -920,9 +931,7 @@ tbody td {
   border-radius: 2px;
 }
 
-.chart-card canvas {
-  max-height: 280px;
-}
+.chart-card canvas { max-height: 280px; }
 
 .modal {
   position: fixed;
@@ -1004,17 +1013,10 @@ tbody td {
   padding-right: 32px;
 }
 
-.modal select option {
-  background: var(--bg-primary);
-}
+.modal select option { background: var(--bg-primary); }
 
-input[type="date"] {
-  color-scheme: dark;
-}
-
-[data-theme="light"] input[type="date"] {
-  color-scheme: light;
-}
+input[type="date"] { color-scheme: dark; }
+[data-theme="light"] input[type="date"] { color-scheme: light; }
 
 .modal-buttons {
   margin-top: 24px;
@@ -1041,9 +1043,7 @@ input[type="date"] {
   border: 1px solid var(--glass-border);
 }
 
-.close-modal:hover {
-  background: var(--bg-card-hover);
-}
+.close-modal:hover { background: var(--bg-card-hover); }
 
 .submit-modal {
   background: var(--gradient-main);
@@ -1101,9 +1101,7 @@ input[type="date"] {
   to { transform: translateX(120%); opacity: 0; }
 }
 
-.toast.removing {
-  animation: toastOut 0.3s ease forwards;
-}
+.toast.removing { animation: toastOut 0.3s ease forwards; }
 
 .custom-tooltip {
   position: fixed;
@@ -1184,6 +1182,16 @@ input[type="date"] {
 <main class="container">
   <section class="controls">
     <button class="btn primary add-row-btn" id="addRowBtn"><i class="fas fa-plus"></i> Add Work Order</button>
+
+    <!-- Search box -->
+    <div class="filter-group search-group">
+      <label class="filter-label"><i class="fas fa-search"></i> Search</label>
+      <div class="search-wrap">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="text" class="filter-input" id="filterSearch" placeholder="Search WO, Camp, Location..." />
+      </div>
+    </div>
+
     <div class="filter-group">
       <label class="filter-label"><i class="fas fa-campground"></i> Camp</label>
       <select class="filter-select" id="filterCamp">
@@ -1202,6 +1210,30 @@ input[type="date"] {
         <option value="">All Types</option>
       </select>
     </div>
+    <div class="filter-group">
+      <label class="filter-label"><i class="fas fa-chart-pie"></i> Progress</label>
+      <select class="filter-select" id="filterProgress">
+        <option value="">All Progress</option>
+        <option value="not_started">Not Started (0%)</option>
+        <option value="in_progress">In Progress (1–79%)</option>
+        <option value="almost_done">Almost Done (80–99%)</option>
+        <option value="complete">Complete (100%)</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label"><i class="fas fa-clock"></i> Urgency</label>
+      <select class="filter-select" id="filterUrgency">
+        <option value="">All</option>
+        <option value="expired">Expired / Ended</option>
+        <option value="critical">Critical (&lt; 15 days)</option>
+        <option value="urgent">Urgent (15–30 days)</option>
+        <option value="warning">Warning (30–60 days)</option>
+        <option value="normal">Normal (&gt; 60 days)</option>
+      </select>
+    </div>
+    <button class="btn-reset" id="resetFiltersBtn" title="Reset all filters">
+      <i class="fas fa-rotate-left"></i> Reset
+    </button>
   </section>
 
   <div class="status-bar">
@@ -1442,44 +1474,24 @@ const HIDDEN_ROWS_KEY = 'hidden_work_orders_v1';
 const ROW_COLORS_KEY = 'row_colors_v1';
 const selectedWoNos = new Set();
 
-// ============ THEME MANAGEMENT ============
-function getCurrentTheme() {
-  return document.body.getAttribute('data-theme') || 'dark';
-}
-
+// ============ THEME ============
+function getCurrentTheme() { return document.body.getAttribute('data-theme') || 'dark'; }
 function setTheme(theme) {
   document.body.setAttribute('data-theme', theme);
   localStorage.setItem(THEME_KEY, theme);
   updateChartsTheme();
 }
-
-function toggleTheme() {
-  const current = getCurrentTheme();
-  const next = current === 'dark' ? 'light' : 'dark';
-  setTheme(next);
-}
-
+function toggleTheme() { setTheme(getCurrentTheme() === 'dark' ? 'light' : 'dark'); }
 function initTheme() {
   const saved = localStorage.getItem(THEME_KEY);
-  if (saved) {
-    document.body.setAttribute('data-theme', saved);
-  } else {
-    // Check system preference
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.body.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-  }
+  if (saved) document.body.setAttribute('data-theme', saved);
+  else document.body.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 }
-
 document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-
-// Listen for system theme changes
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-  if (!localStorage.getItem(THEME_KEY)) {
-    setTheme(e.matches ? 'dark' : 'light');
-  }
+  if (!localStorage.getItem(THEME_KEY)) setTheme(e.matches ? 'dark' : 'light');
 });
 
-// ============ CHART THEME ============
 function getChartColors() {
   const isDark = getCurrentTheme() === 'dark';
   return {
@@ -1489,22 +1501,13 @@ function getChartColors() {
     doughnutBorder: isDark ? '#0f0f2a' : '#ffffff'
   };
 }
-
 function updateChartsTheme() {
   const colors = getChartColors();
   Chart.defaults.color = colors.text;
   Chart.defaults.borderColor = colors.border;
-  
-  // Re-render charts if data exists
-  if (ALL_ROWS.length > 0) {
-    const c = computeCounts(getFilteredRows());
-    renderCharts(c);
-  }
+  if (ALL_ROWS.length > 0) renderCharts(computeCounts(getFilteredRows()));
 }
-
-// Initialize theme before anything else
 initTheme();
-
 const chartColors = getChartColors();
 Chart.defaults.color = chartColors.text;
 Chart.defaults.borderColor = chartColors.border;
@@ -1513,14 +1516,12 @@ Chart.defaults.font.family = 'Inter, sans-serif';
 // ============ HELPERS ============
 function isCacheValid(ts) { return Date.now() - ts < CACHE_TTL; }
 function getCachedPdfUrls(filename) {
-  const key = filename.toLowerCase();
-  const cached = PDF_URL_CACHE[key];
+  const cached = PDF_URL_CACHE[filename.toLowerCase()];
   if (cached && isCacheValid(cached.ts)) return { direct: cached.direct, google: cached.google };
   return null;
 }
 function setCachedPdfUrls(filename, direct, google) {
-  const key = filename.toLowerCase();
-  PDF_URL_CACHE[key] = { direct, google, ts: Date.now() };
+  PDF_URL_CACHE[filename.toLowerCase()] = { direct, google, ts: Date.now() };
   localStorage.setItem(PDF_CACHE_KEY, JSON.stringify(PDF_URL_CACHE));
 }
 async function resolvePdfUrls(file) {
@@ -1551,15 +1552,15 @@ function formatDMY(d) {
 }
 function remainingDays(endDateStr) {
   const end = parseDate(endDateStr);
-  if (!end) return '';
+  if (!end) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   end.setHours(0, 0, 0, 0);
-  const diff = Math.ceil((end - today) / 86400000);
-  return Math.max(0, diff);
+  return Math.ceil((end - today) / 86400000);
 }
 function remainingColor(days) {
-  if (!Number.isFinite(days)) return '';
+  if (days === null || !Number.isFinite(days)) return '';
+  if (days < 0) return '#64748b';
   if (days === 0) return '#3b82f6';
   if (days <= 30) return '#ef4444';
   if (days <= 60) return '#f59e0b';
@@ -1593,8 +1594,7 @@ function sortByWoNo(rows) {
   return [...rows].sort((a, b) => {
     const woA = String(a.wo_no || '').trim();
     const woB = String(b.wo_no || '').trim();
-    const numA = parseFloat(woA);
-    const numB = parseFloat(woB);
+    const numA = parseFloat(woA), numB = parseFloat(woB);
     if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
     return woA.localeCompare(woB, undefined, { numeric: true, sensitivity: 'base' });
   });
@@ -1621,6 +1621,10 @@ const statusEl = document.getElementById('statusBar');
 const selCamp = document.getElementById('filterCamp');
 const selLocation = document.getElementById('filterLocation');
 const selType = document.getElementById('filterType');
+const selProgress = document.getElementById('filterProgress');
+const selUrgency = document.getElementById('filterUrgency');
+const filterSearch = document.getElementById('filterSearch');
+const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 const printBtn = document.getElementById('printBtn');
 const addRowBtn = document.getElementById('addRowBtn');
 const addModal = document.getElementById('addModal');
@@ -1821,7 +1825,6 @@ function openEditModal(rowData) {
   editModal.style.display = 'flex';
   editForm.dataset.woNo = rowData.wo_no;
 }
-
 closeEditModal.addEventListener('click', () => { editModal.style.display = 'none'; });
 
 editForm.addEventListener('submit', async (e) => {
@@ -1854,7 +1857,6 @@ addRowBtn.addEventListener('click', () => {
   buildForm(addForm);
   addModal.style.display = 'flex';
 });
-
 closeAddModal.addEventListener('click', () => { addModal.style.display = 'none'; });
 
 addForm.addEventListener('submit', async (e) => {
@@ -1885,7 +1887,6 @@ function confirmDelete(woNo) {
   if (!confirm('Are you sure you want to delete this work order?')) return;
   deleteRow(woNo);
 }
-
 async function deleteRow(woNo) {
   try {
     const { error } = await supabaseClient.from('WO').delete().eq('wo_no', woNo);
@@ -1906,6 +1907,7 @@ showAllBtn.addEventListener('click', () => {
   selectedWoNos.clear();
   document.querySelectorAll('.row-selector').forEach(cb => cb.checked = false);
   updateSelectedCostSum();
+  localStorage.setItem(HIDDEN_ROWS_KEY, '[]');
   setStatus('All rows restored.');
 });
 
@@ -1919,10 +1921,7 @@ function updateWoCount(count) {
     const timer = setInterval(() => {
       step++;
       el.textContent = Math.round(current + (diff * step / steps));
-      if (step >= steps) {
-        el.textContent = count;
-        clearInterval(timer);
-      }
+      if (step >= steps) { el.textContent = count; clearInterval(timer); }
     }, 25);
   }
 }
@@ -1931,9 +1930,8 @@ function renderRows(rows) {
   const tbody = document.querySelector('#dataTable tbody');
   const tooltip = document.getElementById('customTooltip');
   tbody.innerHTML = '';
-  
   updateWoCount(rows.length);
-  
+
   rows.forEach((row, idx) => {
     const tr = document.createElement('tr');
     const woNo = row.wo_no || 'N/A';
@@ -1949,13 +1947,13 @@ function renderRows(rows) {
         tooltip.textContent = `${woNo} • Camp: ${camp} • Location: ${location}`;
         tooltip.style.display = 'block';
         const left = e.pageX - tooltip.offsetWidth - 10;
-        const top = e.pageY;
         tooltip.style.left = `${Math.max(0, left)}px`;
-        tooltip.style.top = `${top}px`;
+        tooltip.style.top = `${e.pageY}px`;
         clearTimeout(tooltip.hideTimeout);
         tooltip.hideTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 3000);
       }
     });
+
     const RENDER_HEADERS = [
       { label: 'WO NO.', key: 'wo_no' },
       { label: 'CAMP', key: 'camp' },
@@ -1988,6 +1986,7 @@ function renderRows(rows) {
       { label: 'WO', key: 'wo_pdf' },
       { label: 'Cost without VAT', key: 'cost' }
     ];
+
     RENDER_HEADERS.forEach(h => {
       const td = document.createElement('td');
       let handled = false;
@@ -2002,8 +2001,7 @@ function renderRows(rows) {
         checkbox.checked = selectedWoNos.has(woStr);
         checkbox.addEventListener('change', (e) => {
           const wo = e.target.dataset.woNo;
-          if (e.target.checked) selectedWoNos.add(wo);
-          else selectedWoNos.delete(wo);
+          if (e.target.checked) selectedWoNos.add(wo); else selectedWoNos.delete(wo);
           updateSelectedCostSum();
         });
         const hideBtn = document.createElement('button');
@@ -2028,7 +2026,8 @@ function renderRows(rows) {
         td.appendChild(span);
         handled = true;
       } else if (h.key === null && h.label === 'REMAINING DAYS') {
-        val = remainingDays(row.end_date);
+        const d = remainingDays(row.end_date);
+        val = d === null ? '' : Math.max(0, d);
         td.classList.add('remain');
       } else if (h.key === 'start_date' || h.key === 'end_date') {
         val = formatDMY(parseDate(row[h.key]));
@@ -2038,13 +2037,9 @@ function renderRows(rows) {
           const bg = percentColor(p);
           td.innerHTML = `<div class="progress-cell"><div class="progress-bar" style="width:${p}%; background:${bg}"></div><span class="progress-text" style="color:#fff">${p}%</span></div>`;
           handled = true;
-        } else {
-          td.textContent = '';
-          handled = true;
-        }
+        } else { td.textContent = ''; handled = true; }
       } else if (h.key === 'lpo') {
-        const loc = row.location ?? '';
-        const cam = row.camp ?? '';
+        const loc = row.location ?? '', cam = row.camp ?? '';
         const raw = row[h.key] ?? '';
         const name = String(raw).trim();
         if (name) {
@@ -2053,9 +2048,7 @@ function renderRows(rows) {
           handled = true;
         } else { td.textContent = ''; handled = true; }
       } else if (h.key === 'do_doc') {
-        const lpoRaw = row.lpo ?? '';
-        const loc = row.location ?? '';
-        const cam = row.camp ?? '';
+        const lpoRaw = row.lpo ?? '', loc = row.location ?? '', cam = row.camp ?? '';
         const lpoName = String(lpoRaw).trim();
         const doLabelRaw = row[h.key] ?? '';
         const doLabel = String(doLabelRaw).trim();
@@ -2067,10 +2060,7 @@ function renderRows(rows) {
           handled = true;
         } else { td.textContent = ''; handled = true; }
       } else if (h.key === 'wo_pdf') {
-        const raw = row.wo_no ?? '';
-        const lpoRaw = row.lpo ?? '';
-        const loc = row.location ?? '';
-        const cam = row.camp ?? '';
+        const raw = row.wo_no ?? '', lpoRaw = row.lpo ?? '', loc = row.location ?? '', cam = row.camp ?? '';
         const name = String(raw).trim();
         if (name) {
           let file;
@@ -2110,6 +2100,7 @@ function renderRows(rows) {
     tr.appendChild(renderActionCell(row, idx));
     tbody.appendChild(tr);
   });
+
   const savedHidden = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
   rows.forEach((row, idx) => {
     const wo = String(row.wo_no || '').trim();
@@ -2142,7 +2133,9 @@ function initFilters() {
   const camps = uniqueSorted(ALL_ROWS.map(r => r.camp));
   const locs = uniqueSorted(ALL_ROWS.map(r => r.location));
   const fillSelect = (sel, opts) => {
+    const prev = sel.value;
     sel.innerHTML = opts.map(o => `<option value="${o === 'All' ? '' : o}">${o}</option>`).join('');
+    if ([...sel.options].some(op => op.value === prev)) sel.value = prev;
   };
   fillSelect(selCamp, camps);
   fillSelect(selLocation, locs);
@@ -2164,8 +2157,7 @@ function computeCounts(rows) {
   rows.forEach(row => {
     const rowCost = isNumericOnly(row.cost) ? Number(row.cost) : 0;
     for (const [group, keys] of Object.entries(GROUP_KEYS)) {
-      let groupHasValue = false;
-      let groupQty = 0;
+      let groupHasValue = false, groupQty = 0;
       for (const key of keys) {
         const val = row[key];
         if (isNumericOnly(val)) {
@@ -2184,9 +2176,29 @@ function hasGroupValue(row, group) {
   return keys.some(k => {
     const v = row[k];
     if (!isNumericOnly(v)) return false;
-    const num = Number(v);
-    return Number.isFinite(num) && num > 0;
+    return Number.isFinite(Number(v)) && Number(v) > 0;
   });
+}
+
+// ===== URGENCY CALCULATION =====
+function getUrgencyLevel(row) {
+  const days = remainingDays(row.end_date);
+  if (days === null) return 'normal';
+  if (days < 0) return 'expired';
+  if (days < 15) return 'critical';
+  if (days <= 30) return 'urgent';
+  if (days <= 60) return 'warning';
+  return 'normal';
+}
+
+// ===== PROGRESS LEVEL =====
+function getProgressLevel(row) {
+  const p = parsePercentage(row.wo_percentage);
+  if (p === null) return null;
+  if (p === 0) return 'not_started';
+  if (p < 80) return 'in_progress';
+  if (p < 100) return 'almost_done';
+  return 'complete';
 }
 
 let charts = { split: null, pkg: null, groups: null, progress: null };
@@ -2273,14 +2285,38 @@ function renderStats(rows) {
   renderCharts(c);
 }
 
+// ===== FIXED & EXTENDED FILTERING =====
 function getFilteredRows() {
-  const campVal = selCamp.value || 'All';
-  const locVal = selLocation.value || 'All';
-  const typeVal = selType.value || 'All';
+  const campVal = selCamp.value;
+  const locVal = selLocation.value;
+  const typeVal = selType.value;
+  const progressVal = selProgress.value;
+  const urgencyVal = selUrgency.value;
+  const searchVal = (filterSearch.value || '').trim().toLowerCase();
+
   return ALL_ROWS.filter(r => {
-    if (campVal !== 'All' && String(r.camp).trim() !== campVal) return false;
-    if (locVal !== 'All' && String(r.location).trim() !== locVal) return false;
-    if (typeVal !== 'All' && !hasGroupValue(r, typeVal)) return false;
+    if (campVal && String(r.camp || '').trim() !== campVal) return false;
+    if (locVal && String(r.location || '').trim() !== locVal) return false;
+    if (typeVal && !hasGroupValue(r, typeVal)) return false;
+
+    // Progress filter
+    if (progressVal) {
+      const pLevel = getProgressLevel(r);
+      if (pLevel !== progressVal) return false;
+    }
+
+    // Urgency filter
+    if (urgencyVal) {
+      const uLevel = getUrgencyLevel(r);
+      if (uLevel !== urgencyVal) return false;
+    }
+
+    // Text search (WO, Camp, Location)
+    if (searchVal) {
+      const hay = `${r.wo_no || ''} ${r.camp || ''} ${r.location || ''}`.toLowerCase();
+      if (!hay.includes(searchVal)) return false;
+    }
+
     return true;
   });
 }
@@ -2300,8 +2336,45 @@ function applyFilters() {
       }
     });
   } catch (e) { console.warn('Toast error:', e); }
-  setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows`);
+
+  // Build status message with active filters
+  const activeFilters = [];
+  if (selCamp.value) activeFilters.push(`Camp: ${selCamp.value}`);
+  if (selLocation.value) activeFilters.push(`Loc: ${selLocation.value}`);
+  if (selType.value) activeFilters.push(`Type: ${selType.value}`);
+  if (selProgress.value) activeFilters.push(`Progress: ${selProgress.options[selProgress.selectedIndex].text}`);
+  if (selUrgency.value) activeFilters.push(`Urgency: ${selUrgency.options[selUrgency.selectedIndex].text}`);
+  if (filterSearch.value.trim()) activeFilters.push(`Search: "${filterSearch.value.trim()}"`);
+
+  const filterInfo = activeFilters.length ? ` [${activeFilters.join(' • ')}]` : '';
+  setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows${filterInfo}`);
 }
+
+// ===== ATTACH FILTER EVENT LISTENERS (THIS WAS THE BUG) =====
+selCamp.addEventListener('change', applyFilters);
+selLocation.addEventListener('change', applyFilters);
+selType.addEventListener('change', applyFilters);
+selProgress.addEventListener('change', applyFilters);
+selUrgency.addEventListener('change', applyFilters);
+
+// Search with debounce
+let searchDebounce = null;
+filterSearch.addEventListener('input', () => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(applyFilters, 250);
+});
+
+// Reset button
+resetFiltersBtn.addEventListener('click', () => {
+  selCamp.value = '';
+  selLocation.value = '';
+  selType.value = '';
+  selProgress.value = '';
+  selUrgency.value = '';
+  filterSearch.value = '';
+  applyFilters();
+  setStatus('All filters reset.');
+});
 
 async function loadFromSupabase() {
   setStatus('Loading data from database...');
