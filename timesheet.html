@@ -1705,7 +1705,94 @@ function handleEmpTableInput(e) {
     }
 }
         
-      
+      function renderEmpTable() {
+    // 1. SAVE FOCUS STATE: Remember which input is currently focused before we destroy the DOM
+    const activeEl = document.activeElement;
+    let focusIndex = -1;
+    let focusField = '';
+    let cursorPos = -1;
+
+    if (activeEl && activeEl.dataset && activeEl.dataset.index !== undefined) {
+        focusIndex = parseInt(activeEl.dataset.index, 10);
+        focusField = activeEl.dataset.field || '';
+        // Save cursor position for text inputs (ignore number inputs as they don't support selectionStart well)
+        if (activeEl.selectionStart !== undefined && activeEl.type !== 'number') {
+            cursorPos = activeEl.selectionStart;
+        }
+    }
+
+    const tbody = document.getElementById('empTableBody');
+    tbody.innerHTML = ''; // This destroys the old inputs
+    
+    empCodes.forEach((empEntry, i) => {
+        const code = (empEntry.code || '').trim();
+        const name = (empEntry.name || '').trim();
+        const not = empEntry.not !== undefined ? empEntry.not : '';
+        const wot = empEntry.wot !== undefined ? empEntry.wot : '';
+        const empInfo = empData[code] || { name: '' };
+        const autoName = empInfo.name || name;
+        empCodes[i].name = autoName;
+        
+        const duplicateCode = isDuplicateEmpCode(code, i);
+        const duplicateName = isDuplicateEmpName(autoName, i);
+        const codeInputClass = duplicateCode ? 'emp-input invalid' : 'emp-input';
+        const nameInputClass = duplicateName ? 'emp-input invalid' : 'emp-input';
+        const codeWarning = duplicateCode ? '<span class="duplicate-warning">Duplicate!</span>' : '';
+        const nameWarning = duplicateName ? '<span class="duplicate-warning">Duplicate!</span>' : '';
+        
+        const tr = document.createElement('tr');
+        // 2. ADD data-field ATTRIBUTES: This helps us identify exactly which input was focused
+        tr.innerHTML = `
+            <td>
+                <input type="text" value="${code}" data-index="${i}" data-field="code" class="${codeInputClass}" placeholder="Enter employee code" />
+                ${codeWarning}
+            </td>
+            <td>
+                <input type="text" value="${autoName}" data-index="${i}" data-field="name" class="${nameInputClass}" placeholder="Name" style="background:#f1f5f9;" disabled />
+                ${nameWarning}
+            </td>
+            <td>
+                <input type="number" min="0" max="999" value="${not}" data-index="${i}" data-field="not" class="overtime-input not-input" placeholder="NOT" />
+                <span class="overtime-warning" id="not-warning-${i}" style="display:none;"></span>
+            </td>
+            <td>
+                <input type="number" min="0" max="999" value="${wot}" data-index="${i}" data-field="wot" class="overtime-input wot-input" placeholder="WOT" />
+                <span class="overtime-warning" id="wot-warning-${i}" style="display:none;"></span>
+            </td>
+            <td>
+                <button class="action-btn btn-remove" data-index="${i}">
+                    <i class="fas fa-trash"></i> Remove
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    updateEmpCounter();
+    updateGenerateButton();
+
+    // 3. RESTORE FOCUS: Put the cursor back exactly where it was
+    if (focusIndex !== -1 && focusField) {
+        const newEl = document.querySelector(`#empTableBody [data-index="${focusIndex}"][data-field="${focusField}"]`);
+        if (newEl) {
+            newEl.focus();
+            // Restore cursor position so typing feels seamless
+            if (cursorPos !== -1 && newEl.setSelectionRange) {
+                try {
+                    newEl.setSelectionRange(cursorPos, cursorPos);
+                } catch (e) {
+                    // Ignore errors for inputs that don't support setSelectionRange
+                }
+            }
+        }
+    }
+}
+
+// We also need this function back because the "Remove" button relies on it!
+function removeEmpCode(index) {
+    empCodes.splice(index, 1);
+    renderEmpTable();
+}
         
         function showStatus(msg, isError = false, isWarning = false, isInfo = false) {
             const el = document.getElementById('status');
