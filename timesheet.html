@@ -1201,42 +1201,45 @@ margin: 20px 0;
             renderPhdList();
         });
         
-        function initEventListeners() {
-            document.getElementById('fileUploadContainer').addEventListener('click', () => {
-                document.getElementById('excelFile').click();
-            });
-            
-            document.getElementById('fileBtn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.getElementById('excelFile').click();
-            });
-            
-            document.getElementById('excelFile').addEventListener('change', handleTemplateFile);
-            
-            document.getElementById('empFileUploadContainer').addEventListener('click', () => {
-                document.getElementById('empFile').click();
-            });
-            
-            document.getElementById('empFileBtn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.getElementById('empFile').click();
-            });
-            
-            document.getElementById('empFile').addEventListener('change', handleEmpFile);
-            
-            document.getElementById('addPhdBtn').addEventListener('click', addPublicHoliday);
-            document.getElementById('phdList').addEventListener('click', handlePhdListClick);
-            document.getElementById('empTableBody').addEventListener('input', handleEmpTableInput);
-            document.getElementById('empTableBody').addEventListener('click', handleEmpTableClick);
-            document.getElementById('addEmpBtn').addEventListener('click', addNewEmpRow);
-            document.getElementById('CheckDuplicates').addEventListener('click', checkDuplicates);
-            document.getElementById('generateBtn').addEventListener('click', generateTimesheet);
-            document.getElementById('showReportBtn').addEventListener('click', showOvertimeReport);
-            document.getElementById('closeReport').addEventListener('click', closeReport);
-            document.getElementById('printReport').addEventListener('click', printReport);
-            document.getElementById('exportReport').addEventListener('click', exportReport);
-             initRamadanListeners(); // Initialize Ramadan listeners
-        }
+       function initEventListeners() {
+    document.getElementById('fileUploadContainer').addEventListener('click', () => {
+        document.getElementById('excelFile').click();
+    });
+    
+    // ✅ FIX: Add listener for Workplace Code input
+    document.getElementById('wplaceInput').addEventListener('input', updateGenerateButton);
+    
+    document.getElementById('fileBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('excelFile').click();
+    });
+    
+    document.getElementById('excelFile').addEventListener('change', handleTemplateFile);
+    
+    document.getElementById('empFileUploadContainer').addEventListener('click', () => {
+        document.getElementById('empFile').click();
+    });
+    
+    document.getElementById('empFileBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('empFile').click();
+    });
+    
+    document.getElementById('empFile').addEventListener('change', handleEmpFile);
+    
+    document.getElementById('addPhdBtn').addEventListener('click', addPublicHoliday);
+    document.getElementById('phdList').addEventListener('click', handlePhdListClick);
+    document.getElementById('empTableBody').addEventListener('input', handleEmpTableInput);
+    document.getElementById('empTableBody').addEventListener('click', handleEmpTableClick);
+    document.getElementById('addEmpBtn').addEventListener('click', addNewEmpRow);
+    document.getElementById('CheckDuplicates').addEventListener('click', checkDuplicates);
+    document.getElementById('generateBtn').addEventListener('click', generateTimesheet);
+    document.getElementById('showReportBtn').addEventListener('click', showOvertimeReport);
+    document.getElementById('closeReport').addEventListener('click', closeReport);
+    document.getElementById('printReport').addEventListener('click', printReport);
+    document.getElementById('exportReport').addEventListener('click', exportReport);
+    initRamadanListeners(); // Initialize Ramadan listeners
+}
         
         function handleTemplateFile(e) {
             const file = e.target.files[0];
@@ -1635,30 +1638,7 @@ function isRamadanDate(date) {
                 }
             }
         }
-        
-        function handleEmpTableInput(e) {
-            const target = e.target;
-            const index = parseInt(target.dataset.index, 10);
-            if (isNaN(index) || index < 0 || index >= empCodes.length) return;
-            
-            if (target.classList.contains('emp-input')) {
-                const newCode = target.value.trim();
-                empCodes[index].code = newCode;
-                if (empFileLoaded && empData[newCode]) {
-                    empCodes[index].name = empData[newCode].name || '';
-                } else {
-                    empCodes[index].name = '';
-                }
-                renderEmpTable();
-            } else if (target.classList.contains('not-input')) {
-                empCodes[index].not = target.value;
-                updateGenerateButton();
-            } else if (target.classList.contains('wot-input')) {
-                empCodes[index].wot = target.value;
-                updateGenerateButton();
-            }
-        }
-        
+                    
         function handleEmpTableClick(e) {
             if (e.target.closest('.btn-remove')) {
                 const button = e.target.closest('.btn-remove');
@@ -1793,6 +1773,24 @@ function removeEmpCode(index) {
     empCodes.splice(index, 1);
     renderEmpTable();
 }
+function checkDuplicates() {
+    renderEmpTable();
+    const hasDuplicates = empCodes.some((empData, i) => {
+        const code = empData.code || '';
+        return isDuplicateEmpCode(code, i);
+    });
+    const hasDuplicateNames = empCodes.some((empData, i) => {
+        const name = empData.name || '';
+        return isDuplicateEmpName(name, i);
+    });
+    if (hasDuplicates) {
+        showStatus('There are duplicate employee codes. Please resolve duplicates before generating.', true);
+    } else if (hasDuplicateNames) {
+        showStatus('There are duplicate employee names. Please resolve duplicates before generating.', true);
+    } else {
+        showStatus('No duplicate employee codes or names found. Ready to generate.', false);
+    }
+}
         
         function showStatus(msg, isError = false, isWarning = false, isInfo = false) {
             const el = document.getElementById('status');
@@ -1885,23 +1883,47 @@ function removeEmpCode(index) {
             return isValid;
         }
         
-        function updateGenerateButton() {
-            const hasDuplicates = empCodes.some((empData, i) => {
-                const code = empData.code || '';
-                return isDuplicateEmpCode(code, i);
-            });
-            const hasDuplicateNames = empCodes.some((empData, i) => {
-                const name = empData.name || '';
-                return isDuplicateEmpName(name, i);
-            });
-            const hasInvalidRamadan = isRamadanEnabled && !validateRamadanDates();
-            const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
-            const hasInvalidOvertime = !validateOvertimeInputs();
-            const canGenerate = empCodes.length > 0 && !hasDuplicates && !hasDuplicateNames && !hasEmpty && !hasInvalidOvertime && !hasInvalidRamadan; // Ensure all conditions are met before enabling generate button (and Ramdhan also must be valid if enabled)
-            const canShowReport = canGenerate && empFileLoaded;
-            document.getElementById('generateBtn').disabled = !canGenerate;
-            document.getElementById('showReportBtn').disabled = !canShowReport;
-        }
+       function updateGenerateButton() {
+    const hasDuplicates = empCodes.some((empData, i) => {
+        const code = empData.code || '';
+        return isDuplicateEmpCode(code, i);
+    });
+    const hasDuplicateNames = empCodes.some((empData, i) => {
+        const name = empData.name || '';
+        return isDuplicateEmpName(name, i);
+    });
+    const hasInvalidRamadan = isRamadanEnabled && !validateRamadanDates();
+    const hasEmpty = empCodes.some(empData => !String(empData.code || '').trim());
+    const hasInvalidOvertime = !validateOvertimeInputs();
+    
+    // ✅ NEW: Check if Workplace Code is empty
+    const wplaceValue = document.getElementById('wplaceInput').value.trim();
+    const hasEmptyWplace = !wplaceValue;
+
+    // ✅ Add !hasEmptyWplace to the canGenerate condition
+    const canGenerate = empCodes.length > 0 && 
+                        !hasDuplicates && 
+                        !hasDuplicateNames && 
+                        !hasEmpty && 
+                        !hasInvalidOvertime && 
+                        !hasInvalidRamadan && 
+                        !hasEmptyWplace; 
+                        
+    const canShowReport = canGenerate && empFileLoaded;
+    
+    document.getElementById('generateBtn').disabled = !canGenerate;
+    document.getElementById('showReportBtn').disabled = !canShowReport;
+    
+    // ✅ Visual feedback: Turn the Wplace input border red if it's empty
+    const wplaceInput = document.getElementById('wplaceInput');
+    if (hasEmptyWplace && empCodes.length > 0) {
+        wplaceInput.style.borderColor = 'var(--danger)';
+        wplaceInput.style.backgroundColor = '#fef2f2';
+    } else {
+        wplaceInput.style.borderColor = 'var(--border)';
+        wplaceInput.style.backgroundColor = 'white';
+    }
+}
         
         function dateToExcelSerial(date) {
             if (!(date instanceof Date) || isNaN(date)) {
