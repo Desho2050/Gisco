@@ -74,20 +74,8 @@
     .btn-action.delete:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444; }
     .btn-action.edit:hover { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: #3b82f6; }
 
-    /* --- NEW: Toast Notification Styles --- */
-    .toast-container {
-        position: fixed; top: 80px; right: 20px; z-index: 9999;
-        display: flex; flex-direction: column; gap: 10px; pointer-events: none;
-    }
-    .toast {
-        background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px);
-        border: 1px solid var(--border); color: var(--text-main);
-        padding: 14px 20px; border-radius: 10px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        display: flex; align-items: center; gap: 12px;
-        min-width: 280px; font-size: 0.9rem; font-weight: 500;
-        animation: slideIn 0.3s ease-out forwards; pointer-events: auto;
-    }
+    .toast-container { position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border: 1px solid var(--border); color: var(--text-main); padding: 14px 20px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 12px; min-width: 280px; font-size: 0.9rem; font-weight: 500; animation: slideIn 0.3s ease-out forwards; pointer-events: auto; }
     .toast.success { border-left: 4px solid var(--success); }
     .toast.error { border-left: 4px solid #ef4444; }
     .toast.hide { animation: slideOut 0.3s ease-in forwards; }
@@ -118,12 +106,13 @@
     </div>
     <div class="actions-top">
       <button class="btn" onclick="handlePrint()">🖨️ Print</button>
+      <input type="file" id="csvFileInput" accept=".csv" style="display:none" />
+      <button class="btn" onclick="document.getElementById('csvFileInput').click()">📥 Import CSV</button>
       <button class="btn" onclick="loadData()">🔄 Refresh</button>
       <a href="index.html" class="btn">⬅ Home</a>
     </div>
   </header>
 
-  <!-- Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 
   <main style="background-color: rgb(0, 217, 255);">
@@ -202,14 +191,11 @@
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        
         let icon = 'ℹ️';
         if (type === 'success') icon = '✅';
         if (type === 'error') icon = '❌';
-        
         toast.innerHTML = `<span style="font-size:1.2rem;">${icon}</span><span>${escapeHtml(message)}</span>`;
         container.appendChild(toast);
-        
         setTimeout(() => {
             toast.classList.add('hide');
             setTimeout(() => toast.remove(), 300);
@@ -256,10 +242,145 @@
       const unit = String(pickField(item, FIELD_ALIASES.unit) || '').trim();
       const qty = String(pickField(item, FIELD_ALIASES.qty) || '').trim();
       const type = String(pickField(item, FIELD_ALIASES.type) || '').trim();
-      
       const searchIndex = `${code} ${description} ${type}`.toLowerCase();
       const isStock = type.toLowerCase().includes('stock');
       return { id, code, description, unit, qty, type, searchIndex, isStock };
+    }
+
+    // --- CSV IMPORT LOGIC ---
+    function parseCSV(text) {
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // Remove Excel BOM
+        const rows = [];
+        let currentRow = [];
+        let currentField = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const nextChar = text[i + 1];
+
+            if (inQuotes) {
+                if (char === '"' && nextChar === '"') { currentField += '"'; i++; } 
+                else if (char === '"') { inQuotes = false; } 
+                else { currentField += char; }
+            } else {
+                if (char === '"') { inQuotes = true; } 
+                else if (char === ',') { currentRow.push(currentField); currentField = ''; } 
+                else if (char === '\n' || (char === '\r' && nextChar === '\n')) { 
+                    currentRow.push(currentField); rows.push(currentRow); 
+                    currentRow = []; currentField = ''; 
+                    if (char === '\r') i++; 
+                } else if (char === '\r') { 
+                    currentRow.push(currentField); rows.push(currentRow); 
+                    currentRow = []; currentField = ''; 
+                } else { currentField += char; }
+            }
+        }
+        currentRow.push(currentField);
+        if (currentRow.length > 1 || currentRow[0] !== '') rows.push(currentRow);
+        return rows;
+    }
+
+    function mapHeaders(headers) {
+        const map = {};
+        headers.forEach((h, index) => {
+            const lower = h.toLowerCase().trim();
+            if (lower.includes('code') || lower === 'id') map.code = index;
+            else if (lower.includes('desc') || lower.includes('name') || lower.includes('item')) map.description = index;
+            else if (lower.includes('type') || lower.includes('category')) map.type = index;
+            else if (lower.includes('unit') || lower.includes('uom')) map.unit = index;
+            else if (lower.includes('qty') || lower.includes('quantity') || lower.includes('stock')) map.qty = index;
+        });
+        return map;
+    }
+
+    async function importCSV(file) {
+        setStatus('Reading CSV file...', true);
+        const reader = new FileReader();
+        
+        reader.onload = async (e) => {
+            try {
+                const text = e.target.result;
+                const rows = parseCSV(text);
+                
+                if (rows.length < 2) {
+                    showToast('CSV file is empty or invalid.', 'error');
+                    setStatus('', false);
+                    return;
+                }
+
+                const headers = rows[0];
+                const colMap = mapHeaders(headers);
+                
+                if (colMap.code === undefined || colMap.description === undefined) {
+                    showToast('CSV must contain "Code" and "Description" columns.', 'error');
+                    setStatus('', false);
+                    return;
+                }
+
+                const records = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (row.length === 1 && row[0] === '') continue; 
+                    
+                    const code = colMap.code !== undefined ? row[colMap.code] : '';
+                    if (!code || !code.trim()) continue; 
+
+                    const parsedQty = colMap.qty !== undefined && row[colMap.qty] ? parseInt(row[colMap.qty]) : null;
+
+                    records.push({
+                        code: code.trim(),
+                        description: colMap.description !== undefined ? (row[colMap.description] || '').trim() : '',
+                        type: colMap.type !== undefined ? (row[colMap.type] || '').trim() : '',
+                        unit: colMap.unit !== undefined ? (row[colMap.unit] || '').trim() : '',
+                        qty: isNaN(parsedQty) ? null : parsedQty
+                    });
+                }
+
+                if (records.length === 0) {
+                    showToast('No valid records found in CSV.', 'error');
+                    setStatus('', false);
+                    return;
+                }
+
+                setStatus(`Importing ${records.length} records...`, true);
+                const chunkSize = 500;
+                let successCount = 0;
+                let errorCount = 0;
+
+                for (let i = 0; i < records.length; i += chunkSize) {
+                    const chunk = records.slice(i, i + chunkSize);
+                    
+                    // Try upsert first (handles duplicates by updating existing codes)
+                    let { error } = await supabaseClient.from('oracle').upsert(chunk, { onConflict: 'code' });
+                    
+                    // Fallback to standard insert if unique constraint on 'code' doesn't exist in DB
+                    if (error && (error.message.toLowerCase().includes('constraint') || error.message.toLowerCase().includes('unique'))) {
+                        const res = await supabaseClient.from('oracle').insert(chunk);
+                        error = res.error;
+                    }
+
+                    if (error) {
+                        console.error('Chunk import error:', error);
+                        errorCount += chunk.length;
+                    } else {
+                        successCount += chunk.length;
+                    }
+                    
+                    setStatus(`Importing... ${Math.min(i + chunkSize, records.length)} / ${records.length}`, true);
+                }
+
+                const msg = `Import complete! ${successCount} records processed.` + (errorCount > 0 ? ` ${errorCount} failed.` : '');
+                showToast(msg, errorCount > 0 ? 'error' : 'success');
+                loadData(); 
+            } catch (err) {
+                console.error(err);
+                showToast('Error processing CSV: ' + err.message, 'error');
+            } finally {
+                setStatus('', false);
+            }
+        };
+        reader.readAsText(file);
     }
 
     // --- OPTIMIZED RENDERING (PROGRESSIVE CHUNKING) ---
@@ -397,17 +518,14 @@
       try {
         let data, error;
         if (id) {
-            // Update & fetch the updated row
             const res = await supabaseClient.from('oracle').update(recordData).eq('id', id).select();
             data = res.data; error = res.error;
         } else {
-            // Insert & fetch the new row
             const res = await supabaseClient.from('oracle').insert([recordData]).select();
             data = res.data; error = res.error;
         }
 
         if (error) {
-            // Catch Duplicate Key Error (Postgres error code 23505)
             if (error.code === '23505' || error.message.toLowerCase().includes('duplicate')) {
                 showToast('Error: This Oracle Code already exists!', 'error');
             } else {
@@ -416,7 +534,6 @@
             return;
         }
 
-        // SUCCESS: Update local array instantly without reloading from DB
         if (id) {
             const updatedRow = buildRow(data[0]);
             const index = ALL_ROWS.findIndex(r => r.id === id);
@@ -428,7 +545,6 @@
             showToast('Record added successfully!', 'success');
         }
 
-        // Re-sort to maintain order and re-apply current filters
         ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
         filterNow(); 
         closeModal();
@@ -437,7 +553,7 @@
         console.error(err);
         showToast('Unexpected Error: ' + err.message, 'error');
       } finally {
-        setStatus('', false); // Hide bottom loader
+        setStatus('', false);
       }
     });
 
@@ -448,10 +564,8 @@
         const { error } = await supabaseClient.from('oracle').delete().eq('id', id);
         if (error) throw error;
         
-        // SUCCESS: Remove from local array instantly
         ALL_ROWS = ALL_ROWS.filter(r => r.id !== id);
         filterNow();
-        
         showToast('Record deleted successfully!', 'success');
       } catch (err) {
         console.error(err);
@@ -481,7 +595,7 @@
         ALL_ROWS = allData.map(item => buildRow(item));
         ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
         setStatus(`Loaded ${ALL_ROWS.length} records successfully.`);
-        filterNow(); // Renders and updates chart
+        filterNow();
       } catch (e) {
         console.error(e);
         showToast('Error loading data: ' + e.message, 'error');
@@ -494,10 +608,19 @@
     document.addEventListener('DOMContentLoaded', () => {
       ['q1', 'q2', 'q3', 'q4'].forEach(id => document.getElementById(id).addEventListener('input', debouncedFilter));
       document.getElementById('stockOnly').addEventListener('change', filterNow);
+      
+      // CSV Import Event Listener
+      document.getElementById('csvFileInput').addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) importCSV(file);
+          e.target.value = ''; // Reset input so the same file can be re-selected if needed
+      });
+
       window.onclick = function(event) {
         const modal = document.getElementById('recordModal');
         if (event.target === modal) closeModal();
       }
+      
       loadData();
     });
   </script>
