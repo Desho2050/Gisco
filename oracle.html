@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,413 +9,180 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     :root {
-      --bg-dark: #00bfa1f5;
-      --bg-card: #009200f5;
-      --brand: #3b82f6;
-      --accent: #8b5cf6;
-      --success: #10b981;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: rgba(148, 163, 184, 0.1);
-      --glow: 0 0 20px rgba(59, 130, 246, 0.15);
+      --bg-dark: #00bfa1f5; --bg-card: #25014ef5; --brand: #3b82f6; --accent: #8b5cf6;
+      --success: #10b981; --text-main: #f8fafc; --text-muted: #94a3b8;
+      --border: rgba(148, 163, 184, 0.1); --glow: 0 0 20px rgba(59, 130, 246, 0.15);
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    
     body {
       background-color: var(--bg-dark);
-      background-image: 
-        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
-      color: var(--text-main);
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+      color: var(--text-main); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; flex-direction: column;
     }
-
-    /* Glassmorphism Utilities */
-    .glass {
-      background: var(--bg-card);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-    }
-
-    /* Header */
-    header {
-      padding: 20px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      background: rgba(15, 23, 42, 0.8);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
+    .glass { background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 16px; }
+    header { padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: rgba(15, 23, 42, 0.8); position: sticky; top: 0; z-index: 100; }
     .brand-area { display: flex; align-items: center; gap: 15px; }
-        .logo-mark {
-      /* Changed from 40px to auto width and added padding */
-      min-width: 80px; 
-      height: 40px;
-      padding: 0 10px;
-      background: linear-gradient(135deg, var(--brand), var(--accent));
-      border-radius: 10px;
-      display: grid; place-items: center;
-      font-weight: 800; 
-      font-size: 16px; /* Slightly smaller font to fit 5 letters */
-      letter-spacing: 1px; /* Adds space between letters for a premium look */
-      color: white;
-    }
+    .logo-mark { min-width: 80px; height: 40px; padding: 0 10px; background: linear-gradient(135deg, var(--brand), var(--accent)); border-radius: 10px; display: grid; place-items: center; font-weight: 800; font-size: 16px; letter-spacing: 1px; color: white; }
     .titles h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px; }
     .titles p { font-size: 0.85rem; color: var(--text-muted); }
-
     .actions-top { display: flex; gap: 10px; }
-    .btn {
-      padding: 8px 16px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.05);
-      color: var(--text-main);
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: all 0.2s;
-      text-decoration: none;
-      display: inline-flex; align-items: center; gap: 8px;
-    }
+    .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text-main); cursor: pointer; font-size: 0.9rem; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
     .btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
     .btn.primary { background: var(--brand); border-color: var(--brand); color: white; }
     .btn.primary:hover { background: #2563eb; }
-
-    /* Main Layout */
-    main {
-      flex: 1;
-      padding: 30px;
-      max-width: 1600px;
-      margin: 0 auto;
-      width: 100%;
-      display: grid;
-      grid-template-columns: 320px 1fr;
-      gap: 30px;
-    }
-
-    /* Sidebar Controls */
+    main { flex: 1; padding: 30px; max-width: 1600px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 320px 1fr; gap: 30px; }
     .sidebar { display: flex; flex-direction: column; gap: 20px; }
-    
     .search-panel { padding: 20px; }
     .input-group { margin-bottom: 12px; }
-    .input-group label {
-      display: block;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-    .modern-input {
-      width: 100%;
-      background: rgb(224, 223, 223);
-      border: 1px solid var(--border);
-      padding: 10px 12px;
-      border-radius: 8px;
-      color: rgb(0, 0, 0);
-      font-family: 'Inter', sans-serif;
-      transition: border-color 0.2s;
-    }
+    .input-group label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+    .modern-input { width: 100%; background: rgb(224, 223, 223); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; color: rgb(0, 0, 0); font-family: 'Inter', sans-serif; transition: border-color 0.2s; }
     .modern-input:focus { outline: none; border-color: var(--brand); }
     .modern-input::placeholder { color: rgba(65, 64, 64, 0.863); }
-.modern-input:hover { background: rgba(5, 94, 177, 0.596); }
-    .toggle-container {
-      display: flex; align-items: center; gap: 10px;
-      background: rgba(16, 185, 129, 0.1);
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid rgba(16, 185, 129, 0.2);
-      cursor: pointer;
-      margin-top: 15px;
-    }
+    .modern-input:hover { background: rgba(5, 94, 177, 0.596); }
+    .toggle-container { display: flex; align-items: center; gap: 10px; background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2); cursor: pointer; margin-top: 15px; }
     .toggle-container input { accent-color: var(--success); transform: scale(1.2); }
     .toggle-text { font-size: 0.9rem; font-weight: 600; color: var(--success); }
-
     .stats-panel { padding: 20px; text-align: center; }
     .chart-container { position: relative; height: 200px; margin-top: 10px; }
-
-    /* Data Grid */
     .data-section { display: flex; flex-direction: column; gap: 20px; }
-    
-    .toolbar {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 15px 20px;
-    }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
     .result-count { font-family: 'JetBrains Mono', monospace; color: var(--brand); font-weight: 700; }
-
-    .table-wrapper {
-      overflow-x: auto;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 42, 0.4);
-    }
-    
-    table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    th {
-      text-align: left;
-      padding: 16px;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
-      background: rgba(0,0,0,0.2);
-      position: sticky; top: 0;
-    }
-    td {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
-      vertical-align: middle;
-    }
+    .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid var(--border); background: rgba(15, 23, 42, 0.4); }
+    table { width: 100%; border-collapse: collapse; min-width: 900px; }
+    th { text-align: left; padding: 16px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); position: sticky; top: 0; }
+    td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: rgba(255,255,255,0.03); }
-
-    /* Special Column Styling */
     .col-code { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-weight: 600; }
     .col-desc { font-weight: 500; color: white; }
-    
-    .stock-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--success);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
+    .stock-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
     .non-stock { color: var(--text-muted); font-style: italic; }
-
-    /* Loader & Status */
-    .status-bar {
-      position: fixed; bottom: 20px; right: 20px;
-      background: var(--bg-card);
-      padding: 10px 20px;
-      border-radius: 30px;
-      border: 1px solid var(--border);
-      font-size: 0.85rem;
-      display: flex; align-items: center; gap: 10px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      z-index: 200;
-    }
-    .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid var(--border);
-      border-top-color: var(--brand);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
+    .status-bar { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); padding: 10px 20px; border-radius: 30px; border: 1px solid var(--border); font-size: 0.85rem; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 200; }
+    .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .modal.active { display: flex; }
+    .modal-content { padding: 30px; width: 90%; max-width: 500px; position: relative; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+    .close-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
+    .close-btn:hover { color: white; }
+    .modal-content h2 { margin-bottom: 20px; font-size: 1.2rem; color: var(--brand); }
+    .btn-action { background: transparent; border: 1px solid var(--border); color: var(--text-main); padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; margin-right: 5px; }
+    .btn-action:hover { background: rgba(255,255,255,0.1); }
+    .btn-action.delete:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444; }
+    .btn-action.edit:hover { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: #3b82f6; }
 
-    /* Responsive */
-    @media (max-width: 1024px) {
-      main { grid-template-columns: 1fr; }
-      .sidebar { order: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-      .data-section { order: 1; }
-    }
-    @media (max-width: 768px) {
-      header { flex-direction: column; gap: 15px; align-items: flex-start; }
-      .sidebar { grid-template-columns: 1fr; }
-      .actions-top { width: 100%; justify-content: space-between; }
-    }
-       /* =========================================
-       PRINT STYLES - FORCE HIDE SIDEBAR
-       ========================================= */
+    @media (max-width: 1024px) { main { grid-template-columns: 1fr; } .sidebar { order: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; } .data-section { order: 1; } }
+    @media (max-width: 768px) { header { flex-direction: column; gap: 15px; align-items: flex-start; } .sidebar { grid-template-columns: 1fr; } .actions-top { width: 100%; justify-content: space-between; } }
+
     @media print {
-      /* 1. Force Hide the Sidebar (Search & Chart) */
-      .sidebar {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        width: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      /* 2. Reset Main Layout to Full Width */
-      main {
-        display: block !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        grid-template-columns: none !important;
-      }
-
-      /* 3. Hide Header Buttons & Status Bar */
-      .actions-top, 
-      .status-bar,
-      .footer {
-        display: none !important;
-      }
-
-      /* 4. Clean Up Table for Paper */
-      .table-wrapper {
-        border: none !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        overflow: visible !important;
-      }
-
-      table {
-        width: 100% !important;
-        min-width: 100% !important;
-        border-collapse: collapse !important;
-      }
-
-      th {
-        background-color: #f0f0f0 !important; /* Light gray for header */
-        color: #000 !important;
-        border-bottom: 2px solid #000 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      td {
-        color: #000 !important;
-        border-bottom: 0.4px solid #ccc !important;
-        padding: px 100px 1px 1px !important;
-        font-size: 0.6rem !important;
-        height:min-content !important;
-      }
-
-      /* 5. Force White Background & Black Text for Whole Page */
-      body {
-        background: #ffffff !important;
-        background-image: none !important;
-        color: #000000 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      /* 6. Hide any glass effects */
-      .glass {
-        background: transparent !important;
-        backdrop-filter: none !important;
-        border: none !important;
-        box-shadow: none !important;
-      }
+      .sidebar, .actions-top, .status-bar, .footer, .btn-action { display: none !important; }
+      main { display: block !important; width: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+      .table-wrapper { border: none !important; background: transparent !important; box-shadow: none !important; overflow: visible !important; }
+      table { width: 100% !important; min-width: 100% !important; border-collapse: collapse !important; }
+      th { background-color: #f0f0f0 !important; color: #000 !important; border-bottom: 2px solid #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      td { color: #000 !important; border-bottom: 0.4px solid #ccc !important; padding: 4px !important; font-size: 0.6rem !important; }
+      body { background: #ffffff !important; background-image: none !important; color: #000000 !important; margin: 0 !important; padding: 0 !important; }
+      .glass { background: transparent !important; backdrop-filter: none !important; border: none !important; box-shadow: none !important; }
     }
-
-
   </style>
 </head>
 <body>
 
   <header class="glass" style="background: rgba(0, 0, 0, 0.8);">
-    <div class="brand-area" >
-      <div class="logo-mark" >GISCO</div>
-      <div class="titles">
-        <h1>Oracle Materials</h1>
-        <p>Intelligent Inventory Search</p>
-      </div>
+    <div class="brand-area">
+      <div class="logo-mark">GISCO</div>
+      <div class="titles"><h1>Oracle Materials</h1><p>Intelligent Inventory Search</p></div>
     </div>
     <div class="actions-top">
-      <button class="btn" onclick="window.print()">🖨️ Print</button>
-      <input type="file" id="localFile" accept=".csv" style="display:none" />
-      <button class="btn primary" onclick="document.getElementById('localFile').click()">📂 Load CSV</button>
+      <button class="btn" onclick="handlePrint()">🖨️ Print</button>
+      <button class="btn" onclick="loadData()">🔄 Refresh</button>
       <a href="index.html" class="btn">⬅ Home</a>
     </div>
   </header>
 
   <main style="background-color: rgb(0, 217, 255);">
-    <!-- Left Sidebar: Controls & Stats -->
     <aside class="sidebar">
-      <div stye="item-align: center; padding: 10px 20px;background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
-      <p style="font-weight: bold;text-align: center;text-shadow: 1px 1px 4px rgba(252, 195, 7, 0.5);box-shadow: #00ffaa 1px 1px 1px; border-radius: 20px 20px 20px 20px;background-color:#0f172a;padding: 10px 20px;margin-bottom: 10px;">:::تصميم و برمجة: مصطفي النجار :::</p>
-        </div>
-      <div class="glass search-panel" style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
-        <div class="input-group" >
-          <label >Search Query 1</label>
-          <input id="q1" class="modern-input" type="text"  placeholder="Search Code or Description..." />
-        </div>
-        <div class="input-group">
-          <label>Search Query 2</label>
-          <input id="q2" class="modern-input" type="text" placeholder="Filter further..." />
-        </div>
-        <div class="input-group">
-          <label>Search Query 3</label>
-          <input id="q3" class="modern-input" type="text" placeholder="Filter further..." />
-        </div>
-        <!-- ADDED 4TH QUERY BOX HERE -->
-        <div class="input-group">
-          <label>Search Query 4</label>
-          <input id="q4" class="modern-input" type="text" placeholder="Final filter..." />
-        </div>
-        
-        <label class="toggle-container">
-          <input type="checkbox" id="stockOnly">
-          <span class="toggle-text">Show Stock Items Only</span>
-        </label>
+      <div style="align-items: center; padding: 10px 20px;background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
+        <p style="font-weight: bold;text-align: center;text-shadow: 1px 1px 4px rgba(252, 195, 7, 0.5);box-shadow: #00ffaa 1px 1px 1px; border-radius: 20px;background-color:#0f172a;padding: 10px 20px;margin-bottom: 10px;">:::تصميم و برمجة: مصطفي النجار :::</p>
       </div>
-
+      <div class="glass search-panel" style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
+        <div class="input-group"><label>Search Query 1</label><input id="q1" class="modern-input" type="text" placeholder="Search Code or Description..." /></div>
+        <div class="input-group"><label>Search Query 2</label><input id="q2" class="modern-input" type="text" placeholder="Filter further..." /></div>
+        <div class="input-group"><label>Search Query 3</label><input id="q3" class="modern-input" type="text" placeholder="Filter further..." /></div>
+        <div class="input-group"><label>Search Query 4</label><input id="q4" class="modern-input" type="text" placeholder="Final filter..." /></div>
+        <label class="toggle-container"><input type="checkbox" id="stockOnly"><span class="toggle-text">Show Stock Items Only</span></label>
+      </div>
       <div class="glass stats-panel" style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
         <h3 style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase;">Inventory Mix</h3>
-        <div class="chart-container">
-          <canvas id="inventoryChart"></canvas>
-        </div>
-        <div style="margin-top: 15px; font-size: 0.8rem; color: var(--text-muted);">
-          Total Records: <span id="totalCount" style="color: white; font-weight: bold;">0</span>
-        </div>
+        <div class="chart-container"><canvas id="inventoryChart"></canvas></div>
+        <div style="margin-top: 15px; font-size: 0.8rem; color: var(--text-muted);">Total Records: <span id="totalCount" style="color: white; font-weight: bold;">0</span></div>
       </div>
     </aside>
 
-    <!-- Right Section: Data Display -->
     <section class="data-section">
       <div class="glass toolbar" style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="color:var(--text-muted)">Results:</span>
           <span id="resultCount" class="result-count">0</span>
         </div>
-        <div id="loader" style="display:none; align-items:center; gap:8px; color:var(--brand); ">
-          <div class="spinner"></div> Processing...
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn primary" onclick="openAddModal()">➕ Add New</button>
+          <div id="loader" style="display:none; align-items:center; gap:8px; color:var(--brand); "><div class="spinner"></div> Processing...</div>
         </div>
       </div>
-
-      <div class="table-wrapper glass" >
+      <div class="table-wrapper glass">
         <table id="dataTable">
           <thead>
             <tr style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
-              <th style="color: white;">Oracle Code</th>
-              <th style="color: white;">Description</th>
-              <th style="color: white;">Type</th>
-              <th style="color: white;">Unit</th>
-              <th style="color: white;">Qty</th>
+              <th style="color: white;">Oracle Code</th><th style="color: white;">Description</th><th style="color: white;">Type</th><th style="color: white;">Unit</th><th style="color: white;">Qty</th><th style="color: white; text-align: center;">Actions</th>
             </tr>
           </thead>
-          <tbody id="tableBody" style="background: rgba(0, 17, 14, 0.712); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
-            <!-- Rows injected here -->
-          </tbody>
+          <tbody id="tableBody" style="background: rgba(0, 17, 14, 0.712); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);"></tbody>
         </table>
       </div>
     </section>
   </main>
 
-  <div id="statusBar" class="status-bar">
-    <div class="spinner"></div> Initializing System...
+  <div id="recordModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle">Add New Record</h2>
+      <form id="recordForm">
+        <input type="hidden" id="recordId">
+        <div class="input-group"><label>Oracle Code</label><input id="f_code" class="modern-input" type="text" required></div>
+        <div class="input-group"><label>Description</label><input id="f_description" class="modern-input" type="text" required></div>
+        <div class="input-group"><label>Type</label><input id="f_type" class="modern-input" type="text"></div>
+        <div class="input-group"><label>Unit</label><input id="f_unit" class="modern-input" type="text"></div>
+        <div class="input-group"><label>Qty</label><input id="f_qty" class="modern-input" type="number" min="0"></div>
+        <button type="submit" class="btn primary" style="width:100%; margin-top:15px; justify-content: center;">Save Record</button>
+      </form>
+    </div>
   </div>
 
-  <script>
-    // --- Configuration & State ---
-    const csvPath = 'Oracle.csv';
-    let ALL_ROWS = [];
-    let chartInstance = null;
+  <div id="statusBar" class="status-bar"><div class="spinner"></div> Initializing System...</div>
 
-    // --- Helpers ---
+  <script>
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let ALL_ROWS = [];
+    let currentFilteredRows = [];
+    let chartInstance = null;
+    let renderFrameId = null;
+
+    // --- OPTIMIZED HELPERS ---
+    const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    function escapeHtml(s) {
+        if (s === null || s === undefined) return '';
+        return String(s).replace(/[&<>"']/g, match => escapeMap[match]);
+    }
+
     function normalizeKey(k){ return String(k || '').toLowerCase().replace(/\s+|_/g,'').trim(); }
-    
     function pickField(obj, aliases){
       const keys = Object.keys(obj);
       const normToKey = new Map(keys.map(k => [normalizeKey(k), k]));
@@ -424,214 +192,234 @@
       return '';
     }
 
-    function escapeHtml(s){
-      return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-    }
-
-        function setStatus(msg, isLoading = false) {
+    function setStatus(msg, isLoading = false) {
       const el = document.getElementById('statusBar');
-      
-      // 1. Update the visual state immediately
       el.innerHTML = isLoading ? `<div class="spinner"></div> ${msg}` : msg;
       document.getElementById('loader').style.display = isLoading ? 'flex' : 'none';
-
-      // 2. If we are NOT loading (action is finished), clear the message after 2 seconds
       if (!isLoading) {
         setTimeout(() => {
-          // Optional: Check if the message is still the same one we set, 
-          // so we don't clear a NEW message that appeared in the meantime.
-          if (el.textContent === msg || el.innerHTML.includes(msg)) {
-             el.innerHTML = '' 
-             statusBar.style.display = 'none'; // Hide the status bar after clearing
-          }
+          if (el.textContent === msg || el.innerHTML.includes(msg)) { el.innerHTML = ''; el.style.display = 'none'; }
         }, 2000);
-      }
+      } else { el.style.display = 'flex'; }
     }
 
-    // --- Data Processing ---
     const FIELD_ALIASES = {
-      code: ['oracle code','code','item code','id'],
-      description: ['item description','description','desc','name'],
-      unit: ['unit','uom','measure'],
-      qty: ['qty','quantity','onhand','stock'],
-      type: ['type','category','class']
+      code: ['oracle code','code','item code'], description: ['item description','description','desc','name'],
+      unit: ['unit','uom','measure'], qty: ['qty','quantity','onhand','stock'], type: ['type','category','class']
     };
 
     function buildRow(item){
+      const id = item.id; 
       const code = String(pickField(item, FIELD_ALIASES.code) || '').trim();
       const description = String(pickField(item, FIELD_ALIASES.description) || '').trim();
       const unit = String(pickField(item, FIELD_ALIASES.unit) || '').trim();
       const qty = String(pickField(item, FIELD_ALIASES.qty) || '').trim();
       const type = String(pickField(item, FIELD_ALIASES.type) || '').trim();
       
-      // Create a searchable string
       const searchIndex = `${code} ${description} ${type}`.toLowerCase();
       const isStock = type.toLowerCase().includes('stock');
-
-      return { code, description, unit, qty, type, searchIndex, isStock };
+      return { id, code, description, unit, qty, type, searchIndex, isStock };
     }
 
-    function parseCSV(csvText) {
-      const lines = csvText.split(/\r?\n/);
-      if (lines.length < 2) return [];
-      const headers = lines[0].split(',').map(h => h.trim());
-      const rows = [];
-      
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
+    // --- OPTIMIZED RENDERING (PROGRESSIVE CHUNKING) ---
+    function renderTable(rows, forceFullRender = false) {
+        if (renderFrameId) { cancelAnimationFrame(renderFrameId); renderFrameId = null; }
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
         
-        // Simple CSV parser handling quotes
-        const values = [];
-        let current = '';
-        let inQuotes = false;
-        for (let j = 0; j < line.length; j++) {
-          const char = line[j];
-          if (char === '"') inQuotes = !inQuotes;
-          else if (char === ',' && !inQuotes) { values.push(current.trim()); current = ''; }
-          else current += char;
+        document.getElementById('resultCount').textContent = rows.length.toLocaleString();
+        document.getElementById('totalCount').textContent = ALL_ROWS.length.toLocaleString();
+        updateChart(rows);
+        
+        if (rows.length === 0) return;
+
+        let index = 0;
+        // Render 300 rows per frame for smooth UI, or ALL rows if printing
+        const CHUNK_SIZE = forceFullRender ? rows.length : 300; 
+
+        function renderChunk() {
+            let chunkHtml = '';
+            const end = Math.min(index + CHUNK_SIZE, rows.length);
+            
+            for (let i = index; i < end; i++) {
+                const r = rows[i];
+                const typeDisplay = r.isStock 
+                    ? `<span class="stock-badge" style="width:100px">STOCK ITEM</span>` 
+                    : `<span class="non-stock">${escapeHtml(r.type)}</span>`;
+                
+                const qtyColor = Number(r.qty) > 0 ? 'var(--success)' : 'var(--text-muted)';
+
+                chunkHtml += `<tr>
+                    <td class="col-code">${escapeHtml(r.code)}</td>
+                    <td class="col-desc">${escapeHtml(r.description)}</td>
+                    <td>${typeDisplay}</td>
+                    <td style="font-family:'JetBrains Mono'">${escapeHtml(r.unit)}</td>
+                    <td style="font-family:'JetBrains Mono'; color: ${qtyColor}">${escapeHtml(r.qty)}</td>
+                    <td style="text-align: center; white-space: nowrap;">
+                        <button class="btn-action edit" onclick="openEditModal('${r.id}')" title="Edit">✏️</button>
+                        <button class="btn-action delete" onclick="deleteRecord('${r.id}')" title="Delete">🗑️</button>
+                    </td>
+                </tr>`;
+            }
+            
+            tbody.insertAdjacentHTML('beforeend', chunkHtml);
+            index = end;
+            
+            if (index < rows.length) {
+                renderFrameId = requestAnimationFrame(renderChunk);
+            } else {
+                renderFrameId = null;
+            }
         }
-        values.push(current.trim());
-        
-        const rowObj = {};
-        headers.forEach((h, idx) => rowObj[h] = values[idx] || '');
-        if (Object.keys(rowObj).length > 0) rows.push(buildRow(rowObj));
-      }
-      return rows;
+        renderChunk();
     }
 
-    // --- Rendering ---
-    function renderTable(rows) {
-      const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '';
-      
-      // Performance optimization: Render only first 100 rows if no search active, otherwise all matches
-      const limit = rows.length > 500 && document.getElementById('q1').value === '' ? 100 : rows.length;
-      
-      const fragment = document.createDocumentFragment();
-      for (let i = 0; i < limit; i++) {
-        const r = rows[i];
-        const tr = document.createElement('tr');
-        
-        const typeDisplay = r.isStock 
-          ? `<span class="stock-badge" style="width:100px">STOCK ITEM</span>` 
-          : `<span class="non-stock">${escapeHtml(r.type)}</span>`;
-
-        tr.innerHTML = `
-          <td class="col-code">${escapeHtml(r.code)}</td>
-          <td class="col-desc">${escapeHtml(r.description)}</td>
-          <td>${typeDisplay}</td>
-          <td style="font-family:'JetBrains Mono'">${escapeHtml(r.unit)}</td>
-          <td style="font-family:'JetBrains Mono'; color: ${Number(r.qty)>0?'var(--success)':'var(--text-muted)'}">${escapeHtml(r.qty)}</td>
-        `;
-        fragment.appendChild(tr);
-      }
-      tbody.appendChild(fragment);
-      
-      document.getElementById('resultCount').textContent = rows.length.toLocaleString();
-      document.getElementById('totalCount').textContent = rows.length.toLocaleString();
-      updateChart(rows);
+    function handlePrint() {
+        // Force render all rows synchronously so the print dialog captures everything
+        renderTable(currentFilteredRows, true);
+        setTimeout(() => window.print(), 50); // Small delay to let DOM paint
     }
 
     function updateChart(rows) {
       const stockCount = rows.filter(r => r.isStock).length;
       const nonStockCount = rows.length - stockCount;
-
       const ctx = document.getElementById('inventoryChart').getContext('2d');
       if (chartInstance) chartInstance.destroy();
-
       chartInstance = new Chart(ctx, {
         type: 'doughnut',
-        data: {
-          labels: ['Stock Items', 'Non-Stock'],
-          datasets: [{
-            data: [stockCount, nonStockCount],
-            backgroundColor: ['#10b981', '#334155'],
-            borderColor: '#0f172a',
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Inter' } } }
-          },
-          cutout: '70%'
-        }
+        data: { labels: ['Stock Items', 'Non-Stock'], datasets: [{ data: [stockCount, nonStockCount], backgroundColor: ['#10b981', '#334155'], borderColor: '#0f172a', borderWidth: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Inter' } } } }, cutout: '70%' }
       });
     }
 
-    // --- Search Logic ---
+    // --- OPTIMIZED SEARCH LOGIC ---
     function filterNow() {
-      const q1 = document.getElementById('q1').value.toLowerCase();
-      const q2 = document.getElementById('q2').value.toLowerCase();
-      const q3 = document.getElementById('q3').value.toLowerCase();
-      const q4 = document.getElementById('q4').value.toLowerCase(); // Added Q4
-      const stockOnly = document.getElementById('stockOnly').checked;
+        const q1 = document.getElementById('q1').value.toLowerCase();
+        const q2 = document.getElementById('q2').value.toLowerCase();
+        const q3 = document.getElementById('q3').value.toLowerCase();
+        const q4 = document.getElementById('q4').value.toLowerCase();
+        const stockOnly = document.getElementById('stockOnly').checked;
 
-      const filtered = ALL_ROWS.filter(r => {
-        if (stockOnly && !r.isStock) return false;
-        
-        const text = r.searchIndex;
-        // AND logic for all 4 inputs
-        if (q1 && !text.includes(q1)) return false;
-        if (q2 && !text.includes(q2)) return false;
-        if (q3 && !text.includes(q3)) return false;
-        if (q4 && !text.includes(q4)) return false; // Added Q4 check
-        
-        return true;
-      });
+        // Pre-calculate booleans outside the loop for maximum speed
+        const hasQ1 = q1.length > 0;
+        const hasQ2 = q2.length > 0;
+        const hasQ3 = q3.length > 0;
+        const hasQ4 = q4.length > 0;
 
-      renderTable(filtered);
+        const filtered = ALL_ROWS.filter(r => {
+            if (stockOnly && !r.isStock) return false;
+            const text = r.searchIndex;
+            if (hasQ1 && !text.includes(q1)) return false;
+            if (hasQ2 && !text.includes(q2)) return false;
+            if (hasQ3 && !text.includes(q3)) return false;
+            if (hasQ4 && !text.includes(q4)) return false;
+            return true;
+        });
+        
+        currentFilteredRows = filtered;
+        renderTable(filtered);
     }
 
-    // Debounce for performance
     let timeout;
-    function debouncedFilter() {
-      clearTimeout(timeout);
-      timeout = setTimeout(filterNow, 150);
+    function debouncedFilter() { clearTimeout(timeout); timeout = setTimeout(filterNow, 150); }
+
+    // --- CRUD OPERATIONS ---
+    function openAddModal() {
+      document.getElementById('modalTitle').textContent = 'Add New Record';
+      document.getElementById('recordForm').reset();
+      document.getElementById('recordId').value = '';
+      document.getElementById('recordModal').classList.add('active');
     }
 
-    // --- Initialization ---
-    async function loadData() {
-      setStatus('Fetching Oracle Data...', true);
+    function openEditModal(id) {
+      const record = ALL_ROWS.find(r => r.id === id);
+      if (!record) return;
+      document.getElementById('modalTitle').textContent = 'Edit Record';
+      document.getElementById('recordId').value = record.id;
+      document.getElementById('f_code').value = record.code;
+      document.getElementById('f_description').value = record.description;
+      document.getElementById('f_type').value = record.type;
+      document.getElementById('f_unit').value = record.unit;
+      document.getElementById('f_qty').value = record.qty;
+      document.getElementById('recordModal').classList.add('active');
+    }
+
+    function closeModal() { document.getElementById('recordModal').classList.remove('active'); }
+
+    document.getElementById('recordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('recordId').value;
+      const recordData = {
+        code: document.getElementById('f_code').value.trim(),
+        description: document.getElementById('f_description').value.trim(),
+        type: document.getElementById('f_type').value.trim(),
+        unit: document.getElementById('f_unit').value.trim(),
+        qty: document.getElementById('f_qty').value ? parseInt(document.getElementById('f_qty').value) : null
+      };
+
+      setStatus(id ? 'Updating record...' : 'Adding record...', true);
       try {
-        // Try fetching from server
-        const res = await fetch(csvPath);
-        if (!res.ok) throw new Error('File not found');
-        const text = await res.text();
-        ALL_ROWS = parseCSV(text);
+        let error;
+        if (id) {
+          const { error: updateError } = await supabaseClient.from('oracle').update(recordData).eq('id', id);
+          error = updateError;
+        } else {
+          const { error: insertError } = await supabaseClient.from('oracle').insert([recordData]);
+          error = insertError;
+        }
+        if (error) throw error;
+        setStatus('Record saved successfully!');
+        closeModal();
+        loadData(); 
+      } catch (err) { console.error(err); setStatus('Error saving record: ' + err.message); }
+    });
+
+    async function deleteRecord(id) {
+      if (!confirm('Are you sure you want to delete this record?')) return;
+      setStatus('Deleting record...', true);
+      try {
+        const { error } = await supabaseClient.from('oracle').delete().eq('id', id);
+        if (error) throw error;
+        setStatus('Record deleted successfully!');
+        loadData(); 
+      } catch (err) { console.error(err); setStatus('Error deleting record: ' + err.message); }
+    }
+
+    // --- INITIALIZATION ---
+    async function loadData() {
+      setStatus('Fetching Oracle Data from Supabase...', true);
+      try {
+        let allData = [];
+        let from = 0;
+        const chunkSize = 1000; 
+        
+        while (true) {
+          const { data, error } = await supabaseClient.from('oracle').select('*').order('code', { ascending: true }).range(from, from + chunkSize - 1);
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+          allData = allData.concat(data);
+          if (data.length < chunkSize) break;
+          from += chunkSize;
+        }
+
+        ALL_ROWS = allData.map(item => buildRow(item));
+        currentFilteredRows = ALL_ROWS; // Initialize filtered state
         setStatus(`Loaded ${ALL_ROWS.length} records successfully.`);
         renderTable(ALL_ROWS);
       } catch (e) {
-        console.warn(e);
-        setStatus('Local Mode: Please load Oracle.csv manually.', false);
+        console.error(e);
+        setStatus('Error loading data: ' + e.message);
         document.getElementById('resultCount').textContent = '0';
       }
     }
 
-    // Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
-      // Added q4 to the event listeners
-      ['q1', 'q2', 'q3', 'q4'].forEach(id => {
-        document.getElementById(id).addEventListener('input', debouncedFilter);
-      });
+      ['q1', 'q2', 'q3', 'q4'].forEach(id => document.getElementById(id).addEventListener('input', debouncedFilter));
       document.getElementById('stockOnly').addEventListener('change', filterNow);
-      
-      document.getElementById('localFile').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setStatus('Reading local file...', true);
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-          ALL_ROWS = parseCSV(evt.target.result);
-          setStatus(`Loaded ${ALL_ROWS.length} records from local file.`);
-          renderTable(ALL_ROWS);
-        };
-        reader.readAsText(file);
-      });
-
+      window.onclick = function(event) {
+        const modal = document.getElementById('recordModal');
+        if (event.target === modal) closeModal();
+      }
       loadData();
     });
   </script>
