@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -75,11 +74,31 @@
     .btn-action.delete:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444; }
     .btn-action.edit:hover { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: #3b82f6; }
 
+    /* --- NEW: Toast Notification Styles --- */
+    .toast-container {
+        position: fixed; top: 80px; right: 20px; z-index: 9999;
+        display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+    }
+    .toast {
+        background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px);
+        border: 1px solid var(--border); color: var(--text-main);
+        padding: 14px 20px; border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        display: flex; align-items: center; gap: 12px;
+        min-width: 280px; font-size: 0.9rem; font-weight: 500;
+        animation: slideIn 0.3s ease-out forwards; pointer-events: auto;
+    }
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error { border-left: 4px solid #ef4444; }
+    .toast.hide { animation: slideOut 0.3s ease-in forwards; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
     @media (max-width: 1024px) { main { grid-template-columns: 1fr; } .sidebar { order: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; } .data-section { order: 1; } }
     @media (max-width: 768px) { header { flex-direction: column; gap: 15px; align-items: flex-start; } .sidebar { grid-template-columns: 1fr; } .actions-top { width: 100%; justify-content: space-between; } }
 
     @media print {
-      .sidebar, .actions-top, .status-bar, .footer, .btn-action { display: none !important; }
+      .sidebar, .actions-top, .status-bar, .footer, .btn-action, .toast-container { display: none !important; }
       main { display: block !important; width: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
       .table-wrapper { border: none !important; background: transparent !important; box-shadow: none !important; overflow: visible !important; }
       table { width: 100% !important; min-width: 100% !important; border-collapse: collapse !important; }
@@ -103,6 +122,9 @@
       <a href="index.html" class="btn">⬅ Home</a>
     </div>
   </header>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
 
   <main style="background-color: rgb(0, 217, 255);">
     <aside class="sidebar">
@@ -175,6 +197,25 @@
     let chartInstance = null;
     let renderFrameId = null;
 
+    // --- TOAST NOTIFICATION SYSTEM ---
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        let icon = 'ℹ️';
+        if (type === 'success') icon = '✅';
+        if (type === 'error') icon = '❌';
+        
+        toast.innerHTML = `<span style="font-size:1.2rem;">${icon}</span><span>${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
     // --- OPTIMIZED HELPERS ---
     const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
     function escapeHtml(s) {
@@ -234,7 +275,6 @@
         if (rows.length === 0) return;
 
         let index = 0;
-        // Render 300 rows per frame for smooth UI, or ALL rows if printing
         const CHUNK_SIZE = forceFullRender ? rows.length : 300; 
 
         function renderChunk() {
@@ -275,9 +315,8 @@
     }
 
     function handlePrint() {
-        // Force render all rows synchronously so the print dialog captures everything
         renderTable(currentFilteredRows, true);
-        setTimeout(() => window.print(), 50); // Small delay to let DOM paint
+        setTimeout(() => window.print(), 50);
     }
 
     function updateChart(rows) {
@@ -300,11 +339,8 @@
         const q4 = document.getElementById('q4').value.toLowerCase();
         const stockOnly = document.getElementById('stockOnly').checked;
 
-        // Pre-calculate booleans outside the loop for maximum speed
-        const hasQ1 = q1.length > 0;
-        const hasQ2 = q2.length > 0;
-        const hasQ3 = q3.length > 0;
-        const hasQ4 = q4.length > 0;
+        const hasQ1 = q1.length > 0; const hasQ2 = q2.length > 0;
+        const hasQ3 = q3.length > 0; const hasQ4 = q4.length > 0;
 
         const filtered = ALL_ROWS.filter(r => {
             if (stockOnly && !r.isStock) return false;
@@ -323,7 +359,7 @@
     let timeout;
     function debouncedFilter() { clearTimeout(timeout); timeout = setTimeout(filterNow, 150); }
 
-    // --- CRUD OPERATIONS ---
+    // --- INSTANT CRUD OPERATIONS ---
     function openAddModal() {
       document.getElementById('modalTitle').textContent = 'Add New Record';
       document.getElementById('recordForm').reset();
@@ -359,19 +395,50 @@
 
       setStatus(id ? 'Updating record...' : 'Adding record...', true);
       try {
-        let error;
+        let data, error;
         if (id) {
-          const { error: updateError } = await supabaseClient.from('oracle').update(recordData).eq('id', id);
-          error = updateError;
+            // Update & fetch the updated row
+            const res = await supabaseClient.from('oracle').update(recordData).eq('id', id).select();
+            data = res.data; error = res.error;
         } else {
-          const { error: insertError } = await supabaseClient.from('oracle').insert([recordData]);
-          error = insertError;
+            // Insert & fetch the new row
+            const res = await supabaseClient.from('oracle').insert([recordData]).select();
+            data = res.data; error = res.error;
         }
-        if (error) throw error;
-        setStatus('Record saved successfully!');
+
+        if (error) {
+            // Catch Duplicate Key Error (Postgres error code 23505)
+            if (error.code === '23505' || error.message.toLowerCase().includes('duplicate')) {
+                showToast('Error: This Oracle Code already exists!', 'error');
+            } else {
+                showToast('Database Error: ' + error.message, 'error');
+            }
+            return;
+        }
+
+        // SUCCESS: Update local array instantly without reloading from DB
+        if (id) {
+            const updatedRow = buildRow(data[0]);
+            const index = ALL_ROWS.findIndex(r => r.id === id);
+            if (index !== -1) ALL_ROWS[index] = updatedRow;
+            showToast('Record updated successfully!', 'success');
+        } else {
+            const newRow = buildRow(data[0]);
+            ALL_ROWS.push(newRow);
+            showToast('Record added successfully!', 'success');
+        }
+
+        // Re-sort to maintain order and re-apply current filters
+        ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
+        filterNow(); 
         closeModal();
-        loadData(); 
-      } catch (err) { console.error(err); setStatus('Error saving record: ' + err.message); }
+
+      } catch (err) {
+        console.error(err);
+        showToast('Unexpected Error: ' + err.message, 'error');
+      } finally {
+        setStatus('', false); // Hide bottom loader
+      }
     });
 
     async function deleteRecord(id) {
@@ -380,9 +447,18 @@
       try {
         const { error } = await supabaseClient.from('oracle').delete().eq('id', id);
         if (error) throw error;
-        setStatus('Record deleted successfully!');
-        loadData(); 
-      } catch (err) { console.error(err); setStatus('Error deleting record: ' + err.message); }
+        
+        // SUCCESS: Remove from local array instantly
+        ALL_ROWS = ALL_ROWS.filter(r => r.id !== id);
+        filterNow();
+        
+        showToast('Record deleted successfully!', 'success');
+      } catch (err) {
+        console.error(err);
+        showToast('Error deleting record: ' + err.message, 'error');
+      } finally {
+        setStatus('', false);
+      }
     }
 
     // --- INITIALIZATION ---
@@ -403,13 +479,15 @@
         }
 
         ALL_ROWS = allData.map(item => buildRow(item));
-        currentFilteredRows = ALL_ROWS; // Initialize filtered state
+        ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
         setStatus(`Loaded ${ALL_ROWS.length} records successfully.`);
-        renderTable(ALL_ROWS);
+        filterNow(); // Renders and updates chart
       } catch (e) {
         console.error(e);
-        setStatus('Error loading data: ' + e.message);
+        showToast('Error loading data: ' + e.message, 'error');
         document.getElementById('resultCount').textContent = '0';
+      } finally {
+        setStatus('', false);
       }
     }
 
