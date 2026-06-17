@@ -158,6 +158,7 @@
     </section>
   </main>
 
+  <!-- Add/Edit Modal -->
   <div id="recordModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -174,6 +175,21 @@
     </div>
   </div>
 
+  <!-- Import Confirmation Modal -->
+  <div id="importConfirmModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeImportModal()">&times;</span>
+      <h2>Confirm CSV Import</h2>
+      <div id="importStats" style="margin: 20px 0; line-height: 1.8; font-size: 1rem;">
+        <!-- Stats will be injected here -->
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn primary" style="flex: 1; justify-content: center;" onclick="executeImport()">✅ Confirm Import</button>
+        <button class="btn" style="flex: 1; justify-content: center; background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444;" onclick="closeImportModal()">❌ Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div id="statusBar" class="status-bar"><div class="spinner"></div> Initializing System...</div>
 
   <script>
@@ -185,6 +201,7 @@
     let currentFilteredRows = [];
     let chartInstance = null;
     let renderFrameId = null;
+    let pendingImportRecords = []; // Holds data between analysis and confirmation
 
     // --- TOAST NOTIFICATION SYSTEM ---
     function showToast(message, type = 'info') {
@@ -247,7 +264,7 @@
       return { id, code, description, unit, qty, type, searchIndex, isStock };
     }
 
-    // --- CSV IMPORT LOGIC ---
+    // --- SMART CSV IMPORT LOGIC ---
     function parseCSV(text) {
         if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // Remove Excel BOM
         const rows = [];
@@ -295,7 +312,7 @@
     }
 
     async function importCSV(file) {
-        setStatus('Reading CSV file...', true);
+        setStatus('Analyzing CSV file...', true);
         const reader = new FileReader();
         
         reader.onload = async (e) => {
@@ -318,18 +335,42 @@
                     return;
                 }
 
+                // Prepare existing codes for O(1) fast lookup
+                const existingCodes = new Set(ALL_ROWS.map(r => r.code));
+                const seenInCSV = new Set();
+
                 const records = [];
+                let duplicateCount = 0;
+                let invalidCount = 0;
+                let internalDuplicateCount = 0;
+
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i];
                     if (row.length === 1 && row[0] === '') continue; 
                     
-                    const code = colMap.code !== undefined ? row[colMap.code] : '';
-                    if (!code || !code.trim()) continue; 
+                    const code = colMap.code !== undefined ? (row[colMap.code] || '').trim() : '';
+                    if (!code) {
+                        invalidCount++;
+                        continue; 
+                    }
+
+                    // Check if duplicate in Database
+                    if (existingCodes.has(code)) {
+                        duplicateCount++;
+                        continue;
+                    }
+
+                    // Check if duplicate within the CSV itself
+                    if (seenInCSV.has(code)) {
+                        internalDuplicateCount++;
+                        continue;
+                    }
+                    seenInCSV.add(code);
 
                     const parsedQty = colMap.qty !== undefined && row[colMap.qty] ? parseInt(row[colMap.qty]) : null;
 
                     records.push({
-                        code: code.trim(),
+                        code: code,
                         description: colMap.description !== undefined ? (row[colMap.description] || '').trim() : '',
                         type: colMap.type !== undefined ? (row[colMap.type] || '').trim() : '',
                         unit: colMap.unit !== undefined ? (row[colMap.unit] || '').trim() : '',
@@ -337,42 +378,27 @@
                     });
                 }
 
-                if (records.length === 0) {
-                    showToast('No valid records found in CSV.', 'error');
+                const totalParsed = rows.length - 1;
+                const newUniqueCount = records.length;
+
+                if (newUniqueCount === 0) {
+                    showToast('No new unique records found to import.', 'error');
                     setStatus('', false);
                     return;
                 }
 
-                setStatus(`Importing ${records.length} records...`, true);
-                const chunkSize = 500;
-                let successCount = 0;
-                let errorCount = 0;
+                // Store for later execution
+                pendingImportRecords = records;
 
-                for (let i = 0; i < records.length; i += chunkSize) {
-                    const chunk = records.slice(i, i + chunkSize);
-                    
-                    // Try upsert first (handles duplicates by updating existing codes)
-                    let { error } = await supabaseClient.from('oracle').upsert(chunk, { onConflict: 'code' });
-                    
-                    // Fallback to standard insert if unique constraint on 'code' doesn't exist in DB
-                    if (error && (error.message.toLowerCase().includes('constraint') || error.message.toLowerCase().includes('unique'))) {
-                        const res = await supabaseClient.from('oracle').insert(chunk);
-                        error = res.error;
-                    }
+                // Show confirmation modal
+                showImportConfirmation({
+                    total: totalParsed,
+                    invalid: invalidCount,
+                    dbDuplicates: duplicateCount,
+                    csvDuplicates: internalDuplicateCount,
+                    newUnique: newUniqueCount
+                });
 
-                    if (error) {
-                        console.error('Chunk import error:', error);
-                        errorCount += chunk.length;
-                    } else {
-                        successCount += chunk.length;
-                    }
-                    
-                    setStatus(`Importing... ${Math.min(i + chunkSize, records.length)} / ${records.length}`, true);
-                }
-
-                const msg = `Import complete! ${successCount} records processed.` + (errorCount > 0 ? ` ${errorCount} failed.` : '');
-                showToast(msg, errorCount > 0 ? 'error' : 'success');
-                loadData(); 
             } catch (err) {
                 console.error(err);
                 showToast('Error processing CSV: ' + err.message, 'error');
@@ -381,6 +407,60 @@
             }
         };
         reader.readAsText(file);
+    }
+
+    function showImportConfirmation(stats) {
+        const statsDiv = document.getElementById('importStats');
+        statsDiv.innerHTML = `
+            <p><strong>Total rows in CSV:</strong> ${stats.total.toLocaleString()}</p>
+            <p style="color: var(--text-muted);"><strong>Invalid/Empty Code:</strong> ${stats.invalid.toLocaleString()}</p>
+            <p style="color: #ef4444;"><strong>Already in Database (Skipped):</strong> ${stats.dbDuplicates.toLocaleString()}</p>
+            <p style="color: #f59e0b;"><strong>Repeated in CSV (Skipped):</strong> ${stats.csvDuplicates.toLocaleString()}</p>
+            <hr style="border: 1px solid var(--border); margin: 15px 0;">
+            <p style="color: var(--success); font-size: 1.2rem;"><strong>✅ New Records to Import:</strong> ${stats.newUnique.toLocaleString()}</p>
+        `;
+        document.getElementById('importConfirmModal').classList.add('active');
+    }
+
+    function closeImportModal() {
+        document.getElementById('importConfirmModal').classList.remove('active');
+        pendingImportRecords = [];
+    }
+
+    async function executeImport() {
+        if (pendingImportRecords.length === 0) {
+            closeImportModal();
+            return;
+        }
+
+        closeImportModal();
+        setStatus(`Importing ${pendingImportRecords.length} new records...`, true);
+
+        const chunkSize = 500;
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (let i = 0; i < pendingImportRecords.length; i += chunkSize) {
+            const chunk = pendingImportRecords.slice(i, i + chunkSize);
+            
+            // We use standard insert since we already filtered out duplicates
+            const { error } = await supabaseClient.from('oracle').insert(chunk);
+
+            if (error) {
+                console.error('Chunk import error:', error);
+                errorCount += chunk.length;
+            } else {
+                successCount += chunk.length;
+            }
+            
+            setStatus(`Importing... ${Math.min(i + chunkSize, pendingImportRecords.length)} / ${pendingImportRecords.length}`, true);
+        }
+
+        const msg = `Import complete! ${successCount} records added.` + (errorCount > 0 ? ` ${errorCount} failed.` : '');
+        showToast(msg, errorCount > 0 ? 'error' : 'success');
+        
+        pendingImportRecords = [];
+        loadData(); // Refresh data to update UI
     }
 
     // --- OPTIMIZED RENDERING (PROGRESSIVE CHUNKING) ---
@@ -613,12 +693,15 @@
       document.getElementById('csvFileInput').addEventListener('change', (e) => {
           const file = e.target.files[0];
           if (file) importCSV(file);
-          e.target.value = ''; // Reset input so the same file can be re-selected if needed
+          e.target.value = ''; 
       });
 
+      // Handle clicking outside modals
       window.onclick = function(event) {
-        const modal = document.getElementById('recordModal');
-        if (event.target === modal) closeModal();
+        const modal1 = document.getElementById('recordModal');
+        const modal2 = document.getElementById('importConfirmModal');
+        if (event.target === modal1) closeModal();
+        if (event.target === modal2) closeImportModal();
       }
       
       loadData();
