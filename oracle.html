@@ -183,7 +183,23 @@
       <div id="importStats" style="margin: 20px 0; line-height: 1.8; font-size: 1rem;">
         <!-- Stats will be injected here -->
       </div>
-      <div style="display: flex; gap: 10px;">
+      
+      <!-- Professional Progress Bar Area -->
+      <div id="importProgressArea" style="display: none; margin-top: 20px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-muted);">
+              <span id="progressStatus">Processing records...</span>
+              <span id="progressPercent" style="color: var(--brand); font-weight: bold;">0%</span>
+          </div>
+          <div style="width: 100%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 10px; overflow: hidden; border: 1px solid var(--border);">
+              <div id="progressBarFill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #3b82f6); transition: width 0.2s ease;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8rem;">
+              <span style="color: var(--success);">✅ Success: <span id="progressSuccess">0</span></span>
+              <span style="color: #ef4444;">❌ Skipped/Duplicates: <span id="progressErrors">0</span></span>
+          </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
         <button class="btn primary" style="flex: 1; justify-content: center;" onclick="executeImport()">✅ Confirm Import</button>
         <button class="btn" style="flex: 1; justify-content: center; background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444;" onclick="closeImportModal()">❌ Cancel</button>
       </div>
@@ -201,7 +217,7 @@
     let currentFilteredRows = [];
     let chartInstance = null;
     let renderFrameId = null;
-    let pendingImportRecords = []; // Holds data between analysis and confirmation
+    let pendingImportRecords = [];
 
     // --- TOAST NOTIFICATION SYSTEM ---
     function showToast(message, type = 'info') {
@@ -266,7 +282,7 @@
 
     // --- SMART CSV IMPORT LOGIC ---
     function parseCSV(text) {
-        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // Remove Excel BOM
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
         const rows = [];
         let currentRow = [];
         let currentField = '';
@@ -335,7 +351,6 @@
                     return;
                 }
 
-                // Prepare existing codes for O(1) fast lookup
                 const existingCodes = new Set(ALL_ROWS.map(r => r.code));
                 const seenInCSV = new Set();
 
@@ -354,13 +369,11 @@
                         continue; 
                     }
 
-                    // Check if duplicate in Database
                     if (existingCodes.has(code)) {
                         duplicateCount++;
                         continue;
                     }
 
-                    // Check if duplicate within the CSV itself
                     if (seenInCSV.has(code)) {
                         internalDuplicateCount++;
                         continue;
@@ -387,10 +400,8 @@
                     return;
                 }
 
-                // Store for later execution
                 pendingImportRecords = records;
 
-                // Show confirmation modal
                 showImportConfirmation({
                     total: totalParsed,
                     invalid: invalidCount,
@@ -423,8 +434,54 @@
     }
 
     function closeImportModal() {
-        document.getElementById('importConfirmModal').classList.remove('active');
+        const modal = document.getElementById('importConfirmModal');
+        modal.classList.remove('active');
+        
+        // Reset UI state for next time
+        document.getElementById('importStats').style.display = 'block';
+        document.getElementById('importProgressArea').style.display = 'none';
+        
+        const confirmBtn = modal.querySelector('.btn.primary');
+        if(confirmBtn) {
+            confirmBtn.style.display = 'inline-flex';
+            confirmBtn.textContent = '✅ Confirm Import';
+        }
+        
+        const cancelBtn = modal.querySelector('.btn[onclick="closeImportModal()"]');
+        if(cancelBtn) {
+            cancelBtn.style.display = 'inline-flex';
+            cancelBtn.textContent = '❌ Cancel';
+            cancelBtn.style.background = 'rgba(239, 68, 68, 0.2)';
+            cancelBtn.style.borderColor = '#ef4444';
+            cancelBtn.style.color = '#ef4444';
+        }
+        
         pendingImportRecords = [];
+    }
+
+    // --- PROFESSIONAL "DIVIDE & CONQUER" INSERT LOGIC ---
+    // This guarantees that unique records are saved even if duplicates exist in the batch.
+    async function insertRobustly(records, onBatchSuccess, onRecordFail) {
+        if (records.length === 0) return;
+        
+        // 1. Try to insert the whole chunk at once (Fastest method)
+        const { error } = await supabaseClient.from('oracle').insert(records);
+        
+        if (!error) {
+            onBatchSuccess(records.length);
+            return;
+        }
+        
+        // 2. If it's a single record and it failed, it's definitely a bad record (duplicate/invalid)
+        if (records.length === 1) {
+            onRecordFail();
+            return;
+        }
+        
+        // 3. Divide and Conquer: Split the chunk in half and try again
+        const mid = Math.floor(records.length / 2);
+        await insertRobustly(records.slice(0, mid), onBatchSuccess, onRecordFail);
+        await insertRobustly(records.slice(mid), onBatchSuccess, onRecordFail);
     }
 
     async function executeImport() {
@@ -433,34 +490,50 @@
             return;
         }
 
-        closeImportModal();
-        setStatus(`Importing ${pendingImportRecords.length} new records...`, true);
+        // Hide initial stats and buttons, show progress
+        document.getElementById('importStats').style.display = 'none';
+        document.querySelector('#importConfirmModal .btn.primary').style.display = 'none';
+        const cancelBtn = document.querySelector('#importConfirmModal .btn[onclick="closeImportModal()"]');
+        cancelBtn.style.display = 'none';
+        document.getElementById('importProgressArea').style.display = 'block';
 
-        const chunkSize = 500;
+        const total = pendingImportRecords.length;
         let successCount = 0;
         let errorCount = 0;
+        const chunkSize = 500; // Process in large chunks for speed
 
-        for (let i = 0; i < pendingImportRecords.length; i += chunkSize) {
+        for (let i = 0; i < total; i += chunkSize) {
             const chunk = pendingImportRecords.slice(i, i + chunkSize);
             
-            // FIX: Added { ignoreDuplicates: true }
-            // This ensures that if a record in the chunk violates a unique constraint, 
-            // it is skipped instead of failing the entire chunk of 500 records.
-            const { data, error } = await supabaseClient.from('oracle').insert(chunk, { ignoreDuplicates: true });
-
-            if (error) {
-                console.error('Chunk import error:', error);
-                errorCount += chunk.length;
-            } else {
-                // 'data' contains only the successfully inserted records
-                successCount += data ? data.length : 0;
-            }
+            // Use the robust divide & conquer inserter
+            await insertRobustly(
+                chunk,
+                (count) => { successCount += count; },
+                () => { errorCount++; }
+            );
             
-            setStatus(`Importing... ${Math.min(i + chunkSize, pendingImportRecords.length)} / ${pendingImportRecords.length}`, true);
+            // Update Progress UI in real-time
+            const processed = Math.min(i + chunkSize, total);
+            const percent = Math.round((processed / total) * 100);
+            document.getElementById('progressBarFill').style.width = `${percent}%`;
+            document.getElementById('progressPercent').textContent = `${percent}%`;
+            document.getElementById('progressStatus').textContent = `Importing... ${processed} / ${total}`;
+            document.getElementById('progressSuccess').textContent = successCount;
+            document.getElementById('progressErrors').textContent = errorCount;
         }
 
-        const msg = `Import complete! ${successCount} records added.` + (errorCount > 0 ? ` ${errorCount} failed.` : '');
-        showToast(msg, errorCount > 0 ? 'error' : 'success');
+        // Finalize UI
+        document.getElementById('progressStatus').textContent = '✅ Import Complete!';
+        document.getElementById('progressStatus').style.color = 'var(--success)';
+        
+        // Show close button again
+        cancelBtn.style.display = 'inline-flex';
+        cancelBtn.textContent = '✅ Finish & Close';
+        cancelBtn.style.background = 'rgba(16, 185, 129, 0.2)';
+        cancelBtn.style.borderColor = '#10b981';
+        cancelBtn.style.color = '#10b981';
+
+        showToast(`Import finished! ${successCount} added, ${errorCount} duplicates skipped.`, errorCount > 0 ? 'info' : 'success');
         
         pendingImportRecords = [];
         loadData(); // Refresh data to update UI
@@ -692,14 +765,12 @@
       ['q1', 'q2', 'q3', 'q4'].forEach(id => document.getElementById(id).addEventListener('input', debouncedFilter));
       document.getElementById('stockOnly').addEventListener('change', filterNow);
       
-      // CSV Import Event Listener
       document.getElementById('csvFileInput').addEventListener('change', (e) => {
           const file = e.target.files[0];
           if (file) importCSV(file);
           e.target.value = ''; 
       });
 
-      // Handle clicking outside modals
       window.onclick = function(event) {
         const modal1 = document.getElementById('recordModal');
         const modal2 = document.getElementById('importConfirmModal');
