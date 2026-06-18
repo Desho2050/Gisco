@@ -217,8 +217,8 @@
       </div>
     </div>
     <div class="actions-top">
-      <input type="file" id="localFile" accept=".xlsx,.xls" style="display:none" />
-      <button class="btn" onclick="document.getElementById('localFile').click()">📂 Load Excel</button>
+      <input type="file" id="localFile" accept=".csv" style="display:none" />
+      <button class="btn" onclick="document.getElementById('localFile').click()">📂 Load CSV</button>
       <button class="btn primary" onclick="window.print()">🖨️ Print Report</button>
       <a href="index.html" class="btn">⬅ Home</a>
     </div>
@@ -300,7 +300,7 @@
     };
     const setLang = (lang) => { localStorage.setItem('lang', lang); applyLang(lang); };
 
-    const excelPath = 'Materials.xlsx';
+    const excelPath = 'materials.csv'; // Updated to CSV
     let ALL_DATA = [];
 
     const FIELD_ALIASES = {
@@ -403,13 +403,14 @@
 
     function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
 
+    // Updated to read CSV as text instead of arrayBuffer
     async function loadExcel(){
       try {
         showLoader(true);
         const res = await fetch(excelPath + '?ts=' + Date.now());
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-        const buf = await res.arrayBuffer();
-        const wb = XLSX.read(buf, { type: 'array' });
+        const text = await res.text(); // Read as text for CSV
+        const wb = XLSX.read(text, { type: 'string' }); // Parse as string
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
         ALL_DATA = json.map(buildRow);
@@ -423,12 +424,13 @@
       }
     }
 
+    // Updated to read CSV as text instead of arrayBuffer
     async function loadLocalFile(file){
       if (!file) return;
       showLoader(true);
       try {
-        const buf = await file.arrayBuffer();
-        const wb = XLSX.read(buf, { type: 'array' });
+        const text = await file.text(); // Read as text for CSV
+        const wb = XLSX.read(text, { type: 'string' }); // Parse as string
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
         ALL_DATA = json.map(buildRow);
