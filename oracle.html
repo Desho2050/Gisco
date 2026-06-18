@@ -443,14 +443,17 @@
         for (let i = 0; i < pendingImportRecords.length; i += chunkSize) {
             const chunk = pendingImportRecords.slice(i, i + chunkSize);
             
-            // We use standard insert since we already filtered out duplicates
-            const { error } = await supabaseClient.from('oracle').insert(chunk);
+            // FIX: Added { ignoreDuplicates: true }
+            // This ensures that if a record in the chunk violates a unique constraint, 
+            // it is skipped instead of failing the entire chunk of 500 records.
+            const { data, error } = await supabaseClient.from('oracle').insert(chunk, { ignoreDuplicates: true });
 
             if (error) {
                 console.error('Chunk import error:', error);
                 errorCount += chunk.length;
             } else {
-                successCount += chunk.length;
+                // 'data' contains only the successfully inserted records
+                successCount += data ? data.length : 0;
             }
             
             setStatus(`Importing... ${Math.min(i + chunkSize, pendingImportRecords.length)} / ${pendingImportRecords.length}`, true);
