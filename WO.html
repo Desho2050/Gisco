@@ -618,15 +618,15 @@ table {
 #dataTable col.col-freestand-5,
 #dataTable col.col-freestand-8,
 #dataTable col.col-air-curtains { width: 60px; }
-#dataTable col.col-amount { width: 120px; }
+#dataTable col.col-amount { width: 170px; }
 #dataTable col.col-start-date,
 #dataTable col.col-end-date { width: 100px; }
 #dataTable col.col-remain-days { width: 100px; }
 #dataTable col.col-percentage { width: 110px; }
-#dataTable col.col-lpo,
+#dataTable col.col-lpo{ width: 210px; }
 #dataTable col.col-do,
 #dataTable col.col-wo-pdf { width: 90px; }
-#dataTable col.col-cost { width: 130px; }
+#dataTable col.col-cost { width: 170px; }
 
 thead th {
   background: var(--col-meta);
@@ -1318,7 +1318,7 @@ input[type="date"] { color-scheme: dark; }
       <div class="card">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-main);"></div>
         <div class="card-icon" style="background:var(--gradient-main);"><i class="fas fa-coins"></i></div>
-        <div class="title">Total Cost (No VAT)</div>
+        <div class="title">Work Order Total Amount</div>
         <div class="value" id="statTotalCostNoVat" style="font-size:20px;">0</div>
         <div class="cost-sub" id="statCostNoVat"></div>
       </div>
@@ -1419,7 +1419,7 @@ input[type="date"] { color-scheme: dark; }
           <th class="th-freestand">Stand 5T</th>
           <th class="th-freestand">Stand 8T</th>
           <th class="th-aircurtain">Air Curtain</th>
-          <th class="th-meta">Amount</th>
+          <th class="th-meta">WO Amount</th>
           <th class="th-meta">Start</th>
           <th class="th-meta">End</th>
           <th class="th-meta">Days Left</th>
@@ -1427,7 +1427,7 @@ input[type="date"] { color-scheme: dark; }
           <th class="th-meta">LPO</th>
           <th class="th-meta">DO</th>
           <th class="th-meta">WO</th>
-          <th class="th-meta">Cost</th>
+          <th class="th-meta">LPO Cost</th>
           <th class="th-meta">Actions</th>
         </tr>
       </thead>
@@ -1585,7 +1585,7 @@ function percentColor(p) {
   return '#ef4444';
 }
 
-const AED_FORMATTER = new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const AED_FORMATTER = new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', minimumFractionDigits: 0, maximumFractionDigits: 0 });
 function formatAED(value) {
   const n = Number(value);
   return Number.isFinite(n) ? AED_FORMATTER.format(n) : 'AED 0.00';
@@ -2074,11 +2074,11 @@ function renderRows(rows) {
           td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} (${lpoRaw}) ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
           handled = true;
         } else { td.textContent = ''; handled = true; }
-      } else if (h.key === 'cost') {
+           } else if (h.key === 'cost' || h.key === 'amount') {
         const v = row[h.key];
         td.textContent = isNumericOnly(v) ? formatAED(Number(v)) : String(v ?? '');
         td.style.fontWeight = '700';
-        td.style.color = '#10b981';
+        if (h.key === 'cost') td.style.color = '#10b981'; // Keeps the green color only for the 'Cost' column
         handled = true;
       } else {
         val = row[h.key] ?? '';
@@ -2259,7 +2259,7 @@ function renderStats(rows) {
   const c = computeCounts(rows);
   let totalCostNoVat = 0;
   rows.forEach(r => {
-    const v = r.cost;
+    const v = r.amount;
     if (isNumericOnly(v)) totalCostNoVat += Number(v);
   });
   const byId = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = String(val); };
