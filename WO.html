@@ -62,6 +62,7 @@
   --modal-bg: #0f0f2a;
   --toast-bg: rgba(15, 15, 42, 0.95);
   --tooltip-bg: rgba(15, 15, 42, 0.95);
+  --table-border: rgba(255, 255, 255, 0.15); /* Clearer grid for dark mode */
 }
 
 [data-theme="light"] {
@@ -97,6 +98,7 @@
   --modal-bg: #ffffff;
   --toast-bg: rgba(255, 255, 255, 0.95);
   --tooltip-bg: rgba(26, 26, 46, 0.95);
+  --table-border: rgba(0, 0, 0, 0.15); /* Clearer grid for light mode */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -619,13 +621,13 @@ table {
 #dataTable col.col-freestand-8,
 #dataTable col.col-air-curtains { width: 60px; }
 #dataTable col.col-amount { width: 170px; }
-#dataTable col.col-start-date,
-#dataTable col.col-end-date { width: 100px; }
+#dataTable col.col-start-date{ width: 170px; }
+#dataTable col.col-end-date { width: 170px; }
 #dataTable col.col-remain-days { width: 100px; }
 #dataTable col.col-percentage { width: 110px; }
 #dataTable col.col-lpo{ width: 210px; }
-#dataTable col.col-do,
-#dataTable col.col-wo-pdf { width: 90px; }
+#dataTable col.col-do{ width: 210px; }
+#dataTable col.col-wo-pdf { width: 120px; }
 #dataTable col.col-cost { width: 170px; }
 
 thead th {
@@ -642,7 +644,16 @@ thead th {
   text-align: center;
   white-space: normal;
   overflow-wrap: anywhere;
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--table-border);
+  border-right: 1px solid var(--table-border); /* Added vertical border */
+}
+thead th:last-child {
+  border-right: none; /* Prevent double border on the far right edge */
+}
+
+/* ===== COLUMN TOOLTIP STYLES ===== */
+thead th[data-tooltip] {
+  cursor: help; /* Indicates to the user that there is more info */
 }
 
 .th-meta { background: var(--col-meta); }
@@ -658,7 +669,8 @@ thead th {
 
 /* ===== COMPACT ROWS ===== */
 tbody td {
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--table-border);
+  border-right: 1px solid var(--table-border); /* Added vertical border */
   padding: 3px 4px;
   text-align: center;
   font-size: 11px;
@@ -669,6 +681,9 @@ tbody td {
   transition: background 0.15s;
   color: var(--text-primary);
   line-height: 1.25;
+}
+tbody td:last-child {
+  border-right: none; /* Prevent double border on the far right edge */
 }
 
 #dataTable tbody tr {
@@ -1398,37 +1413,37 @@ input[type="date"] { color-scheme: dark; }
       </colgroup>
       <thead>
         <tr>
-          <th class="th-meta">WO NO.</th>
-          <th class="th-meta">CAMP</th>
-          <th class="th-meta">LOCATION</th>
-          <th class="th-split">Split 1.5T</th>
-          <th class="th-split">Split 2T</th>
-          <th class="th-split">Split 2.5T</th>
-          <th class="th-split">Split 3T</th>
-          <th class="th-window">Window 2T</th>
-          <th class="th-cooler">Cooler</th>
-          <th class="th-used">Used AC</th>
-          <th class="th-fridge">Fridge</th>
-          <th class="th-freezer">Freezer</th>
-          <th class="th-package">Pkg 8T</th>
-          <th class="th-package">Pkg 10T</th>
-          <th class="th-package">Pkg 12T</th>
-          <th class="th-package">Pkg 15T</th>
-          <th class="th-package">Pkg 20T</th>
-          <th class="th-package">Pkg 25T</th>
-          <th class="th-freestand">Stand 5T</th>
-          <th class="th-freestand">Stand 8T</th>
-          <th class="th-aircurtain">Air Curtain</th>
-          <th class="th-meta">WO Amount</th>
-          <th class="th-meta">Start</th>
-          <th class="th-meta">End</th>
-          <th class="th-meta">Days Left</th>
-          <th class="th-meta">Progress</th>
-          <th class="th-meta">LPO</th>
-          <th class="th-meta">DO</th>
-          <th class="th-meta">WO</th>
-          <th class="th-meta">LPO Cost</th>
-          <th class="th-meta">Actions</th>
+          <th class="th-meta" data-tooltip="Work Order Number" tabindex="0">WO NO.</th>
+          <th class="th-meta" data-tooltip="Camp Name" tabindex="0">CAMP</th>
+          <th class="th-meta" data-tooltip="Location Details" tabindex="0">LOCATION</th>
+          <th class="th-split" data-tooltip="Split 1.5 Ton" tabindex="0">Split 1.5T</th>
+          <th class="th-split" data-tooltip="Split 2 Ton" tabindex="0">Split 2T</th>
+          <th class="th-split" data-tooltip="Split 2.5 Ton" tabindex="0">Split 2.5T</th>
+          <th class="th-split" data-tooltip="Split 3 Ton" tabindex="0">Split 3T</th>
+          <th class="th-window" data-tooltip="Window 2 Ton" tabindex="0">Window 2T</th>
+          <th class="th-cooler" data-tooltip="Cooler Unit" tabindex="0">Cooler</th>
+          <th class="th-used" data-tooltip="Used AC Unit" tabindex="0">Used AC</th>
+          <th class="th-fridge" data-tooltip="Fridge Unit" tabindex="0">Fridge</th>
+          <th class="th-freezer" data-tooltip="Freezer Unit" tabindex="0">Freezer</th>
+          <th class="th-package" data-tooltip="Package 8 Ton" tabindex="0">Pkg 8T</th>
+          <th class="th-package" data-tooltip="Package 10 Ton" tabindex="0">Pkg 10T</th>
+          <th class="th-package" data-tooltip="Package 12 Ton" tabindex="0">Pkg 12T</th>
+          <th class="th-package" data-tooltip="Package 15 Ton" tabindex="0">Pkg 15T</th>
+          <th class="th-package" data-tooltip="Package 20 Ton" tabindex="0">Pkg 20T</th>
+          <th class="th-package" data-tooltip="Package 25 Ton" tabindex="0">Pkg 25T</th>
+          <th class="th-freestand" data-tooltip="Free Stand 5 Ton" tabindex="0">Stand 5T</th>
+          <th class="th-freestand" data-tooltip="Free Stand 8 Ton" tabindex="0">Stand 8T</th>
+          <th class="th-aircurtain" data-tooltip="Air Curtain Unit" tabindex="0">Air Curtain</th>
+          <th class="th-meta" data-tooltip="Work Order Amount" tabindex="0">WO Amount</th>
+          <th class="th-meta" data-tooltip="Start Date" tabindex="0">Start</th>
+          <th class="th-meta" data-tooltip="End Date" tabindex="0">End</th>
+          <th class="th-meta" data-tooltip="Remaining Days" tabindex="0">Days Left</th>
+          <th class="th-meta" data-tooltip="Work Order Progress" tabindex="0">Progress</th>
+          <th class="th-meta" data-tooltip="Local Purchase Order" tabindex="0">LPO</th>
+          <th class="th-meta" data-tooltip="Delivery Order" tabindex="0">DO</th>
+          <th class="th-meta" data-tooltip="Work Order Document" tabindex="0">WO</th>
+          <th class="th-meta" data-tooltip="LPO Cost without VAT" tabindex="0">LPO Cost</th>
+          <th class="th-meta" data-tooltip="Row Actions" tabindex="0">Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -1942,18 +1957,7 @@ function renderRows(rows) {
     tr.dataset.location = location;
     const savedColor = getStoredRowColor(woNo);
     if (savedColor) tr.style.backgroundColor = savedColor;
-    tr.addEventListener('dblclick', (e) => {
-      if (tooltip) {
-        tooltip.textContent = `${woNo} • Camp: ${camp} • Location: ${location}`;
-        tooltip.style.display = 'block';
-        const left = e.pageX - tooltip.offsetWidth - 10;
-        tooltip.style.left = `${Math.max(0, left)}px`;
-        tooltip.style.top = `${e.pageY}px`;
-        clearTimeout(tooltip.hideTimeout);
-        tooltip.hideTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 3000);
-      }
-    });
-
+   
     const RENDER_HEADERS = [
       { label: 'WO NO.', key: 'wo_no' },
       { label: 'CAMP', key: 'camp' },
@@ -2376,6 +2380,10 @@ resetFiltersBtn.addEventListener('click', () => {
   setStatus('All filters reset.');
 });
 
+// ===== COLUMN TOOLTIPS LOGIC =====
+// ===== COLUMN TOOLTIPS LOGIC =====
+
+
 async function loadFromSupabase() {
   setStatus('Loading data from database...');
   try {
@@ -2394,6 +2402,7 @@ async function loadFromSupabase() {
 document.addEventListener('DOMContentLoaded', async () => {
   await loadRemotePdfMap();
   loadFromSupabase();
+  initColumnTooltips(); // Initialize tooltips for column headers
   if (printBtn) printBtn.addEventListener('click', () => window.print());
 });
 
@@ -2403,6 +2412,54 @@ document.addEventListener('click', (e) => {
     tooltip.style.display = 'none';
     clearTimeout(tooltip.hideTimeout);
   }
+});
+// ===== COLUMN TOOLTIP ON DOUBLE CLICK =====
+document.getElementById('dataTable').addEventListener('dblclick', function(e) {
+  const cell = e.target.closest('td, th');
+  if (!cell) return;
+  
+  e.stopPropagation(); // Prevent other double-click handlers
+  
+  const row = cell.closest('tr');
+  const cellIndex = Array.from(row.children).indexOf(cell);
+  if (cellIndex === -1) return;
+  
+  // Get the corresponding header to find the data-tooltip
+  const th = document.querySelector(`#dataTable thead tr th:nth-child(${cellIndex + 1})`);
+  if (!th) return;
+  
+  const tooltipText = th.getAttribute('data-tooltip');
+  if (!tooltipText) return;
+  
+  const tooltip = document.getElementById('customTooltip');
+  if (!tooltip) return;
+  
+  clearTimeout(tooltip.hideTimeout);
+  tooltip.textContent = tooltipText;
+  tooltip.style.display = 'block';
+  
+  // FIX: Use clientX and clientY because the tooltip uses 'position: fixed'
+  // pageX/pageY include scroll offset, which breaks fixed positioning!
+  let left = e.clientX + 15;
+  let top = e.clientY + 15;
+  
+  // Prevent going off-screen
+  requestAnimationFrame(() => {
+    const rect = tooltip.getBoundingClientRect();
+    if (left + rect.width > window.innerWidth - 10) {
+      left = e.clientX - rect.width - 15;
+    }
+    if (top + rect.height > window.innerHeight - 10) {
+      top = e.clientY - rect.height - 15;
+    }
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+  });
+  
+  // Auto-hide after 3 seconds
+  tooltip.hideTimeout = setTimeout(() => {
+    tooltip.style.display = 'none';
+  }, 3000);
 });
 </script>
 </body>
