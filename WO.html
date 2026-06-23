@@ -2593,7 +2593,11 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
       13: 'FF94A3B8', // Freezer (Light Slate)
       14: 'FF3B82F6', 15: 'FF3B82F6', 16: 'FF3B82F6', 17: 'FF3B82F6', 18: 'FF3B82F6', 19: 'FF3B82F6', // Package (Blue)
       20: 'FFA855F7', 21: 'FFA855F7', // Free Stand (Purple)
-      22: 'FFF59E0B' // Air Curtain (Amber)
+      22: 'FFF59E0B', // Air Curtain (Amber)
+      2: 'FF1E293B',// Meta (Dark Slate)
+      23: 'FF1E305B',// Meta (Dark Slate)
+      24: 'FF1E293B',// Meta (Dark Slate)
+      25: 'FF1E293B',// Meta (Dark Slate)
     };
 
     data.forEach((row, idx) => {
@@ -2648,9 +2652,9 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
         const cellValue = cell.value;
         const strVal = String(cellValue).trim();
         const isNumber = strVal !== '' && !isNaN(Number(strVal));
-        
+        const iswoCol = [2,23,24,25].includes(c); // WO No, WO Amount, Start Date, End Date columns
         // Apply colored background for equipment counts
-        if (colColors[c] && isNumber) {
+        if (colColors[c] && isNumber || iswoCol) {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colColors[c] } };
           cell.font = { size: 10, name: 'Inter', color: { argb: 'FFFFFFFF' }, bold: true }; // White bold text
         } else if (idx % 2 === 1) {
