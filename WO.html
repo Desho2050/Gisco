@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 <style>
 :root {
   --col-split: #16a34a;
@@ -1190,6 +1191,9 @@ input[type="date"] { color-scheme: dark; }
     </button>
     <button class="btn warning" id="showAllBtn"><i class="fas fa-eye"></i> Show All</button>
     <button class="btn print-btn" id="printBtn"><i class="fas fa-print"></i> Print</button>
+    <button class="btn" id="exportExcelBtn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);">
+  <i class="fas fa-file-excel"></i> Export Excel
+</button>
     <a class="btn" href="index.html"><i class="fas fa-arrow-left"></i> Dashboard</a>
   </div>
 </header>
@@ -2460,6 +2464,226 @@ document.getElementById('dataTable').addEventListener('dblclick', function(e) {
   tooltip.hideTimeout = setTimeout(() => {
     tooltip.style.display = 'none';
   }, 3000);
+});
+// ===== EXPORT TO EXCEL =====
+document.getElementById('exportExcelBtn').addEventListener('click', async () => {
+  if (typeof ExcelJS === 'undefined') {
+    setStatus('ExcelJS library is still loading. Please wait a moment.', true);
+    return;
+  }
+  
+  setStatus('Generating Excel file...');
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Work Orders', {
+      views: [{ state: 'frozen', ySplit: 2 }] // Freezes the top 2 header rows
+    });
+
+    // Set column widths
+    worksheet.columns = [
+      { width: 6 }, { width: 12 }, { width: 15 }, { width: 20 },
+      { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 },
+      { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 },
+      { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 },
+      { width: 9 }, { width: 9 },
+      { width: 12 },
+      { width: 14 }, { width: 12 }, { width: 12 }, { width: 10 }, { width: 10 },
+      { width: 15 }, { width: 15 }, { width: 15 }, { width: 14 }
+    ];
+
+    // Row 1: Group Headers
+    const row1 = worksheet.addRow([
+      'S.No', 'WORK ORDER', 'CAMP', 'LOCATION',
+      'SPLIT', '', '', '', 
+      'WINDOW', 'COOLER', 'USED AC', 'FRIDGE', 'FREEZER',
+      'PACKAGE', '', '', '', '', '', 
+      'FREE STAND', '', 
+      'AIR CURTAIN',
+      'WO AMOUNT', 'START DATE', 'END DATE', 'DAYS LEFT', 'PROGRESS',
+      'LPO', 'DO', 'WO', 'LPO COST'
+    ]);
+
+    // Row 2: Sub Headers
+    const row2 = worksheet.addRow([
+      '', '', '', '',
+      '1.5 TON', '2 TON', '2.5 TON', '3 TON',
+      '2 TON', '', '', '', '',
+      '8 TON', '10 TON', '12 TON', '15 TON', '20 TON', '25 TON',
+      '5 TON', '8 TON',
+      '',
+      '', '', '', '', '',
+      '', '', '', ''
+    ]);
+
+    // Merge cells for Row 1 to match PDF layout
+    worksheet.mergeCells('A1:A2'); worksheet.mergeCells('B1:B2'); 
+    worksheet.mergeCells('C1:C2'); worksheet.mergeCells('D1:D2');
+    worksheet.mergeCells('E1:H1'); // SPLIT
+    worksheet.mergeCells('I1:I2'); worksheet.mergeCells('J1:J2'); 
+    worksheet.mergeCells('K1:K2'); worksheet.mergeCells('L1:L2'); worksheet.mergeCells('M1:M2');
+    worksheet.mergeCells('N1:S1'); // PACKAGE
+    worksheet.mergeCells('T1:U1'); // FREE STAND
+    worksheet.mergeCells('V1:V2');
+    worksheet.mergeCells('W1:W2'); worksheet.mergeCells('X1:X2'); 
+    worksheet.mergeCells('Y1:Y2'); worksheet.mergeCells('Z1:Z2'); worksheet.mergeCells('AA1:AA2');
+    worksheet.mergeCells('AB1:AB2'); worksheet.mergeCells('AC1:AC2'); 
+    worksheet.mergeCells('AD1:AD2'); worksheet.mergeCells('AE1:AE2');
+
+    // Styles
+    const headerFill = (color) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: color } });
+    const headerFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10, name: 'Inter' };
+    const headerAlignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    const borderStyle = {
+      top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+      left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+      bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+      right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+    };
+
+    const applyHeaderStyle = (row, colStart, colEnd, color) => {
+      for (let c = colStart; c <= colEnd; c++) {
+        const cell = row.getCell(c);
+        cell.fill = headerFill(color);
+        cell.font = headerFont;
+        cell.alignment = headerAlignment;
+        cell.border = borderStyle;
+      }
+    };
+
+    // Apply colors matching the app/PDF
+    applyHeaderStyle(row1, 1, 4, 'FF1E293B'); // Meta
+    applyHeaderStyle(row1, 5, 8, 'FF16A34A'); // Split
+    applyHeaderStyle(row1, 9, 9, 'FFC022C5'); // Window
+    applyHeaderStyle(row1, 10, 10, 'FF06B6D4'); // Cooler
+    applyHeaderStyle(row1, 11, 11, 'FFEF4444'); // Used
+    applyHeaderStyle(row1, 12, 12, 'FF64748B'); // Fridge
+    applyHeaderStyle(row1, 13, 13, 'FF94A3B8'); // Freezer
+    applyHeaderStyle(row1, 14, 19, 'FF3B82F6'); // Package
+    applyHeaderStyle(row1, 20, 21, 'FFA855F7'); // Free Stand
+    applyHeaderStyle(row1, 22, 22, 'FFF59E0B'); // Air Curtain
+    applyHeaderStyle(row1, 23, 31, 'FF1E293B'); // Meta
+
+    applyHeaderStyle(row2, 1, 4, 'FF1E293B');
+    applyHeaderStyle(row2, 5, 8, 'FF16A34A');
+    applyHeaderStyle(row2, 9, 9, 'FFC022C5');
+    applyHeaderStyle(row2, 10, 10, 'FF06B6D4');
+    applyHeaderStyle(row2, 11, 11, 'FFEF4444');
+    applyHeaderStyle(row2, 12, 12, 'FF64748B');
+    applyHeaderStyle(row2, 13, 13, 'FF94A3B8');
+    applyHeaderStyle(row2, 14, 19, 'FF3B82F6');
+    applyHeaderStyle(row2, 20, 21, 'FFA855F7');
+    applyHeaderStyle(row2, 22, 22, 'FFF59E0B');
+    applyHeaderStyle(row2, 23, 31, 'FF1E293B');
+    
+    row1.height = 28;
+    row2.height = 22;
+
+        // Add Data Rows
+    const data = getFilteredRows(); // Exports currently filtered data
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Define colors for equipment columns to match the web app badges/PDF
+    const colColors = {
+      5: 'FF16A34A', 6: 'FF16A34A', 7: 'FF16A34A', 8: 'FF16A34A', // Split (Green)
+      9: 'FFC022C5', // Window (Purple)
+      10: 'FF06B6D4', // Cooler (Cyan)
+      11: 'FFEF4444', // Used (Red)
+      12: 'FF64748B', // Fridge (Slate)
+      13: 'FF94A3B8', // Freezer (Light Slate)
+      14: 'FF3B82F6', 15: 'FF3B82F6', 16: 'FF3B82F6', 17: 'FF3B82F6', 18: 'FF3B82F6', 19: 'FF3B82F6', // Package (Blue)
+      20: 'FFA855F7', 21: 'FFA855F7', // Free Stand (Purple)
+      22: 'FFF59E0B' // Air Curtain (Amber)
+    };
+
+    data.forEach((row, idx) => {
+      const startDate = parseDate(row.start_date);
+      const endDate = parseDate(row.end_date);
+      const daysLeft = endDate ? Math.ceil((endDate - today) / 86400000) : '';
+      const progress = parsePercentage(row.wo_percentage);
+
+      const dataRow = worksheet.addRow([
+        idx + 1,
+        row.wo_no || ' ' ,
+        row.camp || ' ',
+        row.location || ' ',
+        row.split_1_5 || ' ',
+        row.split_2 || ' ',
+        row.split_2_5 || ' ',
+        row.split_3 || ' ',
+        row.window_2 || ' ',
+        row.cooler || ' ',
+        row.used_ac || ' ',
+        row.fridge || ' ',
+        row.freezer || ' ',
+        row.pkg_8 || ' ',
+        row.pkg_10 || ' ',
+        row.pkg_12 || ' ',
+        row.pkg_15 || ' ',
+        row.pkg_20 || ' ',
+        row.pkg_25 || ' ',
+        row.free_5ton || ' ',
+        row.free_8ton || ' ',
+        row.air_curtains || ' ',
+        isNumericOnly(row.amount) ? Number(row.amount) : (row.amount || ''),
+        startDate || '',
+        endDate || '',
+        daysLeft,
+        progress !== null ? progress / 100 : '', // Excel percentage format
+        row.lpo || '',
+        row.do_doc || '',
+        row.wo_pdf || '',
+        isNumericOnly(row.cost) ? Number(row.cost) : (row.cost || '')
+      ]);
+
+      const dataFont = { size: 10, name: 'Inter' };
+      const dataAlignment = { horizontal: 'center', vertical: 'middle' };
+      
+      for (let c = 1; c <= 31; c++) {
+        const cell = dataRow.getCell(c);
+        cell.font = dataFont;
+        cell.alignment = dataAlignment;
+        cell.border = borderStyle;
+        
+        const cellValue = cell.value;
+        const strVal = String(cellValue).trim();
+        const isNumber = strVal !== '' && !isNaN(Number(strVal));
+        
+        // Apply colored background for equipment counts
+        if (colColors[c] && isNumber) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colColors[c] } };
+          cell.font = { size: 10, name: 'Inter', color: { argb: 'FFFFFFFF' }, bold: true }; // White bold text
+        } else if (idx % 2 === 1) {
+          // Alternate row background color for other cells
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+        }
+      }
+      
+      // Specific Cell Formats
+      dataRow.getCell(23).numFmt = '#,##0.00'; // WO Amount
+      dataRow.getCell(24).numFmt = 'dd/mm/yyyy'; // Start Date
+      dataRow.getCell(25).numFmt = 'dd/mm/yyyy'; // End Date
+      dataRow.getCell(27).numFmt = '0%'; // Progress
+      dataRow.getCell(31).numFmt = '#,##0.00'; // LPO Cost
+    });
+
+    // Generate and download the file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Work_Orders_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    setStatus(`Exported ${data.length} rows to Excel successfully!`);
+  } catch (err) {
+    console.error(err);
+    setStatus('Failed to export Excel file.', true);
+  }
 });
 </script>
 </body>
