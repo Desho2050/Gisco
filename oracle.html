@@ -28,7 +28,7 @@
     .logo-mark { min-width: 80px; height: 40px; padding: 0 10px; background: linear-gradient(135deg, var(--brand), var(--accent)); border-radius: 10px; display: grid; place-items: center; font-weight: 800; font-size: 16px; letter-spacing: 1px; color: white; }
     .titles h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px; }
     .titles p { font-size: 0.85rem; color: var(--text-muted); }
-    .actions-top { display: flex; gap: 10px; }
+    .actions-top { display: flex; gap: 10px; flex-wrap: wrap; }
     .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text-main); cursor: pointer; font-size: 0.9rem; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
     .btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
     .btn.primary { background: var(--brand); border-color: var(--brand); color: white; }
@@ -108,7 +108,8 @@
       <button class="btn" onclick="handlePrint()">🖨️ Print</button>
       <input type="file" id="csvFileInput" accept=".csv" style="display:none" />
       <button class="btn" onclick="document.getElementById('csvFileInput').click()">📥 Import CSV</button>
-      <button class="btn" onclick="loadData()">🔄 Refresh</button>
+      <button class="btn" onclick="loadData(true)">🔄 Sync / Refresh</button>
+      <button class="btn" onclick="handleClearCache()" style="border-color: rgba(239, 68, 68, 0.5); color: #ef4444;">🗑️ Clear Cache</button>
       <a href="index.html" class="btn">⬅ Home</a>
     </div>
   </header>
@@ -214,10 +215,78 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let ALL_ROWS = [];
+    let RAW_DATA = []; // Store raw data for caching
     let currentFilteredRows = [];
     let chartInstance = null;
     let renderFrameId = null;
     let pendingImportRecords = [];
+
+    // --- INDEXEDDB CACHE HELPERS ---
+    const DB_NAME = 'gisco_oracle_db';
+    const STORE_NAME = 'materials_cache';
+    const CACHE_KEY = 'oracle_data';
+
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
+                }
+            };
+        });
+    }
+
+    async function saveToCache(data) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.put(data, CACHE_KEY);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function loadFromCache() {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.get(CACHE_KEY);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function clearCacheDB() {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.clear();
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function handleClearCache() {
+        if (!confirm('Are you sure you want to clear the local cache? This will force a reload from the database.')) return;
+        setStatus('Clearing cache...', true);
+        try {
+            await clearCacheDB();
+            RAW_DATA = [];
+            showToast('Local cache cleared successfully!', 'success');
+            loadData(true); // Force reload from DB
+        } catch (err) {
+            console.error(err);
+            showToast('Error clearing cache: ' + err.message, 'error');
+            setStatus('', false);
+        }
+    }
 
     // --- TOAST NOTIFICATION SYSTEM ---
     function showToast(message, type = 'info') {
@@ -460,37 +529,19 @@
     }
 
     // --- PROFESSIONAL "DIVIDE & CONQUER" INSERT LOGIC ---
-    // This guarantees that unique records are saved even if duplicates exist in the batch.
     async function insertRobustly(records, onBatchSuccess, onRecordFail) {
         if (records.length === 0) return;
-        
-        // 1. Try to insert the whole chunk at once (Fastest method)
         const { error } = await supabaseClient.from('oracle').insert(records);
-        
-        if (!error) {
-            onBatchSuccess(records.length);
-            return;
-        }
-        
-        // 2. If it's a single record and it failed, it's definitely a bad record (duplicate/invalid)
-        if (records.length === 1) {
-            onRecordFail();
-            return;
-        }
-        
-        // 3. Divide and Conquer: Split the chunk in half and try again
+        if (!error) { onBatchSuccess(records.length); return; }
+        if (records.length === 1) { onRecordFail(); return; }
         const mid = Math.floor(records.length / 2);
         await insertRobustly(records.slice(0, mid), onBatchSuccess, onRecordFail);
         await insertRobustly(records.slice(mid), onBatchSuccess, onRecordFail);
     }
 
     async function executeImport() {
-        if (pendingImportRecords.length === 0) {
-            closeImportModal();
-            return;
-        }
+        if (pendingImportRecords.length === 0) { closeImportModal(); return; }
 
-        // Hide initial stats and buttons, show progress
         document.getElementById('importStats').style.display = 'none';
         document.querySelector('#importConfirmModal .btn.primary').style.display = 'none';
         const cancelBtn = document.querySelector('#importConfirmModal .btn[onclick="closeImportModal()"]');
@@ -500,19 +551,11 @@
         const total = pendingImportRecords.length;
         let successCount = 0;
         let errorCount = 0;
-        const chunkSize = 500; // Process in large chunks for speed
+        const chunkSize = 500;
 
         for (let i = 0; i < total; i += chunkSize) {
             const chunk = pendingImportRecords.slice(i, i + chunkSize);
-            
-            // Use the robust divide & conquer inserter
-            await insertRobustly(
-                chunk,
-                (count) => { successCount += count; },
-                () => { errorCount++; }
-            );
-            
-            // Update Progress UI in real-time
+            await insertRobustly(chunk, (count) => { successCount += count; }, () => { errorCount++; });
             const processed = Math.min(i + chunkSize, total);
             const percent = Math.round((processed / total) * 100);
             document.getElementById('progressBarFill').style.width = `${percent}%`;
@@ -522,11 +565,8 @@
             document.getElementById('progressErrors').textContent = errorCount;
         }
 
-        // Finalize UI
         document.getElementById('progressStatus').textContent = '✅ Import Complete!';
         document.getElementById('progressStatus').style.color = 'var(--success)';
-        
-        // Show close button again
         cancelBtn.style.display = 'inline-flex';
         cancelBtn.textContent = '✅ Finish & Close';
         cancelBtn.style.background = 'rgba(16, 185, 129, 0.2)';
@@ -534,9 +574,8 @@
         cancelBtn.style.color = '#10b981';
 
         showToast(`Import finished! ${successCount} added, ${errorCount} duplicates skipped.`, errorCount > 0 ? 'info' : 'success');
-        
         pendingImportRecords = [];
-        loadData(); // Refresh data to update UI
+        loadData(true); // Force refresh from DB and update cache
     }
 
     // --- OPTIMIZED RENDERING (PROGRESSIVE CHUNKING) ---
@@ -544,11 +583,9 @@
         if (renderFrameId) { cancelAnimationFrame(renderFrameId); renderFrameId = null; }
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
-        
         document.getElementById('resultCount').textContent = rows.length.toLocaleString();
         document.getElementById('totalCount').textContent = ALL_ROWS.length.toLocaleString();
         updateChart(rows);
-        
         if (rows.length === 0) return;
 
         let index = 0;
@@ -557,13 +594,11 @@
         function renderChunk() {
             let chunkHtml = '';
             const end = Math.min(index + CHUNK_SIZE, rows.length);
-            
             for (let i = index; i < end; i++) {
                 const r = rows[i];
                 const typeDisplay = r.isStock 
                     ? `<span class="stock-badge" style="width:100px">STOCK ITEM</span>` 
                     : `<span class="non-stock">${escapeHtml(r.type)}</span>`;
-                
                 const qtyColor = Number(r.qty) > 0 ? 'var(--success)' : 'var(--text-muted)';
 
                 chunkHtml += `<tr>
@@ -578,15 +613,10 @@
                     </td>
                 </tr>`;
             }
-            
             tbody.insertAdjacentHTML('beforeend', chunkHtml);
             index = end;
-            
-            if (index < rows.length) {
-                renderFrameId = requestAnimationFrame(renderChunk);
-            } else {
-                renderFrameId = null;
-            }
+            if (index < rows.length) { renderFrameId = requestAnimationFrame(renderChunk); } 
+            else { renderFrameId = null; }
         }
         renderChunk();
     }
@@ -628,7 +658,6 @@
             if (hasQ4 && !text.includes(q4)) return false;
             return true;
         });
-        
         currentFilteredRows = filtered;
         renderTable(filtered);
     }
@@ -691,15 +720,23 @@
         }
 
         if (id) {
-            const updatedRow = buildRow(data[0]);
+            const updatedRaw = data[0];
+            const idx = RAW_DATA.findIndex(r => r.id === id);
+            if (idx !== -1) RAW_DATA[idx] = updatedRaw;
+            const updatedRow = buildRow(updatedRaw);
             const index = ALL_ROWS.findIndex(r => r.id === id);
             if (index !== -1) ALL_ROWS[index] = updatedRow;
             showToast('Record updated successfully!', 'success');
         } else {
-            const newRow = buildRow(data[0]);
+            const newRaw = data[0];
+            RAW_DATA.push(newRaw);
+            const newRow = buildRow(newRaw);
             ALL_ROWS.push(newRow);
             showToast('Record added successfully!', 'success');
         }
+
+        // Update cache in background
+        saveToCache(RAW_DATA).catch(err => console.warn('Cache update failed:', err));
 
         ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
         filterNow(); 
@@ -720,6 +757,9 @@
         const { error } = await supabaseClient.from('oracle').delete().eq('id', id);
         if (error) throw error;
         
+        RAW_DATA = RAW_DATA.filter(r => r.id !== id);
+        saveToCache(RAW_DATA).catch(err => console.warn('Cache update failed:', err));
+        
         ALL_ROWS = ALL_ROWS.filter(r => r.id !== id);
         filterNow();
         showToast('Record deleted successfully!', 'success');
@@ -731,34 +771,63 @@
       }
     }
 
-    // --- INITIALIZATION ---
-    async function loadData() {
-      setStatus('Fetching Oracle Data from Supabase...', true);
-      try {
-        let allData = [];
-        let from = 0;
-        const chunkSize = 1000; 
-        
-        while (true) {
-          const { data, error } = await supabaseClient.from('oracle').select('*').order('code', { ascending: true }).range(from, from + chunkSize - 1);
-          if (error) throw error;
-          if (!data || data.length === 0) break;
-          allData = allData.concat(data);
-          if (data.length < chunkSize) break;
-          from += chunkSize;
-        }
+    // --- DATA FETCHING & CACHING LOGIC ---
+    async function fetchAndCacheData() {
+        setStatus('Fetching Oracle Data from Supabase...', true);
+        try {
+            let allData = [];
+            let from = 0;
+            const chunkSize = 1000; 
+            
+            while (true) {
+                const { data, error } = await supabaseClient.from('oracle').select('*').order('code', { ascending: true }).range(from, from + chunkSize - 1);
+                if (error) throw error;
+                if (!data || data.length === 0) break;
+                allData = allData.concat(data);
+                if (data.length < chunkSize) break;
+                from += chunkSize;
+            }
 
-        ALL_ROWS = allData.map(item => buildRow(item));
-        ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
-        setStatus(`Loaded ${ALL_ROWS.length} records successfully.`);
-        filterNow();
-      } catch (e) {
-        console.error(e);
-        showToast('Error loading data: ' + e.message, 'error');
-        document.getElementById('resultCount').textContent = '0';
-      } finally {
-        setStatus('', false);
-      }
+            RAW_DATA = allData;
+            ALL_ROWS = allData.map(item => buildRow(item));
+            ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
+            
+            // Save to local cache in background
+            saveToCache(RAW_DATA).catch(err => console.warn('Failed to save to local cache:', err));
+
+            setStatus(`Loaded ${ALL_ROWS.length} records successfully.`);
+            filterNow();
+            showToast('Data synced with database!', 'success');
+        } catch (e) {
+            console.error(e);
+            showToast('Error loading data: ' + e.message, 'error');
+            document.getElementById('resultCount').textContent = '0';
+        } finally {
+            setStatus('', false);
+        }
+    }
+
+    async function loadData(forceFetch = false) {
+        if (!forceFetch) {
+            try {
+                setStatus('Checking local cache...', true);
+                const cachedData = await loadFromCache();
+                if (cachedData && cachedData.length > 0) {
+                    RAW_DATA = cachedData;
+                    ALL_ROWS = cachedData.map(item => buildRow(item));
+                    ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
+                    filterNow();
+                    showToast(`Loaded ${ALL_ROWS.length} records instantly from local cache.`, 'success');
+                    setStatus(`Ready. (Click 'Sync / Refresh' to fetch latest data)`, false);
+                    return;
+                }
+            } catch (err) {
+                console.warn('Cache load failed, fetching from DB:', err);
+            }
+        }
+        
+        // If no cache or forceFetch is true
+        await fetchAndCacheData();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -778,7 +847,7 @@
         if (event.target === modal2) closeImportModal();
       }
       
-      loadData();
+      loadData(); // Initial load checks cache first
     });
   </script>
 </body>
