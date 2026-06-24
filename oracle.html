@@ -89,8 +89,8 @@
     /* Tablet & Small Desktop */
     @media (max-width: 1024px) { 
       main { grid-template-columns: 1fr; padding: 20px; } 
-      .sidebar { order: 2; } 
-      .data-section { order: 1; } 
+      .sidebar { order: 1; } /* Bring search boxes to the top */
+      .data-section { order: 2; } 
     }
 
     /* Mobile Devices */
@@ -115,6 +115,36 @@
         justify-content: center;
       }
       main { padding: 15px; }
+      
+      /* HORIZONTAL SCROLLABLE SIDEBAR FOR MOBILE */
+      .sidebar {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        gap: 15px !important;
+        padding-bottom: 15px !important;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* Make each panel a swipeable card */
+      .sidebar > div {
+        flex: 0 0 85vw !important; /* Each card takes 85% of screen width */
+        min-width: 280px !important;
+        max-width: 350px !important;
+        scroll-snap-align: start;
+        margin: 0 !important;
+      }
+      
+      /* Reorder so Search Panel is first, then Stats, then Designer Credit */
+      .sidebar > div:nth-child(1) { order: 3; } /* Designer Credit goes to the end */
+      .sidebar > div:nth-child(2) { order: 1; } /* Search Panel comes FIRST */
+      .sidebar > div:nth-child(3) { order: 2; } /* Stats Panel is second */
+      
+      /* Hide scrollbar for a cleaner look */
+      .sidebar::-webkit-scrollbar { display: none; }
+      .sidebar { -ms-overflow-style: none; scrollbar-width: none; }
       
       /* Table tweaks for mobile */
       th, td { padding: 12px 10px; font-size: 0.85rem; }
