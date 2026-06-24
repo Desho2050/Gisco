@@ -52,11 +52,11 @@
     .result-count { font-family: 'JetBrains Mono', monospace; color: var(--brand); font-weight: 700; }
     .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid var(--border); background: rgba(15, 23, 42, 0.4); }
     table { width: 100%; border-collapse: collapse; min-width: 900px; }
-    th { text-align: left; padding: 16px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); position: sticky; top: 0; }
+    th { text-align: left; padding: 16px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: white; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); position: sticky; top: 0; }
     td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: rgba(255,255,255,0.03); }
-    .col-code { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-weight: 600; }
+    .col-code { font-family: 'JetBrains Mono', monospace; color:#00ff22; font-weight: 600; }
     .col-desc { font-weight: 500; color: white; }
     .stock-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
     .non-stock { color: var(--text-muted); font-style: italic; }
@@ -207,12 +207,12 @@
       <div class="titles"><h1>Oracle Materials</h1><p>Intelligent Inventory Search</p></div>
     </div>
     <div class="actions-top">
-      <button class="btn" onclick="handlePrint()">🖨️ Print</button>
+      <button class="btn" onclick="handlePrint()"  style="background-color: #3b82f6;color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">🖨️ Print</button>
       <input type="file" id="csvFileInput" accept=".csv" style="display:none" />
-      <button class="btn" onclick="document.getElementById('csvFileInput').click()">📥 Import CSV</button>
-      <button class="btn" onclick="loadData(true)">🔄 Sync / Refresh</button>
-      <button class="btn" onclick="handleClearCache()" style="border-color: rgba(239, 68, 68, 0.5); color: #ef4444;">🗑️ Clear Cache</button>
-      <a href="index.html" class="btn">⬅ Home</a>
+      <button class="btn" onclick="document.getElementById('csvFileInput').click()" style=" background-color: darkmagenta;color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">📥 Import CSV</button>
+      <button class="btn" onclick="handleClearCache()" style="background-color: #01ce8a; color:black; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">🔄 Sync / Refresh</button>
+     
+      <a href="index.html" class="btn" style="color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);" >⬅ Home</a>
     </div>
   </header>
 
@@ -240,8 +240,8 @@
     <section class="data-section">
       <div class="glass toolbar" style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
         <div style="display:flex; align-items:center; gap:10px;">
-          <span style="color:var(--text-muted)">Results:</span>
-          <span id="resultCount" class="result-count">0</span>
+          <span style="color:white">Results:</span>
+          <span id="resultCount" class="result-count" style="color: white; font-weight: bold; text-shadow: 1px 1px 2px rgb(2, 248, 215);">0</span>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
           <button class="btn primary" onclick="openAddModal()">➕ Add New</button>
@@ -376,13 +376,15 @@
     }
 
     async function handleClearCache() {
-        if (!confirm('Are you sure you want to clear the local cache? This will force a reload from the database.')) return;
+        if (!confirm('Are you sure you want to clear the local cache? This will force a reload from the Server database.')) return;
         setStatus('Clearing cache...', true);
         try {
             await clearCacheDB();
             RAW_DATA = [];
             showToast('Local cache cleared successfully!', 'success');
+            location.reload();
             loadData(true); 
+
         } catch (err) {
             console.error(err);
             showToast('Error clearing cache: ' + err.message, 'error');
@@ -684,7 +686,7 @@
         if (renderFrameId) { cancelAnimationFrame(renderFrameId); renderFrameId = null; }
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
-        document.getElementById('resultCount').textContent = rows.length.toLocaleString();
+        document.getElementById('resultCount').textContent = "(  "+rows.length.toLocaleString() +" )  Items Found";
         document.getElementById('totalCount').textContent = ALL_ROWS.length.toLocaleString();
         updateChart(rows);
         if (rows.length === 0) return;
@@ -873,7 +875,7 @@
 
     // --- DATA FETCHING & CACHING LOGIC ---
     async function fetchAndCacheData() {
-        setStatus('Fetching Oracle Data from Supabase...', true);
+        setStatus('Fetching Oracle Data from Server...', true);
         try {
             let allData = [];
             let from = 0;
