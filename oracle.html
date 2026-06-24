@@ -12,9 +12,10 @@
 
   <style>
     :root {
-      --bg-dark: #00bfa1f5; --bg-card: #25014ef5; --brand: #3b82f6; --accent: #8b5cf6;
+      --bg-dark: #00bfa1f5; --bg-card: #000000f5; --brand: #3b82f6; --accent: #8b5cf6;
       --success: #10b981; --text-main: #f8fafc; --text-muted: #94a3b8;
-      --border: rgba(148, 163, 184, 0.1); --glow: 0 0 20px rgba(59, 130, 246, 0.15);
+      --border: rgba(255, 255, 255, 0.548); --glow: 0 0 20px rgba(154, 193, 252, 0.63);border-radius: 12px;
+
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -37,11 +38,11 @@
     .sidebar { display: flex; flex-direction: column; gap: 20px; }
     .search-panel { padding: 20px; }
     .input-group { margin-bottom: 12px; }
-    .input-group label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+    .input-group label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: white; margin-bottom: 6px; }
     .modern-input { width: 100%; background: rgb(224, 223, 223); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; color: rgb(0, 0, 0); font-family: 'Inter', sans-serif; transition: border-color 0.2s; }
     .modern-input:focus { outline: none; border-color: var(--brand); }
-    .modern-input::placeholder { color: rgba(65, 64, 64, 0.863); }
-    .modern-input:hover { background: rgba(5, 94, 177, 0.596); }
+    .modern-input::placeholder { color: rgba(26, 26, 26, 0.863); }
+    .modern-input:hover { background: rgba(2, 187, 100, 0.596); color:rgb(31, 30, 30)}
     .toggle-container { display: flex; align-items: center; gap: 10px; background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2); cursor: pointer; margin-top: 15px; }
     .toggle-container input { accent-color: var(--success); transform: scale(1.2); }
     .toggle-text { font-size: 0.9rem; font-weight: 600; color: var(--success); }
@@ -58,17 +59,17 @@
     tr:hover td { background: rgba(255,255,255,0.03); }
     .col-code { font-family: 'JetBrains Mono', monospace; color:#00ff22; font-weight: 600; }
     .col-desc { font-weight: 500; color: white; }
-    .stock-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .stock-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: rgb(7, 172, 29); color: black; border: 2px solid rgb(255, 255, 255); box-shadow: 0 2px 4px rgba(3, 179, 233, 0.363);}
     .non-stock { color: var(--text-muted); font-style: italic; }
     .status-bar { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); padding: 10px 20px; border-radius: 30px; border: 1px solid var(--border); font-size: 0.85rem; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 200; }
     .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; backdrop-filter: blur(5px);}
     .modal.active { display: flex; }
-    .modal-content { padding: 30px; width: 90%; max-width: 500px; position: relative; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+    .modal-content { padding: 30px; width: 90%; max-width: 500px; position: relative; background: var(--bg-card); border: 1px solid white; border-radius: 16px; box-shadow: 0 10px 40px rgb(217, 255, 0);color: white; }
     .close-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
     .close-btn:hover { color: white; }
-    .modal-content h2 { margin-bottom: 20px; font-size: 1.2rem; color: var(--brand); }
+    .modal-content h2 { margin-bottom: 20px; font-size: 1.2rem; color:white; }
     .btn-action { background: transparent; border: 1px solid var(--border); color: var(--text-main); padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; margin-right: 5px; }
     .btn-action:hover { background: rgba(255,255,255,0.1); }
     .btn-action.delete:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444; }
