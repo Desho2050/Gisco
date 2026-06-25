@@ -15,7 +15,6 @@
       --bg-dark: #00bfa1f5; --bg-card: #000000f5; --brand: #3b82f6; --accent: #8b5cf6;
       --success: #10b981; --text-main: #f8fafc; --text-muted: #94a3b8;
       --border: rgba(255, 255, 255, 0.548); --glow: 0 0 20px rgba(154, 193, 252, 0.63);border-radius: 12px;
-
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -83,106 +82,36 @@
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
 
-    /* Row Checkbox Styling */
-    .row-checkbox {
-        transform: scale(1.2);
-        cursor: pointer;
-        accent-color: var(--brand);
-    }
+    .row-checkbox { transform: scale(1.2); cursor: pointer; accent-color: var(--brand); }
 
-    /* ========================================= */
-    /* RESPONSIVE MOBILE OPTIMIZATIONS           */
-    /* ========================================= */
-
-    /* Tablet & Small Desktop */
     @media (max-width: 1024px) { 
       main { grid-template-columns: 1fr; padding: 20px; } 
-      .sidebar { order: 1; } /* Bring search boxes to the top */
+      .sidebar { order: 1; } 
       .data-section { order: 2; } 
     }
 
-    /* Mobile Devices */
     @media (max-width: 768px) { 
-      header { 
-        flex-direction: column; 
-        gap: 15px; 
-        align-items: stretch; 
-        padding: 15px;
-      } 
+      header { flex-direction: column; gap: 15px; align-items: stretch; padding: 15px; } 
       .brand-area { justify-content: center; }
       .titles { text-align: center; }
-      .actions-top { 
-        width: 100%; 
-        justify-content: center; 
-        gap: 8px; 
-      } 
-      .actions-top .btn {
-        font-size: 0.8rem;
-        padding: 8px 12px;
-        flex: 1 1 calc(50% - 8px); 
-        justify-content: center;
-      }
+      .actions-top { width: 100%; justify-content: center; gap: 8px; } 
+      .actions-top .btn { font-size: 0.8rem; padding: 8px 12px; flex: 1 1 calc(50% - 8px); justify-content: center; }
       main { padding: 15px; }
-      
-      /* HORIZONTAL SCROLLABLE SIDEBAR FOR MOBILE */
-      .sidebar {
-        display: flex !important;
-        flex-direction: row !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        gap: 15px !important;
-        padding-bottom: 15px !important;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-      }
-      
-      /* Make each panel a swipeable card */
-      .sidebar > div {
-        flex: 0 0 85vw !important; /* Each card takes 85% of screen width */
-        min-width: 280px !important;
-        max-width: 350px !important;
-        scroll-snap-align: start;
-        margin: 0 !important;
-      }
-      
-      /* Reorder so Search Panel is first, then Stats, then Designer Credit */
-      .sidebar > div:nth-child(1) { order: 3; } /* Designer Credit goes to the end */
-      .sidebar > div:nth-child(2) { order: 1; } /* Search Panel comes FIRST */
-      .sidebar > div:nth-child(3) { order: 2; } /* Stats Panel is second */
-      
-      /* Hide scrollbar for a cleaner look */
+      .sidebar { display: flex !important; flex-direction: row !important; overflow-x: auto !important; overflow-y: hidden !important; gap: 15px !important; padding-bottom: 15px !important; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+      .sidebar > div { flex: 0 0 85vw !important; min-width: 280px !important; max-width: 350px !important; scroll-snap-align: start; margin: 0 !important; }
+      .sidebar > div:nth-child(1) { order: 3; } 
+      .sidebar > div:nth-child(2) { order: 1; } 
+      .sidebar > div:nth-child(3) { order: 2; } 
       .sidebar::-webkit-scrollbar { display: none; }
       .sidebar { -ms-overflow-style: none; scrollbar-width: none; }
-      
-      /* Table tweaks for mobile */
       th, td { padding: 12px 10px; font-size: 0.85rem; }
       .col-code { font-size: 0.8rem; }
-      
-      /* Modals */
       .modal-content { width: 95%; padding: 20px; }
-      
-      /* Status Bar & Toasts */
-      .status-bar {
-        left: 15px;
-        right: 15px;
-        bottom: 15px;
-        justify-content: center;
-        font-size: 0.8rem;
-      }
-      .toast-container {
-        top: auto;
-        bottom: 70px; 
-        left: 15px;
-        right: 15px;
-        align-items: center;
-      }
-      .toast {
-        width: 100%;
-        min-width: unset;
-      }
+      .status-bar { left: 15px; right: 15px; bottom: 15px; justify-content: center; font-size: 0.8rem; }
+      .toast-container { top: auto; bottom: 70px; left: 15px; right: 15px; align-items: center; }
+      .toast { width: 100%; min-width: unset; }
     }
 
-    /* Small Mobile */
     @media (max-width: 480px) {
       header { padding: 10px; }
       .logo-mark { min-width: 60px; height: 30px; font-size: 12px; }
@@ -194,9 +123,8 @@
       .search-panel, .stats-panel, .toolbar, .table-wrapper { border-radius: 12px; }
     }
 
-    /* Print Styles */
     @media print {
-      .sidebar, .actions-top, .status-bar, .footer, .btn-action, .toast-container { display: none !important; }
+      .sidebar, .actions-top, .status-bar, .footer, .btn-action, .toast-container, #loadMoreRow { display: none !important; }
       main { display: block !important; width: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
       .table-wrapper { border: none !important; background: transparent !important; box-shadow: none !important; overflow: visible !important; }
       table { width: 100% !important; min-width: 100% !important; border-collapse: collapse !important; }
@@ -219,7 +147,6 @@
       <input type="file" id="csvFileInput" accept=".csv" style="display:none" />
       <button class="btn" onclick="document.getElementById('csvFileInput').click()" style=" background-color: darkmagenta;color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">📥 Import CSV</button>
       <button class="btn" onclick="handleClearCache()" style="background-color: #01ce8a; color:black; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">🔄 Sync / Refresh</button>
-     
       <a href="index.html" class="btn" style="color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);" >⬅ Home</a>
     </div>
   </header>
@@ -271,7 +198,6 @@
     </section>
   </main>
 
-  <!-- Add/Edit Modal -->
   <div id="recordModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -288,16 +214,11 @@
     </div>
   </div>
 
-  <!-- Import Confirmation Modal -->
   <div id="importConfirmModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeImportModal()">&times;</span>
       <h2>Confirm CSV Import</h2>
-      <div id="importStats" style="margin: 20px 0; line-height: 1.8; font-size: 1rem;">
-        <!-- Stats will be injected here -->
-      </div>
-      
-      <!-- Professional Progress Bar Area -->
+      <div id="importStats" style="margin: 20px 0; line-height: 1.8; font-size: 1rem;"></div>
       <div id="importProgressArea" style="display: none; margin-top: 20px;">
           <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-muted);">
               <span id="progressStatus">Processing records...</span>
@@ -311,7 +232,6 @@
               <span style="color: #ef4444;">❌ Skipped/Duplicates: <span id="progressErrors">0</span></span>
           </div>
       </div>
-
       <div style="display: flex; gap: 10px; margin-top: 20px;">
         <button class="btn primary" style="flex: 1; justify-content: center;" onclick="executeImport()">✅ Confirm Import</button>
         <button class="btn" style="flex: 1; justify-content: center; background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444;" onclick="closeImportModal()">❌ Cancel</button>
@@ -332,9 +252,12 @@
     let chartInstance = null;
     let renderFrameId = null;
     let pendingImportRecords = [];
-    let selectedIds = new Set(); // Track selected record IDs
+    let selectedIds = new Set(); 
+    
+    // Pagination state for DOM rendering
+    let renderedUpTo = 0;
+    const BATCH_SIZE = 2000; // Show first 2000 rows initially
 
-    // --- INDEXEDDB CACHE HELPERS ---
     const DB_NAME = 'gisco_oracle_db';
     const STORE_NAME = 'materials_cache';
     const CACHE_KEY = 'oracle_data';
@@ -392,18 +315,32 @@
         try {
             await clearCacheDB();
             RAW_DATA = [];
-            showToast('Local cache cleared successfully!', 'success');
+                
             location.reload();
             loadData(true); 
-
         } catch (err) {
             console.error(err);
             showToast('Error clearing cache: ' + err.message, 'error');
             setStatus('', false);
         }
     }
+    async function handleClearCacheWithoutConfirmation() {
+       
+        setStatus('synchronising server data', true);
+        try {
+            await clearCacheDB();
+            RAW_DATA = [];
+            showToast('Local cache cleared successfully!', 'success');
+            location.reload();
+            loadData(true); 
+        } catch (err) {
+            console.error(err);
+            showToast('Error clearing cache: ' + err.message, 'error');
+            setStatus('', false);
+        }
+    }
+    
 
-    // --- TOAST NOTIFICATION SYSTEM ---
     function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
@@ -419,7 +356,6 @@
         }, 4000);
     }
 
-    // --- OPTIMIZED HELPERS ---
     const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
     function escapeHtml(s) {
         if (s === null || s === undefined) return '';
@@ -464,7 +400,6 @@
       return { id, code, description, unit, qty, type, searchIndex, isStock };
     }
 
-    // --- SMART CSV IMPORT LOGIC ---
     function parseCSV(text) {
         if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
         const rows = [];
@@ -506,7 +441,7 @@
             else if (lower.includes('desc') || lower.includes('name') || lower.includes('item')) map.description = index;
             else if (lower.includes('type') || lower.includes('category')) map.type = index;
             else if (lower.includes('unit') || lower.includes('uom')) map.unit = index;
-            else if (lower.includes('qty') || lower.includes('quantity') || lower.includes('stock') || toUpperCase.includes('WAREHOUSE')) map.qty = index;
+            else if (lower.includes('qty') || lower.includes('quantity') || lower.includes('stock') || lower.includes('warehouse')) map.qty = index;
         });
         return map;
     }
@@ -642,7 +577,6 @@
         pendingImportRecords = [];
     }
 
-    // --- PROFESSIONAL "DIVIDE & CONQUER" INSERT LOGIC ---
     async function insertRobustly(records, onBatchSuccess, onRecordFail) {
         if (records.length === 0) return;
         const { error } = await supabaseClient.from('oracle').insert(records);
@@ -689,17 +623,15 @@
 
         showToast(`Import finished! ${successCount} added, ${errorCount} duplicates skipped.`, errorCount > 0 ? 'info' : 'success');
         pendingImportRecords = [];
-        loadData(true); 
+        handleClearCacheWithoutConfirmation();
     }
 
-    // --- SELECTION MANAGEMENT FUNCTIONS ---
     function toggleSelectAll(checkbox) {
         if (checkbox.checked) {
             currentFilteredRows.forEach(r => selectedIds.add(r.id));
         } else {
             currentFilteredRows.forEach(r => selectedIds.delete(r.id));
         }
-        // Update row checkboxes in the DOM
         document.querySelectorAll('.row-checkbox').forEach(cb => {
             cb.checked = selectedIds.has(cb.dataset.id);
         });
@@ -768,7 +700,6 @@
             const chunkSize = 500;
             let errorOccurred = null;
             
-            // Chunk deletion to avoid URL length limits with large selections
             for (let i = 0; i < idsToDelete.length; i += chunkSize) {
                 const chunk = idsToDelete.slice(i, i + chunkSize);
                 const { error } = await supabaseClient.from('oracle').delete().in('id', chunk);
@@ -780,13 +711,12 @@
             
             if (errorOccurred) throw errorOccurred;
             
-            // Update local state
             RAW_DATA = RAW_DATA.filter(r => !selectedIds.has(r.id));
             ALL_ROWS = ALL_ROWS.filter(r => !selectedIds.has(r.id));
             selectedIds.clear();
             
             saveToCache(RAW_DATA).catch(err => console.warn('Cache update failed:', err));
-            filterNow(); // Re-render
+            filterNow(); 
             showToast(`${idsToDelete.length} records deleted successfully!`, 'success');
         } catch (err) {
             console.error(err);
@@ -796,62 +726,109 @@
         }
     }
 
-    // --- OPTIMIZED RENDERING (PROGRESSIVE CHUNKING) ---
-    function renderTable(rows, forceFullRender = false) {
-        if (renderFrameId) { cancelAnimationFrame(renderFrameId); renderFrameId = null; }
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        document.getElementById('resultCount').textContent = "(  "+rows.length.toLocaleString() +" )  Items Found";
-        document.getElementById('totalCount').textContent = ALL_ROWS.length.toLocaleString();
-        updateChart(rows);
-        if (rows.length === 0) {
-            updateSelectAllCheckbox();
-            updateDeleteButton();
-            return;
-        }
-
-        let index = 0;
-        const CHUNK_SIZE = forceFullRender ? rows.length : 300; 
-
-        function renderChunk() {
-            let chunkHtml = '';
-            const end = Math.min(index + CHUNK_SIZE, rows.length);
-            for (let i = index; i < end; i++) {
-                const r = rows[i];
-                const isChecked = selectedIds.has(r.id) ? 'checked' : '';
-                const typeDisplay = r.isStock 
-                    ? `<span class="stock-badge" style="width:100px">STOCK ITEM</span>` 
-                    : `<span class="non-stock">${escapeHtml(r.type)}</span>`;
-                const qtyColor = Number(r.qty) > 0 ? 'var(--success)' : 'var(--text-muted)';
-
-                chunkHtml += `<tr>
-                    <td style="text-align: center; width: 40px;"><input type="checkbox" class="row-checkbox" data-id="${r.id}" ${isChecked} onchange="toggleRowSelection(this)"></td>
-                    <td class="col-code">${escapeHtml(r.code)}</td>
-                    <td class="col-desc">${escapeHtml(r.description)}</td>
-                    <td>${typeDisplay}</td>
-                    <td style="font-family:'JetBrains Mono'">${escapeHtml(r.unit)}</td>
-                    <td style="font-family:'JetBrains Mono'; color: ${qtyColor}">${escapeHtml(r.qty)}</td>
-                    <td style="text-align: center; white-space: nowrap;">
-                        <button class="btn-action edit" onclick="openEditModal('${r.id}')" title="Edit">✏️</button>
-                        <button class="btn-action delete" onclick="deleteRecord('${r.id}')" title="Delete">🗑️</button>
-                    </td>
-                </tr>`;
-            }
-            tbody.insertAdjacentHTML('beforeend', chunkHtml);
-            index = end;
-            if (index < rows.length) { renderFrameId = requestAnimationFrame(renderChunk); } 
-            else { 
-                renderFrameId = null; 
-                updateSelectAllCheckbox();
-                updateDeleteButton();
-            }
-        }
-        renderChunk();
+    // Load next batch of rows
+    function loadMoreRows() {
+        renderedUpTo += BATCH_SIZE;
+        renderTable(currentFilteredRows, false, true);
     }
 
-    function handlePrint() {
-        renderTable(currentFilteredRows, true);
-        setTimeout(() => window.print(), 50);
+    // Optimized rendering with pagination
+    function renderTable(rows, forceFullRender = false, isAppend = false) {
+        return new Promise((resolve) => {
+            if (renderFrameId) { cancelAnimationFrame(renderFrameId); renderFrameId = null; }
+            const tbody = document.getElementById('tableBody');
+            
+            if (!isAppend) {
+                tbody.innerHTML = '';
+                renderedUpTo = forceFullRender ? rows.length : Math.min(BATCH_SIZE, rows.length);
+            } else {
+                const lm = document.getElementById('loadMoreRow');
+                if(lm) lm.remove();
+            }
+
+            document.getElementById('resultCount').textContent = "(  "+rows.length.toLocaleString() +" )  Items Found";
+            document.getElementById('totalCount').textContent = ALL_ROWS.length.toLocaleString();
+            
+            if (!isAppend) {
+                updateChart(rows);
+            }
+
+            if (rows.length === 0) {
+                if (!isAppend) {
+                    updateSelectAllCheckbox();
+                    updateDeleteButton();
+                }
+                resolve();
+                return;
+            }
+
+            let startIndex, endIndex;
+            if (!isAppend) {
+                startIndex = 0;
+                endIndex = renderedUpTo;
+            } else {
+                startIndex = Math.max(0, renderedUpTo - BATCH_SIZE);
+                endIndex = Math.min(renderedUpTo, rows.length);
+            }
+
+            let index = startIndex;
+            const CHUNK_SIZE = 300; 
+
+            function renderChunk() {
+                let chunkHtml = '';
+                const end = Math.min(index + CHUNK_SIZE, endIndex);
+                for (let i = index; i < end; i++) {
+                    const r = rows[i];
+                    const isChecked = selectedIds.has(r.id) ? 'checked' : '';
+                    const typeDisplay = r.isStock 
+                        ? `<span class="stock-badge" style="width:100px">STOCK ITEM</span>` 
+                        : `<span class="non-stock">${escapeHtml(r.type)}</span>`;
+                    const qtyColor = Number(r.qty) > 0 ? 'var(--success)' : 'var(--text-muted)';
+
+                    chunkHtml += `<tr>
+                        <td style="text-align: center; width: 40px;"><input type="checkbox" class="row-checkbox" data-id="${r.id}" ${isChecked} onchange="toggleRowSelection(this)"></td>
+                        <td class="col-code">${escapeHtml(r.code)}</td>
+                        <td class="col-desc">${escapeHtml(r.description)}</td>
+                        <td>${typeDisplay}</td>
+                        <td style="font-family:'JetBrains Mono'">${escapeHtml(r.unit)}</td>
+                        <td style="font-family:'JetBrains Mono'; color: ${qtyColor}">${escapeHtml(r.qty)}</td>
+                        <td style="text-align: center; white-space: nowrap;">
+                            <button class="btn-action edit" onclick="openEditModal('${r.id}')" title="Edit">✏️</button>
+                            <button class="btn-action delete" onclick="deleteRecord('${r.id}')" title="Delete">🗑️</button>
+                        </td>
+                    </tr>`;
+                }
+                tbody.insertAdjacentHTML('beforeend', chunkHtml);
+                index = end;
+                if (index < endIndex) { 
+                    renderFrameId = requestAnimationFrame(renderChunk); 
+                } else { 
+                    renderFrameId = null; 
+                    if (!forceFullRender && renderedUpTo < rows.length) {
+                        const remaining = rows.length - renderedUpTo;
+                        const loadMoreHtml = `<tr id="loadMoreRow"><td colspan="7" style="text-align:center; padding:20px; background:rgba(0,0,0,0.4);">
+                            <button class="btn primary" onclick="loadMoreRows()" style="margin:0 auto;">
+                                Load More (${remaining.toLocaleString()} items remaining)
+                            </button>
+                        </td></tr>`;
+                        tbody.insertAdjacentHTML('beforeend', loadMoreHtml);
+                    }
+                    if (!isAppend) {
+                        updateSelectAllCheckbox();
+                        updateDeleteButton();
+                    }
+                    resolve();
+                }
+            }
+            renderChunk();
+        });
+    }
+
+    async function handlePrint() {
+        setStatus('Preparing all rows for printing...', true);
+        await renderTable(currentFilteredRows, true);
+        setStatus('', false);
+        window.print();
     }
 
     function updateChart(rows) {
@@ -866,7 +843,6 @@
       });
     }
 
-    // --- OPTIMIZED SEARCH LOGIC ---
     function filterNow() {
         const q1 = document.getElementById('q1').value.toLowerCase();
         const q2 = document.getElementById('q2').value.toLowerCase();
@@ -886,14 +862,15 @@
             if (hasQ4 && !text.includes(q4)) return false;
             return true;
         });
+        
         currentFilteredRows = filtered;
+        renderedUpTo = 0; // Reset pagination on new search
         renderTable(filtered);
     }
 
     let timeout;
     function debouncedFilter() { clearTimeout(timeout); timeout = setTimeout(filterNow, 150); }
 
-    // --- INSTANT CRUD OPERATIONS ---
     function openAddModal() {
       document.getElementById('modalTitle').textContent = 'Add New Record';
       document.getElementById('recordForm').reset();
@@ -984,7 +961,7 @@
         const { error } = await supabaseClient.from('oracle').delete().eq('id', id);
         if (error) throw error;
         
-        selectedIds.delete(id); // Remove from selection if it was selected
+        selectedIds.delete(id); 
         
         RAW_DATA = RAW_DATA.filter(r => r.id !== id);
         saveToCache(RAW_DATA).catch(err => console.warn('Cache update failed:', err));
@@ -1000,7 +977,6 @@
       }
     }
 
-    // --- DATA FETCHING & CACHING LOGIC ---
     async function fetchAndCacheData() {
         setStatus('Fetching Oracle Data from Server...', true);
         try {
