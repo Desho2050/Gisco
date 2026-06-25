@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Added SheetJS for Excel (XLSX/XLS) parsing -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
   <style>
     :root {
@@ -144,8 +146,9 @@
     </div>
     <div class="actions-top">
       <button class="btn" onclick="handlePrint()"  style="background-color: #3b82f6;color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">🖨️ Print</button>
-      <input type="file" id="csvFileInput" accept=".csv" style="display:none" />
-      <button class="btn" onclick="document.getElementById('csvFileInput').click()" style=" background-color: darkmagenta;color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">📥 Import CSV</button>
+      <!-- Updated to accept Excel files as well -->
+      <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" style="display:none" />
+      <button class="btn" onclick="document.getElementById('csvFileInput').click()" style=" background-color: darkmagenta;color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">📥 Import CSV / Excel</button>
       <button class="btn" onclick="handleClearCache()" style="background-color: #01ce8a; color:black; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">🔄 Sync / Refresh</button>
       <a href="index.html" class="btn" style="color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);" >⬅ Home</a>
     </div>
@@ -217,7 +220,7 @@
   <div id="importConfirmModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeImportModal()">&times;</span>
-      <h2>Confirm CSV Import</h2>
+      <h2>Confirm Import</h2>
       <div id="importStats" style="margin: 20px 0; line-height: 1.8; font-size: 1rem;"></div>
       <div id="importProgressArea" style="display: none; margin-top: 20px;">
           <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-muted);">
@@ -254,9 +257,8 @@
     let pendingImportRecords = [];
     let selectedIds = new Set(); 
     
-    // Pagination state for DOM rendering
     let renderedUpTo = 0;
-    const BATCH_SIZE = 2000; // Show first 2000 rows initially
+    const BATCH_SIZE = 2000; 
 
     const DB_NAME = 'gisco_oracle_db';
     const STORE_NAME = 'materials_cache';
@@ -315,7 +317,6 @@
         try {
             await clearCacheDB();
             RAW_DATA = [];
-                
             location.reload();
             loadData(true); 
         } catch (err) {
@@ -324,8 +325,8 @@
             setStatus('', false);
         }
     }
+    
     async function handleClearCacheWithoutConfirmation() {
-       
         setStatus('synchronising server data', true);
         try {
             await clearCacheDB();
@@ -339,7 +340,6 @@
             setStatus('', false);
         }
     }
-    
 
     function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
@@ -384,8 +384,8 @@
     }
 
     const FIELD_ALIASES = {
-      code: ['oracle code','code','item code'], description: ['item description','description','desc','name'],
-      unit: ['unit','uom','measure'], qty: ['qty','quantity','onhand','stock','WAREHOUSE'], type: ['type','category','class']
+      code: ['oracle code','code','item code','CODE'], description: ['item description','ITEM_DESCRIPTION', 'description','desc','name'],
+      unit: ['unit','uom','measure'], qty: ['qty','quantity','onhand','stock','WAREHOUSE','STORE'], type: ['type','category','class']
     };
 
     function buildRow(item){
@@ -429,123 +429,187 @@
             }
         }
         currentRow.push(currentField);
-        if (currentRow.length > 1 || currentRow[0] !== '') rows.push(currentRow);
+        if (currentRow.length > 1 || currentRow[0] !== '') rows.push(currentRow)
         return rows;
     }
 
     function mapHeaders(headers) {
         const map = {};
         headers.forEach((h, index) => {
-            const lower = h.toLowerCase().trim();
-            if (lower.includes('code') || lower === 'id') map.code = index;
-            else if (lower.includes('desc') || lower.includes('name') || lower.includes('item')) map.description = index;
+            const lower = h.toLowerCase();
+            const upper = h.toUpperCase();
+            if (lower.includes('code') || lower === 'id' || upper === 'CODE') map.code = index;
+            else if (lower.includes('desc') || lower.includes('name') || lower.includes('item') || upper === 'ITEM_DESCRIPTION') map.description = index;
             else if (lower.includes('type') || lower.includes('category')) map.type = index;
             else if (lower.includes('unit') || lower.includes('uom')) map.unit = index;
-            else if (lower.includes('qty') || lower.includes('quantity') || lower.includes('stock') || lower.includes('warehouse')) map.qty = index;
+            else if (lower.includes('qty') || lower.includes('quantity') || lower.includes('stock') || lower.includes('warehouse') || upper === 'WAREHOUSE' || upper === 'STORE') map.qty = index;
         });
         return map;
     }
 
-    async function importCSV(file) {
-        setStatus('Analyzing CSV file...', true);
-        const reader = new FileReader();
-        
-        reader.onload = async (e) => {
-            try {
-                const text = e.target.result;
-                const rows = parseCSV(text);
-                
-                if (rows.length < 2) {
-                    showToast('CSV file is empty or invalid.', 'error');
-                    setStatus('', false);
-                    return;
-                }
+    // --- UNIFIED FILE IMPORT LOGIC ---
+    async function handleFileImport(file) {
+        const fileName = file.name.toLowerCase();
+        const isCSV = fileName.endsWith('.csv');
+        const isXLSX = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
 
-                const headers = rows[0];
-                const colMap = mapHeaders(headers);
-                
-                if (colMap.code === undefined || colMap.description === undefined) {
-                    showToast('CSV must contain "Code" and "Description" columns.', 'error');
-                    setStatus('', false);
-                    return;
-                }
+        if (!isCSV && !isXLSX) {
+            showToast('Unsupported file format. Please use CSV or Excel (XLSX/XLS).', 'error');
+            return;
+        }
 
-                const existingCodes = new Set(ALL_ROWS.map(r => r.code));
-                const seenInCSV = new Set();
+        setStatus(`Analyzing ${isCSV ? 'CSV' : 'Excel'} file...`, true);
 
-                const records = [];
-                let duplicateCount = 0;
-                let invalidCount = 0;
-                let internalDuplicateCount = 0;
+        try {
+            let rows = [];
 
-                for (let i = 1; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (row.length === 1 && row[0] === '') continue; 
-                    
-                    const code = colMap.code !== undefined ? (row[colMap.code] || '').trim() : '';
-                    if (!code) {
-                        invalidCount++;
-                        continue; 
-                    }
-
-                    if (existingCodes.has(code)) {
-                        duplicateCount++;
-                        continue;
-                    }
-
-                    if (seenInCSV.has(code)) {
-                        internalDuplicateCount++;
-                        continue;
-                    }
-                    seenInCSV.add(code);
-
-                    const parsedQty = colMap.qty !== undefined && row[colMap.qty] ? parseInt(row[colMap.qty]) : null;
-
-                    records.push({
-                        code: code,
-                        description: colMap.description !== undefined ? (row[colMap.description] || '').trim() : '',
-                        type: colMap.type !== undefined ? (row[colMap.type] || '').trim() : '',
-                        unit: colMap.unit !== undefined ? (row[colMap.unit] || '').trim() : '',
-                        qty: isNaN(parsedQty) ? null : parsedQty
-                    });
-                }
-
-                const totalParsed = rows.length - 1;
-                const newUniqueCount = records.length;
-
-                if (newUniqueCount === 0) {
-                    showToast('No new unique records found to import.', 'error');
-                    setStatus('', false);
-                    return;
-                }
-
-                pendingImportRecords = records;
-
-                showImportConfirmation({
-                    total: totalParsed,
-                    invalid: invalidCount,
-                    dbDuplicates: duplicateCount,
-                    csvDuplicates: internalDuplicateCount,
-                    newUnique: newUniqueCount
+            if (isCSV) {
+                const text = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (e) => reject(e);
+                    reader.readAsText(file);
                 });
+                rows = parseCSV(text);
+            } else {
+                const data = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (e) => reject(e);
+                    reader.readAsArrayBuffer(file);
+                });
+                
+                if (typeof XLSX === 'undefined') {
+                    showToast('Excel parsing library failed to load. Please refresh the page.', 'error');
+                    setStatus('', false);
+                    return;
+                }
 
-            } catch (err) {
-                console.error(err);
-                showToast('Error processing CSV: ' + err.message, 'error');
-            } finally {
-                setStatus('', false);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                // Convert sheet to array of arrays, formatting all cells as strings
+                rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false });
             }
-        };
-        reader.readAsText(file);
+
+            processImportData(rows);
+
+        } catch (err) {
+            console.error(err);
+            showToast('Error processing file: ' + err.message, 'error');
+            setStatus('', false);
+        }
+    }
+
+    function processImportData(rows) {
+        if (!rows || rows.length < 2) {
+            showToast('File is empty or invalid.', 'error');
+            setStatus('', false);
+            return;
+        }
+
+        // Normalize all data to strings to prevent type errors during mapping
+        const stringRows = rows.map(row => row.map(cell => String(cell === null || cell === undefined ? '' : cell).trim()));
+        
+        let headers = stringRows[0];
+        let dataStartIndex = 1;
+        let colMap = mapHeaders(headers);
+        
+        // Check if first row has valid headers
+        if (colMap.code === undefined || colMap.description === undefined) {
+            // Check if sixth row (index 5) has valid headers
+            if (stringRows.length > 5) {
+                const headersRow6 = stringRows[5];
+                const colMapRow6 = mapHeaders(headersRow6);
+                
+                if (colMapRow6.code !== undefined && colMapRow6.description !== undefined) {
+                    headers = headersRow6;
+                    colMap = colMapRow6;
+                    dataStartIndex = 6; // Data starts after the 6th row (index 6)
+                } else {
+                    showToast('File must contain valid "Code" and "Description" columns in the 1st or 6th row.', 'error');
+                    setStatus('', false);
+                    return;
+                }
+            } else {
+                showToast('File must contain valid "Code" and "Description" columns in the 1st or 6th row.', 'error');
+                setStatus('', false);
+                return;
+            }
+        }
+
+        const existingCodes = new Set(ALL_ROWS.map(r => r.code));
+        const seenInCSV = new Set();
+
+        const records = [];
+        let duplicateCount = 0;
+        let invalidCount = 0;
+        let internalDuplicateCount = 0;
+
+        // Start loop from dataStartIndex instead of hardcoded 1
+        for (let i = dataStartIndex; i < stringRows.length; i++) {
+            const row = stringRows[i];
+            if (row.length === 1 && row[0] === '') continue; 
+            
+            const code = colMap.code !== undefined ? (row[colMap.code] || '') : '';
+            if (!code) {
+                invalidCount++;
+                continue; 
+            }
+
+            if (existingCodes.has(code)) {
+                duplicateCount++;
+                continue;
+            }
+
+            if (seenInCSV.has(code)) {
+                internalDuplicateCount++;
+                continue;
+            }
+            seenInCSV.add(code);
+
+            const rawQty = colMap.qty !== undefined ? row[colMap.qty] : '';
+            const parsedQty = rawQty ? parseInt(rawQty) : null;
+
+            records.push({
+                code: code,
+                description: colMap.description !== undefined ? (row[colMap.description] || '') : '',
+                type: colMap.type !== undefined ? (row[colMap.type] || '') : '',
+                unit: colMap.unit !== undefined ? (row[colMap.unit] || '') : '',
+                qty: isNaN(parsedQty) ? null : parsedQty
+            });
+        }
+
+        // Total parsed should be calculated based on dataStartIndex
+        const totalParsed = stringRows.length - dataStartIndex;
+        const newUniqueCount = records.length;
+
+        if (newUniqueCount === 0) {
+            showToast('No new unique records found to import.', 'error');
+            setStatus('', false);
+            return;
+        }
+
+        pendingImportRecords = records;
+
+        showImportConfirmation({
+            total: totalParsed,
+            invalid: invalidCount,
+            dbDuplicates: duplicateCount,
+            csvDuplicates: internalDuplicateCount,
+            newUnique: newUniqueCount
+        });
+        
+        setStatus('', false);
     }
 
     function showImportConfirmation(stats) {
         const statsDiv = document.getElementById('importStats');
         statsDiv.innerHTML = `
-            <p><strong>Total rows in CSV:</strong> ${stats.total.toLocaleString()}</p>
+            <p><strong>Total rows in file:</strong> ${stats.total.toLocaleString()}</p>
             <p style="color: var(--text-muted);"><strong>Invalid/Empty Code:</strong> ${stats.invalid.toLocaleString()}</p>
             <p style="color: #ef4444;"><strong>Already in Database (Skipped):</strong> ${stats.dbDuplicates.toLocaleString()}</p>
-            <p style="color: #f59e0b;"><strong>Repeated in CSV (Skipped):</strong> ${stats.csvDuplicates.toLocaleString()}</p>
+            <p style="color: #f59e0b;"><strong>Repeated in File (Skipped):</strong> ${stats.csvDuplicates.toLocaleString()}</p>
             <hr style="border: 1px solid var(--border); margin: 15px 0;">
             <p style="color: var(--success); font-size: 1.2rem;"><strong>✅ New Records to Import:</strong> ${stats.newUnique.toLocaleString()}</p>
         `;
@@ -726,13 +790,11 @@
         }
     }
 
-    // Load next batch of rows
     function loadMoreRows() {
         renderedUpTo += BATCH_SIZE;
         renderTable(currentFilteredRows, false, true);
     }
 
-    // Optimized rendering with pagination
     function renderTable(rows, forceFullRender = false, isAppend = false) {
         return new Promise((resolve) => {
             if (renderFrameId) { cancelAnimationFrame(renderFrameId); renderFrameId = null; }
@@ -864,7 +926,7 @@
         });
         
         currentFilteredRows = filtered;
-        renderedUpTo = 0; // Reset pagination on new search
+        renderedUpTo = 0; 
         renderTable(filtered);
     }
 
@@ -1037,9 +1099,10 @@
       ['q1', 'q2', 'q3', 'q4'].forEach(id => document.getElementById(id).addEventListener('input', debouncedFilter));
       document.getElementById('stockOnly').addEventListener('change', filterNow);
       
+      // Updated event listener to use the unified handler
       document.getElementById('csvFileInput').addEventListener('change', (e) => {
           const file = e.target.files[0];
-          if (file) importCSV(file);
+          if (file) handleFileImport(file);
           e.target.value = ''; 
       });
 
