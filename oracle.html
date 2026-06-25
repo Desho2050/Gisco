@@ -65,10 +65,10 @@
     .status-bar { position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); padding: 10px 20px; border-radius: 30px; border: 1px solid var(--border); font-size: 0.85rem; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 200; }
     .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; backdrop-filter: blur(5px);}
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.534); justify-content: center; align-items: center; backdrop-filter: blur(3px);}
     .modal.active { display: flex; }
-    .modal-content { padding: 30px; width: 90%; max-width: 500px; position: relative; background: var(--bg-card); border: 1px solid white; border-radius: 16px; box-shadow: 0 10px 40px rgb(217, 255, 0);color: white; }
-    .close-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
+    .modal-content { padding: 30px; width: 90%; max-width: 500px; position: relative; background: var(--bg-card); border: 1px solid white; border-radius: 16px; box-shadow: 0 10px 40px rgba(75, 223, 243, 0.788);color: white; }
+    .close-btn { position: absolute; top: 15px; right: 20px; font-size: 40px; cursor: pointer; color:rgb(255, 255, 255); transition: color 0.2s;background: rgb(255, 0, 0); border-radius: 50%;text-align: center; }
     .close-btn:hover { color: white; }
     .modal-content h2 { margin-bottom: 20px; font-size: 1.2rem; color:white; }
     .btn-action { background: transparent; border: 1px solid var(--border); color: var(--text-main); padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; margin-right: 5px; }
@@ -121,7 +121,7 @@
       .titles p { font-size: 0.75rem; }
       .actions-top .btn { font-size: 0.75rem; padding: 6px 10px; flex: 1 1 100%; } 
       th, td { padding: 10px 6px; font-size: 0.75rem; }
-      .stock-badge { font-size: 0.65rem; padding: 2px 6px; }
+      .stock-badge { font-size: 0.10rem; padding: 2px 6px; }
       .search-panel, .stats-panel, .toolbar, .table-wrapper { border-radius: 12px; }
     }
 
@@ -158,8 +158,8 @@
 
   <main style="background-color: rgb(0, 217, 255);">
     <aside class="sidebar">
-      <div style="align-items: center; padding: 10px 20px;background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
-        <p style="font-weight: bold;text-align: center;text-shadow: 1px 1px 4px rgba(252, 195, 7, 0.5);box-shadow: #00ffaa 1px 1px 1px; border-radius: 20px;background-color:#0f172a;padding: 10px 20px;margin-bottom: 10px;">:::تصميم و برمجة: مصطفي النجار :::</p>
+      <div style="align-items: center; padding: 10px 20px;background: rgb(0, 217, 255); border-radius: 12px;">
+        <p style="font-weight: bold;text-align: center;text-shadow: 1px 1px 4px rgba(252, 195, 7, 0.5);box-shadow: #00ffaa 1px 1px 1px; border-radius: 20px;background-color:#0f172a;padding: 10px 20px;margin-bottom: 10px;border: 4px solid transparent;background:linear-gradient(#01f3f3, #03eeda) padding-box, linear-gradient(45deg, #eeff00, #ff0080) border-box; color:#000">:::تصميم و برمجة: مصطفي النجار :::</p>
       </div>
       <div class="glass search-panel" style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
         <div class="input-group"><label>Search Query 1</label><input id="q1" class="modern-input" type="text" placeholder="Search Code or Description..." /></div>
@@ -201,18 +201,18 @@
     </section>
   </main>
 
-  <div id="recordModal" class="modal">
+  <div id="recordModal" class="modal" style="text-align: center;">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
-      <h2 id="modalTitle">Add New Record</h2>
+      <h4 id="modalTitle" style="text-align: center;border: 2px solid transparent;background:linear-gradient(#014646, #016129) padding-box, linear-gradient(45deg, #ffffff, #00c3ca) border-box; color:#ffffff;border-radius: 20px;margin-bottom: 20px;width: 200px;">Add New Record</h4>
       <form id="recordForm">
         <input type="hidden" id="recordId">
-        <div class="input-group"><label>Oracle Code</label><input id="f_code" class="modern-input" type="text" required></div>
-        <div class="input-group"><label>Description</label><input id="f_description" class="modern-input" type="text" required></div>
-        <div class="input-group"><label>Type</label><input id="f_type" class="modern-input" type="text"></div>
-        <div class="input-group"><label>Unit</label><input id="f_unit" class="modern-input" type="text"></div>
-        <div class="input-group"><label>Qty</label><input id="f_qty" class="modern-input" type="number" min="0"></div>
-        <button type="submit" class="btn primary" style="width:100%; margin-top:15px; justify-content: center;">Save Record</button>
+        <div class="input-group"><label style="color:white">Oracle Code</label><input id="f_code" class="modern-input" type="text" required></div>
+        <div class="input-group"><label style="color:white">Description</label><input id="f_description" class="modern-input" type="text" required></div>
+        <div class="input-group"><label style="color:white">Type</label><input id="f_type" class="modern-input" type="text"></div>
+        <div class="input-group"><label style="color:white">Unit</label><input id="f_unit" class="modern-input" type="text"></div>
+        <div class="input-group"><label style="color:white">Qty</label><input id="f_qty" class="modern-input" type="number" min="0"></div>
+        <button type="submit" class="btn primary" style="width:100%; margin-top:15px; justify-content: center;border: 3px solid transparent;background:linear-gradient(#01f3f3, #03eeda) padding-box, linear-gradient(45deg, #eeff00, #af4000) border-box; color:#000;border-radius: 20px;font-weight: bold;font-size: 1rem;">Save Record</button>
       </form>
     </div>
   </div>
@@ -843,7 +843,7 @@
                     const r = rows[i];
                     const isChecked = selectedIds.has(r.id) ? 'checked' : '';
                     const typeDisplay = r.isStock 
-                        ? `<span class="stock-badge" style="width:100px">STOCK ITEM</span>` 
+                        ? `<span class="stock-badge" style="width:110px; text-align:center;border: 3px solid transparent;background:linear-gradient(#01f3f3, #03eeda) padding-box, linear-gradient(45deg, #eeff00, #ff0080) border-box; color:#000;border-radius:20px" >STOCK ITEM</span>` 
                         : `<span class="non-stock">${escapeHtml(r.type)}</span>`;
                     const qtyColor = Number(r.qty) > 0 ? 'var(--success)' : 'var(--text-muted)';
 
