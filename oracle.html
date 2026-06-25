@@ -396,7 +396,7 @@
       const qty = String(pickField(item, FIELD_ALIASES.qty) || '').trim();
       const type = String(pickField(item, FIELD_ALIASES.type) || '').trim();
       const searchIndex = `${code} ${description} ${type}`.toLowerCase();
-      const isStock = type.toLowerCase().includes('stock') || type.toUpperCase().includes('WAREHOUSE');
+      const isStock = type.toLowerCase().includes('stock') || type.toUpperCase().includes('WAREHOUSE') || type.toUpperCase().includes('STORE') || type.toLowerCase().includes('store') || type.toLowerCase().includes('inventory') || type.toLowerCase().includes('on hand') || type.toLowerCase().includes('on_hand') || type.toLowerCase().includes('onhand') || type.toLowerCase().includes('available') || type.toLowerCase().includes('in stock') || type.toLowerCase().includes('instock')        ;
       return { id, code, description, unit, qty, type, searchIndex, isStock };
     }
 
