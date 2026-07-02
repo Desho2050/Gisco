@@ -207,6 +207,9 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Print-only section - hidden by default */
+    .print-only { display: none; }
+
     @media (max-width: 768px) {
       header { flex-direction: column; gap: 15px; align-items: flex-start; }
       .actions-top { width: 100%; justify-content: space-between; }
@@ -214,15 +217,235 @@
       .assets-dropdown-wrapper { width: 100%; }
     }
 
+    /* =========================================
+       A4 LANDSCAPE PRINT STYLES - OPTIMIZED
+       ========================================= */
     @media print {
-      body { background: white; color: black; }
-      .glass { background: white; border: 1px solid #ccc; backdrop-filter: none; }
-      .actions-top, .search-group, .btn, .assets-dropdown-wrapper { display: none !important; }
-      .stat-card { border: 1px solid #eee; color: black; }
-      .stat-value { color: black; }
-      table { min-width: 100%; }
-      th { background: #f0f0f0 !important; color: black !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-      td { color: black !important; border-bottom: 1px solid #ddd; }
+      @page {
+        size: A4 landscape;
+        margin-left: 10px;
+        margin-right: 50px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+      
+      html, body {
+        width: 290mm;
+        background: white !important;
+        color: black !important;
+        font-family: Arial, sans-serif !important;
+        min-height: auto;
+        background-image: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 8px !important;
+        line-height: 1.1 !important;
+        overflow: visible !important;
+      }
+      
+      /* Hide all screen-only elements */
+      .no-print,
+      header,
+      .dashboard-grid,
+      .controls-bar,
+      .table-container,
+      .actions-top,
+      .search-group,
+      .btn,
+      .assets-dropdown-wrapper,
+      .loader-overlay,
+      main {
+        display: none !important;
+      }
+      
+      /* Show print-only elements */
+      .print-only {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+      }
+      
+      /* Print Header - Compact */
+      .print-header {
+        text-align: center;
+        margin-bottom: 4px;
+        border-bottom: 1.5px solid #333;
+        padding-bottom: 3px;
+      }
+      
+      .print-header h1 {
+        font-size: 11px;
+        color: #000;
+        margin-bottom: 1px;
+        letter-spacing: 0.5px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+      
+      .print-header h2 {
+        font-size: 9px;
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      
+      .print-header .meta-info {
+        font-size: 6.5px;
+        color: #666;
+      }
+      
+      /* Print Summary Box - Compact */
+      .print-summary {
+        margin: 3px 0 4px 0;
+        padding: 4px 6px;
+        background: #f0f0f0 !important;
+        border: 1px solid #999;
+        border-radius: 2px;
+        display: flex;
+        gap: 6px;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      
+      .print-summary-item {
+        flex: 1;
+        text-align: center;
+        padding: 1px 0;
+      }
+      
+      .print-summary-item .label {
+        font-size: 6px;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 1px;
+        font-weight: 600;
+      }
+      
+      .print-summary-item .value {
+        font-size: 10px;
+        font-weight: 700;
+        color: #1a1a1a;
+        font-family: 'Courier New', monospace;
+      }
+      
+      /* Print Table - Optimized for A4 Landscape */
+      #printTable {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-collapse: collapse;
+        font-size: 7px;
+        page-break-inside: auto;
+        table-layout: fixed;
+        margin: 0;
+      }
+      
+      #printTable thead {
+        display: table-header-group;
+      }
+      
+      #printTable tr {
+        page-break-inside: avoid;
+        line-height: 1.1;
+      }
+      
+      #printTable th {
+        background: #1a2b3c !important;
+        color: white !important;
+        padding: 2.5px 2px !important;
+        text-align: left;
+        border: 0.5px solid #000;
+        text-transform: uppercase;
+        font-size: 6.5px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      
+      #printTable td {
+        padding: 2px 2px !important;
+        border: 0.5px solid #999;
+        color: #000 !important;
+        vertical-align: middle;
+        line-height: 1.1;
+        font-size: 7px;
+        overflow: hidden;
+      }
+      
+      /* Column widths optimized for A4 landscape - all columns visible */
+      #printTable th:nth-child(1),
+      #printTable td:nth-child(1) { 
+        width: 10%; 
+        text-align: center; 
+      }
+      #printTable th:nth-child(2),
+      #printTable td:nth-child(2) { 
+        width: 10%; 
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 0;
+      }
+      #printTable th:nth-child(3),
+      #printTable td:nth-child(3) { 
+        width: 10%; 
+        text-align: center; 
+      }
+       #printTable th:nth-child(4),
+      #printTable td:nth-child(4) { 
+        width: 60%; 
+        text-align: center; 
+      }
+       #printTable th:nth-child(5),
+      #printTable td:nth-child(5) { 
+        width: 5%; 
+        text-align: center; 
+      }
+     
+      /* Alternate row shading */
+      #printTable tbody tr:nth-child(even) {
+        background: #f8f8f8 !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      
+      #printTable tbody tr:hover td {
+        background: transparent !important;
+      }
+      
+      /* Total row styling */
+      .print-total-row {
+        font-weight: 700 !important;
+        background: #d4e8f0 !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      
+      .print-total-row td {
+        border-top: 1.5px solid #000 !important;
+        border-bottom: 1.5px solid #000 !important;
+        padding: 3px 2px !important;
+        font-size: 7.5px !important;
+      }
+      
+      /* Print Footer */
+      .print-footer {
+        margin-top: 4px;
+        padding-top: 3px;
+        border-top: 0.5px solid #999;
+        font-size: 6px;
+        color: #666;
+        display: flex;
+        justify-content: space-between;
+      }
     }
   </style>
 </head>
@@ -244,7 +467,7 @@
     <div class="actions-top">
       <input type="file" id="localFile" accept=".csv" style="display:none" />
       <button class="btn" onclick="document.getElementById('localFile').click()">📂 Load CSV</button>
-      <button class="btn primary" onclick="window.print()">🖨️ Print Report</button>
+      <button class="btn primary" onclick="prepareAndPrint()">🖨️ Print Report</button>
       <a href="index.html" class="btn">⬅ Home</a>
     </div>
   </header>
@@ -301,6 +524,55 @@
     </div>
   </main>
 
+  <!-- Print-Only Section -->
+  <div class="print-only">
+    <div class="print-header">
+      <h1>Gulf Industrial Service Company (GISCO)</h1>
+      <h2>Received Materials – Grouped Summary Report</h2>
+      <div class="meta-info">
+        <span id="printDate"></span> | 
+        <span id="printFilterInfo"></span>
+      </div>
+    </div>
+    
+    <div class="print-summary">
+      <div class="print-summary-item">
+        <div class="label">Total Amount</div>
+        <div class="value" id="printTotalAmount">AED 0.00</div>
+      </div>
+      <div class="print-summary-item">
+        <div class="label">Total Received</div>
+        <div class="value" id="printTotalReceived">0</div>
+      </div>
+      <div class="print-summary-item">
+        <div class="label">Total Qty</div>
+        <div class="value" id="printTotalQty">0</div>
+      </div>
+      <div class="print-summary-item">
+        <div class="label">Unique Items</div>
+        <div class="value" id="printUniqueCount">0</div>
+      </div>
+    </div>
+
+    <table id="printTable">
+      <thead>
+        <tr>
+          <th>TOTAL AMOUNT</th>
+          <th>RECEIVED</th>
+          <th>QTY</th>
+          <th>ITEM DESCRIPTION</th>
+          <th>SN</th>
+        </tr>
+      </thead>
+      <tbody id="printTableBody"></tbody>
+    </table>
+
+    <div class="print-footer">
+      <div>Generated by GISCO Intelligence Dashboard</div>
+      <div>Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>
+    </div>
+  </div>
+
   <script>
     const I18N = {
       en: {
@@ -331,7 +603,7 @@
 
     const excelPath = 'Materials.csv';
     let ALL_DATA = [];
-    let ASSET_DESCRIPTIONS = []; // Stores unique asset descriptions for dropdown
+    let ASSET_DESCRIPTIONS = [];
 
     const FIELD_ALIASES = {
       request: ['request','req','reqno','req_no','req id','reqid'],
@@ -381,28 +653,30 @@
       return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
     }
 
+    // Function to truncate text to max length
+    function truncateText(text, maxLength) {
+      if (!text) return '';
+      if (text.length <= maxLength) return text;
+      return text.substring(0, maxLength - 3) + '...';
+    }
+
     function formatMoney(n){ return Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     function formatAED(n){ return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(Number(n || 0)); }
 
     function populateAssetsDropdown(){
       const dropdown = document.getElementById('assetsDropdown');
-      
-      // Clear existing options except the first two
       dropdown.innerHTML = '';
       
-      // Add "All" option
       const allOption = document.createElement('option');
       allOption.value = 'ALL';
       allOption.textContent = 'All';
       dropdown.appendChild(allOption);
       
-      // Add "Assets" option (shows all rows where category = ASSETS)
       const assetsOption = document.createElement('option');
       assetsOption.value = 'ASSETS_CATEGORY';
       assetsOption.textContent = 'Assets';
       dropdown.appendChild(assetsOption);
       
-      // Extract unique asset descriptions
       ASSET_DESCRIPTIONS = [];
       const seen = new Set();
       
@@ -416,10 +690,8 @@
         }
       });
       
-      // Sort alphabetically
       ASSET_DESCRIPTIONS.sort();
       
-      // Add each unique asset description as an option
       ASSET_DESCRIPTIONS.forEach(desc => {
         const option = document.createElement('option');
         option.value = `ASSET_ITEM:${desc}`;
@@ -463,15 +735,14 @@
       document.getElementById("sumAmount").textContent = formatAED(totalVal);
     }
 
-    function filterNow(){
+    function getFilteredData(){
       const q1 = document.getElementById("q1").value.toLowerCase();
       const q2 = document.getElementById("q2").value.toLowerCase();
       const q3 = document.getElementById("q3").value.toLowerCase();
       const q4 = document.getElementById("q4").value.toLowerCase();
       const assetFilter = document.getElementById("assetsDropdown").value;
 
-      const filtered = ALL_DATA.filter(item => {
-        // Text filters
+      return ALL_DATA.filter(item => {
         const textMatch = (!q1 || item.searchIndex.includes(q1)) &&
                           (!q2 || item.searchIndex.includes(q2)) &&
                           (!q3 || item.searchIndex.includes(q3)) &&
@@ -479,14 +750,9 @@
         
         if (!textMatch) return false;
         
-        // Asset dropdown filter
-        if (assetFilter === 'ALL') {
-          return true; // No additional filtering
-        } else if (assetFilter === 'ASSETS_CATEGORY') {
-          // Show all rows where category is ASSETS
-          return item.category.toUpperCase() === 'ASSETS';
-        } else if (assetFilter.startsWith('ASSET_ITEM:')) {
-          // Show rows matching specific asset description AND category is ASSETS
+        if (assetFilter === 'ALL') return true;
+        if (assetFilter === 'ASSETS_CATEGORY') return item.category.toUpperCase() === 'ASSETS';
+        if (assetFilter.startsWith('ASSET_ITEM:')) {
           const selectedDesc = assetFilter.substring('ASSET_ITEM:'.length).toLowerCase();
           return item.category.toUpperCase() === 'ASSETS' && 
                  item.description.toLowerCase() === selectedDesc;
@@ -494,8 +760,86 @@
         
         return true;
       });
+    }
+
+    function filterNow(){
+      renderTable(getFilteredData());
+    }
+
+    // Prepare grouped data for printing and trigger print
+    function prepareAndPrint(){
+      const filtered = getFilteredData();
       
-      renderTable(filtered);
+      // Group by ITEM DESCRIPTION
+      const grouped = {};
+      filtered.forEach(item => {
+        const desc = item.description.trim() || '(No Description)';
+        if (!grouped[desc]) {
+          grouped[desc] = { qty: 0, receivedAmount: 0, totalAmount: 0 };
+        }
+        grouped[desc].qty += Number(item.qty) || 0;
+        grouped[desc].receivedAmount += Number(item.receivedAmount) || 0;
+        grouped[desc].totalAmount += Number(item.total) || 0;
+        
+      });
+      
+      // Sort descriptions alphabetically
+      const sortedDescs = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+      
+      // Build print table rows with truncated descriptions
+      let printHtml = '';
+      let grandTotalQty = 0;
+      let grandTotalReceived = 0;
+      let grandTotalAmount = 0;
+      
+      sortedDescs.forEach((desc, index) => {
+        const data = grouped[desc];
+        grandTotalQty += data.qty;
+        grandTotalReceived += data.receivedAmount;
+        grandTotalAmount += data.totalAmount;
+        
+        // Truncate description to 120 characters max for print
+        const truncatedDesc = truncateText(desc, 120);
+        
+        printHtml += `
+          <tr>
+            
+            
+             
+             <td style="text-align:center">${data.receivedAmount}</td>
+             <td style="text-align:center">${data.qty}</td>
+         <td style="text-align:center">${data.totalAmount}</td>
+          <td title="${escapeHtml(desc)}">${escapeHtml(truncatedDesc)}</td>
+            <td style="text-align:center">${index + 1}</td>
+          </tr>
+        `;
+      });
+      
+     
+      
+      document.getElementById("printTableBody").innerHTML = printHtml;
+      
+      // Update summary
+      document.getElementById("printUniqueCount").textContent = sortedDescs.length.toLocaleString();
+      document.getElementById("printTotalQty").textContent = grandTotalQty.toLocaleString();
+      document.getElementById("printTotalReceived").textContent = grandTotalReceived.toLocaleString();
+      document.getElementById("printTotalAmount").textContent = formatAED(grandTotalAmount);
+      
+      // Update print header metadata
+      const now = new Date();
+      document.getElementById("printDate").textContent = `Printed: ${now.toLocaleString()}`;
+      
+      const assetFilter = document.getElementById("assetsDropdown").value;
+      let filterInfo = 'Filter: All Items';
+      if (assetFilter === 'ASSETS_CATEGORY') {
+        filterInfo = 'Filter: All Assets';
+      } else if (assetFilter.startsWith('ASSET_ITEM:')) {
+        filterInfo = `Filter: ${assetFilter.substring('ASSET_ITEM:'.length)}`;
+      }
+      document.getElementById("printFilterInfo").textContent = filterInfo;
+      
+      // Trigger print dialog
+      setTimeout(() => window.print(), 100);
     }
 
     function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
@@ -510,7 +854,7 @@
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
         ALL_DATA = json.map(buildRow);
-        populateAssetsDropdown(); // Populate dropdown after data loads
+        populateAssetsDropdown();
         renderTable(ALL_DATA);
       } catch (err) {
         console.error(err);
@@ -529,7 +873,7 @@
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
         ALL_DATA = json.map(buildRow);
-        populateAssetsDropdown(); // Populate dropdown after data loads
+        populateAssetsDropdown();
         renderTable(ALL_DATA);
       } catch (e) {
         alert('Error loading file.');
