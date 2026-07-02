@@ -12,7 +12,7 @@
     :root {
       --bg-dark: #0f172a;
       --bg-card: rgba(30, 41, 59, 0.7);
-      --brand: #00bfa5; /* GISCO Teal */
+      --brand: #00bfa5;
       --brand-glow: rgba(0, 191, 165, 0.4);
       --accent: #8b5cf6;
       --text-main: #f8fafc;
@@ -20,7 +20,6 @@
       --border: rgba(148, 163, 184, 0.1);
       --success: #00ffaa;
       --warning: #000000;
-      
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,7 +36,6 @@
       flex-direction: column;
     }
 
-    /* Glassmorphism Utilities */
     .glass {
       background: var(--bg-card);
       backdrop-filter: blur(12px);
@@ -46,7 +44,6 @@
       border-radius: 16px;
     }
 
-    /* Header */
     header {
       padding: 20px 30px;
       display: flex;
@@ -81,13 +78,11 @@
     .btn.primary { background: var(--brand); border-color: var(--brand); color: #000; font-weight: 700; }
     .btn.primary:hover { background: #00e6c5; box-shadow: 0 0 15px var(--brand-glow); }
 
-    /* Main Layout */
     main {
       flex: 1; padding: 30px; max-width: 1600px; margin: 0 auto; width: 100%;
       display: flex; flex-direction: column; gap: 24px;
     }
 
-    /* Dashboard Summary Cards */
     .dashboard-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -110,7 +105,6 @@
     .stat-value { font-size: 1.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
     .stat-sub { font-size: 0.9rem; color: var(--brand); margin-top: 5px; }
 
-    /* Controls & Search */
     .controls-bar {
       display: flex;
       flex-wrap: wrap;
@@ -137,14 +131,46 @@
     .modern-input:focus { outline: none; border-color: var(--brand); }
     .modern-input::placeholder { color: rgb(43, 43, 43); }
 
-    /* Data Table */
+    /* Assets Dropdown Styles */
+    .assets-dropdown-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      min-width: 220px;
+    }
+    .assets-dropdown-wrapper label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .assets-dropdown {
+      background: rgb(255, 255, 255);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 6px;
+      color: rgb(0, 0, 0);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      flex: 1;
+      min-width: 150px;
+    }
+    .assets-dropdown:focus { outline: none; border-color: var(--brand); }
+
     .table-container {
       overflow-x: auto;
       border-radius: 16px;
       border: 1px solid var(--border);
       background: rgba(15, 23, 42, 0.4);
     }
-    table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+    table { width: 100%; border-collapse: collapse; min-width: 1100px; }
     th {
       text-align: left; padding: 16px;
       font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
@@ -160,6 +186,7 @@
     
     .col-code { font-family: 'JetBrains Mono'; color: var(--accent); }
     .col-money { font-family: 'JetBrains Mono'; color: var(--success); }
+    .col-received { font-family: 'JetBrains Mono'; color: #fbbf24; font-weight: 600; }
     
     .status-badge {
       padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
@@ -168,7 +195,6 @@
     .status-received { background: rgb(16, 185, 129); color: var(--success); border-color: rgba(16, 185, 129, 0.3); }
     .status-pending { background: radial-gradient(at 0% 0%, rgb(0, 191, 25) 0px, transparent 100%); color: var(--warning); border-color: rgba(245, 158, 11, 0.3); }
 
-    /* Loader */
     .loader-overlay {
       position: fixed; inset: 0; background: rgba(15,23,42,0.9);
       display: none; align-items: center; justify-content: center; z-index: 999;
@@ -181,18 +207,17 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Responsive */
     @media (max-width: 768px) {
       header { flex-direction: column; gap: 15px; align-items: flex-start; }
       .actions-top { width: 100%; justify-content: space-between; }
       .dashboard-grid { grid-template-columns: 1fr; }
+      .assets-dropdown-wrapper { width: 100%; }
     }
 
-    /* Print Styles */
     @media print {
       body { background: white; color: black; }
       .glass { background: white; border: 1px solid #ccc; backdrop-filter: none; }
-      .actions-top, .search-group, .btn { display: none !important; }
+      .actions-top, .search-group, .btn, .assets-dropdown-wrapper { display: none !important; }
       .stat-card { border: 1px solid #eee; color: black; }
       .stat-value { color: black; }
       table { min-width: 100%; }
@@ -225,7 +250,6 @@
   </header>
 
   <main>
-    <!-- Financial Dashboard -->
     <div class="dashboard-grid">
       <div class="glass stat-card">
         <span class="stat-label">Total Records</span>
@@ -239,7 +263,6 @@
       </div>
     </div>
 
-    <!-- Search & Actions -->
     <div class="glass controls-bar" style="padding: 15px;">
       <div class="search-group">
         <input id="q1" class="modern-input" type="text" placeholder="Search Request..." onkeyup="filterNow()">
@@ -247,9 +270,15 @@
         <input id="q3" class="modern-input" type="text" placeholder="Description..." onkeyup="filterNow()">
         <input id="q4" class="modern-input" type="text" placeholder="Job No / Order..." onkeyup="filterNow()">
       </div>
+      <!-- Assets Dropdown -->
+      <div class="assets-dropdown-wrapper">
+        <label for="assetsDropdown">📦 Assets</label>
+        <select id="assetsDropdown" class="assets-dropdown" onchange="filterNow()">
+          <option value="ALL">All</option>
+        </select>
+      </div>
     </div>
 
-    <!-- Data Table -->
     <div class="table-container glass">
       <table id="dataTable">
         <thead>
@@ -259,6 +288,7 @@
             <th>Description</th>
             <th>Category</th>
             <th>Qty</th>
+            <th>Received Qty</th>
             <th>Price</th>
             <th>Job No</th>
             <th>Total Amount</th>
@@ -272,7 +302,6 @@
   </main>
 
   <script>
-    // i18n setup
     const I18N = {
       en: {
         brand_title: 'Gulf Industrial Service Company',
@@ -300,8 +329,9 @@
     };
     const setLang = (lang) => { localStorage.setItem('lang', lang); applyLang(lang); };
 
-    const excelPath = 'Materials.csv'; // Updated to CSV
+    const excelPath = 'Materials.csv';
     let ALL_DATA = [];
+    let ASSET_DESCRIPTIONS = []; // Stores unique asset descriptions for dropdown
 
     const FIELD_ALIASES = {
       request: ['request','req','reqno','req_no','req id','reqid'],
@@ -309,6 +339,7 @@
       description: ['item description','description','desc','item name','name'],
       category: ['item category','category','cat','type','class'],
       qty: ['qty','quantity','onhand','on hand','stock','balance'],
+      receivedAmount: ['received-amount','received amount','received_amount','receivedamount','received qty','receivedqty','received_qty'],
       price: ['price','unit price','unitprice','rate','cost'],
       job: ['job no','job','jobno','job number','job_number'],
       status: ['status','statue','state','approval'],
@@ -332,16 +363,18 @@
       const description = String(pickField(item, FIELD_ALIASES.description) || '').trim();
       const category = String(pickField(item, FIELD_ALIASES.category) || '').trim();
       const qty = Number(pickField(item, FIELD_ALIASES.qty) || 0);
+      const receivedAmount = Number(pickField(item, FIELD_ALIASES.receivedAmount) || 0);
       const price = Number(pickField(item, FIELD_ALIASES.price) || 0);
       const job = String(pickField(item, FIELD_ALIASES.job) || '').trim();
       const status = String(pickField(item, FIELD_ALIASES.status) || '').trim();
       const order = String(pickField(item, FIELD_ALIASES.order) || '').trim();
       const total = qty * price;
       
-      // Create a searchable string
       const searchIndex = `${request} ${code} ${description} ${category} ${job} ${order} ${status}`.toLowerCase();
       
-      return { request, code, description, category, qty, price, job, total, status, order, searchIndex };
+      return { 
+        request, code, description, category, qty, receivedAmount, price, job, total, status, order, searchIndex 
+      };
     }
 
     function escapeHtml(s){
@@ -350,6 +383,50 @@
 
     function formatMoney(n){ return Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     function formatAED(n){ return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(Number(n || 0)); }
+
+    function populateAssetsDropdown(){
+      const dropdown = document.getElementById('assetsDropdown');
+      
+      // Clear existing options except the first two
+      dropdown.innerHTML = '';
+      
+      // Add "All" option
+      const allOption = document.createElement('option');
+      allOption.value = 'ALL';
+      allOption.textContent = 'All';
+      dropdown.appendChild(allOption);
+      
+      // Add "Assets" option (shows all rows where category = ASSETS)
+      const assetsOption = document.createElement('option');
+      assetsOption.value = 'ASSETS_CATEGORY';
+      assetsOption.textContent = 'Assets';
+      dropdown.appendChild(assetsOption);
+      
+      // Extract unique asset descriptions
+      ASSET_DESCRIPTIONS = [];
+      const seen = new Set();
+      
+      ALL_DATA.forEach(item => {
+        if (item.category.toUpperCase() === 'ASSETS' && item.description) {
+          const normalizedDesc = item.description.trim();
+          if (!seen.has(normalizedDesc.toLowerCase())) {
+            seen.add(normalizedDesc.toLowerCase());
+            ASSET_DESCRIPTIONS.push(normalizedDesc);
+          }
+        }
+      });
+      
+      // Sort alphabetically
+      ASSET_DESCRIPTIONS.sort();
+      
+      // Add each unique asset description as an option
+      ASSET_DESCRIPTIONS.forEach(desc => {
+        const option = document.createElement('option');
+        option.value = `ASSET_ITEM:${desc}`;
+        option.textContent = desc;
+        dropdown.appendChild(option);
+      });
+    }
 
     function renderTable(rows){
       const tbody = document.querySelector("#dataTable tbody");
@@ -360,7 +437,6 @@
       rows.forEach(r => {
         totalVal += r.total;
         
-        // Dynamic Status Badge
         let statusClass = 'status-pending';
         if(r.status.toLowerCase().includes('received') || r.status.toLowerCase().includes('complete')) {
           statusClass = 'status-received';
@@ -373,6 +449,7 @@
           <td>${escapeHtml(r.description)}</td>
           <td>${escapeHtml(r.category)}</td>
           <td style="text-align:center">${r.qty}</td>
+          <td class="col-received" style="text-align:center">${r.receivedAmount}</td>
           <td style="text-align:right">${formatMoney(r.price)}</td>
           <td>${escapeHtml(r.job)}</td>
           <td class="col-money" style="text-align:right">${formatMoney(r.total)}</td>
@@ -391,49 +468,68 @@
       const q2 = document.getElementById("q2").value.toLowerCase();
       const q3 = document.getElementById("q3").value.toLowerCase();
       const q4 = document.getElementById("q4").value.toLowerCase();
+      const assetFilter = document.getElementById("assetsDropdown").value;
 
       const filtered = ALL_DATA.filter(item => {
-        return (!q1 || item.searchIndex.includes(q1)) &&
-               (!q2 || item.searchIndex.includes(q2)) &&
-               (!q3 || item.searchIndex.includes(q3)) &&
-               (!q4 || item.searchIndex.includes(q4));
+        // Text filters
+        const textMatch = (!q1 || item.searchIndex.includes(q1)) &&
+                          (!q2 || item.searchIndex.includes(q2)) &&
+                          (!q3 || item.searchIndex.includes(q3)) &&
+                          (!q4 || item.searchIndex.includes(q4));
+        
+        if (!textMatch) return false;
+        
+        // Asset dropdown filter
+        if (assetFilter === 'ALL') {
+          return true; // No additional filtering
+        } else if (assetFilter === 'ASSETS_CATEGORY') {
+          // Show all rows where category is ASSETS
+          return item.category.toUpperCase() === 'ASSETS';
+        } else if (assetFilter.startsWith('ASSET_ITEM:')) {
+          // Show rows matching specific asset description AND category is ASSETS
+          const selectedDesc = assetFilter.substring('ASSET_ITEM:'.length).toLowerCase();
+          return item.category.toUpperCase() === 'ASSETS' && 
+                 item.description.toLowerCase() === selectedDesc;
+        }
+        
+        return true;
       });
+      
       renderTable(filtered);
     }
 
     function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
 
-    // Updated to read CSV as text instead of arrayBuffer
     async function loadExcel(){
       try {
         showLoader(true);
         const res = await fetch(excelPath + '?ts=' + Date.now());
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-        const text = await res.text(); // Read as text for CSV
-        const wb = XLSX.read(text, { type: 'string' }); // Parse as string
+        const text = await res.text();
+        const wb = XLSX.read(text, { type: 'string' });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
         ALL_DATA = json.map(buildRow);
+        populateAssetsDropdown(); // Populate dropdown after data loads
         renderTable(ALL_DATA);
       } catch (err) {
         console.error(err);
-        // Fallback to local button if fetch fails
         document.querySelector('.btn[onclick*="localFile"]').style.display = 'inline-flex';
       } finally {
         showLoader(false);
       }
     }
 
-    // Updated to read CSV as text instead of arrayBuffer
     async function loadLocalFile(file){
       if (!file) return;
       showLoader(true);
       try {
-        const text = await file.text(); // Read as text for CSV
-        const wb = XLSX.read(text, { type: 'string' }); // Parse as string
+        const text = await file.text();
+        const wb = XLSX.read(text, { type: 'string' });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
         ALL_DATA = json.map(buildRow);
+        populateAssetsDropdown(); // Populate dropdown after data loads
         renderTable(ALL_DATA);
       } catch (e) {
         alert('Error loading file.');
@@ -442,7 +538,6 @@
       }
     }
 
-    // Init
     document.addEventListener('DOMContentLoaded', () => {
       applyLang(getLang());
       document.querySelectorAll('[data-lang]').forEach(btn => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
