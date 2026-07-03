@@ -221,13 +221,34 @@
        A4 LANDSCAPE PRINT STYLES - OPTIMIZED
        ========================================= */
     @media print {
-      @page {
-        size: A4 landscape;
-        margin-left: 10px;
-        margin-right: 50px;
-        margin-top: 10px;
-        margin-bottom: 10px;
-      }
+  
+  /* 1. PAGE SETUP */
+  @page {
+    size: landscape;      /* Forces landscape orientation */
+    margin: 2.5mm;        /* Sets tight margins (Note: some physical printers may not print closer than 3mm-5mm to the edge) */
+  }
+
+  /* 2. FORCE BACKGROUND COLORS/IMAGES TO PRINT */
+  /* (Replaces your invalid background-graphics rule) */
+  * {
+    -webkit-print-color-adjust: exact !important; /* For Safari/Chrome */
+    print-color-adjust: exact !important;         /* Standard */
+  }
+
+  /* 3. SCALE THE CONTENT TO 97% */
+  /* (Replaces your invalid scale rule inside @page) */
+  body {
+    transform: scale(0.97);
+    transform-origin: top left;
+    /* Compensate for the scale so it doesn't leave a blank gap on the right */
+    width: 103.09%; /* (100 / 0.97) */ 
+  }
+  
+  /* Ensure your table still takes up 100% of the scaled body */
+  #printTable {
+    width: 100% !important;
+  }
+
       
       html, body {
         width: 290mm;
@@ -271,13 +292,13 @@
       /* Print Header - Compact */
       .print-header {
         text-align: center;
-        margin-bottom: 4px;
-        border-bottom: 1.5px solid #333;
-        padding-bottom: 3px;
+        
+        
+        
       }
       
       .print-header h1 {
-        font-size: 11px;
+        font-size: 15px;
         color: #000;
         margin-bottom: 1px;
         letter-spacing: 0.5px;
@@ -300,14 +321,16 @@
       /* Print Summary Box - Compact */
       .print-summary {
         margin: 3px 0 4px 0;
-        padding: 4px 6px;
-        background: #f0f0f0 !important;
-        border: 1px solid #999;
+        padding: 4px;
+        background: #d6cbcb !important;
+        border: 1px solid #292828;
         border-radius: 2px;
         display: flex;
         gap: 6px;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
+        font-size: 12px;
+        font-weight: 600;
       }
       
       .print-summary-item {
@@ -331,17 +354,17 @@
         color: #1a1a1a;
         font-family: 'Courier New', monospace;
       }
-      
+
       /* Print Table - Optimized for A4 Landscape */
       #printTable {
-        width: 100% !important;
-        max-width: 100% !important;
-        border-collapse: collapse;
-        font-size: 7px;
-        page-break-inside: auto;
-        table-layout: fixed;
-        margin: 0;
-      }
+    width: 97% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important; /*
+    border-collapse: collapse;
+    font-size: 7px;
+    page-break-inside: auto;
+    table-layout: auto; /* FIXED: Changed from 'flex' to 'auto' */
+  }
       
       #printTable thead {
         display: table-header-group;
@@ -349,7 +372,7 @@
       
       #printTable tr {
         page-break-inside: avoid;
-        line-height: 1.1;
+        line-height: 2;
       }
       
       #printTable th {
@@ -359,12 +382,12 @@
         text-align: left;
         border: 0.5px solid #000;
         text-transform: uppercase;
-        font-size: 6.5px;
+        font-size: 10px;
         font-weight: 700;
         letter-spacing: 0.2px;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
-        line-height: 1.1;
+        line-height: 3;
         white-space: nowrap;
         overflow: hidden;
       }
@@ -374,39 +397,55 @@
         border: 0.5px solid #999;
         color: #000 !important;
         vertical-align: middle;
-        line-height: 1.1;
+        line-height: 1.5;
         font-size: 7px;
         overflow: hidden;
       }
       
       /* Column widths optimized for A4 landscape - all columns visible */
-      #printTable th:nth-child(1),
-      #printTable td:nth-child(1) { 
-        width: 10%; 
+      #printTable th:nth-child(1){ 
+        width: 5%; 
         text-align: center; 
       }
-      #printTable th:nth-child(2),
-      #printTable td:nth-child(2) { 
-        width: 10%; 
+      #printTable td:nth-child(1) { 
+        width: 5%; 
+        text-align: center; 
+      }
+      #printTable th:nth-child(2){ 
+        width: 5%; 
         text-align: left;
+        
+      }
+      #printTable td:nth-child(2) { 
+        width: 5%; 
+        text-align: left;
+        
+      }
+      #printTable th:nth-child(3){ 
+        width: 5%; 
+        text-align: center; }
+      #printTable td:nth-child(3) { 
+        width: 5%; 
+        text-align: center; 
+      }
+       #printTable th:nth-child(4){ 
+        width: 70%; 
+        text-align: center; 
+      }
+      #printTable td:nth-child(4) { 
+        width: 70%; 
+         text-align: left;
         white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 0;
+        text-overflow:visible;
+        max-width: 0; 
       }
-      #printTable th:nth-child(3),
-      #printTable td:nth-child(3) { 
-        width: 10%; 
+       #printTable th:nth-child(5){ 
+        width: 3%; 
         text-align: center; 
       }
-       #printTable th:nth-child(4),
-      #printTable td:nth-child(4) { 
-        width: 60%; 
-        text-align: center; 
-      }
-       #printTable th:nth-child(5),
       #printTable td:nth-child(5) { 
-        width: 5%; 
+        width: 3%; 
         text-align: center; 
       }
      
@@ -527,7 +566,7 @@
   <!-- Print-Only Section -->
   <div class="print-only">
     <div class="print-header">
-      <h1>Gulf Industrial Service Company (GISCO)</h1>
+      <h1 style="margin-top:5px;">Gulf Industrial Service Company (GISCO)</h1>
       <h2>Received Materials – Grouped Summary Report</h2>
       <div class="meta-info">
         <span id="printDate"></span> | 
@@ -554,11 +593,11 @@
       </div>
     </div>
 
-    <table id="printTable">
+    <table id="printTable" >
       <thead>
         <tr>
-          <th>TOTAL AMOUNT</th>
-          <th>RECEIVED</th>
+          <th>TOTAL</th>
+          <th>QTY RECEIVED</th>
           <th>QTY</th>
           <th>ITEM DESCRIPTION</th>
           <th>SN</th>
@@ -798,17 +837,15 @@
         grandTotalReceived += data.receivedAmount;
         grandTotalAmount += data.totalAmount;
         
-        // Truncate description to 120 characters max for print
-        const truncatedDesc = truncateText(desc, 120);
+        // Truncate description to 300 characters max for print
+        const truncatedDesc = truncateText(desc, 300);
         
         printHtml += `
           <tr>
-            
-            
-             
-             <td style="text-align:center">${data.receivedAmount}</td>
-             <td style="text-align:center">${data.qty}</td>
+  
          <td style="text-align:center">${data.totalAmount}</td>
+          <td style="text-align:center">${data.receivedAmount}</td>
+          <td style="text-align:center">${data.qty}</td>
           <td title="${escapeHtml(desc)}">${escapeHtml(truncatedDesc)}</td>
             <td style="text-align:center">${index + 1}</td>
           </tr>
