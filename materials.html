@@ -220,12 +220,13 @@
     /* =========================================
        A4 LANDSCAPE PRINT STYLES - OPTIMIZED
        ========================================= */
-    @media print {
+  @media print {
   
   /* 1. PAGE SETUP */
   @page {
-    size: landscape;      /* Forces landscape orientation */
-    margin: 2.5mm;        /* Sets tight margins (Note: some physical printers may not print closer than 3mm-5mm to the edge) */
+    size: A4 landscape;    /* Use standard A4 landscape */
+    /* Use larger left/right margins to avoid right-side clipping on physical printers */
+    margin: 6mm 12mm 8mm 12mm;
   }
 
   /* 2. FORCE BACKGROUND COLORS/IMAGES TO PRINT */
@@ -235,23 +236,23 @@
     print-color-adjust: exact !important;         /* Standard */
   }
 
-  /* 3. SCALE THE CONTENT TO 97% */
-  /* (Replaces your invalid scale rule inside @page) */
+  /* 3. Remove global scaling for stable pagination */
+  /* Scaling via transform can cause clipping and unpredictable page breaks */
   body {
-    transform: scale(0.97);
-    transform-origin: top left;
-    /* Compensate for the scale so it doesn't leave a blank gap on the right */
-    width: 103.09%; /* (100 / 0.97) */ 
+    transform: none !important;
+    width: auto !important;
   }
-  
-  /* Ensure your table still takes up 100% of the scaled body */
+
+  /* Ensure your table fits the page (leave extra space for printer non-printable area) */
   #printTable {
-    width: 100% !important;
+    width: 90% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
   }
 
       
       html, body {
-        width: 290mm;
+        width: auto !important;
         background: white !important;
         color: black !important;
         font-family: Arial, sans-serif !important;
@@ -356,14 +357,14 @@
       }
 
       /* Print Table - Optimized for A4 Landscape */
-      #printTable {
-    width: 97% !important;
+  #printTable {
+    /* More conservative width to prevent right-side clipping on physical printers */
+    width: 88% !important;
     max-width: 100% !important;
-    margin: 0 auto !important; /*
+    margin: 0 auto !important;
+    /* Keep table predictable for print */
+    table-layout: fixed !important;
     border-collapse: collapse;
-    font-size: 7px;
-    page-break-inside: auto;
-    table-layout: auto; /* FIXED: Changed from 'flex' to 'auto' */
   }
       
       #printTable thead {
@@ -399,53 +400,51 @@
         vertical-align: middle;
         line-height: 1.5;
         font-size: 7px;
-        overflow: hidden;
+        overflow-wrap: break-word !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        white-space: normal !important;
       }
       
       /* Column widths optimized for A4 landscape - all columns visible */
       #printTable th:nth-child(1){ 
-        width: 5%; 
+        width: 12%; 
         text-align: center; 
       }
       #printTable td:nth-child(1) { 
-        width: 5%; 
+        width: 12%; 
         text-align: center; 
       }
       #printTable th:nth-child(2){ 
-        width: 5%; 
+        width: 12%; 
         text-align: left;
-        
       }
       #printTable td:nth-child(2) { 
-        width: 5%; 
+        width: 12%; 
         text-align: left;
-        
       }
       #printTable th:nth-child(3){ 
-        width: 5%; 
+        width: 12%; 
         text-align: center; }
       #printTable td:nth-child(3) { 
-        width: 5%; 
+        width: 12%; 
         text-align: center; 
       }
-       #printTable th:nth-child(4){ 
-        width: 70%; 
-        text-align: center; 
+      #printTable th:nth-child(4){ 
+        width: 48%; 
+        text-align: left; 
       }
       #printTable td:nth-child(4) { 
-        width: 70%; 
-         text-align: left;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow:visible;
-        max-width: 0; 
+        width: 48%; 
+        text-align: left;
+        white-space: normal !important;
       }
-       #printTable th:nth-child(5){ 
-        width: 3%; 
+      #printTable th:nth-child(5){ 
+        width: 16%; 
         text-align: center; 
       }
       #printTable td:nth-child(5) { 
-        width: 3%; 
+        width: 16%; 
         text-align: center; 
       }
      
