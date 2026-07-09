@@ -192,7 +192,7 @@
           <thead>
             <tr style="background: rgba(0, 0, 17, 0.918); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);">
               <th style="color: white; width: 40px; text-align: center;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" style="transform: scale(1.2); cursor: pointer;"></th>
-              <th style="color: white;">Oracle Code</th><th style="color: white;">Description</th><th style="color: white;">Type</th><th style="color: white;">Unit</th><th style="color: white;">Qty</th><th style="color: white; text-align: center;">Actions</th>
+              <th style="color: white;">Oracle Code</th><th style="color: white;">Description</th><th style="color: white;">Stock availability</th><th style="color: white;">Unit</th><th style="color: white;">Qty</th><th style="color: white; text-align: center;">Actions</th>
             </tr>
           </thead>
           <tbody id="tableBody" style="background: rgba(0, 17, 14, 0.712); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.562);"></tbody>
@@ -209,7 +209,7 @@
         <input type="hidden" id="recordId">
         <div class="input-group"><label style="color:white">Oracle Code</label><input id="f_code" class="modern-input" type="text" required></div>
         <div class="input-group"><label style="color:white">Description</label><input id="f_description" class="modern-input" type="text" required></div>
-        <div class="input-group"><label style="color:white">Type</label><input id="f_type" class="modern-input" type="text"></div>
+        <div class="input-group"><label style="color:white">Stock availability</label><input id="f_type" class="modern-input" type="text"></div>
         <div class="input-group"><label style="color:white">Unit</label><input id="f_unit" class="modern-input" type="text"></div>
         <div class="input-group"><label style="color:white">Qty</label><input id="f_qty" class="modern-input" type="number" min="0"></div>
         <button type="submit" class="btn primary" style="width:100%; margin-top:15px; justify-content: center;border: 3px solid transparent;background:linear-gradient(#01f3f3, #03eeda) padding-box, linear-gradient(45deg, #eeff00, #af4000) border-box; color:#000;border-radius: 20px;font-weight: bold;font-size: 1rem;">Save Record</button>
@@ -245,8 +245,10 @@
   <div id="statusBar" class="status-bar"><div class="spinner"></div> Initializing System...</div>
 
   <script>
+    // ⚠️ SECURITY: Use the 'anon' (public) key from Supabase Dashboard → Settings → API
+    // NEVER use the service_role key in frontend code — it bypasses Row Level Security!
     const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let ALL_ROWS = [];
@@ -384,21 +386,32 @@
     }
 
     const FIELD_ALIASES = {
-      code: ['oracle code','code','item code','CODE'], description: ['item description','ITEM_DESCRIPTION', 'description','desc','name'],
-      unit: ['unit','uom','measure'], qty: ['qty','quantity','onhand','stock','WAREHOUSE','STORE'], type: ['type','category','class']
+      code: ['oracle code','code','item code','CODE'],
+      description: ['item description','ITEM_DESCRIPTION','description','desc','name'],
+      unit: ['unit','uom','measure'],
+
+      // qty/on-hand column candidates
+      qty: ['qty','quantity','onhand','stock','on hand','WAREHOUSE','STORE','warehouse','store'],
+
+      // stock availability column candidates (where the CSV/XLSX contains values like store/warehouse/stock)
+      type: ['type','category','class','STORE','WAREHOUSE','STOCK','stock','Stock','store','warehouse']
     };
 
     function buildRow(item){
-      const id = item.id; 
-      const code = String(pickField(item, FIELD_ALIASES.code) || '').trim();
-      const description = String(pickField(item, FIELD_ALIASES.description) || '').trim();
-      const unit = String(pickField(item, FIELD_ALIASES.unit) || '').trim();
-      const qty = String(pickField(item, FIELD_ALIASES.qty) || '').trim();
-      const type = String(pickField(item, FIELD_ALIASES.type) || '').trim();
-      const searchIndex = `${code} ${description} ${type}`.toLowerCase();
-      const isStock = type.toLowerCase().includes('stock') || type.toUpperCase().includes('WAREHOUSE') || type.toUpperCase().includes('STORE') || type.toLowerCase().includes('store') || type.toLowerCase().includes('inventory') || type.toLowerCase().includes('on hand') || type.toLowerCase().includes('on_hand') || type.toLowerCase().includes('onhand') || type.toLowerCase().includes('available') || type.toLowerCase().includes('in stock') || type.toLowerCase().includes('instock')        ;
-      return { id, code, description, unit, qty, type, searchIndex, isStock };
-    }
+  const id = item.id; 
+  const code = String(pickField(item, FIELD_ALIASES.code) || '').trim();
+  const description = String(pickField(item, FIELD_ALIASES.description) || '').trim();
+  const unit = String(pickField(item, FIELD_ALIASES.unit) || '').trim();
+  const qty = String(pickField(item, FIELD_ALIASES.qty) || '').trim();
+  const type = String(pickField(item, FIELD_ALIASES.type) || '').trim();
+  const searchIndex = `${code} ${description} ${type}`.toLowerCase();
+
+  // isStock true only when type matches one of the stock keywords (case-sensitive variants included)
+  const stockKeywords = new Set(['store','STORE.Store','warehouse','WAREHOUSE','STOCK','stock','Stock']);
+  const isStock = stockKeywords.has(type);
+
+  return { id, code, description, unit, qty, type, searchIndex, isStock };
+}
 
     function parseCSV(text) {
         if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
@@ -440,7 +453,7 @@
             const upper = h.toUpperCase();
             if (lower.includes('code') || lower === 'id' || upper === 'CODE') map.code = index;
             else if (lower.includes('desc') || lower.includes('name') || lower.includes('item') || upper === 'ITEM_DESCRIPTION') map.description = index;
-            else if (lower.includes('type') || lower.includes('category')) map.type = index;
+            else if (lower.includes('type') || lower.includes('category') || upper.includes('STORE')) map.type = index;
             else if (lower.includes('unit') || lower.includes('uom')) map.unit = index;
             else if (lower.includes('qty') || lower.includes('quantity') || lower.includes('stock') || lower.includes('warehouse') || upper === 'WAREHOUSE' || upper === 'STORE') map.qty = index;
         });
