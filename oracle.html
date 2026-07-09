@@ -406,9 +406,10 @@
   const type = String(pickField(item, FIELD_ALIASES.type) || '').trim();
   const searchIndex = `${code} ${description} ${type}`.toLowerCase();
 
-  // isStock true only when type matches one of the stock keywords (case-sensitive variants included)
-  const stockKeywords = new Set(['store','STORE.Store','warehouse','WAREHOUSE','STOCK','stock','Stock']);
-  const isStock = stockKeywords.has(type);
+
+
+  const isStock = type !== '';
+
 
   return { id, code, description, unit, qty, type, searchIndex, isStock };
 }
