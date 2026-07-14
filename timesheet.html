@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Professional Timesheet Generator</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 :root {
@@ -1117,6 +1118,9 @@ margin: 20px 0;
             <button id="CheckDuplicates" class="action-btn btn-check-duplicates">
                 <i class="fas fa-search"></i> Check Duplicates
             </button>
+            <button id="loadNamesBtn" class="action-btn btn-check-duplicates">
+                <i class="fas fa-sync"></i> Load Names from Supabase
+            </button>
         </div>
     </div>
 </div>
@@ -1182,7 +1186,7 @@ margin: 20px 0;
     
 
     <script>
-        let empCodes = [];
+let empCodes = [];
         let empData = {};
         let empFileLoaded = false;
         let templateArrayBuffer = null;
@@ -1194,6 +1198,128 @@ margin: 20px 0;
        let isRamadanEnabled = false;
         let ramadanStartDate = null;
         let ramadanEndDate = null;
+
+        // ===== Supabase: code -> name2 lookup for Employee Name =====
+        // Use anon key (frontend-safe). Same project credentials as EMP.html.
+        const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+
+        // supabase-js must be loaded in this page (add via <script> tag below).
+        const supabaseClient = (typeof window !== 'undefined' && window.supabase && window.supabase.createClient)
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
+
+        const employeeNameCache = new Map(); // code -> name2
+        const employeeNameFetchInFlight = new Map(); // code -> Promise
+
+        async function fetchEmployeeNameByCode(code) {
+            const normalized = String(code || '').trim();
+            if (!normalized) return '';
+            if (employeeNameCache.has(normalized)) return employeeNameCache.get(normalized) || '';
+            if (employeeNameFetchInFlight.has(normalized)) return employeeNameFetchInFlight.get(normalized);
+            if (!supabaseClient) return '';
+
+            const p = (async () => {
+                const { data, error } = await supabaseClient
+                    .from('emps')
+                    .select('name2')
+                    .eq('code', normalized)
+                    .limit(1)
+                    .maybeSingle();
+
+                // DEBUG: log one response shape
+                if (!employeeNameCache.size) {
+                    console.log('[Supabase] single() response for code:', normalized, { data, error });
+                }
+
+                if (error) {
+                    employeeNameCache.set(normalized, '');
+                    return '';
+                }
+
+                const name2 = (data && data.name2) ? String(data.name2).trim() : '';
+                employeeNameCache.set(normalized, name2);
+                return name2;
+            })();
+
+            employeeNameFetchInFlight.set(normalized, p);
+            try {
+                return await p;
+            } finally {
+                employeeNameFetchInFlight.delete(normalized);
+            }
+        }
+
+
+        async function loadNamesFromSupabaseForTemplate() {
+            try {
+                console.log('[Supabase] loadNames clicked');
+                console.log('[Supabase] empCodes length =', Array.isArray(empCodes) ? empCodes.length : 'NOT_ARRAY');
+
+                if (!Array.isArray(empCodes) || empCodes.length === 0) {
+                    console.warn('[Supabase] No empCodes loaded; skipping fetch');
+                    return;
+                }
+
+                // Directly query Supabase for all needed codes in one request (no cache loop needed).
+                const codesToFetch = empCodes
+                    .map(x => String(x.code || '').trim())
+                    .filter(Boolean);
+
+                console.log('[Supabase] codesToFetch =', codesToFetch);
+
+                if (codesToFetch.length === 0) {
+                    console.warn('[Supabase] empCodes has no valid code values; skipping fetch');
+                    return;
+                }
+
+                showLoading();
+
+                // Refresh local cache from scratch
+                employeeNameCache.clear();
+
+                // Supabase 'in' filter to fetch all rows.
+                const { data, error } = await supabaseClient
+                    .from('emps')
+                    .select('code, name2')
+                    .in('code', codesToFetch);
+
+                console.log('[Supabase] bulk fetch raw response:', { data, error });
+
+                if (error) {
+                    console.error('[Supabase] bulk fetch error:', error);
+                    showStatus('Supabase error while loading names.', true);
+                    return;
+                }
+
+                const received = Array.isArray(data) ? data : [];
+                console.log('[Supabase] bulk fetch rows received:', received);
+
+                received.forEach(row => {
+                    const code = String(row?.code || '').trim();
+                    const name2 = row?.name2 != null ? String(row.name2).trim() : '';
+                    if (!code) return;
+                    employeeNameCache.set(code, name2);
+                });
+
+
+                const filledCount = codesToFetch.reduce((acc, code) => {
+                    const v = String(employeeNameCache.get(code) || '').trim();
+                    return acc + (v ? 1 : 0);
+                }, 0);
+
+                showStatus(`[Supabase] Load Names done. Filled ${filledCount}/${codesToFetch.length} employee name(s).`, false, false, true);
+
+                renderEmpTable();
+                updateGenerateButton();
+
+            } finally {
+                hideLoading();
+            }
+        }
+
+
+
         document.addEventListener('DOMContentLoaded', function() {
             hideStatus();
             updateEmpCounter();
@@ -1238,6 +1364,14 @@ margin: 20px 0;
     document.getElementById('closeReport').addEventListener('click', closeReport);
     document.getElementById('printReport').addEventListener('click', printReport);
     document.getElementById('exportReport').addEventListener('click', exportReport);
+
+    // Load employee names on demand (event delegation because the button is inside #empList and is created after template load)
+    document.addEventListener('click', (evt) => {
+        const btn = evt.target && evt.target.closest ? evt.target.closest('#loadNamesBtn') : null;
+        if (!btn) return;
+        loadNamesFromSupabaseForTemplate();
+    });
+
     initRamadanListeners(); // Initialize Ramadan listeners
 }
         
@@ -1297,6 +1431,25 @@ margin: 20px 0;
                         document.getElementById('fileUploadContainer').classList.add('format-preserved');
                         document.getElementById('empList').style.display = 'block';
                         renderEmpTable();
+
+                        // Auto-fill names from Supabase when opening the template (if emp.xlsx not loaded yet)
+                        if (!empFileLoaded) {
+                            const codesToFetch = empCodes
+                                .map(x => String(x.code || '').trim())
+                                .filter(Boolean);
+
+                            // Show names as soon as they arrive; renderEmpTable() will pull from the cache.
+                            (async () => {
+                                // Bulk-load from Supabase (no per-code single() calls)
+                                await loadNamesFromSupabaseForTemplate();
+                                renderEmpTable();
+                                updateGenerateButton();
+                            })().catch(() => {
+                                renderEmpTable();
+                                updateGenerateButton();
+                            });
+
+                        }
                     }
                     
                     const statusEl = document.getElementById('templateStatus');
@@ -1670,12 +1823,33 @@ function handleEmpTableInput(e) {
     if (target.classList.contains('emp-input') && target.dataset.field === 'code') {
         const newCode = target.value.trim();
         empCodes[index].code = newCode;
+
+        // 1) Prefer excel file lookup if available
         if (empFileLoaded && empData[newCode]) {
             empCodes[index].name = empData[newCode].name || '';
-        } else {
-            empCodes[index].name = '';
+            renderEmpTable();
+            updateGenerateButton();
+            return;
         }
-        renderEmpTable(); // This will now perfectly preserve your focus!
+
+        // 2) Otherwise fetch from Supabase (name2)
+        empCodes[index].name = '';
+        renderEmpTable();
+        updateGenerateButton();
+
+        // async fetch; after it completes re-render (focus restore is already handled)
+        fetchEmployeeNameByCode(newCode).then((name2) => {
+            // code might have changed since request started
+            if (String(empCodes[index]?.code || '').trim() !== String(newCode).trim()) return;
+            empCodes[index].name = name2 || '';
+            renderEmpTable();
+            updateGenerateButton();
+        }).catch(() => {
+            // keep empty if fetch fails
+            empCodes[index].name = '';
+            renderEmpTable();
+            updateGenerateButton();
+        });
     } else if (target.classList.contains('not-input')) {
         empCodes[index].not = target.value;
         updateGenerateButton();
@@ -1685,9 +1859,22 @@ function handleEmpTableInput(e) {
     }
 }
         
-      function renderEmpTable() {
+        function renderEmpTable() {
     // 1. SAVE FOCUS STATE: Remember which input is currently focused before we destroy the DOM
     const activeEl = document.activeElement;
+
+    // Convert supabase cache into empCodes list: if a code has no name2 in Supabase,
+    // skip it completely (remove from table), as requested.
+    // Note: We only do this when the cache has been populated (size > 0).
+    if (employeeNameCache && employeeNameCache.size > 0) {
+        empCodes = empCodes.filter(empEntry => {
+            const code = String(empEntry.code || '').trim();
+            if (!code) return false;
+            const cachedName = employeeNameCache.get(code) || '';
+            return String(cachedName).trim().length > 0;
+        });
+    }
+
     let focusIndex = -1;
     let focusField = '';
     let cursorPos = -1;
@@ -1709,9 +1896,15 @@ function handleEmpTableInput(e) {
         const name = (empEntry.name || '').trim();
         const not = empEntry.not !== undefined ? empEntry.not : '';
         const wot = empEntry.wot !== undefined ? empEntry.wot : '';
+
         const empInfo = empData[code] || { name: '' };
-        const autoName = empInfo.name || name;
+        const cachedName2 = employeeNameCache.get(code) || '';
+
+        // Prefer Supabase name2 when emp.xlsx isn't loaded
+        const autoName = (empFileLoaded && empInfo.name) ? empInfo.name : (cachedName2 || name);
+
         empCodes[i].name = autoName;
+
         
         const duplicateCode = isDuplicateEmpCode(code, i);
         const duplicateName = isDuplicateEmpName(autoName, i);
