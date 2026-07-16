@@ -323,7 +323,7 @@
           <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="resetZoom()">🔎 100%</button>
           <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="zoomIn()">➕ Zoom</button>
           <span class="pdf-help" id="pdfZoomLabel">100%</span>
-          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="printPdf()">🖨️ Print</button>
+          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="printPDFPopup()">🖨️ Print</button>
           <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="downloadPdf(document.getElementById('pdfTitle').dataset.order || document.getElementById('pdfTitle').textContent.replace('PDF: ','').trim())">⬇️ Download</button>
 
           <button id="pdfCloseBtn" class="btn primary" style="padding:6px 10px; font-size:0.85rem;" onclick="closePdfModal()">✖ Close</button>
@@ -652,10 +652,39 @@
       setZoom(1);
     }
 
-    function printPdf() {
-      // Browser print dialog will print whatever is visible.
-      // Users can select “Save as PDF” inside the print dialog.
-      window.print();
+    function printPDFPopup() {
+      const embed = document.getElementById('pdfEmbed');
+      if (!embed) return;
+      const pdfUrl = embed.src;
+      if (!pdfUrl) {
+        alert('PDF not loaded yet.');
+        return;
+      }
+
+      // Open the PDF in a new pop-up window
+      const printWindow = window.open('', 'PrintPDF', 'width=900,height=700');
+      if (!printWindow) {
+        alert('Popup blocked. Please allow popups for this site/browser.');
+        return;
+      }
+
+      // Write a minimal HTML that embeds the PDF
+      printWindow.document.write(`<!doctype html><html><head><title>Print PDF</title></head><body style="margin:0;">
+        <embed src="${pdfUrl}" type="application/pdf" style="width:100%;height:100vh;" />
+        <script>
+          window.addEventListener('load', () => {
+            setTimeout(() => {
+              try {
+                window.focus();
+                window.print();
+              } catch (e) {
+                // ignore
+              }
+            }, 500);
+          });
+        <\/script>
+      </body></html>`);
+      printWindow.document.close();
     }
 
     async function downloadPdf(orderName) {
