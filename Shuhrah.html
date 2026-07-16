@@ -324,7 +324,8 @@
           <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="zoomIn()">➕ Zoom</button>
           <span class="pdf-help" id="pdfZoomLabel">100%</span>
           <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="printPdf()">🖨️ Print</button>
-          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="downloadPdf(document.getElementById('pdfTitle').textContent.replace('PDF: ','').trim())">⬇️ Download</button>
+          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="downloadPdf(document.getElementById('pdfTitle').dataset.order || document.getElementById('pdfTitle').textContent.replace('PDF: ','').trim())">⬇️ Download</button>
+
           <button id="pdfCloseBtn" class="btn primary" style="padding:6px 10px; font-size:0.85rem;" onclick="closePdfModal()">✖ Close</button>
         </div>
       </div>
@@ -542,25 +543,51 @@
     }
 
     // --- PDF Popup Viewer ---
-    const GITHUB_REPO_RAW_PREFIX = 'https://raw.githubusercontent.com/Desho2050/Gisco';
-    // This code uses the repo root by default.
-    // If your PDFs are in a specific subfolder, update PDF_SUBFOLDER.
-    const PDF_SUBFOLDER = ''; // e.g. 'PPO' or 'PPO/New folder/'
+    const PDF_CACHE_KEY = 'pdf_url_cache_v3';
+    let PDF_URL_CACHE = JSON.parse(localStorage.getItem(PDF_CACHE_KEY) || '{}');
+    const CACHE_TTL = 60 * 60 * 1000;
 
-    function buildPdfUrl(orderName) {
-      const safe = String(orderName || '').trim();
-      const file = safe.endsWith('.pdf') ? safe : `${safe}.pdf`;
-      const folder = PDF_SUBFOLDER ? (PDF_SUBFOLDER.replace(/^\/+|\/+$/g,'') + '/') : '';
-      // raw URL: https://raw.githubusercontent.com/{user}/{repo}/{ref}/{path}
-      // using default branch 'main' per your request.
-      return `${GITHUB_REPO_RAW_PREFIX}/main/${folder}${encodeURIComponent(file).replace(/%2F/g,'/')}`;
+    function isCacheValid(ts) { return Date.now() - ts < CACHE_TTL; }
+
+    function getCachedPdfUrls(filename) {
+      const key = String(filename || '').toLowerCase();
+      const cached = PDF_URL_CACHE[key];
+      if (cached && isCacheValid(cached.ts)) return { direct: cached.direct, google: cached.google };
+      return null;
     }
 
-    function openPdfModal(orderName) {
+    function setCachedPdfUrls(filename, direct, google) {
+      const key = String(filename || '').toLowerCase();
+      PDF_URL_CACHE[key] = { direct, google, ts: Date.now() };
+      localStorage.setItem(PDF_CACHE_KEY, JSON.stringify(PDF_URL_CACHE));
+    }
+
+    async function resolvePdfUrls(file) {
+      const cached = getCachedPdfUrls(file);
+      if (cached) return cached;
+
+      const safe = String(file || '').trim();
+      if (!safe) return { direct: '', google: '' };
+
+      const normalized = safe.toLowerCase().endsWith('.pdf') ? safe : `${safe}.pdf`;
+
+      // Direct file URL hosted by GitHub Pages
+      const ghPagesUrl = `https://desho2050.github.io/Gisco/${encodeURIComponent(normalized)}`;
+
+      // Google viewer URL (better for inline embedding when GitHub/raw headers are restrictive)
+      const googleUrl = `https://docs.google.com/gview?url=${encodeURIComponent(ghPagesUrl)}&embedded=true`;
+
+      setCachedPdfUrls(normalized, ghPagesUrl, googleUrl);
+      return { direct: ghPagesUrl, google: googleUrl };
+    }
+
+
+    async function openPdfModal(orderName) {
       const order = String(orderName || '').trim();
       if (!order) return;
 
-      const url = buildPdfUrl(order);
+      const { google } = await resolvePdfUrls(order);
+      const url = google;
       const modal = document.getElementById('pdfModal');
       const overlay = document.getElementById('pdfOverlay');
       const title = document.getElementById('pdfTitle');
@@ -568,13 +595,16 @@
       const zoomLabel = document.getElementById('pdfZoomLabel');
       const viewer = document.getElementById('pdfViewerInner');
 
+
       // reset zoom
       modal.dataset.zoom = '1';
       viewer.style.transform = 'scale(1)';
       zoomLabel.textContent = '100%';
 
       title.textContent = `PDF: ${order}`;
+      title.dataset.order = order;
       embed.src = url;
+
 
       overlay.style.display = 'flex';
       overlay.setAttribute('aria-hidden', 'false');
@@ -628,15 +658,21 @@
       window.print();
     }
 
-    function downloadPdf(orderName) {
-      const url = buildPdfUrl(orderName);
+    async function downloadPdf(orderName) {
+      const order = String(orderName || '').trim();
+      if (!order) return;
+
+      const { direct } = await resolvePdfUrls(order);
+      if (!direct) return;
+
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${String(orderName || '').trim()}.pdf`;
+      a.href = direct;
+      a.download = `${order}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
     }
+
 
     function exportPDF() {
 
