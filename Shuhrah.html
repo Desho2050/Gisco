@@ -205,8 +205,75 @@
       .dashboard-grid { grid-template-columns: 1fr; }
     }
 
+    /* PDF Modal Styles */
+    .pdf-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: none;
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .pdf-modal {
+      width: min(1200px, 100%);
+      height: min(90vh, 900px);
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(10px);
+    }
+    .pdf-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .pdf-title {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--accent);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .pdf-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .pdf-viewport {
+      position: relative;
+      flex: 1;
+      overflow: auto;
+      background: #0b1220;
+    }
+    .pdf-viewer-inner {
+      transform-origin: top left;
+      will-change: transform;
+    }
+    #pdfEmbed {
+      display: block;
+      width: 100%;
+      height: 90vh;
+      border: 0;
+    }
+    .pdf-help {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      margin-left: 10px;
+    }
+
     /* Print Styles */
     @media print {
+
       body { background: white; color: black; }
       .glass { background: white; border: 1px solid #ccc; backdrop-filter: none; }
       .actions-top, .search-group, .btn { display: none !important; }
@@ -243,7 +310,35 @@
     </div>
   </header>
 
+  <!-- PDF Modal -->
+  <div class="pdf-overlay" id="pdfOverlay" aria-hidden="true" onclick="if(event.target===this) closePdfModal()">
+    <div class="pdf-modal" id="pdfModal" role="dialog" aria-modal="true">
+      <div class="pdf-modal-header">
+        <div>
+          <div class="pdf-title" id="pdfTitle">PDF</div>
+          <div class="pdf-help">Zoom • Print • Download</div>
+        </div>
+        <div class="pdf-controls">
+          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="zoomOut()">➖ Zoom</button>
+          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="resetZoom()">🔎 100%</button>
+          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="zoomIn()">➕ Zoom</button>
+          <span class="pdf-help" id="pdfZoomLabel">100%</span>
+          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="printPdf()">🖨️ Print</button>
+          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="downloadPdf(document.getElementById('pdfTitle').textContent.replace('PDF: ','').trim())">⬇️ Download</button>
+          <button id="pdfCloseBtn" class="btn primary" style="padding:6px 10px; font-size:0.85rem;" onclick="closePdfModal()">✖ Close</button>
+        </div>
+      </div>
+
+      <div class="pdf-viewport">
+        <div class="pdf-viewer-inner" id="pdfViewerInner">
+          <embed id="pdfEmbed" type="application/pdf" src="" />
+        </div>
+      </div>
+    </div>
+  </div>
+
   <main>
+
     <!-- Financial Dashboard -->
     <div class="dashboard-grid">
       <div class="glass stat-card">
@@ -293,6 +388,7 @@
             <th>Total</th>
             <th>Status</th>
             <th>Order</th>
+            <th>PDF</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -387,6 +483,10 @@
           <td class="col-money" style="text-align:right">${formatCurrency(total)}</td>
           <td style="text-align:center"><span class="status-badge">${item['Status'] || '-'}</span></td>
           <td>${item['Order'] || ''}</td>
+          <td>
+            <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="openPdfModal('${String(item['Order']||'').replace(/'/g,"\\'") }')">📄 Open PDF</button>
+
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -441,7 +541,105 @@
       XLSX.writeFile(wb, 'GISCO_Purchase_Summary.xlsx');
     }
 
+    // --- PDF Popup Viewer ---
+    const GITHUB_REPO_RAW_PREFIX = 'https://raw.githubusercontent.com/Desho2050/Gisco';
+    // This code uses the repo root by default.
+    // If your PDFs are in a specific subfolder, update PDF_SUBFOLDER.
+    const PDF_SUBFOLDER = ''; // e.g. 'PPO' or 'PPO/New folder/'
+
+    function buildPdfUrl(orderName) {
+      const safe = String(orderName || '').trim();
+      const file = safe.endsWith('.pdf') ? safe : `${safe}.pdf`;
+      const folder = PDF_SUBFOLDER ? (PDF_SUBFOLDER.replace(/^\/+|\/+$/g,'') + '/') : '';
+      // raw URL: https://raw.githubusercontent.com/{user}/{repo}/{ref}/{path}
+      // using default branch 'main' per your request.
+      return `${GITHUB_REPO_RAW_PREFIX}/main/${folder}${encodeURIComponent(file).replace(/%2F/g,'/')}`;
+    }
+
+    function openPdfModal(orderName) {
+      const order = String(orderName || '').trim();
+      if (!order) return;
+
+      const url = buildPdfUrl(order);
+      const modal = document.getElementById('pdfModal');
+      const overlay = document.getElementById('pdfOverlay');
+      const title = document.getElementById('pdfTitle');
+      const embed = document.getElementById('pdfEmbed');
+      const zoomLabel = document.getElementById('pdfZoomLabel');
+      const viewer = document.getElementById('pdfViewerInner');
+
+      // reset zoom
+      modal.dataset.zoom = '1';
+      viewer.style.transform = 'scale(1)';
+      zoomLabel.textContent = '100%';
+
+      title.textContent = `PDF: ${order}`;
+      embed.src = url;
+
+      overlay.style.display = 'flex';
+      overlay.setAttribute('aria-hidden', 'false');
+
+      // Ensure keyboard accessibility
+      document.body.style.overflow = 'hidden';
+
+      // Focus close button
+      const closeBtn = document.getElementById('pdfCloseBtn');
+      if (closeBtn) closeBtn.focus();
+    }
+
+    function closePdfModal() {
+      const overlay = document.getElementById('pdfOverlay');
+      const embed = document.getElementById('pdfEmbed');
+      overlay.style.display = 'none';
+      embed.src = '';
+      overlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    function setZoom(next) {
+      const modal = document.getElementById('pdfModal');
+      const viewer = document.getElementById('pdfViewerInner');
+      const zoomLabel = document.getElementById('pdfZoomLabel');
+      const z = Math.max(0.5, Math.min(3, next));
+      modal.dataset.zoom = String(z);
+      viewer.style.transform = `scale(${z})`;
+      zoomLabel.textContent = `${Math.round(z * 100)}%`;
+    }
+
+    function zoomIn() {
+      const modal = document.getElementById('pdfModal');
+      const z = Number(modal.dataset.zoom || '1');
+      setZoom(z + 0.1);
+    }
+
+    function zoomOut() {
+      const modal = document.getElementById('pdfModal');
+      const z = Number(modal.dataset.zoom || '1');
+      setZoom(z - 0.1);
+    }
+
+    function resetZoom() {
+      setZoom(1);
+    }
+
+    function printPdf() {
+      // Browser print dialog will print whatever is visible.
+      // Users can select “Save as PDF” inside the print dialog.
+      window.print();
+    }
+
+    function downloadPdf(orderName) {
+      const url = buildPdfUrl(orderName);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${String(orderName || '').trim()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
     function exportPDF() {
+
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF('l', 'pt', 'a4'); // Landscape
       
