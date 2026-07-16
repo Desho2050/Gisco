@@ -1,690 +1,2734 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GISCO – Procurement Intelligence</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  
-  <!-- External Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Work Orders – Project 4378M RAK & FUJ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+<style>
+:root {
+  --col-split: #16a34a;
+  --col-window: #c022c5;
+  --col-cooler: #06b6d4;
+  --col-used: #ef4444;
+  --col-fridge: #64748b;
+  --col-freezer: #94a3b8;
+  --col-package: #3b82f6;
+  --col-freestand: #a855f7;
+  --col-aircurtain: #f59e0b;
+  --gradient-main: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --gradient-cool: linear-gradient(135deg, #06b6d4, #10b981);
+  --rd-high: #10b981;
+  --rd-mid: #f59e0b;
+  --rd-low: #ef4444;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  <style>
-    :root {
-      --bg-dark: #024469;
-      --bg-card: rgba(30, 41, 59, 0.7);
-      --brand: #00bfa5; /* GISCO Teal */
-      --brand-glow: rgba(0, 191, 166, 0.637);
-      --accent: #ffffff;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: rgba(255, 255, 255, 0.1);
-      --success: #10b981;
-      --danger: #ef4444;
-    }
+[data-theme="dark"] {
+  --bg-deep: #0a0a1a;
+  --bg-primary: #0f0f2a;
+  --bg-surface: #141432;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.06);
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.15);
+  --text-primary: #f0f0f8;
+  --text-secondary: #9090b8;
+  --text-muted: #555578;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-pink: #ec4899;
+  --col-meta: #1e293b;
+  --grid: rgba(255,255,255,0.08);
+  --progress-zero: rgba(255,255,255,0.05);
+  --shadow-card: 0 4px 20px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 60px rgba(59, 130, 246, 0.08);
+  --orb-opacity: 0.22;
+  --grid-opacity: 0.015;
+  --topbar-bg: rgba(15, 15, 42, 0.85);
+  --input-bg: rgba(255,255,255,0.03);
+  --row-even: rgba(255,255,255,0.015);
+  --row-hover: rgba(59, 130, 246, 0.08);
+  --scrollbar-thumb: rgba(255,255,255,0.1);
+  --scrollbar-thumb-hover: #3b82f6;
+  --modal-bg: #0f0f2a;
+  --toast-bg: rgba(15, 15, 42, 0.95);
+  --tooltip-bg: rgba(15, 15, 42, 0.95);
+  --table-border: rgba(255, 255, 255, 0.15); /* Clearer grid for dark mode */
+}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      background-color: var(--bg-dark);
-      background-image: 
-        radial-gradient(at 0% 0%, rgba(0, 191, 165, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
-      color: var(--text-main);
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+[data-theme="light"] {
+  --bg-deep: #f0f2f5;
+  --bg-primary: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --glass: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border-hover: rgba(0, 0, 0, 0.15);
+  --text-primary: #1a1a2e;
+  --text-secondary: #5a6478;
+  --text-muted: #8892a6;
+  --accent-blue: #3b82f6;
+  --accent-green: #059669;
+  --accent-orange: #d97706;
+  --accent-red: #dc2626;
+  --accent-pink: #db2777;
+  --col-meta: #1e293b;
+  --grid: rgba(0,0,0,0.08);
+  --progress-zero: rgba(0,0,0,0.05);
+  --shadow-card: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-glow: 0 4px 30px rgba(59, 130, 246, 0.1);
+  --orb-opacity: 0.08;
+  --grid-opacity: 0.04;
+  --topbar-bg: rgba(255, 255, 255, 0.85);
+  --input-bg: #f8fafc;
+  --row-even: #f8fafc;
+  --row-hover: rgba(59, 130, 246, 0.06);
+  --scrollbar-thumb: rgba(0,0,0,0.15);
+  --scrollbar-thumb-hover: #3b82f6;
+  --modal-bg: #ffffff;
+  --toast-bg: rgba(255, 255, 255, 0.95);
+  --tooltip-bg: rgba(26, 26, 46, 0.95);
+  --table-border: rgba(0, 0, 0, 0.15); /* Clearer grid for light mode */
+}
 
-    /* Glassmorphism Utilities */
-    .glass {
-      background: var(--bg-card);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-    }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Header */
-    header {
-      padding: 20px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      background: rgba(36, 15, 42, 0.9);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  transition: background 0.4s ease, color 0.4s ease;
+}
 
-    .brand-area { display: flex; align-items: center; gap: 15px; }
-    .logo-mark {
-      min-width: 80px; height: 40px; padding: 0 10px;
-      background: linear-gradient(135deg, var(--brand), var(--accent));
-      border-radius: 8px;
-      display: grid; place-items: center;
-      font-weight: 800; font-size: 16px; letter-spacing: 1px; color: white;
-    }
-    .titles h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px; }
-    .titles p { font-size: 0.85rem; color: var(--text-muted); }
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
 
-    .actions-top { display: flex; gap: 10px; }
-    .btn {
-      padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border);
-      background: rgba(255,255,255,0.05); color: var(--text-main);
-      cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
-      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-    }
-    .btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
-    .btn.primary { background: var(--brand); border-color: var(--brand); color: #000; font-weight: 700; }
-    .btn.primary:hover { background: #00e6c5; box-shadow: 0 0 15px var(--brand-glow); }
+.bg-canvas .orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: var(--orb-opacity);
+  animation: orbFloat 25s ease-in-out infinite;
+  transition: opacity 0.4s ease;
+}
 
-    /* Main Layout */
-    main {
-      flex: 1; padding: 30px; max-width: 1600px; margin: 0 auto; width: 100%;
-      display: flex; flex-direction: column; gap: 24px;
-    }
+.bg-canvas .orb:nth-child(1) { width: 700px; height: 700px; background: #3b82f6; top: -250px; left: -150px; }
+.bg-canvas .orb:nth-child(2) { width: 500px; height: 500px; background: #8b5cf6; top: 40%; right: -200px; animation-delay: -8s; animation-duration: 30s; }
+.bg-canvas .orb:nth-child(3) { width: 450px; height: 450px; background: #ec4899; bottom: -150px; left: 25%; animation-delay: -15s; animation-duration: 35s; }
+.bg-canvas .orb:nth-child(4) { width: 350px; height: 350px; background: #06b6d4; top: 20%; left: 50%; animation-delay: -5s; animation-duration: 28s; }
 
-    /* Dashboard Summary Cards */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-    }
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(128,128,128,var(--grid-opacity)) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(128,128,128,var(--grid-opacity)) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: 0;
+  pointer-events: none;
+}
 
-    .stat-card {
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: relative;
-      overflow: hidden;
-    }
-    .stat-card::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
-      background: var(--brand);
-    }
-    .stat-label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-    .stat-value { font-size: 1.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
-    .stat-sub { font-size: 0.9rem; color: var(--brand); margin-top: 5px; }
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(60px, -40px) scale(1.1); }
+  50% { transform: translate(-40px, 50px) scale(0.9); }
+  75% { transform: translate(30px, 20px) scale(1.05); }
+}
 
-    /* The Arabic Words Display */
-    .words-card {
-      grid-column: 1 / -1;
-      background: linear-gradient(90deg, rgb(32, 0, 51), rgb(255, 255, 255));
-      border: 1px solid var(--brand);
-      text-align: center;
-      padding: 15px;
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  transition: var(--transition);
+}
 
-    }
-    .words-text {
-      font-size: 1.2rem;
-      color:#ffffff;
-      font-weight: 700;
-      text-shadow: 0 0 5px rgb(0, 0, 0);
-    }
+.topbar .title {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-primary);
+}
 
-    /* Controls & Search */
-    .controls-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .search-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      flex: 1;
-    }
-    .modern-input {
-      background: rgb(255, 255, 255);
-      border: 1px solid var(--border);
-      padding: 10px 15px;
-      border-radius: 8px;
-      color: rgb(0, 0, 0);
-      font-family: 'Inter', sans-serif;
-      min-width: 180px;
-      flex: 1;
-    }
-    .modern-input:focus { outline: none; border-color: var(--brand); }
+.topbar .title .icon-wrap {
+  width: 38px; height: 38px;
+  background: var(--gradient-main);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
 
-    /* Data Table */
-    .table-container {
-      overflow-x: auto;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 42, 0.4);
-    }
-    table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-    th {
-      text-align: left; padding: 16px;
-      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
-      color: var(--text-muted);
-      background: rgba(0,0,0,0.3);
-      position: sticky; top: 0;
-    }
-    td {
-      padding: 14px 16px; border-bottom: 1px solid var(--border);
-      font-size: 0.9rem; vertical-align: middle;
-    }
-    tr:hover td { background: rgba(255,255,255,0.03); }
-    
-    .col-code { font-family: 'JetBrains Mono'; color: var(--accent); }
-    .col-money { font-family: 'JetBrains Mono'; color: var(--success); }
-    
-    .status-badge {
-      padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-      background:radial-gradient(at 0% 0%, rgb(2, 255, 221) 0px, transparent 50%); border: 1px solid rgb(7, 243, 46);
-    }
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
 
-    /* Loader */
-    .loader-overlay {
-      position: fixed; inset: 0; background: rgba(15,23,42,0.9);
-      display: none; align-items: center; justify-content: center; z-index: 999;
-      flex-direction: column; gap: 15px;
-    }
-    .spinner {
-      width: 40px; height: 40px; border: 4px solid var(--border);
-      border-top-color: var(--brand); border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+.theme-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: var(--transition);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
 
-    /* Responsive */
-    @media (max-width: 768px) {
-      header { flex-direction: column; gap: 15px; align-items: flex-start; }
-      .actions-top { width: 100%; justify-content: space-between; }
-      .dashboard-grid { grid-template-columns: 1fr; }
-    }
+.theme-toggle:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
 
-    /* PDF Modal Styles */
-    .pdf-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.65);
-      display: none;
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-    .pdf-modal {
-      width: min(1200px, 100%);
-      height: min(90vh, 900px);
-      background: rgba(15, 23, 42, 0.96);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      backdrop-filter: blur(10px);
-    }
-    .pdf-modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-    }
-    .pdf-title {
-      font-weight: 800;
-      font-size: 0.95rem;
-      color: var(--accent);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .pdf-controls {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-    .pdf-viewport {
-      position: relative;
-      flex: 1;
-      overflow: auto;
-      background: #0b1220;
-    }
-    .pdf-viewer-inner {
-      transform-origin: top left;
-      will-change: transform;
-    }
-    #pdfEmbed {
-      display: block;
-      width: 100%;
-      height: 90vh;
-      border: 0;
-    }
-    .pdf-help {
-      color: var(--text-muted);
-      font-size: 0.78rem;
-      margin-left: 10px;
-    }
+.theme-toggle .icon {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
 
-    /* Print Styles */
-    @media print {
+.theme-toggle .sun-icon { position: absolute; color: #f59e0b; }
+.theme-toggle .moon-icon { position: absolute; color: #8b5cf6; }
 
-      body { background: white; color: black; }
-      .glass { background: white; border: 1px solid #ccc; backdrop-filter: none; }
-      .actions-top, .search-group, .btn { display: none !important; }
-      .stat-card { border: 1px solid #eee; color: black; }
-      .stat-value { color: black; }
-      .words-text { color: black; text-shadow: none; }
-      table { min-width: 100%; }
-      th { background: #f0f0f0 !important; color: black !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-      td { color: black !important; border-bottom: 1px solid #ddd; }
-    }
-  </style>
+[data-theme="dark"] .theme-toggle .sun-icon { transform: rotate(180deg) scale(0); opacity: 0; }
+[data-theme="dark"] .theme-toggle .moon-icon { transform: rotate(0deg) scale(1); opacity: 1; }
+[data-theme="light"] .theme-toggle .sun-icon { transform: rotate(0deg) scale(1); opacity: 1; }
+[data-theme="light"] .theme-toggle .moon-icon { transform: rotate(-180deg) scale(0); opacity: 0; }
+
+.btn {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: var(--glass);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: var(--transition);
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.btn.primary {
+  background: var(--gradient-main);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+}
+
+.btn.primary:hover { box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35); }
+
+.btn.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-orange);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.btn.warning:hover { background: rgba(245, 158, 11, 0.25); }
+
+.btn.print-btn {
+  height: 42px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--gradient-cool);
+  color: white;
+  border: none;
+  min-width: 120px;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px 24px 60px;
+}
+
+.controls {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  backdrop-filter: blur(20px);
+  margin-bottom: 16px;
+  transition: var(--transition);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+  flex: 1;
+}
+
+.filter-group.search-group {
+  min-width: 220px;
+  flex: 2;
+}
+
+.filter-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-label i {
+  font-size: 10px;
+  color: var(--accent-blue);
+}
+
+.filter-select, .filter-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  appearance: none;
+}
+
+.filter-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.filter-input {
+  cursor: text;
+  padding-left: 36px;
+}
+
+.search-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.search-wrap i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.filter-select:focus, .filter-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-select option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.btn-reset {
+  height: 40px;
+  padding: 0 14px;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-red);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-reset:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: translateY(-1px);
+}
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.status {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status i { color: var(--accent-blue); }
+
+.status-bar-metrics {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.wo-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--gradient-main);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+  transition: var(--transition);
+}
+
+.wo-count-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+}
+
+.wo-count-badge .icon {
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+}
+
+.wo-count-badge .info { display: flex; flex-direction: column; gap: 2px; }
+
+.wo-count-badge .label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.8);
+}
+
+.wo-count-badge .value {
+  font-size: 20px;
+  font-weight: 800;
+  color: white;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+#selectedCostSum {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-green);
+  padding: 10px 18px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#selectedCostSum::before {
+  content: '\f155';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: var(--accent-green);
+}
+
+.stats-panel { margin-bottom: 20px; }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 3px;
+}
+
+.card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 5px;
+  backdrop-filter: blur(20px);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-glow);
+}
+
+.card .card-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: white;
+}
+
+.card .title {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.card .value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cost-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* ===== TABLE WRAP — NO INTERNAL SCROLL, PAGE SCROLLS ===== */
+.table-wrap {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  overflow-x: auto;   /* only horizontal overflow if table is wider than screen */
+  backdrop-filter: blur(20px);
+  /* REMOVED: max-height: 70vh; overflow: auto; */
+  box-shadow: var(--shadow-card);
+  transition: var(--transition);
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+#dataTable { min-width: 1800px; }
+
+#dataTable col.col-wo { width: clamp(140px, 10vw, 180px); }
+#dataTable col.col-camp { width: clamp(100px, 10vw, 160px); }
+#dataTable col.col-location { width: clamp(140px, 12vw, 200px); }
+#dataTable col.col-split-1-5,
+#dataTable col.col-split-2,
+#dataTable col.col-split-2-5,
+#dataTable col.col-split-3,
+#dataTable col.col-window,
+#dataTable col.col-cooler,
+#dataTable col.col-used,
+#dataTable col.col-fridge,
+#dataTable col.col-freezer,
+#dataTable col.col-pkg-8,
+#dataTable col.col-pkg-10,
+#dataTable col.col-pkg-12,
+#dataTable col.col-pkg-15,
+#dataTable col.col-pkg-20,
+#dataTable col.col-pkg-25,
+#dataTable col.col-freestand-5,
+#dataTable col.col-freestand-8,
+#dataTable col.col-air-curtains { width: 60px; }
+#dataTable col.col-amount { width: 170px; }
+#dataTable col.col-start-date{ width: 170px; }
+#dataTable col.col-end-date { width: 170px; }
+#dataTable col.col-remain-days { width: 100px; }
+#dataTable col.col-percentage { width: 110px; }
+#dataTable col.col-lpo{ width: 210px; }
+#dataTable col.col-do{ width: 210px; }
+#dataTable col.col-wo-pdf { width: 120px; }
+#dataTable col.col-cost { width: 170px; }
+
+thead th {
+  background: var(--col-meta);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 8px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--table-border);
+  border-right: 1px solid var(--table-border); /* Added vertical border */
+}
+thead th:last-child {
+  border-right: none; /* Prevent double border on the far right edge */
+}
+
+/* ===== COLUMN TOOLTIP STYLES ===== */
+thead th[data-tooltip] {
+  cursor: help; /* Indicates to the user that there is more info */
+}
+
+.th-meta { background: var(--col-meta); }
+.th-split { background: var(--col-split); color: white; }
+.th-window { background: var(--col-window); color: white; }
+.th-cooler { background: var(--col-cooler); color: white; }
+.th-used { background: var(--col-used); color: white; }
+.th-fridge { background: var(--col-fridge); color: white; }
+.th-freezer { background: var(--col-freezer); color: white; }
+.th-package { background: var(--col-package); color: white; }
+.th-freestand { background: var(--col-freestand); color: white; }
+.th-aircurtain { background: var(--col-aircurtain); color: white; }
+
+/* ===== COMPACT ROWS ===== */
+tbody td {
+  border-bottom: 1px solid var(--table-border);
+  border-right: 1px solid var(--table-border); /* Added vertical border */
+  padding: 3px 4px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+  transition: background 0.15s;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+tbody td:last-child {
+  border-right: none; /* Prevent double border on the far right edge */
+}
+
+#dataTable tbody tr {
+  transition: var(--transition);
+}
+
+#dataTable tbody tr:nth-child(even) {
+  background: var(--row-even);
+}
+
+#dataTable tbody tr:hover {
+  background: var(--row-hover) !important;
+}
+
+#dataTable tbody tr:hover td {
+  background: transparent;
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11px;
+  color: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.count-badge.split { background: var(--col-split); }
+.count-badge.window { background: var(--col-window); }
+.count-badge.package { background: var(--col-package); }
+.count-badge.used { background: var(--col-used); }
+.count-badge.cooler { background: var(--col-cooler); }
+.count-badge.fridge { background: var(--col-fridge); }
+.count-badge.freezer { background: var(--col-freezer); }
+.count-badge.freestand { background: var(--col-freestand); }
+.count-badge.aircurtain { background: var(--col-aircurtain); }
+
+.lpo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-blue);
+  font-weight: 700;
+  font-size: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.lpo-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-blue);
+  transform: translateY(-1px);
+}
+
+.lpo-btn::before {
+  content: '\f15b';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 10px;
+}
+
+.progress-cell {
+  position: relative;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--progress-zero);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--glass-border);
+}
+
+.progress-bar {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: 0;
+  background: var(--rd-high);
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.remain-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 11px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  font-variant-numeric: tabular-nums;
+}
+
+.action-cell {
+  padding: 2px !important;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.action-btn {
+  padding: 3px 7px;
+  font-size: 10px;
+  margin: 0 1px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.edit-btn { background: var(--accent-orange); }
+.save-btn { background: var(--accent-blue); }
+.cancel-btn { background: var(--text-muted); }
+.delete-btn { background: var(--accent-red); }
+.color-btn { background: var(--accent-pink); font-size: 9px; padding: 3px 6px; }
+.hide-btn { background: var(--text-muted); font-size: 9px; padding: 2px 6px; min-width: 34px; }
+
+.row-selector {
+  margin-right: 4px;
+  transform: scale(1);
+  cursor: pointer;
+  accent-color: var(--accent-blue);
+}
+
+.pdf-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.pdf-dialog {
+  width: min(95vw, 1100px);
+  height: min(92vh, 850px);
+  background: var(--modal-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.pdf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--gradient-main);
+  color: white;
+  font-weight: 700;
+}
+
+.pdf-close, .pdf-btn {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  height: 32px;
+  padding: 0 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.pdf-close:hover, .pdf-btn:hover { background: rgba(255,255,255,0.25); }
+
+.pdf-frame {
+  flex: 1;
+  border: none;
+  width: 100%;
+  background: white;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.chart-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 20px;
+  backdrop-filter: blur(20px);
+  transition: var(--transition);
+  box-shadow: var(--shadow-card);
+}
+
+.chart-card:hover {
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-glow);
+}
+
+.chart-card .title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chart-card .title::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: var(--gradient-main);
+  border-radius: 2px;
+}
+
+.chart-card canvas { max-height: 280px; }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--modal-bg);
+  border: 1px solid var(--glass-border);
+  padding: 28px;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modal h3 {
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal h3::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: var(--gradient-main);
+  border-radius: 2px;
+}
+
+.modal label {
+  display: block;
+  margin-top: 14px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.modal input, .modal select {
+  width: 100%;
+  padding: 10px 14px;
+  margin-top: 6px;
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.modal input:focus, .modal select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.modal select option { background: var(--bg-primary); }
+
+input[type="date"] { color-scheme: dark; }
+[data-theme="light"] input[type="date"] { color-scheme: light; }
+
+.modal-buttons {
+  margin-top: 24px;
+  text-align: right;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.close-modal {
+  background: var(--glass);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+}
+
+.close-modal:hover { background: var(--bg-card-hover); }
+
+.submit-modal {
+  background: var(--gradient-main);
+  color: white;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+}
+
+.submit-modal:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+}
+
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 10000;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--toast-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-left: 4px solid var(--accent-orange);
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: toastIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.toast::before {
+  content: '\f071';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: var(--accent-orange);
+  font-size: 16px;
+}
+
+@keyframes toastIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastOut {
+  to { transform: translateX(120%); opacity: 0; }
+}
+
+.toast.removing { animation: toastOut 0.3s ease forwards; }
+
+.custom-tooltip {
+  position: fixed;
+  z-index: 100000;
+  background: var(--tooltip-bg);
+  backdrop-filter: blur(20px);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  border: 1px solid var(--glass-border);
+  max-width: 500px;
+  white-space: nowrap;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+@media (max-width: 768px) {
+  .topbar { padding: 12px 16px; }
+  .topbar .title { font-size: 15px; }
+  .container { padding: 14px; }
+  .controls { flex-direction: column; align-items: stretch; }
+  .filter-group { min-width: 100%; }
+  .cards { grid-template-columns: repeat(2, 1fr); }
+  .card .value { font-size: 20px; }
+  .charts { grid-template-columns: 1fr; }
+  .status-bar { flex-direction: column; align-items: stretch; }
+  .status-bar-metrics { justify-content: center; }
+}
+
+@media print {
+  .topbar, .controls, .action-cell, .charts, .stats-panel, .status-bar, #selectedCostSum, .wo-count-badge, .theme-toggle {
+    display: none !important;
+  }
+  body { background: white; color: black; }
+  .table-wrap { border: 1px solid #ccc; background: white; max-height: none; }
+  thead th { background: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  tbody td { color: black; border: 1px solid #ccc; }
+  .count-badge, .lpo-btn, .remain-badge, .progress-cell { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
 </head>
-<body>
+<body data-theme="dark">
 
-  <div class="loader-overlay" id="loader">
-    <div class="spinner"></div>
-    <div style="color: var(--brand); font-weight: 600;">Processing Data...</div>
-  </div>
+<div class="bg-canvas">
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+</div>
+<div class="bg-grid"></div>
 
-  <header class="glass">
-    <div class="brand-area">
-      <div class="logo-mark">GISCO</div>
-      <div class="titles">
-        <h1>AL-SHUHRAH SHOP COMPRESSORS</h1>
-        <p>Gulf Industrial Services Co.</p>
-      </div>
-    </div>
-    <div class="actions-top">
-      <input type="file" id="localFile" accept=".xlsx,.xls" style="display:none" />
-      <button class="btn" onclick="document.getElementById('localFile').click()">📂 Load Excel</button>
-      <button class="btn primary" onclick="exportExcel()">💾 Save</button>
-      <button class="btn" onclick="window.print()">🖨️ Print</button>
-      <a href="index.html" class="btn">⬅ Home</a>
-    </div>
-  </header>
-
-  <!-- PDF Modal -->
-  <div class="pdf-overlay" id="pdfOverlay" aria-hidden="true" onclick="if(event.target===this) closePdfModal()">
-    <div class="pdf-modal" id="pdfModal" role="dialog" aria-modal="true">
-      <div class="pdf-modal-header">
-        <div>
-          <div class="pdf-title" id="pdfTitle">PDF</div>
-          <div class="pdf-help">Zoom • Print • Download</div>
-        </div>
-        <div class="pdf-controls">
-          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="zoomOut()">➖ Zoom</button>
-          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="resetZoom()">🔎 100%</button>
-          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="zoomIn()">➕ Zoom</button>
-          <span class="pdf-help" id="pdfZoomLabel">100%</span>
-          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="printPdf()">🖨️ Print</button>
-          <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="downloadPdf(document.getElementById('pdfTitle').textContent.replace('PDF: ','').trim())">⬇️ Download</button>
-          <button id="pdfCloseBtn" class="btn primary" style="padding:6px 10px; font-size:0.85rem;" onclick="closePdfModal()">✖ Close</button>
-        </div>
-      </div>
-
-      <div class="pdf-viewport">
-        <div class="pdf-viewer-inner" id="pdfViewerInner">
-          <embed id="pdfEmbed" type="application/pdf" src="" />
-        </div>
-      </div>
+<header class="topbar">
+  <div class="title">
+    <div class="icon-wrap"><i class="fas fa-hard-hat"></i></div>
+    <div>
+      <div>Work Orders</div>
+      <div style="font-size:11px;font-weight:500;color:var(--text-secondary);margin-top:2px;">Project 4378M • RAK & FUJ</div>
     </div>
   </div>
+  <div class="topbar-actions">
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <i class="fas fa-sun icon sun-icon"></i>
+      <i class="fas fa-moon icon moon-icon"></i>
+    </button>
+    <button class="btn warning" id="showAllBtn"><i class="fas fa-eye"></i> Show All</button>
+    <button class="btn print-btn" id="printBtn"><i class="fas fa-print"></i> Print</button>
+    <button class="btn" id="exportExcelBtn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);">
+  <i class="fas fa-file-excel"></i> Export Excel
+</button>
+    <a class="btn" href="index.html"><i class="fas fa-arrow-left"></i> Dashboard</a>
+  </div>
+</header>
 
-  <main>
+<main class="container">
+  <section class="controls">
+    <button class="btn primary add-row-btn" id="addRowBtn"><i class="fas fa-plus"></i> Add Work Order</button>
 
-    <!-- Financial Dashboard -->
-    <div class="dashboard-grid">
-      <div class="glass stat-card">
-        <span class="stat-label">Total Quantity</span>
-        <span class="stat-value" id="totalQty">0</span>
-        <span class="stat-sub">Compressors / Units</span>
-      </div>
-      <div class="glass stat-card">
-        <span class="stat-label">Net Cost (No VAT)</span>
-        <span class="stat-value" id="totalWithoutVAT">0.00</span>
-        <span class="stat-sub">AED</span>
-      </div>
-      <div class="glass stat-card" style="border-color: var(--success);">
-        <span class="stat-label">Total with VAT (5%)</span>
-        <span class="stat-value" style="color: var(--success);" id="totalWithVAT">0.00</span>
-        <span class="stat-sub">AED</span>
-      </div>
-      
-      <!-- Arabic Words Display -->
-      <div class="glass words-card">
-        <span class="stat-label" style="color: #000; font-weight: bold;">Total Amount in Words</span>
-        <div class="words-text" id="totalWithVATWords">صفر درهماً</div>
-      </div>
-    </div>
-
-    <!-- Search & Actions -->
-    <div class="glass controls-bar" style="padding: 15px;">
-      <div class="search-group">
-        <input id="search1" class="modern-input" type="text" placeholder="Search Request..." onkeyup="filterTable()">
-        <input id="search2" class="modern-input" type="text" placeholder="Item Code..." onkeyup="filterTable()">
-        <input id="search3" class="modern-input" type="text" placeholder="Description..." onkeyup="filterTable()">
-        <input id="search4" class="modern-input" type="text" placeholder="Job No..." onkeyup="filterTable()">
+    <!-- Search box -->
+    <div class="filter-group search-group">
+      <label class="filter-label"><i class="fas fa-search"></i> Search</label>
+      <div class="search-wrap">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="text" class="filter-input" id="filterSearch" placeholder="Search WO, Camp, Location..." />
       </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="table-container glass">
-      <table id="data-table">
-        <thead>
-          <tr>
-            <th>Request</th>
-            <th>Item Code</th>
-            <th>Description</th>
-            <th>Qty</th>
-            <th>Price</th>
-            <th>Job No</th>
-            <th>Total</th>
-            <th>Status</th>
-            <th>Order</th>
-            <th>PDF</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div class="filter-group">
+      <label class="filter-label"><i class="fas fa-campground"></i> Camp</label>
+      <select class="filter-select" id="filterCamp">
+        <option value="">All Camps</option>
+      </select>
     </div>
-  </main>
+    <div class="filter-group">
+      <label class="filter-label"><i class="fas fa-map-marker-alt"></i> Location</label>
+      <select class="filter-select" id="filterLocation">
+        <option value="">All Locations</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label"><i class="fas fa-snowflake"></i> Unit Type</label>
+      <select class="filter-select" id="filterType">
+        <option value="">All Types</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label"><i class="fas fa-chart-pie"></i> Progress</label>
+      <select class="filter-select" id="filterProgress">
+        <option value="">All Progress</option>
+        <option value="not_started">Not Started (0%)</option>
+        <option value="in_progress">In Progress (1–79%)</option>
+        <option value="almost_done">Almost Done (80–99%)</option>
+        <option value="complete">Complete (100%)</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label"><i class="fas fa-clock"></i> Urgency</label>
+      <select class="filter-select" id="filterUrgency">
+        <option value="">All</option>
+        <option value="expired">Expired / Ended</option>
+        <option value="critical">Critical (&lt; 15 days)</option>
+        <option value="urgent">Urgent (15–30 days)</option>
+        <option value="warning">Warning (30–60 days)</option>
+        <option value="normal">Normal (&gt; 60 days)</option>
+      </select>
+    </div>
+    <button class="btn-reset" id="resetFiltersBtn" title="Reset all filters">
+      <i class="fas fa-rotate-left"></i> Reset
+    </button>
+  </section>
 
-  <script>
-    let data = [];
-    const vatRate = 1.05;
+  <div class="status-bar">
+    <div id="statusBar" class="status"><i class="fas fa-circle-info"></i> Ready</div>
+    <div class="status-bar-metrics">
+      <div class="wo-count-badge">
+        <div class="icon"><i class="fas fa-clipboard-list"></i></div>
+        <div class="info">
+          <div class="label">Work Order Count</div>
+          <div class="value" id="woCountValue">0</div>
+        </div>
+      </div>
+      <div id="selectedCostSum">Selected Total: AED 0.00</div>
+    </div>
+  </div>
 
-    // --- Helpers ---
-    function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
-    
-    function formatCurrency(value) { 
-      return Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
+  <section class="stats-panel">
+    <div class="cards">
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-split);"></div>
+        <div class="card-icon" style="background:var(--col-split);"><i class="fas fa-fan"></i></div>
+        <div class="title">Total Splits</div>
+        <div class="value" id="statTotalSplit">0</div>
+        <div class="cost-sub" id="statCostSplit"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-package);"></div>
+        <div class="card-icon" style="background:var(--col-package);"><i class="fas fa-box"></i></div>
+        <div class="title">Total Packages</div>
+        <div class="value" id="statTotalPackage">0</div>
+        <div class="cost-sub" id="statCostPackage"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-freestand);"></div>
+        <div class="card-icon" style="background:var(--col-freestand);"><i class="fas fa-cube"></i></div>
+        <div class="title">Free Stand</div>
+        <div class="value" id="statTotalFreestand">0</div>
+        <div class="cost-sub" id="statCostFreestand"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-window);"></div>
+        <div class="card-icon" style="background:var(--col-window);"><i class="fas fa-border-all"></i></div>
+        <div class="title">Window</div>
+        <div class="value" id="statTotalWindow">0</div>
+        <div class="cost-sub" id="statCostWindow"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-used);"></div>
+        <div class="card-icon" style="background:var(--col-used);"><i class="fas fa-recycle"></i></div>
+        <div class="title">Used AC</div>
+        <div class="value" id="statTotalUsed">0</div>
+        <div class="cost-sub" id="statCostUsed"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-cooler);"></div>
+        <div class="card-icon" style="background:var(--col-cooler);"><i class="fas fa-temperature-low"></i></div>
+        <div class="title">Cooler</div>
+        <div class="value" id="statTotalCooler">0</div>
+        <div class="cost-sub" id="statCostCooler"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-fridge);"></div>
+        <div class="card-icon" style="background:var(--col-fridge);"><i class="fas fa-snowflake"></i></div>
+        <div class="title">Fridge</div>
+        <div class="value" id="statTotalFridge">0</div>
+        <div class="cost-sub" id="statCostFridge"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-freezer);"></div>
+        <div class="card-icon" style="background:var(--col-freezer);"><i class="fas fa-ice-cream"></i></div>
+        <div class="title">Freezer</div>
+        <div class="value" id="statTotalFreezer">0</div>
+        <div class="cost-sub" id="statCostFreezer"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-aircurtain);"></div>
+        <div class="card-icon" style="background:var(--col-aircurtain);"><i class="fas fa-wind"></i></div>
+        <div class="title">Air Curtains</div>
+        <div class="value" id="statTotalAirCurtain">0</div>
+        <div class="cost-sub" id="statCostAirCurtain"></div>
+      </div>
+      <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-main);"></div>
+        <div class="card-icon" style="background:var(--gradient-main);"><i class="fas fa-coins"></i></div>
+        <div class="title">Work Order Total Amount</div>
+        <div class="value" id="statTotalCostNoVat" style="font-size:20px;">0</div>
+        <div class="cost-sub" id="statCostNoVat"></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="pdfOverlay" class="pdf-overlay" aria-hidden="true">
+    <div class="pdf-dialog">
+      <div class="pdf-header">
+        <span id="pdfTitle"><i class="fas fa-file-pdf"></i> PDF Viewer</span>
+        <div style="display:flex;gap:6px;">
+          <button class="pdf-btn pdf-download" type="button"><i class="fas fa-download"></i> Download</button>
+          <button class="pdf-btn pdf-newtab" type="button"><i class="fas fa-external-link-alt"></i> New Tab</button>
+          <button id="pdfClose" class="pdf-close" type="button"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <iframe id="pdfFrame" class="pdf-frame" src="about:blank" title="PDF"></iframe>
+    </div>
+  </div>
+
+  <div id="addModal" class="modal">
+    <div class="modal-content">
+      <h3>Add New Work Order</h3>
+      <form id="addForm"></form>
+      <div class="modal-buttons">
+        <button type="button" class="modal-btn close-modal" id="closeAddModal">Cancel</button>
+        <button type="submit" class="modal-btn submit-modal" form="addForm"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h3>Edit Work Order</h3>
+      <form id="editForm"></form>
+      <div class="modal-buttons">
+        <button type="button" class="modal-btn close-modal" id="closeEditModal">Cancel</button>
+        <button type="submit" class="modal-btn submit-modal" form="editForm"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="dataTable">
+      <colgroup>
+        <col class="col-wo" />
+        <col class="col-camp" />
+        <col class="col-location" />
+        <col class="col-split-1-5" />
+        <col class="col-split-2" />
+        <col class="col-split-2-5" />
+        <col class="col-split-3" />
+        <col class="col-window" />
+        <col class="col-cooler" />
+        <col class="col-used" />
+        <col class="col-fridge" />
+        <col class="col-freezer" />
+        <col class="col-pkg-8" />
+        <col class="col-pkg-10" />
+        <col class="col-pkg-12" />
+        <col class="col-pkg-15" />
+        <col class="col-pkg-20" />
+        <col class="col-pkg-25" />
+        <col class="col-freestand-5" />
+        <col class="col-freestand-8" />
+        <col class="col-air-curtains" />
+        <col class="col-amount" />
+        <col class="col-start-date" />
+        <col class="col-end-date" />
+        <col class="col-remain-days" />
+        <col class="col-percentage" />
+        <col class="col-lpo" />
+        <col class="col-do" />
+        <col class="col-wo-pdf" />
+        <col class="col-cost" />
+        <col class="col-actions" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="th-meta" data-tooltip="Work Order Number" tabindex="0">WO NO.</th>
+          <th class="th-meta" data-tooltip="Camp Name" tabindex="0">CAMP</th>
+          <th class="th-meta" data-tooltip="Location Details" tabindex="0">LOCATION</th>
+          <th class="th-split" data-tooltip="Split 1.5 Ton" tabindex="0">Split 1.5T</th>
+          <th class="th-split" data-tooltip="Split 2 Ton" tabindex="0">Split 2T</th>
+          <th class="th-split" data-tooltip="Split 2.5 Ton" tabindex="0">Split 2.5T</th>
+          <th class="th-split" data-tooltip="Split 3 Ton" tabindex="0">Split 3T</th>
+          <th class="th-window" data-tooltip="Window 2 Ton" tabindex="0">Window 2T</th>
+          <th class="th-cooler" data-tooltip="Cooler Unit" tabindex="0">Cooler</th>
+          <th class="th-used" data-tooltip="Used AC Unit" tabindex="0">Used AC</th>
+          <th class="th-fridge" data-tooltip="Fridge Unit" tabindex="0">Fridge</th>
+          <th class="th-freezer" data-tooltip="Freezer Unit" tabindex="0">Freezer</th>
+          <th class="th-package" data-tooltip="Package 8 Ton" tabindex="0">Pkg 8T</th>
+          <th class="th-package" data-tooltip="Package 10 Ton" tabindex="0">Pkg 10T</th>
+          <th class="th-package" data-tooltip="Package 12 Ton" tabindex="0">Pkg 12T</th>
+          <th class="th-package" data-tooltip="Package 15 Ton" tabindex="0">Pkg 15T</th>
+          <th class="th-package" data-tooltip="Package 20 Ton" tabindex="0">Pkg 20T</th>
+          <th class="th-package" data-tooltip="Package 25 Ton" tabindex="0">Pkg 25T</th>
+          <th class="th-freestand" data-tooltip="Free Stand 5 Ton" tabindex="0">Stand 5T</th>
+          <th class="th-freestand" data-tooltip="Free Stand 8 Ton" tabindex="0">Stand 8T</th>
+          <th class="th-aircurtain" data-tooltip="Air Curtain Unit" tabindex="0">Air Curtain</th>
+          <th class="th-meta" data-tooltip="Work Order Amount" tabindex="0">WO Amount</th>
+          <th class="th-meta" data-tooltip="Start Date" tabindex="0">Start</th>
+          <th class="th-meta" data-tooltip="End Date" tabindex="0">End</th>
+          <th class="th-meta" data-tooltip="Remaining Days" tabindex="0">Days Left</th>
+          <th class="th-meta" data-tooltip="Work Order Progress" tabindex="0">Progress</th>
+          <th class="th-meta" data-tooltip="Local Purchase Order" tabindex="0">LPO</th>
+          <th class="th-meta" data-tooltip="Delivery Order" tabindex="0">DO</th>
+          <th class="th-meta" data-tooltip="Work Order Document" tabindex="0">WO</th>
+          <th class="th-meta" data-tooltip="LPO Cost without VAT" tabindex="0">LPO Cost</th>
+          <th class="th-meta" data-tooltip="Row Actions" tabindex="0">Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="charts">
+    <div class="chart-card">
+      <div class="title">Split ACs by Ton</div>
+      <canvas id="chartSplit" height="250"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="title">Package ACs by Ton</div>
+      <canvas id="chartPackage" height="250"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="title">Group Composition</div>
+      <canvas id="chartGroups" height="250"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="title">Total Project Progress</div>
+      <div style="position:relative;">
+        <canvas id="chartProgress" height="250"></canvas>
+        <span class="progress-value" id="progressValue" style="position:absolute;left:0;right:0;top:40%;text-align:center;font-size:28px;font-weight:800;color:var(--accent-green);pointer-events:none;font-variant-numeric:tabular-nums;">0%</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="customTooltip" class="custom-tooltip" style="display: none;"></div>
+<div id="toastContainer" class="toast-container"></div>
+
+<script>
+// ⚠️ SECURITY: Use the 'anon' (public) key from Supabase Dashboard → Settings → API
+// NEVER use the service_role key in frontend code — it bypasses Row Level Security!
+const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const THEME_KEY = 'wo_theme_preference';
+const PDF_CACHE_KEY = 'pdf_url_cache_v3';
+let PDF_URL_CACHE = JSON.parse(localStorage.getItem(PDF_CACHE_KEY) || '{}');
+const CACHE_TTL = 60 * 60 * 1000;
+const HIDDEN_ROWS_KEY = 'hidden_work_orders_v1';
+const ROW_COLORS_KEY = 'row_colors_v1';
+const selectedWoNos = new Set();
+
+// ============ THEME ============
+function getCurrentTheme() { return document.body.getAttribute('data-theme') || 'dark'; }
+function setTheme(theme) {
+  document.body.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_KEY, theme);
+  updateChartsTheme();
+}
+function toggleTheme() { setTheme(getCurrentTheme() === 'dark' ? 'light' : 'dark'); }
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved) document.body.setAttribute('data-theme', saved);
+  else document.body.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+}
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  if (!localStorage.getItem(THEME_KEY)) setTheme(e.matches ? 'dark' : 'light');
+});
+
+function getChartColors() {
+  const isDark = getCurrentTheme() === 'dark';
+  return {
+    text: isDark ? '#9090b8' : '#5a6478',
+    grid: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
+    border: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+    doughnutBorder: isDark ? '#0f0f2a' : '#ffffff'
+  };
+}
+function updateChartsTheme() {
+  const colors = getChartColors();
+  Chart.defaults.color = colors.text;
+  Chart.defaults.borderColor = colors.border;
+  if (ALL_ROWS.length > 0) renderCharts(computeCounts(getFilteredRows()));
+}
+initTheme();
+const chartColors = getChartColors();
+Chart.defaults.color = chartColors.text;
+Chart.defaults.borderColor = chartColors.border;
+Chart.defaults.font.family = 'Inter, sans-serif';
+
+// ============ HELPERS ============
+function isCacheValid(ts) { return Date.now() - ts < CACHE_TTL; }
+function getCachedPdfUrls(filename) {
+  const cached = PDF_URL_CACHE[filename.toLowerCase()];
+  if (cached && isCacheValid(cached.ts)) return { direct: cached.direct, google: cached.google };
+  return null;
+}
+function setCachedPdfUrls(filename, direct, google) {
+  PDF_URL_CACHE[filename.toLowerCase()] = { direct, google, ts: Date.now() };
+  localStorage.setItem(PDF_CACHE_KEY, JSON.stringify(PDF_URL_CACHE));
+}
+async function resolvePdfUrls(file) {
+  const cached = getCachedPdfUrls(file);
+  if (cached) return cached;
+  if (!file.toLowerCase().endsWith('.pdf')) file += '.pdf';
+  const ghPagesUrl = `https://desho2050.github.io/Gisco/${encodeURIComponent(file)}`;
+  const googleUrl = `https://docs.google.com/gview?url=${encodeURIComponent(ghPagesUrl)}&embedded=true`;
+  setCachedPdfUrls(file, ghPagesUrl, googleUrl);
+  return { direct: ghPagesUrl, google: googleUrl };
+}
+function isNumericOnly(val) {
+  if (val === null || val === undefined) return false;
+  if (typeof val === 'number') return Number.isFinite(val);
+  const s = String(val).trim();
+  if (!s) return false;
+  return /^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(s);
+}
+function parseDate(val) {
+  if (!val) return null;
+  const d = new Date(val);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function formatDMY(d) {
+  if (!d) return '';
+  const pad2 = (x) => String(x).padStart(2, '0');
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+function remainingDays(endDateStr) {
+  const end = parseDate(endDateStr);
+  if (!end) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  return Math.ceil((end - today) / 86400000);
+}
+function remainingColor(days) {
+  if (days === null || !Number.isFinite(days)) return '';
+  if (days < 0) return '#64748b';
+  if (days === 0) return '#3b82f6';
+  if (days <= 30) return '#ef4444';
+  if (days <= 60) return '#f59e0b';
+  return '#10b981';
+}
+function parsePercentage(val) {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'number') { let n = val; if (n <= 1) n = n * 100; return Math.max(0, Math.min(100, Math.round(n))); }
+  const s = String(val).trim();
+  if (!s) return null;
+  const m = s.match(/([0-9]+(?:\.[0-9]+)?)\s*%?/);
+  if (!m) return null;
+  let n = parseFloat(m[1]);
+  if (/%$/.test(s) === false && n <= 1) n = n * 100;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+function percentColor(p) {
+  if (p === 0) return getCurrentTheme() === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  if (p === 100) return '#3b82f6';
+  if (p >= 80) return '#10b981';
+  if (p >= 40) return '#f59e0b';
+  return '#ef4444';
+}
+
+const AED_FORMATTER = new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+function formatAED(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? AED_FORMATTER.format(n) : 'AED 0.00';
+}
+function sortByWoNo(rows) {
+  return [...rows].sort((a, b) => {
+    const woA = String(a.wo_no || '').trim();
+    const woB = String(b.wo_no || '').trim();
+    const numA = parseFloat(woA), numB = parseFloat(woB);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return woA.localeCompare(woB, undefined, { numeric: true, sensitivity: 'base' });
+  });
+}
+function saveRowColor(woNo, color) {
+  const colors = JSON.parse(localStorage.getItem(ROW_COLORS_KEY) || '{}');
+  colors[String(woNo).trim()] = color;
+  localStorage.setItem(ROW_COLORS_KEY, JSON.stringify(colors));
+}
+function getStoredRowColor(woNo) {
+  const colors = JSON.parse(localStorage.getItem(ROW_COLORS_KEY) || '{}');
+  return colors[String(woNo).trim()] || null;
+}
+function updateSelectedCostSum() {
+  let total = 0;
+  selectedWoNos.forEach(woNo => {
+    const row = ALL_ROWS.find(r => String(r.wo_no).trim() === woNo);
+    if (row && isNumericOnly(row.cost)) total += Number(row.cost);
+  });
+  document.getElementById('selectedCostSum').textContent = `Selected Total: ${formatAED(total)}`;
+}
+
+const statusEl = document.getElementById('statusBar');
+const selCamp = document.getElementById('filterCamp');
+const selLocation = document.getElementById('filterLocation');
+const selType = document.getElementById('filterType');
+const selProgress = document.getElementById('filterProgress');
+const selUrgency = document.getElementById('filterUrgency');
+const filterSearch = document.getElementById('filterSearch');
+const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+const printBtn = document.getElementById('printBtn');
+const addRowBtn = document.getElementById('addRowBtn');
+const addModal = document.getElementById('addModal');
+const addForm = document.getElementById('addForm');
+const closeAddModal = document.getElementById('closeAddModal');
+const editModal = document.getElementById('editModal');
+const editForm = document.getElementById('editForm');
+const closeEditModal = document.getElementById('closeEditModal');
+const showAllBtn = document.getElementById('showAllBtn');
+let ALL_ROWS = [];
+let PDF_MAP = {};
+let NOTIFIED_WO = new Set();
+let currentPdfDirectUrl = '';
+
+function showToast(message, duration = 20000) {
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  const span = document.createElement('span');
+  span.textContent = message;
+  toast.appendChild(span);
+  container.appendChild(toast);
+  const removeToast = () => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 300);
+  };
+  setTimeout(removeToast, duration);
+}
+
+function setStatus(msg, isError = false) {
+  if (statusEl) {
+    statusEl.innerHTML = `<i class="fas fa-circle-info"></i> ${msg || ''}`;
+    statusEl.style.color = isError ? '#ef4444' : '';
+  }
+}
+
+async function loadRemotePdfMap() {
+  try {
+    const res = await fetch('attachs-remote.json?ts=' + Date.now(), { cache: 'no-store' });
+    if (res.ok) {
+      const json = await res.json();
+      if (json && typeof json === 'object') PDF_MAP = json;
     }
+  } catch (e) {}
+}
 
-    function normalizeValue(v) { return String(v ?? '').toLowerCase().trim(); }
-    function buildSearchIndex(item) {
-      return Object.values(item).map(v => normalizeValue(v)).join(' ');
-    }
+async function openPdfViewerFromFile(file, title) {
+  // For best inline preview, use your local server PDFs (external URLs may download/block).
+  // If file is missing extension, append .pdf
+  const f = String(file || '').trim();
+  if (!f) return true;
+  const safeFile = f.toLowerCase().endsWith('.pdf') ? f : `${f}.pdf`;
 
-    // --- Arabic Number to Words Logic (Optimized) ---
-    function numberToArabicWords(num) {
-      if (num === 0) return 'صفر درهماً';
-      if (num < 0) return 'سالب ' + numberToArabicWords(-num);
-      
-      const ones = ['',' واحد',' اثنان ','ثلاثة ','أربعة ','خمسة ','ستة','سبعة','ثمانية','تسعة','عشرة',
-                    'أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
-      const tens = ['','عشرة','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
-      const hundreds = ['','مائة','مئتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];
-      
-      function convertGroup(n) {
-        let res = '';
-        if (n >= 100) { res += hundreds[Math.floor(n / 100)] + ' و '; n %= 100; }
-        if (n >= 20) { res += (ones[n % 10] ? ones[n % 10] + ' و ' : '') + tens[Math.floor(n / 10)]; }
-        else if (n > 0) { res += ones[n]; }
-        return res.replace(/\s+و\s*$/, ''); // Clean trailing 'and'
-      }
+  // PDFs in your repo are under PPO/. We mirror that here.
+  // Use ?raw=1 to avoid GitHub-style blob forced downloads when your server/proxy supports it.
+  const localPdfUrl = `http://localhost:5500/PPO/${encodeURIComponent(safeFile).replace(/%2F/g, '/')}`;
+  currentPdfDirectUrl = localPdfUrl;
 
-      if (num >= 1000000000) return 'الرقم كبير جداً';
-      
-      let parts = [];
-      let scaleIndex = 0;
-      const scales = ['','ألف','مليون','مليار'];
-      
-      while (num > 0) {
-        let group = num % 1000;
-        if (group !== 0) {
-          let groupText = convertGroup(group);
-          if (scaleIndex > 0) {
-            if (group === 1) groupText = scales[scaleIndex];
-            else if (group === 2) groupText = (scaleIndex === 1) ? 'ألفان' : 'مليونان';
-            else {
-               if (scaleIndex === 1) groupText += (group > 2 && group < 11) ? ' آلاف' : ' ألف';
-               else if (scaleIndex === 2) groupText += (group > 2 && group < 11) ? ' ملايين' : ' مليون';
-               else groupText += ' ' + scales[scaleIndex];
-            }
-          }
-          parts.unshift(groupText);
-        }
-        num = Math.floor(num / 1000);
-        scaleIndex++;
-      }
-      return parts.join(' و ') + ' درهماً';
-    }
+  // Load directly in the modal iframe
+  return openPdfViewer(localPdfUrl, title);
 
-    // --- Core Logic ---
-    function renderTable(rowsToRender = data) {
-      const tbody = document.querySelector("#data-table tbody");
-      tbody.innerHTML = "";
-      
-      let totalQty = 0, totalAmount = 0;
+}
 
-      rowsToRender.forEach((item, index) => {
-        const qty = Number(item['Qty']) || 0;
-        const price = Number(item['Price']) || 0;
-        const total = qty * price;
-        
-        totalQty += qty;
-        totalAmount += total;
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${item['REQUEST'] || ''}</td>
-          <td class="col-code">${item['Item Code'] || ''}</td>
-          <td>${item['Description'] || ''}</td>
-          <td style="text-align:center">${qty}</td>
-          <td style="text-align:right">${formatCurrency(price)}</td>
-          <td>${item['Job No'] || ''}</td>
-          <td class="col-money" style="text-align:right">${formatCurrency(total)}</td>
-          <td style="text-align:center"><span class="status-badge">${item['Status'] || '-'}</span></td>
-          <td>${item['Order'] || ''}</td>
-          <td>
-            <button class="btn" style="padding:6px 10px; font-size:0.85rem;" onclick="openPdfModal('${String(item['Order']||'').replace(/'/g,"\\'") }')">📄 Open PDF</button>
+function openPdfViewer(url, title) {
+  const overlay = document.getElementById('pdfOverlay');
+  const frame = document.getElementById('pdfFrame');
+  const titleEl = document.getElementById('pdfTitle');
+  if (!overlay || !frame) return true;
+  frame.src = 'about:blank';
+  titleEl.innerHTML = `<i class="fas fa-file-pdf"></i> ${title || 'PDF'}`;
+  overlay.style.display = 'flex';
+  overlay.setAttribute('aria-hidden', 'false');
+  frame.src = url;
+  return false;
+}
 
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      // Update Dashboard
-      const finalTotal = totalAmount * vatRate;
-      document.getElementById("totalQty").textContent = totalQty.toLocaleString();
-      document.getElementById("totalWithoutVAT").textContent = formatCurrency(totalAmount);
-      document.getElementById("totalWithVAT").textContent = formatCurrency(finalTotal);
-      document.getElementById("totalWithVATWords").textContent = numberToArabicWords(Math.round(finalTotal));
-    }
-
-    function filterTable() {
-      const s1 = normalizeValue(document.getElementById("search1").value);
-      const s2 = normalizeValue(document.getElementById("search2").value);
-      const s3 = normalizeValue(document.getElementById("search3").value);
-      const s4 = normalizeValue(document.getElementById("search4").value);
-
-      const filtered = data.filter(item => {
-        const idx = item.searchIndex || buildSearchIndex(item);
-        return (!s1 || idx.includes(s1)) &&
-               (!s2 || idx.includes(s2)) &&
-               (!s3 || idx.includes(s3)) &&
-               (!s4 || idx.includes(s4));
-      });
-      renderTable(filtered);
-    }
-
-    // --- File Handling ---
-    async function loadLocalFile(file){
-      if (!file) return;
-      showLoader(true);
-      try {
-        const buf = await file.arrayBuffer();
-        const workbook = XLSX.read(buf, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        data.forEach(item => item.searchIndex = buildSearchIndex(item));
-        renderTable();
-      } catch (e) {
-        alert('Error loading file. Ensure it is a valid Excel file.');
-        console.error(e);
-      } finally {
-        showLoader(false);
-      }
-    }
-
-    function exportExcel() {
-      const ws = XLSX.utils.json_to_sheet(data.map(({searchIndex,...r})=>r));
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "GISCO_Summary");
-      XLSX.writeFile(wb, 'GISCO_Purchase_Summary.xlsx');
-    }
-
-    // --- PDF Popup Viewer ---
-    const GITHUB_REPO_RAW_PREFIX = 'https://raw.githubusercontent.com/Desho2050/Gisco';
-    // This code uses the repo root by default.
-    // If your PDFs are in a specific subfolder, update PDF_SUBFOLDER.
-    const PDF_SUBFOLDER = ''; // e.g. 'PPO' or 'PPO/New folder/'
-
-    function buildPdfUrl(orderName) {
-      const safe = String(orderName || '').trim();
-      const file = safe.endsWith('.pdf') ? safe : `${safe}.pdf`;
-      const folder = PDF_SUBFOLDER ? (PDF_SUBFOLDER.replace(/^\/+|\/+$/g,'') + '/') : '';
-      // raw URL: https://raw.githubusercontent.com/{user}/{repo}/{ref}/{path}
-      // using default branch 'main' per your request.
-      return `${GITHUB_REPO_RAW_PREFIX}/main/${folder}${encodeURIComponent(file).replace(/%2F/g,'/')}`;
-    }
-
-    function openPdfModal(orderName) {
-      const order = String(orderName || '').trim();
-      if (!order) return;
-
-      const url = buildPdfUrl(order);
-      const modal = document.getElementById('pdfModal');
-      const overlay = document.getElementById('pdfOverlay');
-      const title = document.getElementById('pdfTitle');
-      const embed = document.getElementById('pdfEmbed');
-      const zoomLabel = document.getElementById('pdfZoomLabel');
-      const viewer = document.getElementById('pdfViewerInner');
-
-      // reset zoom
-      modal.dataset.zoom = '1';
-      viewer.style.transform = 'scale(1)';
-      zoomLabel.textContent = '100%';
-
-      title.textContent = `PDF: ${order}`;
-      embed.src = url;
-
-      overlay.style.display = 'flex';
-      overlay.setAttribute('aria-hidden', 'false');
-
-      // Ensure keyboard accessibility
-      document.body.style.overflow = 'hidden';
-
-      // Focus close button
-      const closeBtn = document.getElementById('pdfCloseBtn');
-      if (closeBtn) closeBtn.focus();
-    }
-
-    function closePdfModal() {
-      const overlay = document.getElementById('pdfOverlay');
-      const embed = document.getElementById('pdfEmbed');
-      overlay.style.display = 'none';
-      embed.src = '';
-      overlay.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-    }
-
-    function setZoom(next) {
-      const modal = document.getElementById('pdfModal');
-      const viewer = document.getElementById('pdfViewerInner');
-      const zoomLabel = document.getElementById('pdfZoomLabel');
-      const z = Math.max(0.5, Math.min(3, next));
-      modal.dataset.zoom = String(z);
-      viewer.style.transform = `scale(${z})`;
-      zoomLabel.textContent = `${Math.round(z * 100)}%`;
-    }
-
-    function zoomIn() {
-      const modal = document.getElementById('pdfModal');
-      const z = Number(modal.dataset.zoom || '1');
-      setZoom(z + 0.1);
-    }
-
-    function zoomOut() {
-      const modal = document.getElementById('pdfModal');
-      const z = Number(modal.dataset.zoom || '1');
-      setZoom(z - 0.1);
-    }
-
-    function resetZoom() {
-      setZoom(1);
-    }
-
-    function printPdf() {
-      // Browser print dialog will print whatever is visible.
-      // Users can select “Save as PDF” inside the print dialog.
-      window.print();
-    }
-
-    function downloadPdf(orderName) {
-      const url = buildPdfUrl(orderName);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${String(orderName || '').trim()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-
-    function exportPDF() {
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('l', 'pt', 'a4'); // Landscape
-      
-      doc.setFontSize(18);
-      doc.text("GISCO Purchase Summary", 40, 40);
-      doc.setFontSize(11);
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 40, 60);
-
-      const headers = [['Request','Code','Description','Qty','Price','Job No','Total','Status','Order']];
-      const rows = data.map(i => [
-        i['REQUEST'], i['Item Code'], i['Description'], i['Qty'], 
-        i['Price'], i['Job No'], ((i['Qty']*i['Price'])).toFixed(2), i['Status'], i['Order']
-      ]);
-
-      doc.autoTable({
-        head: headers,
-        body: rows,
-        startY: 80,
-        theme: 'grid',
-        styles: { fontSize: 9, cellPadding: 3 },
-        headStyles: { fillColor: [0, 191, 165] }
-      });
-
-      doc.save('GISCO_Summary.pdf');
-    }
-
-    // --- Init ---
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('localFile').addEventListener('change', (e) => loadLocalFile(e.target.files[0]));
-      
-      // Auto-load if server is present
-      if (location.protocol !== 'file:') {
-        showLoader(true);
-        fetch('sh.xlsx?ts=' + Date.now())
-          .then(res => res.arrayBuffer())
-          .then(buf => {
-            const wb = XLSX.read(buf, { type: 'array' });
-            data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
-            data.forEach(item => item.searchIndex = buildSearchIndex(item));
-            renderTable();
-          })
-          .catch(err => console.log('Auto-load failed, waiting for manual load.'))
-          .finally(() => showLoader(false));
+(function setupPdfOverlay() {
+  const overlay = document.getElementById('pdfOverlay');
+  const closeBtn = document.getElementById('pdfClose');
+  const downloadBtn = document.querySelector('.pdf-download');
+  const newTabBtn = document.querySelector('.pdf-newtab');
+  function closePdf() {
+    overlay.style.display = 'none';
+    overlay.setAttribute('aria-hidden', 'true');
+    document.getElementById('pdfFrame').src = 'about:blank';
+    currentPdfDirectUrl = '';
+  }
+  if (closeBtn) closeBtn.addEventListener('click', closePdf);
+  if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closePdf(); });
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      if (currentPdfDirectUrl) {
+        const a = document.createElement('a');
+        a.href = currentPdfDirectUrl;
+        a.download = currentPdfDirectUrl.split('/').pop() || 'document.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
     });
-  </script>
+  }
+  if (newTabBtn) {
+    newTabBtn.addEventListener('click', () => {
+      if (currentPdfDirectUrl) window.open(currentPdfDirectUrl, '_blank');
+    });
+  }
+})();
+
+function renderActionCell(rowData, rowId) {
+  const td = document.createElement('td');
+  td.className = 'action-cell';
+  const editBtn = document.createElement('button');
+  editBtn.className = 'action-btn edit-btn';
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = 'Edit';
+  editBtn.onclick = () => openEditModal(rowData);
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'action-btn delete-btn';
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = 'Delete';
+  deleteBtn.onclick = () => confirmDelete(rowData.wo_no);
+  const colorBtn = document.createElement('button');
+  colorBtn.className = 'action-btn color-btn';
+  colorBtn.innerHTML = '<i class="fas fa-palette"></i>';
+  colorBtn.title = 'Set row color';
+  colorBtn.onclick = (e) => {
+    e.stopPropagation();
+    const current = getStoredRowColor(rowData.wo_no) || '#ffeb3b';
+    const color = prompt("Enter a color (name, hex, or rgba):", current);
+    if (color && color.trim()) {
+      saveRowColor(rowData.wo_no, color.trim());
+      const tr = Array.from(document.querySelectorAll('#dataTable tbody tr'))
+        .find(el => el.dataset.woNo === String(rowData.wo_no));
+      if (tr) tr.style.backgroundColor = color.trim();
+    }
+  };
+  td.appendChild(editBtn);
+  td.appendChild(deleteBtn);
+  td.appendChild(colorBtn);
+  return td;
+}
+
+const HEADERS = [
+  { label: 'WO NO.', key: 'wo_no' },
+  { label: 'CAMP', key: 'camp' },
+  { label: 'LOCATION', key: 'location' },
+  { label: 'Split 1.5TON', key: 'split_1_5' },
+  { label: 'Split 2TON', key: 'split_2' },
+  { label: 'Split 2.5TON', key: 'split_2_5' },
+  { label: 'Split 3TON', key: 'split_3' },
+  { label: 'Window 2TON', key: 'window_2' },
+  { label: 'COOLER', key: 'cooler' },
+  { label: 'used AC', key: 'used_ac' },
+  { label: 'FRIDGE', key: 'fridge' },
+  { label: 'FREEZER', key: 'freezer' },
+  { label: 'Package 8TON', key: 'pkg_8' },
+  { label: 'Package 10TON', key: 'pkg_10' },
+  { label: 'Package 12 TON', key: 'pkg_12' },
+  { label: 'Package 15TON', key: 'pkg_15' },
+  { label: 'Package 20TON', key: 'pkg_20' },
+  { label: 'Package 25TON', key: 'pkg_25' },
+  { label: 'FREE STAND 5TON', key: 'free_5ton' },
+  { label: 'FREE STAND 8TON', key: 'free_8ton' },
+  { label: 'AIR CURTAINS', key: 'air_curtains' },
+  { label: 'WORK ORDER AMOUNT', key: 'amount' },
+  { label: 'START DATE', key: 'start_date' },
+  { label: 'END DATE', key: 'end_date' },
+  { label: 'WO PERCENTAGE', key: 'wo_percentage' },
+  { label: 'LPO', key: 'lpo' },
+  { label: 'DO', key: 'do_doc' },
+  { label: 'WO', key: 'wo_pdf' },
+  { label: 'Cost without VAT', key: 'cost' }
+];
+
+function buildForm(formEl, rowData = null) {
+  formEl.innerHTML = '';
+  HEADERS.forEach(h => {
+    if (h.key === null) return;
+    const label = document.createElement('label');
+    label.textContent = h.label;
+    const input = document.createElement('input');
+    let val = rowData ? (rowData[h.key] ?? '') : '';
+    if (h.key === 'start_date' || h.key === 'end_date') {
+      input.type = 'date';
+      const d = parseDate(val);
+      input.value = d ? d.toISOString().split('T')[0] : '';
+    } else if (h.key === 'wo_percentage' || h.key === 'cost') {
+      input.type = 'number';
+      if (h.key === 'cost') input.step = '0.01';
+      input.value = val;
+    } else {
+      input.type = 'text';
+      input.value = String(val);
+    }
+    input.name = h.key;
+    formEl.appendChild(label);
+    formEl.appendChild(input);
+  });
+}
+
+function openEditModal(rowData) {
+  buildForm(editForm, rowData);
+  editModal.style.display = 'flex';
+  editForm.dataset.woNo = rowData.wo_no;
+}
+closeEditModal.addEventListener('click', () => { editModal.style.display = 'none'; });
+
+editForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const woNo = editForm.dataset.woNo;
+  if (!woNo) { setStatus('Error: Missing work order number.', true); return; }
+  const formData = new FormData(editForm);
+  const updatedData = {};
+  for (let [key, value] of formData.entries()) {
+    if (value === '') updatedData[key] = null;
+    else if (key === 'start_date' || key === 'end_date') updatedData[key] = new Date(value).toISOString();
+    else if (key === 'wo_percentage' || key === 'cost') {
+      const num = parseFloat(value);
+      updatedData[key] = isNaN(num) ? null : num;
+    } else updatedData[key] = value;
+  }
+  try {
+    const { error } = await supabaseClient.from('WO').update(updatedData).eq('wo_no', woNo);
+    if (error) throw error;
+    editModal.style.display = 'none';
+    setStatus('Work order updated successfully.');
+    await loadFromSupabase();
+  } catch (err) {
+    console.error(err);
+    setStatus('Failed to update work order.', true);
+  }
+});
+
+addRowBtn.addEventListener('click', () => {
+  buildForm(addForm);
+  addModal.style.display = 'flex';
+});
+closeAddModal.addEventListener('click', () => { addModal.style.display = 'none'; });
+
+addForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData(addForm);
+  const newRow = {};
+  for (let [key, value] of formData.entries()) {
+    if (value === '') newRow[key] = null;
+    else if (key === 'start_date' || key === 'end_date') newRow[key] = new Date(value).toISOString();
+    else if (key === 'wo_percentage' || key === 'cost') {
+      const num = parseFloat(value);
+      newRow[key] = isNaN(num) ? null : num;
+    } else newRow[key] = value;
+  }
+  try {
+    const { error } = await supabaseClient.from('WO').insert([newRow]);
+    if (error) throw error;
+    addModal.style.display = 'none';
+    setStatus('New work order added.');
+    loadFromSupabase();
+  } catch (err) {
+    console.error(err);
+    setStatus('Failed to add work order.', true);
+  }
+});
+
+function confirmDelete(woNo) {
+  if (!confirm('Are you sure you want to delete this work order?')) return;
+  deleteRow(woNo);
+}
+async function deleteRow(woNo) {
+  try {
+    const { error } = await supabaseClient.from('WO').delete().eq('wo_no', woNo);
+    if (error) throw error;
+    setStatus('Row deleted.');
+    await loadFromSupabase();
+  } catch (err) {
+    console.error(err);
+    setStatus('Failed to delete row.', true);
+  }
+}
+
+showAllBtn.addEventListener('click', () => {
+  document.querySelectorAll('#dataTable tbody tr').forEach(tr => {
+    tr.style.display = '';
+    tr.dataset.hidden = '';
+  });
+  selectedWoNos.clear();
+  document.querySelectorAll('.row-selector').forEach(cb => cb.checked = false);
+  updateSelectedCostSum();
+  localStorage.setItem(HIDDEN_ROWS_KEY, '[]');
+  setStatus('All rows restored.');
+});
+
+function updateWoCount(count) {
+  const el = document.getElementById('woCountValue');
+  if (el) {
+    const current = parseInt(el.textContent) || 0;
+    const diff = count - current;
+    const steps = 15;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      el.textContent = Math.round(current + (diff * step / steps));
+      if (step >= steps) { el.textContent = count; clearInterval(timer); }
+    }, 25);
+  }
+}
+
+function renderRows(rows) {
+  const tbody = document.querySelector('#dataTable tbody');
+  const tooltip = document.getElementById('customTooltip');
+  tbody.innerHTML = '';
+  updateWoCount(rows.length);
+
+  rows.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+    const woNo = row.wo_no || 'N/A';
+    const camp = row.camp || 'N/A';
+    const location = row.location || 'N/A';
+    tr.dataset.woNo = woNo;
+    tr.dataset.camp = camp;
+    tr.dataset.location = location;
+    const savedColor = getStoredRowColor(woNo);
+    if (savedColor) tr.style.backgroundColor = savedColor;
+   
+    const RENDER_HEADERS = [
+      { label: 'WO NO.', key: 'wo_no' },
+      { label: 'CAMP', key: 'camp' },
+      { label: 'LOCATION', key: 'location' },
+      { label: 'Split 1.5TON', key: 'split_1_5', group: 'split' },
+      { label: 'Split 2TON', key: 'split_2', group: 'split' },
+      { label: 'Split 2.5TON', key: 'split_2_5', group: 'split' },
+      { label: 'Split 3TON', key: 'split_3', group: 'split' },
+      { label: 'Window 2TON', key: 'window_2', group: 'window' },
+      { label: 'COOLER', key: 'cooler', group: 'cooler' },
+      { label: 'used AC', key: 'used_ac', group: 'used' },
+      { label: 'FRIDGE', key: 'fridge', group: 'fridge' },
+      { label: 'FREEZER', key: 'freezer', group: 'freezer' },
+      { label: 'Package 8TON', key: 'pkg_8', group: 'package' },
+      { label: 'Package 10TON', key: 'pkg_10', group: 'package' },
+      { label: 'Package 12 TON', key: 'pkg_12', group: 'package' },
+      { label: 'Package 15TON', key: 'pkg_15', group: 'package' },
+      { label: 'Package 20TON', key: 'pkg_20', group: 'package' },
+      { label: 'Package 25TON', key: 'pkg_25', group: 'package' },
+      { label: 'FREE STAND 5TON', key: 'free_5ton', group: 'freestand' },
+      { label: 'FREE STAND 8TON', key: 'free_8ton', group: 'freestand' },
+      { label: 'AIR CURTAINS', key: 'air_curtains', group: 'aircurtain' },
+      { label: 'WORK ORDER AMOUNT', key: 'amount' },
+      { label: 'START DATE', key: 'start_date' },
+      { label: 'END DATE', key: 'end_date' },
+      { label: 'REMAINING DAYS', key: null, group: 'remain' },
+      { label: 'WO PERCENTAGE', key: 'wo_percentage' },
+      { label: 'LPO', key: 'lpo' },
+      { label: 'DO', key: 'do_doc' },
+      { label: 'WO', key: 'wo_pdf' },
+      { label: 'Cost without VAT', key: 'cost' }
+    ];
+
+    RENDER_HEADERS.forEach(h => {
+      const td = document.createElement('td');
+      let handled = false;
+      let val = '';
+      if (h.key === 'wo_no') {
+        const woVal = row[h.key] ?? '';
+        const woStr = String(woVal).trim();
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'row-selector';
+        checkbox.dataset.woNo = woStr;
+        checkbox.checked = selectedWoNos.has(woStr);
+        checkbox.addEventListener('change', (e) => {
+          const wo = e.target.dataset.woNo;
+          if (e.target.checked) selectedWoNos.add(wo); else selectedWoNos.delete(wo);
+          updateSelectedCostSum();
+        });
+        const hideBtn = document.createElement('button');
+        hideBtn.textContent = 'Hide';
+        hideBtn.className = 'action-btn hide-btn';
+        hideBtn.onclick = (e) => {
+          e.stopPropagation();
+          tr.style.display = 'none';
+          tr.dataset.hidden = 'true';
+          const wo = String(row.wo_no || '').trim();
+          if (wo) {
+            let hiddenSet = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
+            hiddenSet.add(wo);
+            localStorage.setItem(HIDDEN_ROWS_KEY, JSON.stringify([...hiddenSet]));
+          }
+        };
+        const span = document.createElement('span');
+        span.textContent = woVal;
+        span.style.fontWeight = '700';
+        td.appendChild(checkbox);
+        td.appendChild(hideBtn);
+        td.appendChild(span);
+        handled = true;
+      } else if (h.key === null && h.label === 'REMAINING DAYS') {
+        const d = remainingDays(row.end_date);
+        val = d === null ? '' : Math.max(0, d);
+        td.classList.add('remain');
+      } else if (h.key === 'start_date' || h.key === 'end_date') {
+        val = formatDMY(parseDate(row[h.key]));
+      } else if (h.key === 'wo_percentage') {
+        const p = parsePercentage(row[h.key]);
+        if (p !== null) {
+          const bg = percentColor(p);
+          td.innerHTML = `<div class="progress-cell"><div class="progress-bar" style="width:${p}%; background:${bg}"></div><span class="progress-text" style="color:#fff">${p}%</span></div>`;
+          handled = true;
+        } else { td.textContent = ''; handled = true; }
+      } else if (h.key === 'lpo') {
+        const loc = row.location ?? '', cam = row.camp ?? '';
+        const raw = row[h.key] ?? '';
+        const name = String(raw).trim();
+        if (name) {
+          const file = name.toLowerCase().endsWith('.pdf') ? name : name + '.pdf';
+          td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
+          handled = true;
+        } else { td.textContent = ''; handled = true; }
+      } else if (h.key === 'do_doc') {
+        const lpoRaw = row.lpo ?? '', loc = row.location ?? '', cam = row.camp ?? '';
+        const lpoName = String(lpoRaw).trim();
+        const doLabelRaw = row[h.key] ?? '';
+        const doLabel = String(doLabelRaw).trim();
+        if (lpoName || doLabel) {
+          const base = lpoName ? lpoName.replace(/\.pdf$/i, '') : doLabel.replace(/\.pdf$/i, '');
+          const file = lpoName ? `DO${base}.pdf` : (/^DOPO/.test(base) ? `${base}.pdf` : `DO${base}.pdf`);
+          const label = doLabel || (lpoName ? `DO${base}` : `DO${base}`);
+          td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} ${cam} (${loc})')" title="Open ${file}">${label}</a>`;
+          handled = true;
+        } else { td.textContent = ''; handled = true; }
+      } else if (h.key === 'wo_pdf') {
+        const raw = row.wo_no ?? '', lpoRaw = row.lpo ?? '', loc = row.location ?? '', cam = row.camp ?? '';
+        const name = String(raw).trim();
+        if (name) {
+          let file;
+          if (/\.pdf$/i.test(name)) file = name;
+          else {
+            const m = name.match(/^WO\s+(\d+)$/i);
+            if (m) file = `WO${m[1]}.pdf`;
+            else if (/^WO\d+$/i.test(name)) file = `${name}.pdf`;
+            else file = `${name}.pdf`;
+          }
+          td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} (${lpoRaw}) ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
+          handled = true;
+        } else { td.textContent = ''; handled = true; }
+           } else if (h.key === 'cost' || h.key === 'amount') {
+        const v = row[h.key];
+        td.textContent = isNumericOnly(v) ? formatAED(Number(v)) : String(v ?? '');
+        td.style.fontWeight = '700';
+        if (h.key === 'cost') td.style.color = '#10b981'; // Keeps the green color only for the 'Cost' column
+        handled = true;
+      } else {
+        val = row[h.key] ?? '';
+      }
+      const group = h.group || '';
+      if (group) td.classList.add(group);
+      if (group && isNumericOnly(val) && group !== 'remain') {
+        td.classList.add('is-numeric');
+        td.innerHTML = `<span class="count-badge ${group}">${val}</span>`;
+      } else if (group === 'remain' && isNumericOnly(val)) {
+        const num = Number(val);
+        const bg = remainingColor(num);
+        td.innerHTML = `<span class="remain-badge" style="background:${bg}; color:#fff">${num}</span>`;
+      } else if (!handled) {
+        td.textContent = val;
+      }
+      tr.appendChild(td);
+    });
+    tr.appendChild(renderActionCell(row, idx));
+    tbody.appendChild(tr);
+  });
+
+  const savedHidden = new Set(JSON.parse(localStorage.getItem(HIDDEN_ROWS_KEY) || '[]'));
+  rows.forEach((row, idx) => {
+    const wo = String(row.wo_no || '').trim();
+    if (wo && savedHidden.has(wo)) {
+      const tr = tbody.children[idx];
+      if (tr) { tr.style.display = 'none'; tr.dataset.hidden = 'true'; }
+    }
+  });
+}
+
+function uniqueSorted(values) {
+  const set = new Set(values.filter(v => v !== '' && v !== null && v !== undefined).map(v => String(v).trim()).filter(Boolean));
+  return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+}
+
+const TYPE_OPTIONS = ['All', 'split', 'window', 'package', 'used', 'fridge', 'cooler', 'freezer', 'freestand', 'aircurtain'];
+const GROUP_KEYS = {
+  split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
+  window: ['window_2'],
+  package: ['pkg_8', 'pkg_10', 'pkg_12', 'pkg_15', 'pkg_20', 'pkg_25'],
+  used: ['used_ac'],
+  fridge: ['fridge'],
+  cooler: ['cooler'],
+  freezer: ['freezer'],
+  freestand: ['free_5ton', 'free_8ton'],
+  aircurtain: ['air_curtains']
+};
+
+function initFilters() {
+  const camps = uniqueSorted(ALL_ROWS.map(r => r.camp));
+  const locs = uniqueSorted(ALL_ROWS.map(r => r.location));
+  const fillSelect = (sel, opts) => {
+    const prev = sel.value;
+    sel.innerHTML = opts.map(o => `<option value="${o === 'All' ? '' : o}">${o}</option>`).join('');
+    if ([...sel.options].some(op => op.value === prev)) sel.value = prev;
+  };
+  fillSelect(selCamp, camps);
+  fillSelect(selLocation, locs);
+  fillSelect(selType, TYPE_OPTIONS);
+}
+
+function computeCounts(rows) {
+  const counts = {
+    split: { split_1_5: 0, split_2: 0, split_2_5: 0, split_3: 0, total: 0, cost: 0 },
+    window: { window_2: 0, total: 0, cost: 0 },
+    package: { pkg_8: 0, pkg_10: 0, pkg_12: 0, pkg_15: 0, pkg_20: 0, pkg_25: 0, total: 0, cost: 0 },
+    freestand: { free_5ton: 0, free_8ton: 0, total: 0, cost: 0 },
+    used: { used_ac: 0, total: 0, cost: 0 },
+    fridge: { fridge: 0, total: 0, cost: 0 },
+    cooler: { cooler: 0, total: 0, cost: 0 },
+    freezer: { freezer: 0, total: 0, cost: 0 },
+    aircurtain: { air_curtains: 0, total: 0, cost: 0 }
+  };
+  rows.forEach(row => {
+    const rowCost = isNumericOnly(row.cost) ? Number(row.cost) : 0;
+    for (const [group, keys] of Object.entries(GROUP_KEYS)) {
+      let groupHasValue = false, groupQty = 0;
+      for (const key of keys) {
+        const val = row[key];
+        if (isNumericOnly(val)) {
+          const num = Number(val);
+          if (num > 0) { groupHasValue = true; groupQty += num; counts[group][key] += num; }
+        }
+      }
+      if (groupHasValue) { counts[group].total += groupQty; counts[group].cost += rowCost; }
+    }
+  });
+  return counts;
+}
+
+function hasGroupValue(row, group) {
+  const keys = GROUP_KEYS[group] || [];
+  return keys.some(k => {
+    const v = row[k];
+    if (!isNumericOnly(v)) return false;
+    return Number.isFinite(Number(v)) && Number(v) > 0;
+  });
+}
+
+// ===== URGENCY CALCULATION =====
+function getUrgencyLevel(row) {
+  const days = remainingDays(row.end_date);
+  if (days === null) return 'normal';
+  if (days < 0) return 'expired';
+  if (days < 15) return 'critical';
+  if (days <= 30) return 'urgent';
+  if (days <= 60) return 'warning';
+  return 'normal';
+}
+
+// ===== PROGRESS LEVEL =====
+function getProgressLevel(row) {
+  const p = parsePercentage(row.wo_percentage);
+  if (p === null) return null;
+  if (p === 0) return 'not_started';
+  if (p < 80) return 'in_progress';
+  if (p < 100) return 'almost_done';
+  return 'complete';
+}
+
+let charts = { split: null, pkg: null, groups: null, progress: null };
+
+function renderCharts(counts) {
+  const themeColors = getChartColors();
+  const splitLabels = ['1.5 TON', '2 TON', '2.5 TON', '3 TON'];
+  const splitData = [counts.split.split_1_5, counts.split.split_2, counts.split.split_2_5, counts.split.split_3];
+  const pkgLabels = ['8 TON', '10 TON', '12 TON', '15 TON', '20 TON', '25 TON'];
+  const pkgData = [counts.package.pkg_8, counts.package.pkg_10, counts.package.pkg_12, counts.package.pkg_15, counts.package.pkg_20, counts.package.pkg_25];
+  const groupLabels = ['Split', 'Window', 'Package', 'Free Stand', 'Used', 'Cooler', 'Fridge', 'Freezer', 'Air Curtain'];
+  const groupTotals = [
+    counts.split.total, counts.window.total, counts.package.total, counts.freestand.total,
+    counts.used.total, counts.cooler.total, counts.fridge.total, counts.freezer.total, counts.aircurtain.total
+  ];
+  const colors = {
+    split: '#16a34a', window: '#c022c5', package: '#3b82f6', freestand: '#a855f7',
+    used: '#ef4444', cooler: '#06b6d4', fridge: '#64748b', freezer: '#94a3b8', aircurtain: '#f59e0b'
+  };
+
+  if (charts.split) charts.split.destroy();
+  charts.split = new Chart(document.getElementById('chartSplit'), {
+    type: 'bar',
+    data: { labels: splitLabels, datasets: [{ label: 'Split', data: splitData, backgroundColor: colors.split, borderRadius: 8, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0, color: themeColors.text }, grid: { color: themeColors.grid } }, x: { ticks: { color: themeColors.text }, grid: { display: false } } } }
+  });
+
+  if (charts.pkg) charts.pkg.destroy();
+  charts.pkg = new Chart(document.getElementById('chartPackage'), {
+    type: 'bar',
+    data: { labels: pkgLabels, datasets: [{ label: 'Package', data: pkgData, backgroundColor: colors.package, borderRadius: 8, borderSkipped: false }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0, color: themeColors.text }, grid: { color: themeColors.grid } }, x: { ticks: { color: themeColors.text }, grid: { display: false } } } }
+  });
+
+  if (charts.groups) charts.groups.destroy();
+  charts.groups = new Chart(document.getElementById('chartGroups'), {
+    type: 'doughnut',
+    data: { labels: groupLabels, datasets: [{ data: groupTotals, backgroundColor: Object.values(colors), borderColor: themeColors.doughnutBorder, borderWidth: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { color: themeColors.text, font: { family: 'Inter', weight: '600' } } } } }
+  });
+
+  if (charts.progress) charts.progress.destroy();
+  let sum = 0, count = 0;
+  ALL_ROWS.forEach(row => {
+    const p = parsePercentage(row.wo_percentage);
+    if (p !== null) { sum += p; count++; }
+  });
+  const avg = count > 0 ? Math.round(sum / count) : 0;
+  charts.progress = new Chart(document.getElementById('chartProgress'), {
+    type: 'doughnut',
+    data: { labels: ['Progress', ''], datasets: [{ data: [avg, 100 - avg], backgroundColor: ['#10b981', themeColors.grid], borderColor: themeColors.doughnutBorder, borderWidth: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } }
+  });
+  document.getElementById('progressValue').textContent = `${avg}%`;
+}
+
+function renderStats(rows) {
+  const c = computeCounts(rows);
+  let totalCostNoVat = 0;
+  rows.forEach(r => {
+    const v = r.amount;
+    if (isNumericOnly(v)) totalCostNoVat += Number(v);
+  });
+  const byId = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = String(val); };
+  byId('statTotalSplit', c.split.total);
+  byId('statTotalPackage', c.package.total);
+  byId('statTotalFreestand', c.freestand.total);
+  byId('statTotalWindow', c.window.total);
+  byId('statTotalUsed', c.used.total);
+  byId('statTotalCooler', c.cooler.total);
+  byId('statTotalFridge', c.fridge.total);
+  byId('statTotalFreezer', c.freezer.total);
+  byId('statTotalAirCurtain', c.aircurtain.total);
+  byId('statTotalCostNoVat', formatAED(totalCostNoVat));
+  byId('statCostSplit', `Cost: ${formatAED(c.split.cost)}`);
+  byId('statCostPackage', `Cost: ${formatAED(c.package.cost)}`);
+  byId('statCostFreestand', `Cost: ${formatAED(c.freestand.cost)}`);
+  byId('statCostWindow', `Cost: ${formatAED(c.window.cost)}`);
+  byId('statCostUsed', `Cost: ${formatAED(c.used.cost)}`);
+  byId('statCostCooler', `Cost: ${formatAED(c.cooler.cost)}`);
+  byId('statCostFridge', `Cost: ${formatAED(c.fridge.cost)}`);
+  byId('statCostFreezer', `Cost: ${formatAED(c.freezer.cost)}`);
+  byId('statCostAirCurtain', `Cost: ${formatAED(c.aircurtain.cost)}`);
+  renderCharts(c);
+}
+
+// ===== FIXED & EXTENDED FILTERING =====
+function getFilteredRows() {
+  const campVal = selCamp.value;
+  const locVal = selLocation.value;
+  const typeVal = selType.value;
+  const progressVal = selProgress.value;
+  const urgencyVal = selUrgency.value;
+  const searchVal = (filterSearch.value || '').trim().toLowerCase();
+
+  return ALL_ROWS.filter(r => {
+    if (campVal && String(r.camp || '').trim() !== campVal) return false;
+    if (locVal && String(r.location || '').trim() !== locVal) return false;
+    if (typeVal && !hasGroupValue(r, typeVal)) return false;
+
+    // Progress filter
+    if (progressVal) {
+      const pLevel = getProgressLevel(r);
+      if (pLevel !== progressVal) return false;
+    }
+
+    // Urgency filter
+    if (urgencyVal) {
+      const uLevel = getUrgencyLevel(r);
+      if (uLevel !== urgencyVal) return false;
+    }
+
+    // Text search (WO, Camp, Location)
+    if (searchVal) {
+      const hay = `${r.wo_no || ''} ${r.camp || ''} ${r.location || ''}`.toLowerCase();
+      if (!hay.includes(searchVal)) return false;
+    }
+
+    return true;
+  });
+}
+
+function applyFilters() {
+  const filtered = getFilteredRows();
+  renderRows(filtered);
+  renderStats(filtered);
+  try {
+    filtered.forEach(r => {
+      const days = remainingDays(r.end_date);
+      const wo = String(r.wo_no ?? '').trim();
+      if (wo && Number.isFinite(days) && days < 30 && days > 0 && !NOTIFIED_WO.has(wo)) {
+        const msg = `⚠️ ${wo} • Camp: ${r.camp} • Location: ${r.location} • ${days} days remaining`;
+        showToast(msg, 6000);
+        NOTIFIED_WO.add(wo);
+      }
+    });
+  } catch (e) { console.warn('Toast error:', e); }
+
+  // Build status message with active filters
+  const activeFilters = [];
+  if (selCamp.value) activeFilters.push(`Camp: ${selCamp.value}`);
+  if (selLocation.value) activeFilters.push(`Loc: ${selLocation.value}`);
+  if (selType.value) activeFilters.push(`Type: ${selType.value}`);
+  if (selProgress.value) activeFilters.push(`Progress: ${selProgress.options[selProgress.selectedIndex].text}`);
+  if (selUrgency.value) activeFilters.push(`Urgency: ${selUrgency.options[selUrgency.selectedIndex].text}`);
+  if (filterSearch.value.trim()) activeFilters.push(`Search: "${filterSearch.value.trim()}"`);
+
+  const filterInfo = activeFilters.length ? ` [${activeFilters.join(' • ')}]` : '';
+  setStatus(`Showing ${filtered.length} of ${ALL_ROWS.length} rows${filterInfo}`);
+}
+
+// ===== ATTACH FILTER EVENT LISTENERS (THIS WAS THE BUG) =====
+selCamp.addEventListener('change', applyFilters);
+selLocation.addEventListener('change', applyFilters);
+selType.addEventListener('change', applyFilters);
+selProgress.addEventListener('change', applyFilters);
+selUrgency.addEventListener('change', applyFilters);
+
+// Search with debounce
+let searchDebounce = null;
+filterSearch.addEventListener('input', () => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(applyFilters, 250);
+});
+
+// Reset button
+resetFiltersBtn.addEventListener('click', () => {
+  selCamp.value = '';
+  selLocation.value = '';
+  selType.value = '';
+  selProgress.value = '';
+  selUrgency.value = '';
+  filterSearch.value = '';
+  applyFilters();
+  setStatus('All filters reset.');
+});
+
+// ===== COLUMN TOOLTIPS LOGIC =====
+function initColumnTooltips() {
+  const tooltip = document.getElementById('customTooltip');
+  if (!tooltip) return;
+
+  document.querySelectorAll('#dataTable thead th[data-tooltip]').forEach(th => {
+    th.addEventListener('mouseenter', (e) => {
+      clearTimeout(tooltip.hideTimeout);
+      tooltip.textContent = th.getAttribute('data-tooltip');
+      tooltip.style.display = 'block';
+      const rect = th.getBoundingClientRect();
+      tooltip.style.left = `${rect.left}px`;
+      tooltip.style.top  = `${rect.bottom + 6}px`;
+    });
+    th.addEventListener('mouseleave', () => {
+      tooltip.hideTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 200);
+    });
+  });
+}
+
+
+async function loadFromSupabase() {
+  setStatus('Loading data from database...');
+  try {
+    const { data, error } = await supabaseClient.from('WO').select('*');
+    if (error) {
+      console.error('Supabase error details:', JSON.stringify(error, null, 2));
+      throw error;
+    }
+    if (!data || data.length === 0) {
+      console.warn('Supabase returned 0 rows. Check RLS policies on the WO table — the anon role may not have SELECT permission.');
+      setStatus('⚠️ No data returned. Check Supabase RLS policies for the WO table.', true);
+      return;
+    }
+    ALL_ROWS = sortByWoNo(data);
+    initFilters();
+    applyFilters();
+    setStatus(`Loaded ${data.length} work orders`);
+  } catch (err) {
+    console.error('Supabase error:', err);
+    const msg = err?.message || err?.details || JSON.stringify(err);
+    setStatus(`❌ Failed to load: ${msg}`, true);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadRemotePdfMap();
+  loadFromSupabase();
+  initColumnTooltips(); // Initialize tooltips for column headers
+  if (printBtn) printBtn.addEventListener('click', () => window.print());
+});
+
+document.addEventListener('click', (e) => {
+  const tooltip = document.getElementById('customTooltip');
+  if (tooltip && tooltip.style.display === 'block') {
+    tooltip.style.display = 'none';
+    clearTimeout(tooltip.hideTimeout);
+  }
+});
+// ===== COLUMN TOOLTIP ON DOUBLE CLICK =====
+document.getElementById('dataTable').addEventListener('dblclick', function(e) {
+  const cell = e.target.closest('td, th');
+  if (!cell) return;
+  
+  e.stopPropagation(); // Prevent other double-click handlers
+  
+  const row = cell.closest('tr');
+  const cellIndex = Array.from(row.children).indexOf(cell);
+  if (cellIndex === -1) return;
+  
+  // Get the corresponding header to find the data-tooltip
+  const th = document.querySelector(`#dataTable thead tr th:nth-child(${cellIndex + 1})`);
+  if (!th) return;
+  
+  const tooltipText = th.getAttribute('data-tooltip');
+  if (!tooltipText) return;
+  
+  const tooltip = document.getElementById('customTooltip');
+  if (!tooltip) return;
+  
+  clearTimeout(tooltip.hideTimeout);
+  tooltip.textContent = tooltipText;
+  tooltip.style.display = 'block';
+  
+  // FIX: Use clientX and clientY because the tooltip uses 'position: fixed'
+  // pageX/pageY include scroll offset, which breaks fixed positioning!
+  let left = e.clientX + 15;
+  let top = e.clientY + 15;
+  
+  // Prevent going off-screen
+  requestAnimationFrame(() => {
+    const rect = tooltip.getBoundingClientRect();
+    if (left + rect.width > window.innerWidth - 10) {
+      left = e.clientX - rect.width - 15;
+    }
+    if (top + rect.height > window.innerHeight - 10) {
+      top = e.clientY - rect.height - 15;
+    }
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+  });
+  
+  // Auto-hide after 3 seconds
+  tooltip.hideTimeout = setTimeout(() => {
+    tooltip.style.display = 'none';
+  }, 3000);
+});
+// ===== EXPORT TO EXCEL =====
+document.getElementById('exportExcelBtn').addEventListener('click', async () => {
+  if (typeof ExcelJS === 'undefined') {
+    setStatus('ExcelJS library is still loading. Please wait a moment.', true);
+    return;
+  }
+  
+  setStatus('Generating Excel file...');
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Work Orders', {
+      views: [{ state: 'frozen', ySplit: 2 }] // Freezes the top 2 header rows
+    });
+
+    // Set column widths
+    worksheet.columns = [
+      { width: 6 }, { width: 12 }, { width: 15 }, { width: 20 },
+      { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 },
+      { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 },
+      { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 },
+      { width: 9 }, { width: 9 },
+      { width: 12 },
+      { width: 14 }, { width: 12 }, { width: 12 }, { width: 10 }, { width: 10 },
+      { width: 15 }, { width: 15 }, { width: 15 }, { width: 14 }
+    ];
+
+    // Row 1: Group Headers
+    const row1 = worksheet.addRow([
+      'S.No', 'WORK ORDER', 'CAMP', 'LOCATION',
+      'SPLIT', '', '', '', 
+      'WINDOW', 'COOLER', 'USED AC', 'FRIDGE', 'FREEZER',
+      'PACKAGE', '', '', '', '', '', 
+      'FREE STAND', '', 
+      'AIR CURTAIN',
+      'WO AMOUNT', 'START DATE', 'END DATE', 'DAYS LEFT', 'PROGRESS',
+      'LPO', 'DO', 'WO', 'LPO COST'
+    ]);
+
+    // Row 2: Sub Headers
+    const row2 = worksheet.addRow([
+      '', '', '', '',
+      '1.5 TON', '2 TON', '2.5 TON', '3 TON',
+      '2 TON', '', '', '', '',
+      '8 TON', '10 TON', '12 TON', '15 TON', '20 TON', '25 TON',
+      '5 TON', '8 TON',
+      '',
+      '', '', '', '', '',
+      '', '', '', ''
+    ]);
+
+    // Merge cells for Row 1 to match PDF layout
+    worksheet.mergeCells('A1:A2'); worksheet.mergeCells('B1:B2'); 
+    worksheet.mergeCells('C1:C2'); worksheet.mergeCells('D1:D2');
+    worksheet.mergeCells('E1:H1'); // SPLIT
+    worksheet.mergeCells('I1:I2'); worksheet.mergeCells('J1:J2'); 
+    worksheet.mergeCells('K1:K2'); worksheet.mergeCells('L1:L2'); worksheet.mergeCells('M1:M2');
+    worksheet.mergeCells('N1:S1'); // PACKAGE
+    worksheet.mergeCells('T1:U1'); // FREE STAND
+    worksheet.mergeCells('V1:V2');
+    worksheet.mergeCells('W1:W2'); worksheet.mergeCells('X1:X2'); 
+    worksheet.mergeCells('Y1:Y2'); worksheet.mergeCells('Z1:Z2'); worksheet.mergeCells('AA1:AA2');
+    worksheet.mergeCells('AB1:AB2'); worksheet.mergeCells('AC1:AC2'); 
+    worksheet.mergeCells('AD1:AD2'); worksheet.mergeCells('AE1:AE2');
+
+    // Styles
+    const headerFill = (color) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: color } });
+    const headerFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10, name: 'Inter' };
+    const headerAlignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    const borderStyle = {
+      top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+      left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+      bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+      right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+    };
+
+    const applyHeaderStyle = (row, colStart, colEnd, color) => {
+      for (let c = colStart; c <= colEnd; c++) {
+        const cell = row.getCell(c);
+        cell.fill = headerFill(color);
+        cell.font = headerFont;
+        cell.alignment = headerAlignment;
+        cell.border = borderStyle;
+      }
+    };
+
+    // Apply colors matching the app/PDF
+    applyHeaderStyle(row1, 1, 4, 'FF1E293B'); // Meta
+    applyHeaderStyle(row1, 5, 8, 'FF16A34A'); // Split
+    applyHeaderStyle(row1, 9, 9, 'FFC022C5'); // Window
+    applyHeaderStyle(row1, 10, 10, 'FF06B6D4'); // Cooler
+    applyHeaderStyle(row1, 11, 11, 'FFEF4444'); // Used
+    applyHeaderStyle(row1, 12, 12, 'FF64748B'); // Fridge
+    applyHeaderStyle(row1, 13, 13, 'FF94A3B8'); // Freezer
+    applyHeaderStyle(row1, 14, 19, 'FF3B82F6'); // Package
+    applyHeaderStyle(row1, 20, 21, 'FFA855F7'); // Free Stand
+    applyHeaderStyle(row1, 22, 22, 'FFF59E0B'); // Air Curtain
+    applyHeaderStyle(row1, 23, 31, 'FF1E293B'); // Meta
+
+    applyHeaderStyle(row2, 1, 4, 'FF1E293B');
+    applyHeaderStyle(row2, 5, 8, 'FF16A34A');
+    applyHeaderStyle(row2, 9, 9, 'FFC022C5');
+    applyHeaderStyle(row2, 10, 10, 'FF06B6D4');
+    applyHeaderStyle(row2, 11, 11, 'FFEF4444');
+    applyHeaderStyle(row2, 12, 12, 'FF64748B');
+    applyHeaderStyle(row2, 13, 13, 'FF94A3B8');
+    applyHeaderStyle(row2, 14, 19, 'FF3B82F6');
+    applyHeaderStyle(row2, 20, 21, 'FFA855F7');
+    applyHeaderStyle(row2, 22, 22, 'FFF59E0B');
+    applyHeaderStyle(row2, 23, 31, 'FF1E293B');
+    
+    row1.height = 28;
+    row2.height = 22;
+
+        // Add Data Rows
+    const data = getFilteredRows(); // Exports currently filtered data
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Define colors for equipment columns to match the web app badges/PDF
+    const colColors = {
+      5: 'FF16A34A', 6: 'FF16A34A', 7: 'FF16A34A', 8: 'FF16A34A', // Split (Green)
+      9: 'FFC022C5', // Window (Purple)
+      10: 'FF06B6D4', // Cooler (Cyan)
+      11: 'FFEF4444', // Used (Red)
+      12: 'FF64748B', // Fridge (Slate)
+      13: 'FF94A3B8', // Freezer (Light Slate)
+      14: 'FF3B82F6', 15: 'FF3B82F6', 16: 'FF3B82F6', 17: 'FF3B82F6', 18: 'FF3B82F6', 19: 'FF3B82F6', // Package (Blue)
+      20: 'FFA855F7', 21: 'FFA855F7', // Free Stand (Purple)
+      22: 'FFF59E0B', // Air Curtain (Amber)
+      2: 'FF1E293B',// Meta (Dark Slate)
+      23: 'FF1E305B',// Meta (Dark Slate)
+      24: 'FF1E293B',// Meta (Dark Slate)
+      25: 'FF1E293B',// Meta (Dark Slate)
+    };
+
+    data.forEach((row, idx) => {
+      const startDate = parseDate(row.start_date);
+      const endDate = parseDate(row.end_date);
+      const daysLeft = endDate ? Math.ceil((endDate - today) / 86400000) : '';
+      const progress = parsePercentage(row.wo_percentage);
+
+      const dataRow = worksheet.addRow([
+        idx + 1,
+        row.wo_no || ' ' ,
+        row.camp || ' ',
+        row.location || ' ',
+        row.split_1_5 || ' ',
+        row.split_2 || ' ',
+        row.split_2_5 || ' ',
+        row.split_3 || ' ',
+        row.window_2 || ' ',
+        row.cooler || ' ',
+        row.used_ac || ' ',
+        row.fridge || ' ',
+        row.freezer || ' ',
+        row.pkg_8 || ' ',
+        row.pkg_10 || ' ',
+        row.pkg_12 || ' ',
+        row.pkg_15 || ' ',
+        row.pkg_20 || ' ',
+        row.pkg_25 || ' ',
+        row.free_5ton || ' ',
+        row.free_8ton || ' ',
+        row.air_curtains || ' ',
+        isNumericOnly(row.amount) ? Number(row.amount) : (row.amount || ''),
+        startDate || '',
+        endDate || '',
+        daysLeft,
+        progress !== null ? progress / 100 : '', // Excel percentage format
+        row.lpo || '',
+        row.do_doc || '',
+        row.wo_pdf || '',
+        isNumericOnly(row.cost) ? Number(row.cost) : (row.cost || '')
+      ]);
+
+      const dataFont = { size: 10, name: 'Inter' };
+      const dataAlignment = { horizontal: 'center', vertical: 'middle' };
+      
+      for (let c = 1; c <= 31; c++) {
+        const cell = dataRow.getCell(c);
+        cell.font = dataFont;
+        cell.alignment = dataAlignment;
+        cell.border = borderStyle;
+        
+        const cellValue = cell.value;
+        const strVal = String(cellValue).trim();
+        const isNumber = strVal !== '' && !isNaN(Number(strVal));
+        const iswoCol = [2,23,24,25].includes(c); // WO No, WO Amount, Start Date, End Date columns
+        // Apply colored background for equipment counts
+        if (colColors[c] && isNumber || iswoCol) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colColors[c] } };
+          cell.font = { size: 10, name: 'Inter', color: { argb: 'FFFFFFFF' }, bold: true }; // White bold text
+        } else if (idx % 2 === 1) {
+          // Alternate row background color for other cells
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+        }
+      }
+      
+      // Specific Cell Formats
+      dataRow.getCell(23).numFmt = '#,##0.00'; // WO Amount
+      dataRow.getCell(24).numFmt = 'dd/mm/yyyy'; // Start Date
+      dataRow.getCell(25).numFmt = 'dd/mm/yyyy'; // End Date
+      dataRow.getCell(27).numFmt = '0%'; // Progress
+      dataRow.getCell(31).numFmt = '#,##0.00'; // LPO Cost
+    });
+
+    // Generate and download the file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Work_Orders_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    setStatus(`Exported ${data.length} rows to Excel successfully!`);
+  } catch (err) {
+    console.error(err);
+    setStatus('Failed to export Excel file.', true);
+  }
+});
+</script>
 </body>
 </html>
