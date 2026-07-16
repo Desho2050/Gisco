@@ -1706,15 +1706,10 @@ async function openPdfViewerFromFile(file, title) {
   const safeFile = f.toLowerCase().endsWith('.pdf') ? f : `${f}.pdf`;
 
   // PDFs in your repo are under PPO/. We mirror that here.
-  // Use ?raw=1 to avoid GitHub-style blob forced downloads when your server/proxy supports it.
   const localPdfUrl = `http://localhost:5500/PPO/${encodeURIComponent(safeFile).replace(/%2F/g, '/')}`;
   currentPdfDirectUrl = localPdfUrl;
 
   // Load directly in the modal iframe
-  return openPdfViewer(localPdfUrl, title);
-
-}
-
 
 function openPdfViewer(url, title) {
   const overlay = document.getElementById('pdfOverlay');
