@@ -150,7 +150,6 @@
   margin: 6px auto;
 }
 
-/* Text styling */
 .marquee-text {
   position: absolute;
   white-space: nowrap;
@@ -158,16 +157,26 @@
   animation: bounce-scroll 6s linear infinite;
 }
 
-/* حركة ذهاب وعودة بدون اختفاء */
 @keyframes bounce-scroll {
   0% {
-    transform: translateX(0);        /* يبدأ ظاهر بالكامل عند اليمين */
+    transform: translateX(0);  
   }
   50% {
-    transform: translateX(calc(-100% + 127%)); /* يصل إلى أقصى اليسار بدون اختفاء */
+    transform: translateX(calc(-100% + 127%)); 
+  }
+}
+
+
+
+@keyframes bounce-scroll {
+  0% {
+    transform: translateX(0);  
+  }
+  50% {
+    transform: translateX(calc(-100% + 127%)); 
   }
   100% {
-    transform: translateX(0);        /* يعود إلى اليمين */
+    transform: translateX(0);
   }
 }
 
