@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -165,7 +166,12 @@
     transform: translateX(calc(-100% + 127%)); 
   }
 }
-
+.marquee-text {
+  position: absolute;
+  white-space: nowrap;
+  left: 0;
+  animation: bounce-scroll 6s linear infinite;
+}
 
 
 @keyframes bounce-scroll {
@@ -296,7 +302,43 @@
     // NEVER use the service_role key in frontend code — it bypasses Row Level Security!
     const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    console.log('[DB] Creating Supabase client with URL:', SUPABASE_URL);
+    let supabaseClient;
+    try {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { persistSession: false },
+            global: {
+                fetch: (...args) => {
+                    console.log('[DB] NETWORK REQUEST →', args[0]);
+                    return fetch(...args)
+                        .then(res => {
+                            console.log('[DB] NETWORK RESPONSE ←', res.status, res.statusText, String(args[0]));
+                            return res;
+                        })
+                        .catch(err => {
+                            console.error('[DB] NETWORK ERROR for', String(args[0]), err);
+                            throw err;
+                        });
+                }
+            }
+        });
+        console.log('[DB] Supabase client created successfully.');
+    } catch (e) {
+        console.error('[DB] FAILED to create Supabase client:', e);
+    }
+
+    // Test the connection as soon as the client is ready
+    (async () => {
+        if (!supabaseClient) { console.error('[DB] No client — cannot test connection.'); return; }
+        console.log('[DB] Testing connection with a tiny select...');
+        const { data, error } = await supabaseClient.from('oracle').select('id,code').limit(1);
+        if (error) {
+            console.error('[DB] CONNECTION TEST FAILED:', error);
+        } else {
+            console.log('[DB] CONNECTION TEST OK. Sample rows:', data);
+        }
+    })();
 
     let ALL_ROWS = [];
     let RAW_DATA = []; 
@@ -367,14 +409,13 @@
             await clearCacheDB();
             RAW_DATA = [];
             location.reload();
-            loadData(true); 
         } catch (err) {
             console.error(err);
             showToast('Error clearing cache: ' + err.message, 'error');
             setStatus('', false);
         }
     }
-    
+
     async function handleClearCacheWithoutConfirmation() {
         setStatus('synchronising server data', true);
         try {
@@ -382,7 +423,6 @@
             RAW_DATA = [];
             showToast('Local cache cleared successfully!', 'success');
             location.reload();
-            loadData(true); 
         } catch (err) {
             console.error(err);
             showToast('Error clearing cache: ' + err.message, 'error');
@@ -987,7 +1027,8 @@
         });
         
         currentFilteredRows = filtered;
-        renderedUpTo = 0; 
+        renderedUpTo = 0;
+        console.log('[DB] filterNow(): ALL_ROWS =', ALL_ROWS.length, '| filtered =', filtered.length, '| stockOnly =', stockOnly, '| q =', [q1, q2, q3, q4]);
         renderTable(filtered);
     }
 
@@ -1102,31 +1143,39 @@
 
     async function fetchAndCacheData() {
         setStatus('Fetching Oracle Data from Server...', true);
+        console.log('[DB] fetchAndCacheData() started');
         try {
             let allData = [];
             let from = 0;
-            const chunkSize = 1000; 
-            
+            const chunkSize = 1000;
+
             while (true) {
+                console.log(`[DB] Fetching page from=${from} to=${from + chunkSize - 1}`);
                 const { data, error } = await supabaseClient.from('oracle').select('*').order('code', { ascending: true }).range(from, from + chunkSize - 1);
-                if (error) throw error;
+                if (error) {
+                    console.error('[DB] Fetch error on page', from, error);
+                    throw error;
+                }
+                console.log(`[DB] Page returned ${data ? data.length : 0} rows`);
                 if (!data || data.length === 0) break;
                 allData = allData.concat(data);
                 if (data.length < chunkSize) break;
                 from += chunkSize;
             }
 
+            console.log('[DB] Total rows fetched from database:', allData.length);
             RAW_DATA = allData;
             ALL_ROWS = allData.map(item => buildRow(item));
             ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
-            
+
+            console.log('[DB] buildRow produced ALL_ROWS =', ALL_ROWS.length, '| sample:', ALL_ROWS.slice(0, 2));
             saveToCache(RAW_DATA).catch(err => console.warn('Failed to save to local cache:', err));
 
             setStatus(`Loaded ${ALL_ROWS.length} records successfully.`);
             filterNow();
             showToast('Data synced with database!', 'success');
         } catch (e) {
-            console.error(e);
+            console.error('[DB] fetchAndCacheData FAILED:', e);
             showToast('Error loading data: ' + e.message, 'error');
             document.getElementById('resultCount').textContent = '0';
         } finally {
@@ -1135,10 +1184,13 @@
     }
 
     async function loadData(forceFetch = false) {
+        console.log('[DB] loadData() called. forceFetch =', forceFetch, '| supabaseClient ready =', !!supabaseClient);
         if (!forceFetch) {
             try {
                 setStatus('Checking local cache...', true);
+                console.log('[DB] Attempting to read local IndexedDB cache...');
                 const cachedData = await loadFromCache();
+                console.log('[DB] Cache read result:', cachedData ? `array of ${cachedData.length} rows` : 'null/empty');
                 if (cachedData && cachedData.length > 0) {
                     RAW_DATA = cachedData;
                     ALL_ROWS = cachedData.map(item => buildRow(item));
@@ -1147,6 +1199,11 @@
                     showToast(`Loaded ${ALL_ROWS.length} records instantly from local cache.`, 'success');
                     setStatus(`Ready. (Click 'Sync / Refresh' to fetch latest data)`, false);
                     return;
+                }
+                if (!cachedData) {
+                    showToast('No local cache found. Fetching from database...', 'info');
+                } else {
+                    showToast('Local cache was empty. Fetching from database...', 'info');
                 }
             } catch (err) {
                 console.warn('Cache load failed, fetching from DB:', err);
@@ -1177,5 +1234,43 @@
       loadData(); 
     });
   </script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
 </body>
 </html>
