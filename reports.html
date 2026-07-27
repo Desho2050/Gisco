@@ -1054,19 +1054,19 @@
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-user-shield"></i></div>
                 <div class="stat-value" id="signedByWakeel">0</div>
-                <div class="stat-label">Signed by Wakeel</div>
+                <div class="stat-label">Signed by Wakeel Only</div>
                 <div class="stat-sublabel">Wakeel approvals</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-user-check"></i></div>
                 <div class="stat-value" id="signedByCMW">0</div>
-                <div class="stat-label">Signed by CMW</div>
+                <div class="stat-label">Signed by CMW Client Only</div>
                 <div class="stat-sublabel">CMW approvals</div>
             </div>
             <div class="stat-card" id="notSignedCard">
                 <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
                 <div class="stat-value" id="notSigned">0</div>
-                <div class="stat-label">Not Signed</div>
+                <div class="stat-label">Never Signed </div>
                 <div class="stat-sublabel">Neither CMW nor Wakeel</div>
             </div>
             <div class="stat-card">
@@ -1147,7 +1147,7 @@
                     <input type="date" id="filterDate" onchange="applyFilters()">
                 </div>
                 <div class="filter-group">
-                    <label><i class="fas fa-user-check"></i> Signed by CMW</label>
+                    <label><i class="fas fa-user-check"></i> Signed by CMW Client Only</label>
                     <select id="filterCMWSign" onchange="applyFilters()">
                         <option value="">All</option>
                         <option value="Signed">Signed</option>
@@ -1155,7 +1155,7 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label><i class="fas fa-user-shield"></i> Signed by Wakeel</label>
+                    <label><i class="fas fa-user-shield"></i> Signed by Wakeel Only</label>
                     <select id="filterWakeelSign" onchange="applyFilters()">
                         <option value="">All</option>
                         <option value="signed">Signed</option>
@@ -1815,12 +1815,12 @@
             
             // Signed by Wakeel (regardless of CMW)
             const signedByWakeel = filteredData.filter(r => 
-                r.wakeelSign === 'Signed'
+                r.wakeelSign === 'Signed' && r.cmwSign != 'Signed'
             ).length;
             
             // Signed by CMW (regardless of Wakeel)
             const signedByCMW = filteredData.filter(r => 
-                r.cmwSign === 'Signed'
+                r.cmwSign === 'Signed'&& r.wakeelSign != 'Signed'
             ).length;
             
             // NEW: Not Signed - neither CMW nor Wakeel signed
