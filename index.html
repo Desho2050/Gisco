@@ -1317,6 +1317,28 @@ body {
       </div>
     </div>
 
+    <!-- GatePass Location Tracker (NEW) -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #06b6d4, #6366f1);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #06b6d4, #6366f1);">
+          <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_gateloc_title">GatePass Location Tracker</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_gateloc_desc">Track personnel movement across locations with analytics and filters.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="gatelocCount">loading…</strong></div>
+        <a href="gatepasslocation.html" class="card-btn" data-i18n="open_gateloc">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
     <!-- Tasks -->
     <div class="module-card" style="--card-gradient: linear-gradient(135deg, #a855f7, #9333ea);">
       <div class="card-header">
@@ -1551,6 +1573,9 @@ const I18N = {
     card_reports_title: 'AC Maintenance Reports',
     card_reports_desc: 'Track AC units compliance, signatures (CMW & Wakeel), and work orders from reports.xlsx.',
     open_reports: 'Open',
+    card_gateloc_title: 'GatePass Location Tracker',
+    card_gateloc_desc: 'Track personnel movement across locations with analytics and filters.',
+    open_gateloc: 'Open',
     notification_center_title: 'Notifications',
     no_notifications: 'No new notifications',
     mark_as_read: 'Mark as Read',
@@ -1622,6 +1647,9 @@ const I18N = {
     card_reports_title: 'تقارير صيانة المكيفات',
     card_reports_desc: 'تتبع امتثال وحدات المكيفات والتواقيع (CMW ووكيل) وأوامر العمل من ملف reports.xlsx.',
     open_reports: 'فتح',
+    card_gateloc_title: 'متتبع مواقع التصاريح',
+    card_gateloc_desc: 'تتبع حركة الأفراد عبر المواقع مع تحليلات ومرشحات.',
+    open_gateloc: 'فتح',
     notification_center_title: 'الإشعارات',
     no_notifications: 'لا توجد إشعارات جديدة',
     mark_as_read: 'تحديد كمقروء',
@@ -1907,8 +1935,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===== SUPABASE DATA LOADING =====
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    // ⚠️ SECURITY: Use the 'anon' (public) key from Supabase Dashboard → Settings → API
+    // NEVER use the service_role key in frontend code — it bypasses Row Level Security!
     const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
     const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
     
     const updateCount = (id, value) => {
@@ -2038,6 +2068,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       console.error('⚠️ Supabase gatepass fetch error:', err);
       document.getElementById('gatepassCount').textContent = 'error';
+    }
+    
+    // GatePass Location Tracker
+    try {
+      const { data, error } = await supabaseClient
+        .from('gatlocations')
+        .select('id');
+      
+      if (error) throw error;
+      
+      updateCount('gatelocCount', data.length);
+      totalRecords += data.length;
+    } catch (err) {
+      console.error('⚠️ Supabase gatlocations fetch error:', err);
+      document.getElementById('gatelocCount').textContent = 'error';
     }
     
     // Update totals
