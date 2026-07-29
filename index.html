@@ -910,30 +910,6 @@ body {
 }
 
 /* ============ MARQUEE ANIMATION ============ */
-.marquee-container {
-  overflow: hidden;
-  white-space: nowrap;
-  width: 50%;
-}
-
-.marquee-text {
-  display: inline-block;
-  animation: marquee 20s linear infinite;
-  padding-left: 100%;
-}
-
-.marquee-container:hover .marquee-text {
-  animation-play-state: paused;
-}
-
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
-}
 
 /* ============ RESPONSIVE ============ */
 @media (max-width: 1024px) {
@@ -1011,6 +987,44 @@ body {
     min-width: 0;
   }
 }
+
+.marquee-container {
+  position: relative;
+  height: 40px;
+  width: 40%;
+  max-width: 800px;
+  box-shadow: inset 0 0 10px rgba(17, 17, 17, 0.2);
+  overflow: hidden;
+  background-color: #066902;
+  border: 2px solid #444;
+  border-radius: 8px;
+  padding: 6px 0;
+  margin: 6px auto;
+}
+
+/* Text styling */
+.marquee-text {
+
+  position: absolute;
+  white-space: nowrap;
+  left: 0;
+  color: #ffffff;
+  animation: bounce-scroll 6s linear infinite;
+}
+
+/* حركة ذهاب وعودة بدون اختفاء */
+@keyframes bounce-scroll {
+  0% {
+    transform: translateX(0);        /* يبدأ ظاهر بالكامل عند اليمين */
+  }
+  50% {
+    transform: translateX(calc(-100% + 127%)); /* يصل إلى أقصى اليسار بدون اختفاء */
+  }
+  100% {
+    transform: translateX(0);        /* يعود إلى اليمين */
+  }
+}
+
 
 /* ============ SCROLLBAR ============ */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
