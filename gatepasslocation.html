@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GISCO – GatePass Location Tracker</title>
+  
+  <!-- Suppress Tailwind CDN warning -->
+  <script>
+    const originalWarn = console.warn;
+    console.warn = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) return;
+      originalWarn.apply(console, args);
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- PDF & Supabase -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --brand: #06b6d4;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
+    }
+    
+    body { 
+      font-family: 'Inter', system-ui, sans-serif; 
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+      color: #f8fafc;
+    }
+
+    .glass {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+    @keyframes pulse-border {
+      0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(6, 182, 212, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+    }
+    .highlight-pulse { animation: pulse-border 2s infinite; }
+
+    th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
+    td { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+
+    .location-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: rgba(6, 182, 212, 0.15);
+      color: #67e8f9;
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(6, 182, 212, 0.3);
+      box-shadow: 0 8px 30px rgba(6, 182, 212, 0.1);
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .notification-panel {
+      position: fixed; top: 80px; right: 20px; width: 380px;
+      z-index: 50; transform: translateX(120%); transition: transform 0.3s ease;
+      background: #1e293b;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .notification-panel.show { transform: translateX(0); }
+
+    .filter-dropdown {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #f8fafc;
+      font-size: 0.8rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .filter-dropdown:focus {
+      border-color: #06b6d4;
+    }
+    .filter-dropdown option {
+      background: #1e293b;
+      color: #f8fafc;
+    }
+
+    .dist-bar {
+      height: 8px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #06b6d4, #0891b2);
+      transition: width 0.6s ease;
+    }
+  </style>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { colors: { dark: { 800: '#1f2937', 900: '#0f172a' } } } }
+    }
+  </script>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="glass sticky top-0 z-40 border-b border-gray-700">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </div>
+        <div>
+          <h1 id="page-title" class="text-xl font-bold tracking-tight text-white">GatePass Location Tracker</h1>
+          <p id="page-subtitle" class="text-xs text-gray-400">Track personnel movement across locations</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="btn-notifications" class="relative p-2 text-gray-400 hover:text-white transition" title="Notifications">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          <span id="notification-count" class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center hidden">0</span>
+        </button>
+        <button id="theme-toggle" class="p-2 text-gray-400 hover:text-white transition text-lg">🌙</button>
+        <button id="lang-toggle" class="px-3 py-1 text-xs font-bold border border-gray-600 rounded hover:bg-gray-700 transition">AR</button>
+        <button id="btn-back" class="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded text-white transition">← Home</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl mx-auto w-full p-4 space-y-6">
+    
+    <!-- Dashboard Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="stats-grid">
+      <div class="stat-card border-l-4 border-cyan-500">
+        <div class="stat-label" data-i18n="stat_total">Total Records</div>
+        <div class="stat-value text-cyan-400" id="stat-total">0</div>
+      </div>
+      <div class="stat-card border-l-4 border-purple-500">
+        <div class="stat-label" data-i18n="stat_personnel">Unique Personnel</div>
+        <div class="stat-value text-purple-400" id="stat-personnel">0</div>
+      </div>
+      <div class="stat-card border-l-4 border-amber-500">
+        <div class="stat-label" data-i18n="stat_locations">Unique Locations</div>
+        <div class="stat-value text-amber-400" id="stat-locations">0</div>
+      </div>
+      <div class="stat-card border-l-4 border-green-500">
+        <div class="stat-label" data-i18n="stat_top">Most Common Location</div>
+        <div class="stat-value text-green-400 text-base font-bold truncate" id="stat-top-location">—</div>
+      </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="glass p-4 rounded-xl flex flex-wrap gap-3 items-center justify-between">
+      <div class="relative flex-1 min-w-[200px]">
+        <input type="text" id="search-input" placeholder="Search by name, file no, or location..." 
+               class="w-full bg-gray-900/50 border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-sm focus:border-cyan-500 focus:outline-none text-white placeholder-gray-500">
+        <svg class="w-4 h-4 text-gray-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      </div>
+      
+      <select id="location-filter" class="filter-dropdown min-w-[180px]">
+        <option value="">All Locations</option>
+      </select>
+
+      <div class="flex gap-2 overflow-x-auto pb-1 md:pb-0">
+        <button id="btn-sort-location" class="px-3 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 transition whitespace-nowrap">📍 Sort by Location</button>
+        <button id="btn-add" class="px-4 py-1.5 text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition shadow-lg shadow-cyan-500/20">+ ADD</button>
+        <button id="btn-export-csv" class="px-3 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 transition whitespace-nowrap">CSV</button>
+        <button id="btn-export-pdf" class="px-3 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 transition whitespace-nowrap">PDF</button>
+        <button id="btn-print" class="px-3 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 transition whitespace-nowrap">🖨️ Print</button>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="glass rounded-xl overflow-hidden shadow-2xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="data-table">
+          <thead class="bg-gray-900/50 text-gray-400 border-b border-gray-700">
+            <tr>
+              <th class="py-4 px-4 sortable cursor-pointer hover:text-white" data-col="sn">SN</th>
+              <th class="py-4 px-4 sortable cursor-pointer hover:text-white" data-col="file_no">File No</th>
+              <th class="py-4 px-4 sortable cursor-pointer hover:text-white" data-col="name">Name</th>
+              <th class="py-4 px-4 sortable cursor-pointer hover:text-white" data-col="first_location">First Location</th>
+              <th class="py-4 px-4 sortable cursor-pointer hover:text-white" data-col="second_location">Second Location</th>
+              <th class="py-4 px-4 sortable cursor-pointer hover:text-white" data-col="third_location">Third Location</th>
+              <th class="py-4 px-4 sortable cursor-pointer hover:text-white" data-col="fourth_location">Fourth Location</th>
+              <th class="py-4 px-4 sortable cursor-pointer hover:text-white" data-col="fifth_location">Fifth Location</th>
+              <th class="py-4 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-gray-800">
+          </tbody>
+        </table>
+      </div>
+      <div id="loading" class="hidden p-8 text-center text-cyan-400">
+        <svg class="animate-spin h-8 w-8 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        Loading location data...
+      </div>
+    </div>
+
+    <!-- Location Distribution -->
+    <div class="glass rounded-xl p-4">
+      <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3" data-i18n="distribution_title">Location Distribution</h3>
+      <div id="distribution-chart" class="flex flex-col gap-3">
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-800 mt-auto py-4 text-center text-xs text-gray-500">
+    Designed & Programmed By: Mostafa Al-Najar | تصميم وبرمجة : مصطفي النجار
+  </footer>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="glass bg-gray-900 p-6 rounded-2xl w-full max-w-3xl shadow-2xl border border-gray-700 max-h-[90vh] overflow-y-auto">
+      <h2 id="modal-title" class="text-xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Add Record</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><label class="block text-xs text-gray-400 mb-1" data-i18n="sn_label">SN</label><input type="number" id="sn" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1" data-i18n="file_no_label">File No</label><input type="text" id="file_no" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div class="md:col-span-2"><label class="block text-xs text-gray-400 mb-1" data-i18n="name_label">Name</label><input type="text" id="name" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1" data-i18n="first_loc_label">First Location</label><input type="text" id="first_location" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1" data-i18n="second_loc_label">Second Location</label><input type="text" id="second_location" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1" data-i18n="third_loc_label">Third Location</label><input type="text" id="third_location" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1" data-i18n="fourth_loc_label">Fourth Location</label><input type="text" id="fourth_location" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+        <div><label class="block text-xs text-gray-400 mb-1" data-i18n="fifth_loc_label">Fifth Location</label><input type="text" id="fifth_location" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 outline-none" /></div>
+      </div>
+      <div class="mt-8 flex justify-end gap-3">
+        <button id="modal-cancel" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition" data-i18n="cancel">Cancel</button>
+        <button id="modal-save" class="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold rounded shadow-lg shadow-cyan-500/20 transition" data-i18n="save">Save Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Panel -->
+  <div id="notification-panel" class="notification-panel">
+    <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-red-500/10 rounded-t-xl">
+      <h3 class="font-bold text-red-400 flex items-center gap-2">⚠️ <span data-i18n="notifications_title">Alerts</span></h3>
+      <button id="close-notifications" class="text-gray-400 hover:text-white text-xl">&times;</button>
+    </div>
+    <div id="notification-list" class="max-h-[60vh] overflow-y-auto p-2 text-sm text-gray-300">
+    </div>
+  </div>
+
+  <script>
+    // ======================
+    // CONFIG
+    // ======================
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let allData = [];
+    let currentLang = localStorage.getItem('lang') || 'en';
+    let editingId = null;
+    let locationFilterValue = '';
+
+    // ======================
+    // SECURITY
+    // ======================
+    const _escMap = { '&': '&amp;', '<': '<', '>': '>', '"': '"', "'": '&#39;' };
+    function escapeHtml(s) {
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/[&<>"']/g, m => _escMap[m]);
+    }
+
+    // ======================
+    // TRANSLATIONS
+    // ======================
+    const translations = {
+      en: {
+        page_title: "GatePass Location Tracker",
+        page_subtitle: "Track personnel movement across locations",
+        stat_total: "Total Records",
+        stat_personnel: "Unique Personnel",
+        stat_locations: "Unique Locations",
+        stat_top: "Most Common Location",
+        search_placeholder: "Search by name, file no, or location...",
+        all_locations: "All Locations",
+        sort_loc: "📍 Sort by Location",
+        add: "+ ADD",
+        csv: "CSV",
+        pdf: "PDF",
+        print: "🖨️ Print",
+        distribution_title: "Location Distribution",
+        sn: "SN",
+        file_no: "File No",
+        name: "Name",
+        first_loc: "First Location",
+        second_loc: "Second Location",
+        third_loc: "Third Location",
+        fourth_loc: "Fourth Location",
+        fifth_loc: "Fifth Location",
+        actions: "Actions",
+        add_title: "Add Record",
+        edit_title: "Edit Record",
+        sn_label: "SN",
+        file_no_label: "File No",
+        name_label: "Name",
+        first_loc_label: "First Location",
+        second_loc_label: "Second Location",
+        third_loc_label: "Third Location",
+        fourth_loc_label: "Fourth Location",
+        fifth_loc_label: "Fifth Location",
+        save: "Save Record",
+        cancel: "Cancel",
+        confirm_delete: "Are you sure you want to delete this record?",
+        delete: "Delete",
+        edit: "Edit",
+        notifications_title: "Alerts",
+        no_notifications: "No alerts",
+        records: "records",
+        occurrences: "occurrences",
+        loading: "Loading location data..."
+      },
+      ar: {
+        page_title: "متتبع مواقع تصاريح الدخول",
+        page_subtitle: "تتبع حركة الأفراد عبر المواقع",
+        stat_total: "إجمالي السجلات",
+        stat_personnel: "الأفراد الفريدون",
+        stat_locations: "المواقع الفريدة",
+        stat_top: "الموقع الأكثر شيوعاً",
+        search_placeholder: "ابحث بالاسم أو رقم الملف أو الموقع...",
+        all_locations: "جميع المواقع",
+        sort_loc: "📍 ترتيب حسب الموقع",
+        add: "+ إضافة",
+        csv: "CSV",
+        pdf: "PDF",
+        print: "🖨️ طباعة",
+        distribution_title: "توزيع المواقع",
+        sn: "الرقم",
+        file_no: "رقم الملف",
+        name: "الاسم",
+        first_loc: "الموقع الأول",
+        second_loc: "الموقع الثاني",
+        third_loc: "الموقع الثالث",
+        fourth_loc: "الموقع الرابع",
+        fifth_loc: "الموقع الخامس",
+        actions: "الإجراءات",
+        add_title: "إضافة سجل",
+        edit_title: "تعديل سجل",
+        sn_label: "الرقم",
+        file_no_label: "رقم الملف",
+        name_label: "الاسم",
+        first_loc_label: "الموقع الأول",
+        second_loc_label: "الموقع الثاني",
+        third_loc_label: "الموقع الثالث",
+        fourth_loc_label: "الموقع الرابع",
+        fifth_loc_label: "الموقع الخامس",
+        save: "حفظ",
+        cancel: "إلغاء",
+        confirm_delete: "هل أنت متأكد من حذف هذا السجل؟",
+        delete: "حذف",
+        edit: "تعديل",
+        notifications_title: "تنبيهات",
+        no_notifications: "لا توجد تنبيهات",
+        records: "سجل",
+        occurrences: "تكرار",
+        loading: "جاري تحميل بيانات المواقع..."
+      }
+    };
+
+    function getText(key) {
+      const t = translations[currentLang] || translations.en;
+      return t[key] || key;
+    }
+
+    function updateUI() {
+      const t = translations[currentLang];
+      document.getElementById('page-title').textContent = t.page_title;
+      document.getElementById('page-subtitle').textContent = t.page_subtitle;
+      document.getElementById('search-input').placeholder = t.search_placeholder;
+      document.getElementById('lang-toggle').textContent = currentLang === 'en' ? 'AR' : 'EN';
+      
+      // Update data-i18n elements
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) {
+          if (el.tagName === 'INPUT' && el.type === 'text') el.placeholder = t[key];
+          else el.textContent = t[key];
+        }
+      });
+
+      document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.lang = currentLang;
+    }
+
+    // ======================
+    // HELPERS
+    // ======================
+    function getAllUniqueLocations() {
+      const locSet = new Set();
+      allData.forEach(row => {
+        ['first_location','second_location','third_location','fourth_location','fifth_location'].forEach(key => {
+          if (row[key] && row[key].trim()) locSet.add(row[key].trim());
+        });
+      });
+      return [...locSet].sort();
+    }
+
+    function getLocationFrequency() {
+      const freq = {};
+      allData.forEach(row => {
+        ['first_location','second_location','third_location','fourth_location','fifth_location'].forEach(key => {
+          const loc = row[key];
+          if (loc && loc.trim()) {
+            const trimmed = loc.trim();
+            freq[trimmed] = (freq[trimmed] || 0) + 1;
+          }
+        });
+      });
+      return freq;
+    }
+
+    function populateLocationFilter() {
+      const select = document.getElementById('location-filter');
+      const currentVal = select.value;
+      select.innerHTML = '<option value="">' + getText('all_locations') + '</option>';
+      const locs = getAllUniqueLocations();
+      locs.forEach(loc => {
+        const opt = document.createElement('option');
+        opt.value = loc;
+        opt.textContent = loc;
+        select.appendChild(opt);
+      });
+      select.value = currentVal || '';
+    }
+
+    function updateStats() {
+      document.getElementById('stat-total').textContent = allData.length;
+      
+      const uniquePersonnel = new Set(allData.map(r => r.file_no)).size;
+      document.getElementById('stat-personnel').textContent = uniquePersonnel;
+      
+      const uniqueLocs = getAllUniqueLocations().length;
+      document.getElementById('stat-locations').textContent = uniqueLocs;
+      
+      const freq = getLocationFrequency();
+      let topLoc = '—';
+      let topCount = 0;
+      Object.entries(freq).forEach(([loc, count]) => {
+        if (count > topCount) { topLoc = loc; topCount = count; }
+      });
+      document.getElementById('stat-top-location').textContent = topLoc;
+    }
+
+    function updateDistribution() {
+      const container = document.getElementById('distribution-chart');
+      const freq = getLocationFrequency();
+      const entries = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+      
+      if (entries.length === 0) {
+        container.innerHTML = '<div class="text-gray-500 text-sm text-center py-4">No location data</div>';
+        return;
+      }
+      
+      const maxCount = entries[0][1];
+      
+      container.innerHTML = entries.map(([loc, count]) => {
+        const pct = Math.round((count / maxCount) * 100);
+        const displayName = loc.length > 30 ? loc.substring(0, 30) + '...' : loc;
+        return `
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-400 w-48 truncate text-right" dir="auto">${escapeHtml(displayName)}</span>
+            <div class="flex-1 bg-gray-800 rounded-full h-3 overflow-hidden">
+              <div class="dist-bar" style="width: ${pct}%"></div>
+            </div>
+            <span class="text-xs text-cyan-400 font-bold w-16 text-left">${count} ${getText('occurrences')}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateNotifications() {
+      const panel = document.getElementById('notification-list');
+      const badge = document.getElementById('notification-count');
+      
+      const freq = getLocationFrequency();
+      const entries = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+      
+      if (entries.length === 0) {
+        panel.innerHTML = '<div class="text-center py-4 text-gray-500">' + getText('no_notifications') + '</div>';
+        badge.classList.add('hidden');
+        return;
+      }
+      
+      badge.textContent = entries.length;
+      badge.classList.remove('hidden');
+      
+      panel.innerHTML = entries.slice(0, 10).map(([loc, count]) => `
+        <div class="p-2 mb-1 rounded bg-gray-800 border-l-2 border-cyan-500">
+          <div class="text-xs text-gray-300 truncate">${escapeHtml(loc)}</div>
+          <div class="text-xs text-cyan-400">${count} ${getText('occurrences')}</div>
+        </div>
+      `).join('');
+    }
+
+    // ======================
+    // DATA
+    // ======================
+    async function fetchData() {
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('table-body').innerHTML = '';
+      
+      const { data, error } = await supabaseClient.from('gatlocations').select('*').order('sn', { ascending: true });
+      
+      if (error) {
+        console.error('fetch error:', error);
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('table-body').innerHTML = `<tr><td colspan="9" class="py-8 text-center text-red-400">⚠️ Failed to load data: ${escapeHtml(error.message || JSON.stringify(error))}</td></tr>`;
+        return;
+      }
+      
+      allData = data || [];
+      populateLocationFilter();
+      renderTable();
+      updateStats();
+      updateDistribution();
+      updateNotifications();
+      document.getElementById('loading').classList.add('hidden');
+    }
+
+    function getFilteredData() {
+      const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+      const locFilter = document.getElementById('location-filter').value;
+      
+      let filtered = allData;
+      
+      if (searchTerm) {
+        filtered = filtered.filter(row => {
+          const searchable = `${row.sn || ''} ${row.file_no || ''} ${row.name || ''} ${row.first_location || ''} ${row.second_location || ''} ${row.third_location || ''} ${row.fourth_location || ''} ${row.fifth_location || ''}`.toLowerCase();
+          return searchable.includes(searchTerm);
+        });
+      }
+      
+      if (locFilter) {
+        filtered = filtered.filter(row => {
+          return (row.first_location && row.first_location.trim() === locFilter) ||
+                 (row.second_location && row.second_location.trim() === locFilter) ||
+                 (row.third_location && row.third_location.trim() === locFilter) ||
+                 (row.fourth_location && row.fourth_location.trim() === locFilter) ||
+                 (row.fifth_location && row.fifth_location.trim() === locFilter);
+        });
+      }
+      
+      return filtered;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+      
+      const filtered = getFilteredData();
+      const t = translations[currentLang];
+      
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-gray-500">No records found</td></tr>';
+        return;
+      }
+      
+      filtered.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-800/50 transition border-b border-gray-800 last:border-0';
+        
+        const locCell = (val) => {
+          if (!val || !val.trim()) return '<span class="text-gray-600">—</span>';
+          return `<span class="location-badge" dir="auto">${escapeHtml(val)}</span>`;
+        };
+        
+        tr.innerHTML = `
+          <td class="py-3 px-4 text-gray-400">${escapeHtml(row.sn) || '-'}</td>
+          <td class="py-3 px-4 font-bold text-cyan-400">${escapeHtml(row.file_no) || '-'}</td>
+          <td class="py-3 px-4 text-white font-medium">${escapeHtml(row.name) || '-'}</td>
+          <td class="py-3 px-4">${locCell(row.first_location)}</td>
+          <td class="py-3 px-4">${locCell(row.second_location)}</td>
+          <td class="py-3 px-4">${locCell(row.third_location)}</td>
+          <td class="py-3 px-4">${locCell(row.fourth_location)}</td>
+          <td class="py-3 px-4">${locCell(row.fifth_location)}</td>
+          <td class="py-3 px-4 text-right whitespace-nowrap">
+            <button class="edit-btn text-cyan-400 hover:text-cyan-300 mr-2 text-xs font-bold uppercase">${t.edit}</button>
+            <button class="delete-btn text-red-400 hover:text-red-300 text-xs font-bold uppercase">${t.delete}</button>
+          </td>
+        `;
+        
+        tr.querySelector('.edit-btn').onclick = () => openModal(row.id);
+        tr.querySelector('.delete-btn').onclick = () => deleteRecord(row.id);
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ======================
+    // SORT
+    // ======================
+    document.querySelectorAll('.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.getAttribute('data-col');
+        const dir = sortDirection[col] === 'asc' ? 'desc' : 'asc';
+        sortDirection[col] = dir;
+        
+        // Clear other sort indicators
+        document.querySelectorAll('.sortable').forEach(h => h.classList.remove('text-cyan-400'));
+        th.classList.add('text-cyan-400');
+        
+        allData.sort((a, b) => {
+          const va = (a[col] || '').toString().toLowerCase();
+          const vb = (b[col] || '').toString().toLowerCase();
+          if (col === 'sn') return dir === 'asc' ? (a.sn || 0) - (b.sn || 0) : (b.sn || 0) - (a.sn || 0);
+          return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        });
+        
+        renderTable();
+      });
+    });
+
+    // ======================
+    // CRUD
+    // ======================
+    const modal = document.getElementById('modal');
+
+    function openModal(id = null) {
+      editingId = id;
+      document.getElementById('modal-title').textContent = id ? getText('edit_title') : getText('add_title');
+      
+      if (id) {
+        const row = allData.find(r => r.id == id);
+        ['sn','file_no','name','first_location','second_location','third_location','fourth_location','fifth_location'].forEach(k => {
+          document.getElementById(k).value = row[k] || '';
+        });
+      } else {
+        ['sn','file_no','name','first_location','second_location','third_location','fourth_location','fifth_location'].forEach(k => {
+          document.getElementById(k).value = '';
+        });
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() { modal.classList.add('hidden'); }
+
+    async function saveRecord() {
+      const formData = {
+        sn: parseInt(document.getElementById('sn').value) || null,
+        file_no: document.getElementById('file_no').value.trim(),
+        name: document.getElementById('name').value.trim(),
+        first_location: document.getElementById('first_location').value.trim(),
+        second_location: document.getElementById('second_location').value.trim(),
+        third_location: document.getElementById('third_location').value.trim(),
+        fourth_location: document.getElementById('fourth_location').value.trim(),
+        fifth_location: document.getElementById('fifth_location').value.trim()
+      };
+
+      if (!formData.file_no || !formData.name) return alert('File No and Name are required');
+
+      try {
+        let result;
+        if (editingId) result = await supabaseClient.from('gatlocations').update(formData).eq('id', editingId);
+        else result = await supabaseClient.from('gatlocations').insert([formData]);
+        
+        if (result.error) throw result.error;
+        closeModal();
+        fetchData();
+      } catch (err) {
+        alert('Error: ' + (err.message || JSON.stringify(err)));
+      }
+    }
+
+    async function deleteRecord(id) {
+      if (confirm(getText('confirm_delete'))) {
+        const { error } = await supabaseClient.from('gatlocations').delete().eq('id', id);
+        if (error) { alert('Delete failed: ' + (error.message || JSON.stringify(error))); return; }
+        fetchData();
+      }
+    }
+
+    // ======================
+    // EXPORT
+    // ======================
+    function exportToCSV() {
+      const t = translations[currentLang];
+      const headers = [t.sn, t.file_no, t.name, t.first_loc, t.second_loc, t.third_loc, t.fourth_loc, t.fifth_loc];
+      const rows = allData.map(r => [
+        r.sn || '', r.file_no || '', r.name || '', r.first_location || '', 
+        r.second_location || '', r.third_location || '', r.fourth_location || '', r.fifth_location || ''
+      ]);
+      
+      const BOM = '\uFEFF';
+      const csv = BOM + [headers, ...rows].map(e => e.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+      
+      const link = document.createElement("a");
+      link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      link.download = 'gatepass_locations.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const t = translations[currentLang];
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      
+      const headers = [[t.sn, t.file_no, t.name, t.first_loc, t.second_loc, t.third_loc, t.fourth_loc, t.fifth_loc]];
+      const data = allData.map(r => [r.sn || '', r.file_no || '', r.name || '', r.first_location || '', r.second_location || '', r.third_location || '', r.fourth_location || '', r.fifth_location || '']);
+      
+      doc.autoTable({
+        head: headers,
+        body: data,
+        startY: 20,
+        theme: 'striped',
+        styles: { fontSize: 7, cellPadding: 2 },
+        headStyles: { fillColor: [6, 182, 212] }
+      });
+      
+      doc.save('gatepass_locations.pdf');
+    }
+
+    // ======================
+    // EVENTS
+    // ======================
+    document.getElementById('btn-add').onclick = () => openModal();
+    document.getElementById('modal-cancel').onclick = closeModal;
+    document.getElementById('modal-save').onclick = saveRecord;
+    window.onclick = (e) => { if (e.target === modal) closeModal(); };
+    
+    document.getElementById('search-input').oninput = () => renderTable();
+    document.getElementById('location-filter').onchange = () => renderTable();
+    
+    document.getElementById('btn-sort-location').addEventListener('click', () => {
+      allData.sort((a, b) => {
+        const locsA = [a.first_location, a.second_location, a.third_location, a.fourth_location, a.fifth_location].filter(Boolean).join(' ');
+        const locsB = [b.first_location, b.second_location, b.third_location, b.fourth_location, b.fifth_location].filter(Boolean).join(' ');
+        return locsA.localeCompare(locsB);
+      });
+      renderTable();
+    });
+    
+    document.getElementById('lang-toggle').onclick = () => {
+      currentLang = currentLang === 'en' ? 'ar' : 'en';
+      localStorage.setItem('lang', currentLang);
+      updateUI();
+      renderTable();
+      populateLocationFilter();
+      updateDistribution();
+      updateNotifications();
+    };
+    
+    document.getElementById('btn-back').onclick = () => window.location.href = 'index.html';
+    document.getElementById('btn-export-csv').onclick = exportToCSV;
+    document.getElementById('btn-export-pdf').onclick = exportToPDF;
+    document.getElementById('btn-print').onclick = () => window.print();
+    
+    document.getElementById('btn-notifications').onclick = () => {
+      document.getElementById('notification-panel').classList.toggle('show');
+      updateNotifications();
+    };
+    document.getElementById('close-notifications').onclick = () => {
+      document.getElementById('notification-panel').classList.remove('show');
+    };
+    
+    document.getElementById('theme-toggle').onclick = () => {
+      isDarkMode = !isDarkMode;
+      document.documentElement.classList.toggle('dark', isDarkMode);
+      localStorage.setItem('darkMode', isDarkMode);
+      document.getElementById('theme-toggle').textContent = isDarkMode ? '🌙' : '☀️';
+    };
+    
+    // Init dark mode
+    if (localStorage.getItem('darkMode') === 'false') {
+      isDarkMode = false;
+      document.getElementById('theme-toggle').textContent = '☀️';
+    }
+
+    // ======================
+    // INIT
+    // ======================
+    updateUI();
+    fetchData();
+  </script>
+</body>
+</html>
