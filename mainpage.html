@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GISCO – Main Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* ============ CSS VARIABLES ============ */
+:root {
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Modern Theme */
+.theme-modern {
+  --bg-deep: #ffffff;
+  --bg-primary: #1de2d8;
+  --bg-surface: #04d686;
+  --glass: rgb(1, 248, 248);
+  --glass-border: rgba(8, 174, 196, 0.747);
+  --glass-border-hover: rgba(8, 217, 224, 0.733);
+  --text-primary: #000000;
+  --text-secondary: #282829;
+  --text-muted: #000000;
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-purple: #150046;
+  --accent-pink: #ec4899;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-red: #ef4444;
+  --gradient-main: linear-gradient(135deg, #003791, #4503df);
+  --gradient-warm: linear-gradient(135deg, #f59e0b, #ef4444);
+  --gradient-cool: linear-gradient(135deg, #00191d, #10b981);
+  --gradient-pink: linear-gradient(135deg, #f30c80, #4c05f3);
+  --gradient-gold: linear-gradient(135deg, #f59e0b, #d97706);
+  --shadow-glow: 0 0 60px rgba(59, 130, 246, 0.08);
+  --orb-opacity: 0.22;
+  --grid-opacity: 0.030;
+  --topbar-bg: rgba(15, 15, 42, 0.85);
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-hover: rgba(255, 255, 255, 0.06);
+}
+
+/* Colorful Theme */
+.theme-colorful {
+  --bg-deep: #1a0a2e;
+  --bg-primary: #2d1b4e;
+  --bg-surface: #3d2b5e;
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-hover: rgba(255, 255, 255, 0.2);
+  --text-primary: #ffffff;
+  --text-secondary: #c4b5fd;
+  --text-muted: #8b7fc7;
+  --accent-blue: #60a5fa;
+  --accent-cyan: #22d3ee;
+  --accent-purple: #a78bfa;
+  --accent-pink: #f472b6;
+  --accent-green: #34d399;
+  --accent-orange: #fb923c;
+  --accent-red: #f87171;
+  --gradient-main: linear-gradient(135deg, #f472b6, #a78bfa);
+  --gradient-warm: linear-gradient(135deg, #fb923c, #f87171);
+  --gradient-cool: linear-gradient(135deg, #22d3ee, #34d399);
+  --gradient-pink: linear-gradient(135deg, #f472b6, #a78bfa);
+  --gradient-gold: linear-gradient(135deg, #fbbf24, #fb923c);
+  --shadow-glow: 0 0 60px rgba(244, 114, 182, 0.15);
+  --orb-opacity: 0.25;
+  --grid-opacity: 0.02;
+  --topbar-bg: rgba(45, 27, 78, 0.9);
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --card-hover: rgba(255, 255, 255, 0.08);
+}
+
+/* Business Theme */
+.theme-business {
+  --bg-deep: #0c1222;
+  --bg-primary: #1e293b;
+  --bg-surface: #334155;
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-hover: rgba(255, 255, 255, 0.12);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-blue: #2563eb;
+  --accent-cyan: #0891b2;
+  --accent-purple: #7c3aed;
+  --accent-pink: #db2777;
+  --accent-green: #059669;
+  --accent-orange: #d97706;
+  --accent-red: #dc2626;
+  --gradient-main: linear-gradient(135deg, #2563eb, #7c3aed);
+  --gradient-warm: linear-gradient(135deg, #d97706, #dc2626);
+  --gradient-cool: linear-gradient(135deg, #0891b2, #059669);
+  --gradient-pink: linear-gradient(135deg, #db2777, #7c3aed);
+  --gradient-gold: linear-gradient(135deg, #d97706, #b45309);
+  --shadow-glow: 0 0 60px rgba(37, 99, 235, 0.1);
+  --orb-opacity: 0.18;
+  --grid-opacity: 0.012;
+  --topbar-bg: rgba(30, 41, 59, 0.9);
+  --card-bg: rgba(255, 255, 255, 0.02);
+  --card-hover: rgba(255, 255, 255, 0.04);
+}
+
+/* Classic Theme */
+.theme-classic {
+  --bg-deep: #1a0a2e;
+  --bg-primary: #2d1b4e;
+  --bg-surface: #4c1d95;
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-hover: rgba(255, 255, 255, 0.18);
+  --text-primary: #faf5ff;
+  --text-secondary: #c4b5fd;
+  --text-muted: #8b5cf6;
+  --accent-blue: #818cf8;
+  --accent-cyan: #67e8f9;
+  --accent-purple: #a78bfa;
+  --accent-pink: #f0abfc;
+  --accent-green: #6ee7b7;
+  --accent-orange: #fcd34d;
+  --accent-red: #fca5a5;
+  --gradient-main: linear-gradient(135deg, #7c3aed, #d946ef);
+  --gradient-warm: linear-gradient(135deg, #f59e0b, #ef4444);
+  --gradient-cool: linear-gradient(135deg, #06b6d4, #10b981);
+  --gradient-pink: linear-gradient(135deg, #d946ef, #8b5cf6);
+  --gradient-gold: linear-gradient(135deg, #fbbf24, #f59e0b);
+  --shadow-glow: 0 0 60px rgba(124, 58, 237, 0.15);
+  --orb-opacity: 0.25;
+  --grid-opacity: 0.02;
+  --topbar-bg: rgba(45, 27, 78, 0.9);
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --card-hover: rgba(255, 255, 255, 0.07);
+}
+
+/* Professional Theme */
+.theme-professional {
+  --bg-deep: #000000;
+  --bg-primary: #0a0a0a;
+  --bg-surface: #1a1a1a;
+  --glass: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-border-hover: rgba(255, 255, 255, 0.1);
+  --text-primary: #e5e5e5;
+  --text-secondary: #a3a3a3;
+  --text-muted: #525252;
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-red: #ef4444;
+  --gradient-main: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --gradient-warm: linear-gradient(135deg, #f59e0b, #ef4444);
+  --gradient-cool: linear-gradient(135deg, #06b6d4, #10b981);
+  --gradient-pink: linear-gradient(135deg, #ec4899, #8b5cf6);
+  --gradient-gold: linear-gradient(135deg, #f59e0b, #d97706);
+  --shadow-glow: 0 0 60px rgba(59, 130, 246, 0.05);
+  --orb-opacity: 0.15;
+  --grid-opacity: 0.01;
+  --topbar-bg: rgba(10, 10, 10, 0.95);
+  --card-bg: rgba(255, 255, 255, 0.01);
+  --card-hover: rgba(255, 255, 255, 0.03);
+}
+
+/* ============ BASE STYLES ============ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', 'Tajawal', -apple-system, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  transition: var(--transition-slow);
+}
+
+/* Animated Background */
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-canvas .orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: var(--orb-opacity);
+  animation: orbFloat 25s ease-in-out infinite;
+  transition: opacity 0.5s ease;
+}
+
+.bg-canvas .orb:nth-child(1) { width: 700px; height: 700px; background: var(--accent-blue); top: -250px; left: -150px; }
+.bg-canvas .orb:nth-child(2) { width: 500px; height: 500px; background: var(--accent-purple); top: 40%; right: -200px; animation-delay: -8s; animation-duration: 30s; }
+.bg-canvas .orb:nth-child(3) { width: 450px; height: 450px; background: var(--accent-pink); bottom: -150px; left: 25%; animation-delay: -15s; animation-duration: 35s; }
+.bg-canvas .orb:nth-child(4) { width: 350px; height: 350px; background: var(--accent-cyan); top: 20%; left: 50%; animation-delay: -5s; animation-duration: 28s; }
+
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,var(--grid-opacity)) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,var(--grid-opacity)) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(60px, -40px) scale(1.1); }
+  50% { transform: translate(-40px, 50px) scale(0.9); }
+  75% { transform: translate(30px, 20px) scale(1.05); }
+}
+
+/* ============ TOPBAR ============ */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  transition: var(--transition);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  height: 60px;
+  width: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  transition: var(--transition);
+}
+
+.logo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.brand-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Clock */
+.clock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 20px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  min-width: 180px;
+}
+
+.time {
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.date {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.arabic-clock {
+  font-family: 'Tajawal', sans-serif;
+}
+
+/* Topbar Controls */
+.topbar-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.control-btn {
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--glass);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: var(--transition);
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+  position: relative;
+}
+
+.control-btn:hover {
+  background: var(--card-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-2px);
+}
+
+.control-btn.active {
+  background: var(--gradient-main);
+  color: white;
+  border: none;
+}
+
+.theme-select {
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--glass);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  backdrop-filter: blur(10px);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 12px center;
+  padding-left: 32px;
+}
+
+.theme-select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.theme-select option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Notification Badge */
+.notification-btn {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  background: var(--accent-red);
+  color: white;
+  font-weight: 700;
+  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--bg-primary);
+  animation: pulse 2s infinite;
+}
+
+.notification-badge.show {
+  display: flex;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* ============ MAIN CONTAINER ============ */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Welcome Section */
+.welcome-section {
+  margin-bottom: 32px;
+  padding: 32px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--gradient-main);
+}
+
+.welcome-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.welcome-text h1 {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.welcome-text p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.welcome-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.welcome-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  min-width: 100px;
+}
+
+.welcome-stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent-blue);
+  font-variant-numeric: tabular-nums;
+}
+
+.welcome-stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* ============ CARDS GRID ============ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.module-card {
+  background: var(--card-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(20px);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.module-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--card-gradient, var(--gradient-main));
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.module-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-glow);
+}
+
+.module-card:hover::before {
+  opacity: 1;
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--gradient-warm);
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.card-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.card-count strong {
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+
+.card-btn {
+  padding: 8px 16px;
+  background: var(--gradient-main);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.card-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+/* ============ NOTIFICATION CENTER ============ */
+.notification-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.notification-overlay.show {
+  display: block;
+  opacity: 1;
+}
+
+.notification-center {
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  width: 420px;
+  max-height: 80vh;
+  background: var(--bg-primary);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification-center.show {
+  display: flex;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.notification-header {
+  padding: 18px 20px;
+  background: var(--gradient-main);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notification-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: var(--transition);
+}
+
+.notification-close:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.notification-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.notification-section {
+  margin-bottom: 20px;
+}
+
+.notification-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-item {
+  padding: 14px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  transition: var(--transition);
+}
+
+.notification-item:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--card-hover);
+}
+
+.notification-item.expired {
+  border-right: 3px solid var(--accent-red);
+}
+
+.notification-item.urgent {
+  border-right: 3px solid var(--accent-orange);
+}
+
+.notification-item.warning {
+  border-right: 3px solid var(--accent-orange);
+}
+
+.notification-item-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.notification-item-details {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.notification-item-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.notification-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.notification-empty i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.notification-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: center;
+}
+
+.notification-footer button {
+  padding: 8px 20px;
+  background: var(--gradient-cool);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.notification-footer button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* ============ FOOTER ============ */
+.footer {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.footer-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.footer-credit i {
+  color: var(--accent-pink);
+}
+
+/* ============ TOAST ============ */
+.toast-container {
+  position: fixed;
+  top: 100px;
+  left: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+}
+
+.toast {
+  padding: 14px 18px;
+  background: var(--bg-primary);
+  border: 1px solid var(--glass-border);
+  border-right: 4px solid var(--accent-orange);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  animation: toastIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(20px);
+}
+
+.toast.success {
+  border-right-color: var(--accent-green);
+}
+
+.toast.error {
+  border-right-color: var(--accent-red);
+}
+
+.toast i {
+  font-size: 18px;
+  color: var(--accent-orange);
+}
+
+.toast.success i {
+  color: var(--accent-green);
+}
+
+.toast.error i {
+  color: var(--accent-red);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toastOut {
+  to { opacity: 0; transform: translateX(-40px); }
+}
+
+.toast.removing {
+  animation: toastOut 0.3s ease forwards;
+}
+
+/* ============ MARQUEE ANIMATION ============ */
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 1024px) {
+  .cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 12px 16px;
+  }
+  
+  .brand-title {
+    font-size: 14px;
+  }
+  
+  .clock-container {
+    min-width: 140px;
+    padding: 10px 14px;
+  }
+  
+  .time {
+    font-size: 20px;
+  }
+  
+  .container {
+    padding: 16px;
+  }
+  
+  .welcome-section {
+    padding: 20px;
+  }
+  
+  .welcome-text h1 {
+    font-size: 22px;
+  }
+  
+  .welcome-stats {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .notification-center {
+    width: calc(100% - 40px);
+    left: 20px;
+    right: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    height: 45px;
+  }
+  
+  .brand-title {
+    font-size: 12px;
+  }
+  
+  .brand-subtitle {
+    display: none;
+  }
+  
+  .topbar-controls {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .control-btn, .theme-select {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.marquee-container {
+  position: relative;
+  height: 55px;
+  width: 50%;
+  max-width: 800px;
+  
+  overflow: hidden;
+ 
+  border-radius: 8px;
+  
+ 
+}
+
+/* Text styling */
+.marquee-text {
+
+  position: absolute;
+  white-space: nowrap;
+  left: 0;
+  color: #ffffff;
+  animation: bounce-scroll 6s linear infinite;
+}
+
+/* حركة ذهاب وعودة بدون اختفاء */
+@keyframes bounce-scroll {
+  0% {
+    transform: translateX(0);        /* يبدأ ظاهر بالكامل عند اليمين */
+  }
+  50% {
+    transform: translateX(calc(-100% + 127%)); /* يصل إلى أقصى اليسار بدون اختفاء */
+  }
+  100% {
+    transform: translateX(0);        /* يعود إلى اليمين */
+  }
+}
+
+
+/* ============ SCROLLBAR ============ */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+</style>
+</head>
+<body class="theme-modern">
+
+<!-- Animated Background -->
+<div class="bg-canvas">
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+</div>
+<div class="bg-grid"></div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="brand">
+    <img src="Logo.bmp" alt="GISCO" class="logo" onerror="this.style.display='none'">
+    <div class="brand-text">
+      <div class="brand-title" data-i18n="brand_title" style="color: white !important;">شركة الخليج للخدمات الصناعية</div>
+      <div class="brand-subtitle" style="color: white !important;">Gulf Industrial Service Company</div>
+    </div>
+  </div>
+  
+  <div class="clock-container">
+    <div class="time" id="time">--:--:--</div>
+    <div class="date" id="date"></div>
+  </div>
+  
+  <div class="topbar-controls">
+    <button class="control-btn notification-btn" id="notificationBtn" title="Notifications">
+      <i class="fas fa-bell"></i>
+      <span class="notification-badge" id="notificationBadge">0</span>
+    </button>
+    
+    <select class="theme-select" id="themeSelect">
+      <option value="modern">🎨 Modern</option>
+      <option value="colorful">🌈 Colorful</option>
+      <option value="business">💼 Business</option>
+      <option value="classic">🎭 Classic</option>
+      <option value="professional">⚫ Professional</option>
+    </select>
+    
+    <button class="control-btn" data-lang="ar" id="langAr">
+      <i class="fas fa-language"></i> عربي
+    </button>
+    
+    <button class="control-btn" data-lang="en" id="langEn">
+      <i class="fas fa-language"></i> English
+    </button>
+  </div>
+</header>
+
+<!-- Notification Overlay -->
+<div class="notification-overlay" id="notificationOverlay"></div>
+
+<!-- Notification Center -->
+<div class="notification-center" id="notificationCenter">
+  <div class="notification-header">
+    <h3><i class="fas fa-bell"></i> <span id="notificationHeaderTitle">الإشعارات</span></h3>
+    <button class="notification-close" id="closeNotificationCenter">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  <div class="notification-content" id="notificationContent">
+    <div class="notification-empty">
+      <i class="fas fa-bell-slash"></i>
+      <div id="noNotificationsText">لا توجد إشعارات جديدة</div>
+    </div>
+  </div>
+  <div class="notification-footer">
+    <button id="markReadBtn" data-i18n="mark_as_read">تحديد كمقروء</button>
+  </div>
+</div>
+
+<!-- Main Container -->
+<main class="container" >
+  <!-- Welcome Section -->
+  
+    <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 12px;margin-top: 5px;box-shadow: 0 4px 15px rgba(0,0,0,0.3);padding: 5px 5px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; backdrop-filter: blur(10px);">
+    <i class="fas fa-code" style="color: #dc2626;"></i>
+    <div class="marquee-container">
+      <span class="marquee-text" style="font-weight: bold;text-align: center;text-shadow: 1px 1px 4px rgba(252, 195, 7, 0.5);box-shadow: #00ffaa 1px 1px 1px; border-radius: 20px;background-color:#0f172a;padding: 10px 20px;margin-bottom: 10px;border: 4px solid transparent;background:linear-gradient(#01f3f3, #03eeda) padding-box, linear-gradient(45deg, #eeff00, #ff0080) border-box; color:#000">Programmed By Mostafa Al-Najar | تصميم وبرمجة م: مصطفي النجار</span>
+    </div>
+    <i class="fas fa-code" style="color: #dc2626;"></i>
+    </div>
+   
+  <section class="welcome-section">
+    <div class="welcome-content">
+      <div class="welcome-text">
+        <h1 id="welcomeTitle">مرحباً بك في لوحة التحكم</h1>
+        <p id="welcomeSubtitle">إدارة شاملة لجميع أنظمة الشركة</p>
+      </div>
+      <div class="welcome-stats">
+        <div class="welcome-stat">
+          <div class="welcome-stat-value" id="totalModules" style="color: #0703f0;">14</div>
+          <div class="welcome-stat-label" data-i18n="modules_label">الوحدات</div>
+        </div>
+        <div class="welcome-stat">
+          <div class="welcome-stat-value" id="totalRecords" style="color: #0703f0;">0</div>
+          <div class="welcome-stat-label" data-i18n="records_label">السجلات</div>
+        </div>
+        <div class="welcome-stat" >
+          <div class="welcome-stat-value" id="activeAlerts" style="color: #0703f0;">0</div>
+          <div class="welcome-stat-label" data-i18n="alerts_label" >التنبيهات</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cards Grid -->
+  <div class="cards-grid">
+    <!-- Oracle -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6);">
+          <i class="fas fa-database"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title" data-i18n="card_oracle_title">Oracle Materials</div>
+          <div class="card-desc" data-i18n="card_oracle_desc">Enhanced search across Oracle.xlsx with multi-input filtering.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="oracleCount">loading…</strong></div>
+        <a href="oracle.html" class="card-btn" data-i18n="open_oracle">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Materials -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #10b981, #059669);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+          <i class="fas fa-boxes"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title" data-i18n="card_materials_title">Received Materials</div>
+          <div class="card-desc" data-i18n="card_materials_desc">Powered by Materials.xlsx with totals and search.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="materialsCount">loading…</strong></div>
+        <a href="materials.html" class="card-btn" data-i18n="open_materials">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Requests -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #f59e0b, #d97706);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title" data-i18n="card_requests_title">Costs Summary</div>
+          <div class="card-desc" data-i18n="card_requests_desc">Project costs management without VAT.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="requestsCount">loading…</strong></div>
+        <a href="Requests.html" class="card-btn" data-i18n="open_requests">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Al-Shuhrah -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #ec4899, #db2777);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #ec4899, #db2777);">
+          <i class="fas fa-industry"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title" data-i18n="card_sh_title">Al-Shuhrah Compressors</div>
+          <div class="card-desc" data-i18n="card_sh_desc">Editable table with totals, export to Excel/PDF.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="purchaseCount">loading…</strong></div>
+        <a href="Shuhrah.html" class="card-btn" data-i18n="open_sh">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Work Orders -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+          <i class="fas fa-hard-hat"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_wo_title">4378M Work Orders</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_wo_desc">Open the 4378M work orders summary.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="woCount">loading…</strong></div>
+        <a href="WO.html" class="card-btn" data-i18n="open_wo">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Staff Management -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #06b6d4, #0891b2);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+          <i class="fas fa-users-cog"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="EMP_Card">4378M Staff Management</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="EMP_Card_Desc">Open 4378M Staff Management.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="empcount">loading…</strong></div>
+        <a href="EMP.html" class="card-btn" data-i18n="EMP_Card_Desc">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Vehicles -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #ef4444, #dc2626);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+          <i class="fas fa-truck"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_vehicles_title">Vehicle Usage Tracker</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_vehicles_desc">Track vehicle odometer readings and daily usage.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="vehiclesCount">loading…</strong></div>
+        <a href="vehicles.html" class="card-btn" data-i18n="open_vehicles">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Timesheet -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #14b8a6, #0d9488);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #14b8a6, #0d9488);">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_timesheet_title">Employee Timesheet</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_timesheet_desc">Manage and track employee attendance and working hours.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="timesheetCount">loading…</strong></div>
+        <a href="timesheet.html" class="card-btn" data-i18n="open_timesheet">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Gatepass -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #f97316, #ea580c);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #f97316, #ea580c);">
+          <i class="fas fa-id-card"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_gatepass_title">Passport & GatePass</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_gatepass_desc">Manage employee passport and gatepass expiry dates.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="gatepassCount">loading…</strong></div>
+        <a href="gatepassexpiry.html" class="card-btn" data-i18n="open_gatepass">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- GatePass Location Tracker (NEW) -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #06b6d4, #6366f1);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #06b6d4, #6366f1);">
+          <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_gateloc_title">GatePass Location Tracker</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_gateloc_desc">Track personnel movement across locations with analytics and filters.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="gatelocCount">loading…</strong></div>
+        <a href="gatepasslocation.html" class="card-btn" data-i18n="open_gateloc">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #a855f7, #9333ea);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #a855f7, #9333ea);">
+          <i class="fas fa-tasks"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_tasks_title">Task Scheduler Pro</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_tasks_desc">Schedule tasks with reminders and system notifications.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="tasksCount">loading…</strong></div>
+        <a href="tasks.html" class="card-btn" data-i18n="open_tasks">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Petty Cash -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #22c55e, #16a34a);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+          <i class="fas fa-money-bill-wave"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_pettycash_title">Petty Cash Vouchers</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_pettycash_desc">Manage and track petty cash vouchers with full CRUD.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="pettyCashCount">loading…</strong></div>
+        <a href="pettycash.html" class="card-btn" data-i18n="open_pettycash">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Leaves -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #6366f1, #4f46e5);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_leaves_title">Leaves Management</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_leaves_desc">Manage employee leave requests and approvals.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="Leaves">loading…</strong></div>
+        <a href="Leaves.html" class="card-btn" data-i18n="open_leaves">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Warehouse -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #64748b, #475569);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #64748b, #475569);">
+          <i class="fas fa-warehouse"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_warehouse_title">Warehouse Management</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_warehouse_desc">Manage inventory, stock levels, and warehouse operations.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="warehouseCount">loading…</strong></div>
+        <a href="warehouse.html" class="card-btn" data-i18n="open_warehouse">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- ============ NEW: Reports (AC Maintenance) ============ -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #0891b2, #6366f1);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #0891b2, #6366f1);">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_reports_title">AC Maintenance Reports</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_reports_desc">Track AC units compliance, signatures (CMW & Wakeel), and work orders from reports.xlsx.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="reportsCount">loading…</strong></div>
+        <a href="reports.html" class="card-btn" data-i18n="open_reports">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+ 
+</footer>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ===== GLOBAL STATE =====
+let currentLang = 'ar';
+let upcomingLeaveEvents = null;
+let expiringDocuments = null;
+let notificationCenterVisible = false;
+let hasAutoOpened = false;
+
+// ===== HELPER FUNCTIONS =====
+const convertToArabicNumerals = (numStr) => {
+  if (typeof numStr !== 'string') numStr = String(numStr);
+  const arabicNumerals = { '0':'٠','1':'١','2':'٢','3':'٣','4':'٤','5':'٥','6':'٦','7':'٧','8':'٨','9':'٩' };
+  return numStr.replace(/\d/g, d => arabicNumerals[d] || d);
+};
+
+const formatDateForDisplay = (dateStr, lang) => {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '-';
+  
+  if (lang === 'ar') {
+    const day = date.toLocaleDateString('en-US', { day: 'numeric' });
+    const monthKey = date.toLocaleDateString('en-US', { month: 'long' });
+    const year = date.toLocaleDateString('en-US', { year: 'numeric' });
+    const arabicMonths = {
+      'January':'يناير','February':'فبراير','March':'مارس','April':'أبريل',
+      'May':'مايو','June':'يونيو','July':'يوليو','August':'أغسطس',
+      'September':'سبتمبر','October':'أكتوبر','November':'نوفمبر','December':'ديسمبر'
+    };
+    return `${convertToArabicNumerals(day)} ${arabicMonths[monthKey] || monthKey} ${convertToArabicNumerals(year)}`;
+  }
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+};
+
+// ===== TOAST SYSTEM =====
+function showToast(message, type = 'warning', duration = 10000) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  
+  const icons = { warning: 'fa-exclamation-triangle', success: 'fa-check-circle', error: 'fa-times-circle' };
+  toast.innerHTML = `<i class="fas ${icons[type] || icons.warning}"></i><span>${message}</span>`;
+  
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// ===== NOTIFICATION LEVEL =====
+function getNotificationLevel(days) {
+  if (days === null) return 'none';
+  if (days <= 0) return 'expired';
+  if (days <= 15) return 'urgent';
+  if (days <= 30) return 'warning';
+  return 'none';
+}
+
+// ===== I18N DICTIONARY =====
+const I18N = {
+  en: {
+    brand_title: 'Gulf Industrial Service Company',
+    welcome_title: 'Welcome to Dashboard',
+    welcome_subtitle: 'Comprehensive management of all company systems',
+    modules_label: 'Modules',
+    records_label: 'Records',
+    alerts_label: 'Alerts',
+    card_oracle_title: 'Oracle Materials',
+    card_oracle_desc: 'Enhanced search across Oracle.xlsx with multi-input filtering.',
+    open_oracle: 'Open',
+    card_materials_title: 'Received Materials',
+    card_materials_desc: 'Powered by Materials.xlsx with totals and search.',
+    open_materials: 'Open',
+    card_requests_title: 'Costs Summary',
+    card_requests_desc: 'Project costs management without VAT.',
+    open_requests: 'Open',
+    card_sh_title: 'Al-Shuhrah Compressors',
+    card_sh_desc: 'Editable table with totals, export to Excel/PDF.',
+    open_sh: 'Open',
+    card_wo_title: '4378M Work Orders',
+    card_wo_desc: 'Open the 4378M work orders summary.',
+    open_wo: 'Open',
+    EMP_Card: '4378M Staff Management',
+    EMP_Card_Desc: 'Open 4378M Staff Management.',
+    new_badge: 'New',
+    data_label: 'Data:',
+    rows_suffix: ' rows',
+    file_not_found: 'file not found',
+    card_vehicles_title: 'Vehicle Usage Tracker',
+    card_vehicles_desc: 'Track vehicle odometer readings and daily usage.',
+    open_vehicles: 'Open',
+    card_timesheet_title: 'Employee Timesheet',
+    card_timesheet_desc: 'Manage and track employee attendance and working hours.',
+    open_timesheet: 'Open',
+    card_gatepass_title: 'Passport & GatePass',
+    card_gatepass_desc: 'Manage employee passport and gatepass expiry dates.',
+    open_gatepass: 'Open',
+    card_tasks_title: 'Task Scheduler Pro',
+    card_tasks_desc: 'Schedule tasks with reminders and system notifications.',
+    open_tasks: 'Open',
+    card_pettycash_title: 'Petty Cash Vouchers',
+    card_pettycash_desc: 'Manage and track petty cash vouchers with full CRUD.',
+    open_pettycash: 'Open',
+    card_leaves_title: 'Leaves Management',
+    card_leaves_desc: 'Manage employee leave requests and approvals.',
+    open_leaves: 'Open',
+    card_warehouse_title: 'Warehouse Management',
+    card_warehouse_desc: 'Manage inventory, stock levels, and warehouse operations.',
+    open_warehouse: 'Open',
+    card_reports_title: 'AC Maintenance Reports',
+    card_reports_desc: 'Track AC units compliance, signatures (CMW & Wakeel), and work orders from reports.xlsx.',
+    open_reports: 'Open',
+    card_gateloc_title: 'GatePass Location Tracker',
+    card_gateloc_desc: 'Track personnel movement across locations with analytics and filters.',
+    open_gateloc: 'Open',
+    notification_center_title: 'Notifications',
+    no_notifications: 'No new notifications',
+    mark_as_read: 'Mark as Read',
+    expiring_documents_title: 'Expiring Documents',
+    leave_resignation_title: 'Upcoming Leaves & Resignations',
+    close: 'Close',
+    expired: 'Expired',
+    urgent: 'Urgent',
+    warning: 'Warning',
+    days_remaining: 'days remaining',
+    gatepass: 'GatePass',
+    passport: 'Passport',
+    visa: 'Visa',
+    leave_type_leave: 'Leave',
+    leave_type_resignation: 'Resignation',
+    days_today: 'Today',
+    days_in: 'in {days} days',
+    file_prefix: 'File No: '
+  },
+  ar: {
+    brand_title: 'شركة الخليج للخدمات الصناعية',
+    welcome_title: 'مرحباً بك في لوحة التحكم',
+    welcome_subtitle: 'إدارة شاملة لجميع أنظمة الشركة',
+    modules_label: 'الوحدات',
+    records_label: 'السجلات',
+    alerts_label: 'التنبيهات',
+    card_oracle_title: 'مواد الاوراكل',
+    card_oracle_desc: 'بحث محسّن عبر Oracle.xlsx مع تصفية متعددة المدخلات.',
+    open_oracle: 'فتح',
+    card_materials_title: 'المواد المستلمة',
+    card_materials_desc: 'نفس التصميم باستخدام Materials.xlsx مع المجاميع والبحث.',
+    open_materials: 'فتح',
+    card_requests_title: 'ملخص التكاليف',
+    card_requests_desc: 'إدارة تكاليف المشروع بدون ضريبة القيمة المضافة.',
+    open_requests: 'فتح',
+    card_sh_title: 'كومبريسورز الشهرة',
+    card_sh_desc: 'جدول قابل للتعديل مع المجاميع والتصدير إلى Excel/PDF.',
+    open_sh: 'فتح',
+    card_wo_title: 'أوامر العمل 4378M',
+    card_wo_desc: 'افتح ملخص أوامر العمل 4378M.',
+    open_wo: 'فتح',
+    EMP_Card: 'ادارة الموظفين 4378M',
+    EMP_Card_Desc: 'افتح ادارة الموظفين.',
+    new_badge: 'جديد',
+    data_label: 'البيانات:',
+    rows_suffix: ' نتيجة',
+    file_not_found: 'الملف غير موجود',
+    card_vehicles_title: 'متابعة المركبات',
+    card_vehicles_desc: 'تتبع قراءات عداد الكيلومترات والاستخدام اليومي للمركبة.',
+    open_vehicles: 'فتح',
+    card_timesheet_title: 'جدول الحضور',
+    card_timesheet_desc: 'إدارة وتسجيل ساعات حضور الموظفين.',
+    open_timesheet: 'فتح',
+    card_gatepass_title: 'الجوازات والتصاريح',
+    card_gatepass_desc: 'إدارة تواريخ انتهاء جوازات السفر وتصاريح الدخول للموظفين.',
+    open_gatepass: 'فتح',
+    card_tasks_title: 'مدير المهام',
+    card_tasks_desc: 'جدولة المهام مع التذكيرات والإشعارات النظامية.',
+    open_tasks: 'فتح',
+    card_pettycash_title: 'المصروفات النثرية',
+    card_pettycash_desc: 'إدارة وتتبع المصروفات النثرية للمشروع.',
+    open_pettycash: 'فتح',
+    card_leaves_title: 'ادارة الإجازات',
+    card_leaves_desc: 'إدارة طلبات إجازات الموظفين والموافقات.',
+    open_leaves: 'فتح',
+    card_warehouse_title: 'إدارة المستودعات',
+    card_warehouse_desc: 'إدارة المخزون ومستويات السلع وعمليات المستودعات.',
+    open_warehouse: 'فتح',
+    card_reports_title: 'تقارير صيانة المكيفات',
+    card_reports_desc: 'تتبع امتثال وحدات المكيفات والتواقيع (CMW ووكيل) وأوامر العمل من ملف reports.xlsx.',
+    open_reports: 'فتح',
+    card_gateloc_title: 'متتبع مواقع التصاريح',
+    card_gateloc_desc: 'تتبع حركة الأفراد عبر المواقع مع تحليلات ومرشحات.',
+    open_gateloc: 'فتح',
+    notification_center_title: 'الإشعارات',
+    no_notifications: 'لا توجد إشعارات جديدة',
+    mark_as_read: 'تحديد كمقروء',
+    expiring_documents_title: 'مستندات منتهية الصلاحية',
+    leave_resignation_title: 'الإجازات والاستقالات القادمة',
+    close: 'إغلاق',
+    expired: 'منتهي',
+    urgent: 'عاجل',
+    warning: 'تحذير',
+    days_remaining: 'أيام متبقية',
+    gatepass: 'تصريح الدخول',
+    passport: 'جواز السفر',
+    visa: 'التأشيرة',
+    leave_type_leave: 'إجازة',
+    leave_type_resignation: 'استقالة',
+    days_today: 'اليوم',
+    days_in: 'خلال {days} أيام',
+    file_prefix: 'رقم الملف '
+  }
+};
+
+// ===== NOTIFICATION SYSTEM =====
+function updateNotificationBadge() {
+  const badge = document.getElementById('notificationBadge');
+  const totalCount = (upcomingLeaveEvents?.length || 0) + (expiringDocuments?.length || 0);
+  
+  if (badge) {
+    badge.textContent = totalCount;
+    badge.classList.toggle('show', totalCount > 0);
+  }
+  
+  document.getElementById('activeAlerts').textContent = totalCount;
+}
+
+function renderNotifications() {
+  const contentEl = document.getElementById('notificationContent');
+  const dict = I18N[currentLang] || I18N.ar;
+  
+  contentEl.innerHTML = '';
+  
+  const totalCount = (upcomingLeaveEvents?.length || 0) + (expiringDocuments?.length || 0);
+  
+  if (totalCount === 0) {
+    contentEl.innerHTML = `
+      <div class="notification-empty">
+        <i class="fas fa-bell-slash"></i>
+        <div>${dict.no_notifications}</div>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  
+  if (upcomingLeaveEvents?.length > 0) {
+    html += `
+      <div class="notification-section">
+        <div class="notification-section-title">
+          <i class="fas fa-calendar-alt"></i>
+          <span>${dict.leave_resignation_title}</span>
+        </div>
+    `;
+    
+    [...upcomingLeaveEvents]
+      .sort((a, b) => a.daysUntil - b.daysUntil)
+      .forEach(event => {
+        const formattedDate = formatDateForDisplay(event.date, currentLang);
+        const eventType = event.type === 'leave' ? dict.leave_type_leave : dict.leave_type_resignation;
+        const displayName = currentLang === 'ar' ? event.name_ar : event.name_en;
+        
+        let daysText;
+        if (event.daysUntil === 0) {
+          daysText = dict.days_today;
+        } else {
+          daysText = dict.days_in.replace('{days}',
+            currentLang === 'ar' ? convertToArabicNumerals(event.daysUntil.toString()) : event.daysUntil
+          );
+        }
+        
+        html += `
+          <div class="notification-item">
+            <div class="notification-item-title">${dict.file_prefix}${event.file_no} | ${displayName}</div>
+            <div class="notification-item-details">${eventType} ${daysText}</div>
+            <div class="notification-item-date">${formattedDate}</div>
+          </div>
+        `;
+      });
+    
+    html += `</div>`;
+  }
+  
+  if (expiringDocuments?.length > 0) {
+    html += `
+      <div class="notification-section">
+        <div class="notification-section-title">
+          <i class="fas fa-id-card"></i>
+          <span>${dict.expiring_documents_title}</span>
+        </div>
+    `;
+    
+    const sortedDocs = [...expiringDocuments].sort((a, b) => {
+      const levelOrder = { 'expired': 0, 'urgent': 1, 'warning': 2, 'none': 3 };
+      return levelOrder[a.level] - levelOrder[b.level] || a.days - b.days;
+    });
+    
+    sortedDocs.forEach(doc => {
+      const docType = doc.type === 'gatepass' ? dict.gatepass :
+                      doc.type === 'passport' ? dict.passport : dict.visa;
+      const displayName = currentLang === 'ar' ? doc.name_ar : doc.name_en;
+      const icon = doc.level === 'expired' ? '❌' : doc.level === 'urgent' ? '⚠️' : '🔔';
+      const daysText = doc.days <= 0 ? dict.expired : `${doc.days} ${dict.days_remaining}`;
+      
+      html += `
+        <div class="notification-item ${doc.level}">
+          <div class="notification-item-title">${dict.file_prefix}${doc.file_no} | ${displayName}</div>
+          <div class="notification-item-details">${icon} ${docType}: ${daysText}</div>
+          <div class="notification-item-date">${formatDateForDisplay(doc.expiry_date, currentLang)}</div>
+        </div>
+      `;
+    });
+    
+    html += `</div>`;
+  }
+  
+  contentEl.innerHTML = html;
+}
+
+function toggleNotificationCenter() {
+  const center = document.getElementById('notificationCenter');
+  const overlay = document.getElementById('notificationOverlay');
+  
+  notificationCenterVisible = !notificationCenterVisible;
+  
+  if (notificationCenterVisible) {
+    center.classList.add('show');
+    overlay.classList.add('show');
+    renderNotifications();
+    document.getElementById('notificationBadge').classList.remove('show');
+  } else {
+    center.classList.remove('show');
+    overlay.classList.remove('show');
+  }
+}
+
+function closeNotificationCenter() {
+  document.getElementById('notificationCenter').classList.remove('show');
+  document.getElementById('notificationOverlay').classList.remove('show');
+  notificationCenterVisible = false;
+}
+
+function markNotificationsAsRead() {
+  document.getElementById('notificationBadge').classList.remove('show');
+  const dict = I18N[currentLang] || I18N.ar;
+  showToast(`✓ ${dict.mark_as_read}`, 'success', 3000);
+  closeNotificationCenter();
+}
+
+function autoOpenNotifications() {
+  if (hasAutoOpened) return;
+  
+  const totalCount = (upcomingLeaveEvents?.length || 0) + (expiringDocuments?.length || 0);
+  
+  if (totalCount > 0 && !notificationCenterVisible) {
+    setTimeout(() => {
+      if (!notificationCenterVisible) {
+        toggleNotificationCenter();
+        hasAutoOpened = true;
+      }
+    }, 1000);
+  }
+}
+
+// ===== CLOCK SYSTEM =====
+function updateClock() {
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-US', { hour12: false });
+  document.getElementById('time').textContent = time;
+  
+  if (currentLang === 'ar') {
+    const day = now.toLocaleDateString('en-US', { day: 'numeric' });
+    const monthKey = now.toLocaleDateString('en-US', { month: 'long' });
+    const year = now.toLocaleDateString('en-US', { year: 'numeric' });
+    const weekdayKey = now.toLocaleDateString('en-US', { weekday: 'long' });
+    
+    const arabicWeekdays = {
+      'Sunday':'الأحد','Monday':'الاثنين','Tuesday':'الثلاثاء','Wednesday':'الأربعاء',
+      'Thursday':'الخميس','Friday':'الجمعة','Saturday':'السبت'
+    };
+    
+    const arabicMonths = {
+      'January':'يناير','February':'فبراير','March':'مارس','April':'أبريل',
+      'May':'مايو','June':'يونيو','July':'يوليو','August':'أغسطس',
+      'September':'سبتمبر','October':'أكتوبر','November':'نوفمبر','December':'ديسمبر'
+    };
+    
+    const arabicDate = `${arabicWeekdays[weekdayKey] || weekdayKey}, ${convertToArabicNumerals(day)} ${arabicMonths[monthKey] || monthKey} ${convertToArabicNumerals(year)}`;
+    document.getElementById('date').textContent = arabicDate;
+    document.getElementById('date').className = 'date arabic-clock';
+  } else {
+    const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('date').textContent = date;
+    document.getElementById('date').className = 'date';
+  }
+}
+
+// ===== LANGUAGE SYSTEM =====
+const applyLang = (lang) => {
+  document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+  document.documentElement.setAttribute('lang', lang);
+  
+  const dict = I18N[lang] || I18N.ar;
+  
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) el.textContent = dict[key];
+  });
+  
+  document.getElementById('welcomeTitle').textContent = dict.welcome_title;
+  document.getElementById('welcomeSubtitle').textContent = dict.welcome_subtitle;
+  document.getElementById('notificationHeaderTitle').textContent = dict.notification_center_title;
+  document.getElementById('markReadBtn').textContent = dict.mark_as_read;
+  document.getElementById('noNotificationsText').textContent = dict.no_notifications;
+  
+  if (notificationCenterVisible) renderNotifications();
+  
+  currentLang = lang;
+  updateClock();
+};
+
+// ===== INITIAL SETUP =====
+document.addEventListener('DOMContentLoaded', () => {
+  // Theme initialization
+  const themeSelect = document.getElementById('themeSelect');
+  const savedTheme = localStorage.getItem('selectedTheme') || 'modern';
+  themeSelect.value = savedTheme;
+  document.body.className = `theme-${savedTheme}`;
+  
+  themeSelect.addEventListener('change', (e) => {
+    document.body.className = `theme-${e.target.value}`;
+    localStorage.setItem('selectedTheme', e.target.value);
+  });
+  
+  // Language initialization
+  applyLang(currentLang);
+  
+  document.getElementById('langAr').addEventListener('click', () => applyLang('ar'));
+  document.getElementById('langEn').addEventListener('click', () => applyLang('en'));
+  
+  // Clock
+  updateClock();
+  setInterval(updateClock, 1000);
+  
+  // Notification controls
+  document.getElementById('notificationBtn').addEventListener('click', toggleNotificationCenter);
+  document.getElementById('closeNotificationCenter').addEventListener('click', closeNotificationCenter);
+  document.getElementById('markReadBtn').addEventListener('click', markNotificationsAsRead);
+  document.getElementById('notificationOverlay').addEventListener('click', closeNotificationCenter);
+  
+  // Mock counters
+  const setCount = (id, n) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const dict = I18N[currentLang] || I18N.ar;
+    el.textContent = (typeof n === 'number') ? `${n}${dict.rows_suffix}` : (dict.file_not_found || 'error');
+  };
+  
+  setCount('oracleCount', 58009);
+  setCount('materialsCount', 890);
+  setCount('requestsCount', 340);
+  setCount('purchaseCount', 210);
+  setCount('woCount', 175);
+  setCount('empcount', 85);
+  setCount('vehiclesCount', 120);
+  setCount('timesheetCount', 95);
+  setCount('gatepassCount', 0);
+  setCount('Leaves', 0);
+  setCount('tasksCount', 0);
+  setCount('pettyCashCount', 0);
+  setCount('warehouseCount', 0);
+  setCount('reportsCount', 29); // NEW: Reports card mock count
+});
+
+// ===== SUPABASE DATA LOADING =====
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // ⚠️ SECURITY: Use the 'anon' (public) key from Supabase Dashboard → Settings → API
+    // NEVER use the service_role key in frontend code — it bypasses Row Level Security!
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
+    const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+    
+    const updateCount = (id, value) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const dict = I18N[currentLang] || I18N.ar;
+      el.textContent = (typeof value === 'number') ? `${value}${dict.rows_suffix}` : (dict.file_not_found || 'error');
+    };
+    
+    let totalRecords = 0;
+    
+    // Leaves
+    try {
+      const { data: leavesData, error: leavesError } = await supabaseClient
+        .from('employee_leaves')
+        .select('id, file_no, name, name_ar, leave_status, start_date, resignation_date');
+      
+      if (leavesError) throw leavesError;
+      
+      updateCount('Leaves', leavesData.length);
+      totalRecords += leavesData.length;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const cutoffDate = new Date();
+      cutoffDate.setDate(today.getDate() + 7);
+      cutoffDate.setHours(23, 59, 59, 999);
+      
+      const upcomingEvents = [];
+      
+      leavesData.forEach(row => {
+        const status = (row.leave_status || '').trim().toUpperCase();
+        
+        if (status === 'LEAVE' && row.start_date) {
+          const startDate = new Date(row.start_date);
+          if (isNaN(startDate.getTime())) return;
+          startDate.setHours(0, 0, 0, 0);
+          
+          if (startDate >= today && startDate <= cutoffDate) {
+            upcomingEvents.push({
+              type: 'leave',
+              file_no: row.file_no || '—',
+              name_en: row.name || 'Unknown',
+              name_ar: row.name_ar || row.name || 'غير معروف',
+              date: row.start_date,
+              daysUntil: Math.max(0, Math.ceil((startDate - today) / 86400000))
+            });
+          }
+        } else if (status === 'RESIGNATION' && row.resignation_date) {
+          const resignDate = new Date(row.resignation_date);
+          if (isNaN(resignDate.getTime())) return;
+          resignDate.setHours(0, 0, 0, 0);
+          
+          if (resignDate >= today && resignDate <= cutoffDate) {
+            upcomingEvents.push({
+              type: 'resignation',
+              file_no: row.file_no || '—',
+              name_en: row.name || 'Unknown',
+              name_ar: row.name_ar || row.name || 'غير معروف',
+              date: row.resignation_date,
+              daysUntil: Math.max(0, Math.ceil((resignDate - today) / 86400000))
+            });
+          }
+        }
+      });
+      
+      upcomingLeaveEvents = upcomingEvents;
+      
+      if (upcomingEvents.length > 0) {
+        const dict = I18N[currentLang] || I18N.ar;
+        const alertMsg = `⚠️ ${dict.leave_resignation_title}: ${upcomingEvents.length}`;
+        showToast(alertMsg, 'warning', 8000);
+      }
+    } catch (err) {
+      console.error('⚠️ Supabase leaves fetch error:', err);
+      document.getElementById('Leaves').textContent = 'error';
+    }
+    
+    // Gatepass/Passport/Visa
+    try {
+      const { data, error } = await supabaseClient
+        .from('employee_passports')
+        .select('file_no, name, name_ar, gatepass_exp_date, passport_exp_date, visa_exp_date');
+      
+      if (error) throw error;
+      
+      updateCount('gatepassCount', data.length);
+      totalRecords += data.length;
+      
+      const today = new Date();
+      const expiringEntries = [];
+      
+      data.forEach(row => {
+        ['gatepass', 'passport', 'visa'].forEach(type => {
+          const dateField = `${type}_exp_date`;
+          if (row[dateField]) {
+            const expDate = new Date(row[dateField]);
+            if (!isNaN(expDate.getTime())) {
+              const daysRemaining = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+              const level = getNotificationLevel(daysRemaining);
+              
+              if (level !== 'none') {
+                expiringEntries.push({
+                  type: type,
+                  file_no: row.file_no || '—',
+                  name_en: row.name || 'Unknown',
+                  name_ar: row.name_ar || row.name || 'غير معروف',
+                  expiry_date: row[dateField],
+                  days: daysRemaining,
+                  level: level
+                });
+              }
+            }
+          }
+        });
+      });
+      
+      expiringDocuments = expiringEntries;
+      
+      if (expiringEntries.length > 0) {
+        const urgentCount = expiringEntries.filter(e => e.level === 'urgent' || e.level === 'expired').length;
+        if (urgentCount > 0) {
+          const dict = I18N[currentLang] || I18N.ar;
+          showToast(`⚠️ ${urgentCount} ${dict.expiring_documents_title}`, 'warning', 8000);
+        }
+      }
+    } catch (err) {
+      console.error('⚠️ Supabase gatepass fetch error:', err);
+      document.getElementById('gatepassCount').textContent = 'error';
+    }
+    
+    // GatePass Location Tracker
+    try {
+      const { data, error } = await supabaseClient
+        .from('gatlocations')
+        .select('id');
+      
+      if (error) throw error;
+      
+      updateCount('gatelocCount', data.length);
+      totalRecords += data.length;
+    } catch (err) {
+      console.error('⚠️ Supabase gatlocations fetch error:', err);
+      document.getElementById('gatelocCount').textContent = 'error';
+    }
+    
+    // Update totals
+    document.getElementById('totalRecords').textContent = totalRecords.toLocaleString();
+    updateNotificationBadge();
+    autoOpenNotifications();
+    
+  } catch (err) {
+    console.error('⚠️ Critical Supabase initialization error:', err);
+    showToast('Failed to connect to database', 'error', 5000);
+  }
+});
+</script>
+</body>
+</html>

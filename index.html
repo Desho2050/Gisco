@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GISCO – Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-glow: rgba(79, 70, 229, 0.4);
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1e3a8a, #4f46e5, #7c3aed);
+      font-family: 'Inter', 'Tajawal', sans-serif;
+      padding: 20px;
+    }
+    .login-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+      width: 100%;
+      max-width: 420px;
+      padding: 40px;
+      transition: var(--transition);
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .login-header img {
+      height: 60px;
+      margin-bottom: 12px;
+    }
+    .login-header h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      color: var(--text);
+    }
+    .login-header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .form-control {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+      transition: all 0.2s ease;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+    select.form-control {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 14px center;
+      padding-left: 36px;
+    }
+    [dir="rtl"] select.form-control {
+      background-position: right 14px center;
+      padding-left: 16px;
+      padding-right: 36px;
+    }
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-login:hover:not(:disabled) {
+      background: #4338ca;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+    }
+    .btn-login:disabled {
+      background: var(--text-muted);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .alert {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .alert.error {
+      background: #fef2f2;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+      display: block;
+    }
+    .alert.warning {
+      background: #fffbeb;
+      color: var(--warning);
+      border: 1px solid #fde68a;
+      display: block;
+    }
+    .alert.success {
+      background: #f0fdf4;
+      color: var(--success);
+      border: 1px solid #bbf7d0;
+      display: block;
+    }
+    .lockout-timer {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 10px;
+    }
+    .lang-switch {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .lang-btn {
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+    .lang-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .footer-text {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-header">
+      <img src="Logo.bmp" alt="GISCO" onerror="this.style.display='none'">
+      <h1 data-i18n="login_title">تسجيل الدخول</h1>
+      <p data-i18n="login_subtitle">مرحباً بك في نظام GISCO</p>
+    </div>
+
+    <div class="lang-switch">
+      <button class="lang-btn active" data-lang="ar">عربي</button>
+      <button class="lang-btn" data-lang="en">English</button>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="form-group">
+        <label for="username" data-i18n="username_label">اسم المستخدم</label>
+        <select id="username" class="form-control" required>
+          <option value="" disabled selected data-i18n="select_user">-- اختر المستخدم --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="password" data-i18n="password_label">كلمة المرور</label>
+        <input type="password" id="password" class="form-control" required data-i18n-placeholder="password_placeholder" placeholder="أدخل كلمة المرور" />
+      </div>
+
+      <button type="submit" id="loginBtn" class="btn-login" data-i18n="login_btn">تسجيل الدخول</button>
+    </form>
+
+    <div id="lockoutMessage" class="lockout-timer" style="display:none;"></div>
+
+    <div class="footer-text" data-i18n="footer">جميع الحقوق محفوظة © Mostafa Alnajar ::Desho Smartware::</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ============================================
+    // SUPABASE CONFIG - Replace with your values
+    // ============================================
+ 
+    // ⚠ ï¸ڈ SECURITY: Use the 'anon' (public) key from Supabase Dashboard → Settings → API
+    // NEVER use the service_role key in frontend code — it bypasses Row Level Security!
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // ============================================
+    // I18N
+    // ============================================
+    const I18N = {
+      ar: {
+        login_title: 'تسجيل الدخول',
+        login_subtitle: 'مرحباً بك في نظام GISCO',
+        username_label: 'اسم المستخدم',
+        password_label: 'كلمة المرور',
+        password_placeholder: 'أدخل كلمة المرور',
+        select_user: '-- اختر المستخدم --',
+        login_btn: 'تسجيل الدخول',
+        login_success: 'تم تسجيل الدخول بنجاح',
+        login_failed: 'اسم المستخدم أو كلمة المرور غير صحيحة',
+        footer: 'جميع الحقوق محفوظة © GISCO',
+        lockout_title: 'تم تجاوز عدد المحاولات',
+        lockout_msg: 'تم تعطيل النموذج مؤقتاً. يرجى الانتظار',
+        retry_in: 'إعادة المحاولة بعد',
+        seconds: 'ثانية',
+        minutes: 'دقيقة'
+      },
+      en: {
+        login_title: 'Login',
+        login_subtitle: 'Welcome to GISCO System',
+        username_label: 'Username',
+        password_label: 'Password',
+        password_placeholder: 'Enter your password',
+        select_user: '-- Select User --',
+        login_btn: 'Login',
+        login_success: 'Login successful',
+        login_failed: 'Invalid username or password',
+        footer: 'All rights reserved © GISCO',
+        lockout_title: 'Too many failed attempts',
+        lockout_msg: 'Login is temporarily disabled. Please wait',
+        retry_in: 'Retry in',
+        seconds: 'seconds',
+        minutes: 'minutes'
+      }
+    };
+
+    let currentLang = localStorage.getItem('loginLang') || 'ar';
+
+    function applyLoginLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('loginLang', lang);
+      document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      document.documentElement.setAttribute('lang', lang);
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (I18N[lang][key]) el.textContent = I18N[lang][key];
+      });
+      const placeholder = document.getElementById('password');
+      if (placeholder && I18N[lang]['password_placeholder']) {
+        placeholder.placeholder = I18N[lang]['password_placeholder'];
+      }
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+    }
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => applyLoginLang(btn.dataset.lang));
+    });
+    applyLoginLang(currentLang);
+
+    // ============================================
+    // DROPDOWN POPULATION
+    // ============================================
+    async function loadUsers() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('login')
+          .select('username')
+          .order('username', { ascending: true });
+
+        if (error) throw error;
+
+        const select = document.getElementById('username');
+        // Keep the first option
+        while (select.options.length > 1) select.remove(1);
+        data.forEach(row => {
+          const opt = document.createElement('option');
+          opt.value = row.username;
+          opt.textContent = row.username;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Failed to load users:', err);
+      }
+    }
+
+    loadUsers();
+
+    // ============================================
+    // LOCKOUT LOGIC (localStorage)
+    // ============================================
+    const LOCKOUT_KEY = 'login_lockout_until';
+    const ATTEMPTS_KEY = 'login_failed_attempts';
+    const MAX_ATTEMPTS = 5;
+    const LOCKOUT_DURATION = 2 * 60 * 1000; // 2 minutes
+
+    function getRemainingLockout() {
+      const until = localStorage.getItem(LOCKOUT_KEY);
+      if (!until) return 0;
+      return Math.max(0, parseInt(until) - Date.now());
+    }
+
+    function isLockedOut() {
+      return getRemainingLockout() > 0;
+    }
+
+    function setLockout() {
+      localStorage.setItem(LOCKOUT_KEY, Date.now() + LOCKOUT_DURATION);
+    }
+
+    function getFailedAttempts() {
+      return parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0');
+    }
+
+    function incrementFailedAttempts() {
+      localStorage.setItem(ATTEMPTS_KEY, getFailedAttempts() + 1);
+    }
+
+    function resetFailedAttempts() {
+      localStorage.removeItem(ATTEMPTS_KEY);
+      localStorage.removeItem(LOCKOUT_KEY);
+    }
+
+    function updateLockoutUI(remaining) {
+      const lockoutEl = document.getElementById('lockoutMessage');
+      const form = document.getElementById('loginForm');
+      const btn = document.getElementById('loginBtn');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+
+      if (remaining > 0) {
+        form.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
+        btn.disabled = true;
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        lockoutEl.style.display = 'block';
+        lockoutEl.innerHTML = `
+          <strong>${I18N[currentLang].lockout_title}</strong><br>
+          ${I18N[currentLang].lockout_msg}<br>
+          <span id="lockoutTimer">${I18N[currentLang].retry_in}: ${minutes} ${I18N[currentLang].minutes} ${seconds} ${I18N[currentLang].seconds}</span>
+        `;
+      } else {
+        resetFailedAttempts();
+        lockoutEl.style.display = 'none';
+        form.querySelectorAll('input, select, button').forEach(el => el.disabled = false);
+        btn.disabled = false;
+      }
+    }
+
+    function startLockoutCountdown() {
+      const lockoutEl = document.getElementById('lockoutMessage');
+      const btn = document.getElementById('loginBtn');
+      const form = document.getElementById('loginForm');
+      form.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
+      btn.disabled = true;
+
+      const interval = setInterval(() => {
+        const remaining = getRemainingLockout();
+        if (remaining <= 0) {
+          clearInterval(interval);
+          updateLockoutUI(0);
+          return;
+        }
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        const timerSpan = lockoutEl.querySelector('#lockoutTimer');
+        if (timerSpan) {
+          timerSpan.textContent = `${I18N[currentLang].retry_in}: ${minutes} ${I18N[currentLang].minutes} ${seconds} ${I18N[currentLang].seconds}`;
+        }
+      }, 1000);
+    }
+
+    // ============================================
+    // LOGIN VALIDATION
+    // ============================================
+    const loginForm = document.getElementById('loginForm');
+    const alertBox = document.getElementById('alertBox');
+
+    function showAlert(message, type) {
+      alertBox.className = `alert ${type}`;
+      alertBox.textContent = message;
+      setTimeout(() => { alertBox.className = 'alert'; }, 5000);
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      if (!username) {
+        showAlert(I18N[currentLang].select_user, 'warning');
+        return;
+      }
+
+      // Check lockout
+      if (isLockedOut()) {
+        updateLockoutUI(getRemainingLockout());
+        return;
+      }
+
+      try {
+        // Query the login table for the selected username
+        const { data, error } = await supabaseClient
+          .from('login')
+          .select('*')
+          .eq('username', username)
+          .single();
+
+        if (error || !data) {
+          incrementFailedAttempts();
+          const attempts = getFailedAttempts();
+          if (attempts >= MAX_ATTEMPTS) {
+            setLockout();
+            showAlert(`${I18N[currentLang].login_failed}. ${I18N[currentLang].lockout_title}`, 'error');
+            startLockoutCountdown();
+          } else {
+            showAlert(`${I18N[currentLang].login_failed} (${attempts}/${MAX_ATTEMPTS})`, 'error');
+          }
+          return;
+        }
+
+        // Verify password (plain-text comparison as requested)
+        if (data.password === password) {
+          resetFailedAttempts();
+          sessionStorage.setItem('gisAuthenticated', 'true');
+          showAlert(I18N[currentLang].login_success, 'success');
+          setTimeout(() => {
+            window.location.href = 'mainpage.html';
+          }, 800);
+        } else {
+          incrementFailedAttempts();
+          const attempts = getFailedAttempts();
+          if (attempts >= MAX_ATTEMPTS) {
+            setLockout();
+            showAlert(`${I18N[currentLang].login_failed}. ${I18N[currentLang].lockout_title}`, 'error');
+            startLockoutCountdown();
+          } else {
+            showAlert(`${I18N[currentLang].login_failed} (${attempts}/${MAX_ATTEMPTS})`, 'error');
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('System error. Please try again.', 'error');
+      }
+    });
+
+    // ============================================
+    // INIT LOCKOUT STATE ON LOAD
+    // ============================================
+    document.addEventListener('DOMContentLoaded', () => {
+      if (isLockedOut()) {
+        updateLockoutUI(getRemainingLockout());
+        startLockoutCountdown();
+      }
+    });
+  </script>
+</body>
+</html>
