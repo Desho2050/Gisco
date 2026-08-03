@@ -1266,7 +1266,7 @@ function renderOracleMaterialOptions(items) {
   
   const list = document.getElementById('materialList');
   if (!list) return;
-  list.innerHTML = '<div class="p-4 text-slate-500 text-center text-sm"><i class="fas fa-search mr-2"></i>Type to search materials...</div>';
+  list.innerHTML = '<div class="p-4 text-slate-500 text-center text-sm" style="background-color: #f0f0f0;"><i class="fas fa-search mr-2"></i>Type to search materials...</div>';
   
   const previewCount = Math.min(ORACLE_SEARCH_LIMIT, items.length);
   
@@ -1365,7 +1365,7 @@ async function loadOracleMaterials(forceRefresh = false) {
   allOracleMaterials = [];
   const list = document.getElementById('materialList');
   if (list) {
-    list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-box-open mr-2"></i>No Oracle materials available. Please refresh the database.</div>';
+    list.innerHTML = '<div class="p-4 text-slate-500 text-center" style="background-color: #f0f0f0; margin: 0;"><i class="fas fa-box-open mr-2"></i>No Oracle materials available. Please refresh the database.</div>';
   }
 }
 
@@ -1405,12 +1405,12 @@ function filterMaterials() {
   list.innerHTML = '';
   
   if (!filter) {
-    list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-search mr-2"></i>Type to search materials...</div>';
+    list.innerHTML = '<div class="p-4 text-slate-500 text-center" style="background-color: #f0f0f0; margin: 0;"><i class="fas fa-search mr-2"></i>Type to search materials...</div>';
     return;
   }
   
   if (allOracleMaterials.length === 0) {
-    list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-box-open mr-2"></i>No materials available</div>';
+    list.innerHTML = '<div class="p-4 text-slate-500 text-center" style="background-color: #f0f0f0; margin: 0;"><i class="fas fa-box-open mr-2"></i>No materials available</div>';
     return;
   }
   
