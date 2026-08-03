@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -408,7 +409,7 @@ input:focus, select:focus, textarea:focus {
           </div>
         </div>
         
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openLowStockModal()">
           <div class="min-w-0">
             <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate">Low Stock</p>
             <h3 class="text-xl md:text-2xl font-bold text-danger mt-1" id="dashLowStock">-</h3>
@@ -418,7 +419,7 @@ input:focus, select:focus, textarea:focus {
           </div>
         </div>
         
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openTodayInModal()">
           <div class="min-w-0">
             <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate">Today's In</p>
             <h3 class="text-xl md:text-2xl font-bold text-success mt-1" id="dashTodayIn">-</h3>
@@ -428,7 +429,7 @@ input:focus, select:focus, textarea:focus {
           </div>
         </div>
         
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openTodayOutModal()">
           <div class="min-w-0">
             <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate">Today's Out</p>
             <h3 class="text-xl md:text-2xl font-bold text-warning mt-1" id="dashTodayOut">-</h3>
@@ -2105,6 +2106,197 @@ function exportReport() {
   document.body.removeChild(a);
   showToast('Report exported successfully!', "success");
 }
+
+// ==========================================
+// DASHBOARD POPUP MODALS
+// ==========================================
+async function openLowStockModal() {
+  const modal = document.getElementById('lowStockModal');
+  const tbody = document.getElementById('lowStockTableBody');
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8"><div class="loader"></div></td></tr>';
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  const lowStockItems = allMaterials.filter(m => m.current_stock <= m.min_stock_threshold);
+  
+  if (lowStockItems.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-400">No low stock items</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  lowStockItems.forEach(mat => {
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-slate-100 hover:bg-slate-50';
+    tr.innerHTML = `
+      <td class="px-4 py-3 font-medium text-slate-800">${mat.name || 'Unknown'}</td>
+      <td class="px-4 py-3 text-slate-600">${mat.oracle_code || mat.code || 'N/A'}</td>
+      <td class="px-4 py-3 font-bold text-red-600">${mat.current_stock ?? 0}</td>
+      <td class="px-4 py-3 text-slate-600">${mat.min_stock_threshold ?? 0}</td>
+      <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-bold">LOW</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function closeLowStockModal() {
+  const modal = document.getElementById('lowStockModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+async function openTodayInModal() {
+  const modal = document.getElementById('todayInModal');
+  const tbody = document.getElementById('todayInTableBody');
+  tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8"><div class="loader"></div></td></tr>';
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  const { data, error } = await supabaseClient.from('transactions').select('material_id, quantity, created_at').eq('transaction_date', todayStr).eq('type', 'IN').order('created_at', { ascending: false });
+  
+  if (error || !data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-400">No IN transactions today</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  data.forEach(tx => {
+    const mat = allMaterials.find(m => m.id === tx.material_id);
+    const matName = mat ? mat.name : 'Unknown';
+    const oracleCode = mat ? (mat.oracle_code || mat.code || 'N/A') : 'N/A';
+    const time = new Date(tx.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-slate-100 hover:bg-slate-50';
+    tr.innerHTML = `
+      <td class="px-4 py-3 font-medium text-slate-800">${matName}</td>
+      <td class="px-4 py-3 text-slate-600">${oracleCode}</td>
+      <td class="px-4 py-3 font-bold text-green-600">+${tx.quantity}</td>
+      <td class="px-4 py-3 text-slate-500 text-xs">${time}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function closeTodayInModal() {
+  const modal = document.getElementById('todayInModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+async function openTodayOutModal() {
+  const modal = document.getElementById('todayOutModal');
+  const tbody = document.getElementById('todayOutTableBody');
+  tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8"><div class="loader"></div></td></tr>';
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  const { data, error } = await supabaseClient.from('transactions').select('material_id, quantity, created_at').eq('transaction_date', todayStr).eq('type', 'OUT').order('created_at', { ascending: false });
+  
+  if (error || !data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-400">No OUT transactions today</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  data.forEach(tx => {
+    const mat = allMaterials.find(m => m.id === tx.material_id);
+    const matName = mat ? mat.name : 'Unknown';
+    const oracleCode = mat ? (mat.oracle_code || mat.code || 'N/A') : 'N/A';
+    const time = new Date(tx.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-slate-100 hover:bg-slate-50';
+    tr.innerHTML = `
+      <td class="px-4 py-3 font-medium text-slate-800">${matName}</td>
+      <td class="px-4 py-3 text-slate-600">${oracleCode}</td>
+      <td class="px-4 py-3 font-bold text-orange-600">-${tx.quantity}</td>
+      <td class="px-4 py-3 text-slate-500 text-xs">${time}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function closeTodayOutModal() {
+  const modal = document.getElementById('todayOutModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
 </script>
+
+<!-- Low Stock Modal -->
+<div id="lowStockModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+  <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl modal-animate modal-mobile-full md:max-w-2xl overflow-y-auto max-h-[90vh]">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+        <i class="fas fa-exclamation-triangle text-red-500"></i> Low Stock Items
+      </h3>
+      <button onclick="closeLowStockModal()" class="p-2 rounded-lg hover:bg-slate-100 mobile-touch-target"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="table-container">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-slate-50">
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Material</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Oracle Code</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Current Stock</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Min Threshold</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Status</th>
+          </tr>
+        </thead>
+        <tbody id="lowStockTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Today's In Modal -->
+<div id="todayInModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+  <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl modal-animate modal-mobile-full md:max-w-2xl overflow-y-auto max-h-[90vh]">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+        <i class="fas fa-arrow-down text-green-500"></i> Today's In Items
+      </h3>
+      <button onclick="closeTodayInModal()" class="p-2 rounded-lg hover:bg-slate-100 mobile-touch-target"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="table-container">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-slate-50">
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Material</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Oracle Code</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Quantity</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Time</th>
+          </tr>
+        </thead>
+        <tbody id="todayInTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Today's Out Modal -->
+<div id="todayOutModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+  <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl modal-animate modal-mobile-full md:max-w-2xl overflow-y-auto max-h-[90vh]">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+        <i class="fas fa-arrow-up text-orange-500"></i> Today's Out Items
+      </h3>
+      <button onclick="closeTodayOutModal()" class="p-2 rounded-lg hover:bg-slate-100 mobile-touch-target"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="table-container">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-slate-50">
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Material</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Oracle Code</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Quantity</th>
+            <th class="px-4 py-3 text-right font-bold text-slate-600">Time</th>
+          </tr>
+        </thead>
+        <tbody id="todayOutTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
