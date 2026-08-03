@@ -162,6 +162,7 @@ input, select, button { touch-action: manipulation; }
 <button onclick="switchView('reports')" class="nav-btn w-full text-left p-3 text-slate-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-3">
 <i class="fas fa-chart-line w-6 text-center"></i> <span>Reports</span>
 </button>
+<button type="button" id="refreshOracleBtn" onclick="refreshOracleDataFromDatabase()" class="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition">Refresh Database</button>
 </div>
 <div class="mt-auto p-4 border-t border-slate-100 bg-slate-50" id="Desho" style="border-radius: 20px 20px 20px 20px; background-color: rgb(200, 230, 227); transition: background-color 0.3s;">
 <p class="text-xs text-slate-400 font-medium" style="color: black; font-size: 14px;font-weight:bold; text-align:center;" >Designed By : Mostafa Ahmed Hamdy</p>
@@ -176,6 +177,7 @@ input, select, button { touch-action: manipulation; }
 <h1 class="text-2xl font-bold text-slate-800">Dashboard Overview</h1>
 <span class="text-xs font-mono bg-slate-200 px-2 py-1 rounded text-slate-600" id="currentDateDisplay"></span>
 </div>
+
 <!-- Stats Row -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
@@ -244,7 +246,10 @@ input, select, button { touch-action: manipulation; }
 <!-- Material Search Dropdown -->
 <div class="mb-5 custom-select-container">
 <label class="block text-sm font-semibold text-slate-700 mb-2">Material <span class="text-danger">*</span></label>
-<input type="text" id="materialSearchInput" class="custom-select-input" placeholder="Search materials..." autocomplete="off" onkeyup="filterMaterials()" onclick="toggleMaterialList(true)">
+<div class="flex gap-2">
+<input type="text" id="materialSearchInput" class="custom-select-input" placeholder="Search Oracle materials..." autocomplete="off" onkeyup="filterMaterials()" onclick="toggleMaterialList(true)">
+
+</div>
 <select id="materialSelect" class="hidden"></select>
 <div id="materialList" class="custom-select-list custom-scrollbar"></div>
 <div id="stockInfoBox" class="hidden mt-2 p-2 bg-slate-50 border border-slate-200 rounded text-sm flex justify-between items-center">
@@ -299,9 +304,7 @@ input, select, button { touch-action: manipulation; }
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
 <h1 class="text-2xl font-bold text-slate-800">Inventory Management</h1>
 <div class="flex gap-2">
-<button onclick="loadInventory()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm shadow-sm transition">
-<i class="fas fa-sync-alt mr-2"></i> Refresh
-</button>
+
 <button id="addMaterialBtn" onclick="openAddMaterialModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm shadow-sm transition hidden">
 <i class="fas fa-plus mr-2"></i> Add Material
 </button>
@@ -502,7 +505,7 @@ Generate
 // 1. CONFIGURATION
 // ==========================================
 const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let userRole = null;
@@ -510,9 +513,22 @@ let canStockIn = false;
 const todayStr = new Date().toISOString().split('T')[0];
 let chartInstance = null;
 let allMaterials = [];
+let allOracleMaterials = [];
 let reportData = [];
+let selectedOracleMaterial = null;
 let canDeleteIn = false;
 let canDeleteOut = false;
+const ORACLE_CACHE_KEY = 'warehouse_oracle_cache_v2';
+const ORACLE_CACHE_MAX_ITEMS = 100000;
+const ORACLE_SEARCH_LIMIT = 50;
+// IndexedDB-based oracle cache (better for large datasets than localStorage)
+const ORACLE_IDB_DB = 'gisco_warehouse_db';
+const ORACLE_IDB_STORE = 'oracle_cache';
+const ORACLE_IDB_KEY = 'oracle_data';
+// Reference to oracle.html's existing IndexedDB cache (already populated and working)
+const ORACLE_LEGACY_IDB_DB = 'gisco_oracle_db';
+const ORACLE_LEGACY_IDB_STORE = 'materials_cache';
+const ORACLE_LEGACY_IDB_KEY = 'oracle_data';
 // NEW: Inventory CRUD Permissions
 let canAddMaterial = false;
 let canEditMaterial = false;
@@ -731,6 +747,7 @@ async function initApp() {
 console.log("Initializing App...");
 try {
 await loadMaterials();
+await loadOracleMaterials();
 await loadDashboardStats();
 await loadDashboardTransactions();
 console.log("App initialized successfully!");
@@ -754,36 +771,302 @@ if (!data || data.length === 0) {
 console.warn("No materials found in database");
 allMaterials = [];
 const list = document.getElementById('materialList');
-list.innerHTML = '<div class="p-3 text-slate-500 text-center">No materials in database</div>';
+if (list) {
+list.innerHTML = '<div class="p-3 text-slate-500 text-center">No materials available yet. Please add materials or check the Supabase table.</div>';
+}
 return;
 }
 allMaterials = data;
 console.log(`Loaded ${allMaterials.length} materials from database`);
-const select = document.getElementById('materialSelect');
-select.innerHTML = '<option value="">Select a material</option>';
-data.forEach(mat => {
-const option = document.createElement('option');
-option.value = mat.id;
-option.textContent = `${mat.name} (${mat.unit})`;
-option.dataset.stock = mat.current_stock;
-option.dataset.oracleCode = mat.oracle_code || '-';
-select.appendChild(option);
+}
+
+function getCachedOracleData() {
+try {
+const cached = localStorage.getItem(ORACLE_CACHE_KEY);
+if (!cached) return null;
+return JSON.parse(cached);
+} catch (error) {
+console.warn('Unable to read Oracle cache:', error);
+return null;
+}
+}
+
+function saveOracleDataToCache(items) {
+const compactItems = (items || [])
+.slice(0, ORACLE_CACHE_MAX_ITEMS)
+.map(item => ({
+id: item.id,
+code: item.code || '',
+name: item.name || '',
+unit: item.unit || '',
+stockValue: item.stockValue ?? item.current_stock ?? null,
+material_id: item.material_id || '',
+current_stock: item.current_stock ?? 0,
+oracle_code: item.oracle_code || item.code || ''
+}));
+// Also persist to IndexedDB (survives large datasets and storage limits)
+try { saveOracleCacheToIDB(compactItems); } catch (e) { console.warn('IDB oracle cache save failed:', e); }
+try {
+localStorage.setItem(ORACLE_CACHE_KEY, JSON.stringify({
+updatedAt: new Date().toISOString(),
+items: compactItems
+}));
+} catch (error) {
+try { localStorage.removeItem(ORACLE_CACHE_KEY); } catch {}
+console.info('Oracle cache skipped because browser storage is full or unavailable.');
+}
+}
+
+// ---- IndexedDB oracle cache helpers (for large datasets) ----
+function openOracleIDB() {
+return new Promise((resolve, reject) => {
+const request = indexedDB.open(ORACLE_IDB_DB, 1);
+request.onupgradeneeded = (event) => {
+const db = event.target.result;
+if (!db.objectStoreNames.contains(ORACLE_IDB_STORE)) {
+db.createObjectStore(ORACLE_IDB_STORE);
+}
+};
+request.onsuccess = () => resolve(request.result);
+request.onerror = () => reject(request.error);
 });
+}
+
+async function saveOracleCacheToIDB(items) {
+try {
+const db = await openOracleIDB();
+return new Promise((resolve, reject) => {
+const tx = db.transaction(ORACLE_IDB_STORE, 'readwrite');
+tx.objectStore(ORACLE_IDB_STORE).put({ updatedAt: new Date().toISOString(), items }, ORACLE_IDB_KEY);
+tx.oncomplete = () => resolve();
+tx.onerror = () => reject(tx.error);
+});
+} catch (e) {
+throw e;
+}
+}
+
+async function loadOracleCacheFromIDB() {
+try {
+const db = await openOracleIDB();
+return new Promise((resolve, reject) => {
+const tx = db.transaction(ORACLE_IDB_STORE, 'readonly');
+const req = tx.objectStore(ORACLE_IDB_STORE).get(ORACLE_IDB_KEY);
+req.onsuccess = () => resolve(req.result || null);
+req.onerror = () => reject(req.error);
+});
+} catch (e) {
+throw e;
+}
+}
+
+// Read from oracle.html's existing IndexedDB cache (already populated when the CSV was imported there)
+async function loadLegacyOracleCacheFromIDB() {
+try {
+const db = await new Promise((resolve, reject) => {
+const request = indexedDB.open(ORACLE_LEGACY_IDB_DB, 1);
+request.onsuccess = () => resolve(request.result);
+request.onerror = () => reject(request.error);
+});
+return new Promise((resolve, reject) => {
+const tx = db.transaction(ORACLE_LEGACY_IDB_STORE, 'readonly');
+const req = tx.objectStore(ORACLE_LEGACY_IDB_STORE).get(ORACLE_LEGACY_IDB_KEY);
+req.onsuccess = () => resolve(req.result || null);
+req.onerror = () => reject(req.error);
+});
+} catch (e) {
+throw e;
+}
+}
+
+async function getCachedOracleDataAsync() {
+// Prefer IndexedDB (large), fall back to localStorage
+try {
+const idb = await loadOracleCacheFromIDB();
+if (idb?.items?.length) return idb.items;
+} catch (e) { console.warn('IDB oracle cache read failed:', e); }
+// Fall back to oracle.html's existing cache (already populated there).
+// NOTE: oracle.html stores the RAW array directly (not wrapped in {items: [...]}).
+try {
+const legacy = await loadLegacyOracleCacheFromIDB();
+if (Array.isArray(legacy) && legacy.length) return legacy;
+if (legacy?.items?.length) return legacy.items;
+} catch (e) { console.warn('Legacy oracle cache read failed:', e); }
+const cached = getCachedOracleData();
+return cached?.items?.length ? cached.items : null;
+}
+
+// Fetch ALL rows from the oracle table using pagination (works on large tables).
+async function fetchAllOracleRows() {
+const allData = [];
+let from = 0;
+const chunkSize = 1000;
+while (true) {
+const { data, error } = await supabaseClient
+.from('oracle')
+.select('*')
+.order('code', { ascending: true })
+.range(from, from + chunkSize - 1);
+if (error) {
+console.error('[oracle] fetch error at page', from, error);
+throw error;
+}
+if (!data || data.length === 0) break;
+allData.push(...data);
+if (data.length < chunkSize) break;
+from += chunkSize;
+}
+return allData;
+}
+
+function renderOracleMaterialOptions(items) {
+const select = document.getElementById('materialSelect');
+if (!select) return;
+select.innerHTML = '<option value="">Select a material</option>';
+// Populate the hidden select fully (keeps matId lookup working) but render
+// only a small preview in the visible list. The full list is filtered/rendered
+// on demand via filterMaterials() when the user searches.
 const list = document.getElementById('materialList');
-list.innerHTML = '';
-data.forEach(mat => {
+if (!list) return;
+list.innerHTML = '<div class="p-3 text-slate-500 text-center text-sm">Type to search materials...</div>';
+const previewCount = Math.min(ORACLE_SEARCH_LIMIT, items.length);
+
+// Function that builds one option/div pair, used by both the preview render
+// and filterMaterials() to keep behavior consistent.
+function createOptionRow(item) {
+const option = document.createElement('option');
+option.value = item.material_id || '';
+option.textContent = `${item.name} (${item.unit})`;
+option.dataset.materialId = item.material_id || '';
+option.dataset.stock = item.current_stock ?? 0;
+option.dataset.oracleCode = item.code;
+option.dataset.name = item.name;
+option.dataset.unit = item.unit;
+select.appendChild(option);
+}
+
+// Build the hidden select with all options (chunked via rAF to avoid blocking)
+let idx = 0;
+const SELECT_BATCH = 1000;
+function buildSelectChunk() {
+const end = Math.min(idx + SELECT_BATCH, items.length);
+for (; idx < end; idx++) {
+createOptionRow(items[idx]);
+}
+if (idx < items.length) {
+requestAnimationFrame(buildSelectChunk);
+}
+}
+buildSelectChunk();
+
+// Show preview in the visible list
+for (let i = 0; i < previewCount; i++) {
+const item = items[i];
 const div = document.createElement('div');
 div.className = 'custom-select-option';
-const oracleCode = mat.oracle_code || 'N/A';
-div.textContent = `${mat.name} (${mat.unit}) - Code: ${oracleCode} - Stock: ${mat.current_stock}`;
-div.dataset.id = mat.id;
-div.dataset.name = mat.name;
-div.dataset.unit = mat.unit;
-div.dataset.stock = mat.current_stock;
-div.dataset.oracleCode = oracleCode;
-div.onclick = () => selectMaterial(mat.id, mat.name, mat.unit, mat.current_stock, oracleCode);
+const displayText = `${item.name} (${item.unit}) - Code: ${item.code || 'N/A'}${item.stockValue !== null && item.stockValue !== undefined ? ` - Stock: ${item.stockValue}` : ''}`;
+div.textContent = displayText;
+div.dataset.id = item.material_id || '';
+div.dataset.name = item.name;
+div.dataset.unit = item.unit;
+div.dataset.stock = item.current_stock ?? item.stockValue ?? 0;
+div.dataset.oracleCode = item.code || 'N/A';
+div.onclick = () => selectMaterial(item.material_id || '', item.name, item.unit, item.current_stock ?? item.stockValue ?? 0, item.code || 'N/A');
 list.appendChild(div);
+}
+}
+
+// Normalize raw Oracle rows (from Supabase OR oracle.html's cache) into the
+// shape the dropdown/render functions expect.
+function normalizeOracleMaterials(rows) {
+return (rows || []).map(item => {
+const code = item.code || item.oracle_code || item.item_code || item.id || '';
+const name = item.description || item.name || item.item_description || item.item_name || code || 'Unnamed item';
+const unit = item.unit || item.uom || item.measurement_unit || 'N/A';
+const stockValue = item.qty ?? item.quantity ?? item.current_stock ?? item.stock ?? null;
+const matchedMaterial = allMaterials.find(mat => {
+const matCode = (mat.oracle_code || '').toString().trim().toLowerCase();
+const candidateCode = (code || '').toString().trim().toLowerCase();
+if (matCode && candidateCode && matCode === candidateCode) return true;
+return (mat.name || '').toString().trim().toLowerCase() === name.toString().trim().toLowerCase();
 });
+return {
+id: item.id,
+code,
+name,
+unit,
+stockValue,
+material_id: matchedMaterial?.id || '',
+current_stock: matchedMaterial?.current_stock ?? stockValue ?? 0,
+oracle_code: code
+};
+});
+}
+
+async function loadOracleMaterials(forceRefresh = false) {
+console.log(forceRefresh ? 'Refreshing oracle records for material search...' : 'Loading oracle records for material search...');
+// Try cache first (unless forcing a refresh from the database)
+if (!forceRefresh) {
+const cached = await getCachedOracleDataAsync();
+if (cached && cached.length) {
+allOracleMaterials = normalizeOracleMaterials(cached);
+renderOracleMaterialOptions(allOracleMaterials);
+return;
+}
+}
+// Fetch ALL rows using pagination (works on large tables)
+let data = null;
+try {
+data = await fetchAllOracleRows();
+} catch (error) {
+console.error('Error loading oracle materials:', error);
+}
+if (data && data.length > 0) {
+allOracleMaterials = normalizeOracleMaterials(data);
+saveOracleDataToCache(allOracleMaterials);
+renderOracleMaterialOptions(allOracleMaterials);
+return;
+}
+// Database returned no rows (or the fetch failed) — fall back to the local cache
+// WITHOUT wiping it, so an empty Supabase anon-key result does not empty the dropdown.
+console.info('No Oracle records were returned from the database yet; falling back to local cache.');
+try {
+const cached = await getCachedOracleDataAsync();
+if (cached && cached.length) {
+allOracleMaterials = normalizeOracleMaterials(cached);
+renderOracleMaterialOptions(allOracleMaterials);
+return;
+}
+} catch (e) {
+console.warn('Oracle cache fallback failed:', e);
+}
+// Truly nothing available anywhere
+allOracleMaterials = [];
+const list = document.getElementById('materialList');
+if (list) {
+list.innerHTML = '<div class="p-3 text-slate-500 text-center">No Oracle materials available yet. Please refresh the database or check the oracle table.</div>';
+}
+}
+
+async function refreshOracleDataFromDatabase() {
+const btn = document.getElementById('refreshOracleBtn');
+if (btn) {
+btn.disabled = true;
+btn.innerText = 'Refreshing...';
+}
+try {
+await loadOracleMaterials(true);
+if (btn) {
+btn.innerText = 'Refresh Database';
+btn.disabled = false;
+}
+} catch (error) {
+console.error('Oracle refresh failed:', error);
+if (btn) {
+btn.innerText = 'Refresh Database';
+btn.disabled = false;
+}
+}
 }
 function toggleMaterialList(show) {
 const list = document.getElementById('materialList');
@@ -799,29 +1082,28 @@ const input = document.getElementById('materialSearchInput');
 const filter = input.value.toLowerCase().trim();
 const list = document.getElementById('materialList');
 list.innerHTML = '';
-if(allMaterials.length === 0) {
-list.innerHTML = '<div class="p-3 text-slate-500 text-center">No materials available</div>';
+if(allOracleMaterials.length === 0) {
+list.innerHTML = '<div class="p-3 text-slate-500 text-center">No Oracle materials available yet. Please refresh the database or check the oracle table.</div>';
 return;
 }
-const filtered = allMaterials.filter(mat =>
-mat.name.toLowerCase().includes(filter) ||
-(mat.category && mat.category.toLowerCase().includes(filter)) ||
-(mat.oracle_code && mat.oracle_code.toLowerCase().includes(filter))
-);
+const filtered = allOracleMaterials.filter(item => {
+const searchText = `${item.name} ${item.code || ''} ${item.unit || ''}`.toLowerCase();
+return searchText.includes(filter);
+}).slice(0, ORACLE_SEARCH_LIMIT);
 if(filtered.length === 0) {
-list.innerHTML = '<div class="p-3 text-slate-500 text-center text-sm">No matching materials</div>';
+list.innerHTML = '<div class="p-3 text-slate-500 text-center text-sm">No matching Oracle materials</div>';
 } else {
-filtered.forEach(mat => {
+filtered.forEach(item => {
 const div = document.createElement('div');
 div.className = 'custom-select-option';
-const oracleCode = mat.oracle_code || 'N/A';
-div.textContent = `${mat.name} (${mat.unit}) - Code: ${oracleCode} - Stock: ${mat.current_stock}`;
-div.dataset.id = mat.id;
-div.dataset.name = mat.name;
-div.dataset.unit = mat.unit;
-div.dataset.stock = mat.current_stock;
-div.dataset.oracleCode = oracleCode;
-div.onclick = () => selectMaterial(mat.id, mat.name, mat.unit, mat.current_stock, oracleCode);
+const displayText = `${item.name} (${item.unit}) - Code: ${item.code || 'N/A'}${item.stockValue !== null && item.stockValue !== undefined ? ` - Stock: ${item.stockValue}` : ''}`;
+div.textContent = displayText;
+div.dataset.id = item.material_id || '';
+div.dataset.name = item.name;
+div.dataset.unit = item.unit;
+div.dataset.stock = item.current_stock ?? item.stockValue ?? 0;
+div.dataset.oracleCode = item.code || 'N/A';
+div.onclick = () => selectMaterial(item.material_id || '', item.name, item.unit, item.current_stock ?? item.stockValue ?? 0, item.code || 'N/A');
 list.appendChild(div);
 });
 }
@@ -835,6 +1117,12 @@ document.getElementById('stockInfoBox').classList.remove('hidden');
 document.getElementById('oracleCodeDisplay').innerText = oracleCode || 'N/A';
 document.getElementById('oracleCodeBox').classList.remove('hidden');
 document.getElementById('materialError').classList.add('hidden');
+// Remember the full selected Oracle material so we can auto-register it in the
+// materials table when a transaction is recorded on a new (unregistered) item.
+selectedOracleMaterial = allOracleMaterials.find(m =>
+(m.material_id && m.material_id === id) ||
+(!id && m.name === name && (`${m.code || ''}` === `${oracleCode || ''}` || `${m.unit || ''}` === `${unit || ''}`))
+) || null;
 toggleMaterialList(false);
 }
 // ==========================================
@@ -925,11 +1213,11 @@ const btn = document.getElementById('submitBtn');
 const originalText = btn.innerHTML;
 btn.disabled = true;
 btn.innerHTML = '<div class="loader !border-white !border-t-transparent !w-5 !h-5"></div> Processing...';
-const matId = document.getElementById('materialSelect').value;
+let matId = document.getElementById('materialSelect').value;
 const type = document.querySelector('input[name="type"]:checked')?.value;
 const qty = parseInt(document.getElementById('qtyInput').value);
 const notes = document.getElementById('notesInput')?.value || '';
-if (!matId) {
+if (!matId && !selectedOracleMaterial) {
 document.getElementById('materialError').classList.remove('hidden');
 document.getElementById('materialSearchInput').focus();
 resetBtn(btn, originalText);
@@ -947,6 +1235,30 @@ resetBtn(btn, originalText);
 return;
 }
 try {
+// If the selected Oracle material is not yet registered in the materials table,
+// auto-register it so the transaction can be recorded against a real material id.
+if (!matId && selectedOracleMaterial) {
+const { data: inserted, error: insertError } = await supabaseClient
+.from('materials')
+.insert([{
+name: selectedOracleMaterial.name,
+oracle_code: selectedOracleMaterial.code || '',
+category: selectedOracleMaterial.type || '',
+unit: selectedOracleMaterial.unit || 'N/A',
+current_stock: 0,
+min_stock_threshold: 5
+}])
+.select()
+.single();
+if (insertError) {
+console.error('Auto-register material error:', insertError);
+alert('⚠️ Could not register this material in inventory.\n\n' + insertError.message + '\n\nPlease add it manually via the Inventory > Add Material button, then record the transaction.');
+resetBtn(btn, originalText);
+return;
+}
+matId = inserted.id;
+await loadMaterials();
+}
 const { data: freshMat, error: fetchError } = await supabaseClient
 .from('materials')
 .select('current_stock, unit')
@@ -981,7 +1293,7 @@ document.getElementById('stockInfoBox').classList.add('hidden');
 document.getElementById('oracleCodeDisplay').innerText = '-';
 document.getElementById('oracleCodeBox').classList.add('hidden');
 await initApp();
-alert('✅ Success! Stock updated.');
+
 } catch (err) {
 alert('Error: ' + err.message);
 } finally {
@@ -1049,7 +1361,7 @@ await supabaseClient
 }
 }
 await initApp();
-alert('✅ Transaction deleted successfully');
+
 }
 }
 // ==========================================
