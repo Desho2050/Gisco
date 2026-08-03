@@ -1031,6 +1031,7 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
 </style>
+<script src="auth-guard.js"></script>
 </head>
 <body class="theme-modern">
 
@@ -1086,8 +1087,8 @@ body {
       <i class="fas fa-key"></i> <span data-i18n="change_password">Change Password</span>
     </a>
     
-    <button class="control-btn" id="logoutBtn" title="Logout" style="background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.5); color: #fca5a5;">
-      <i class="fas fa-sign-out-alt"></i> <span data-i18n="logout">Logout</span>
+<button class="control-btn" id="logoutBtn" title="Logout" onclick="handleLogout()" style="background: rgba(245, 0, 0, 0.438); border-color: rgba(248, 0, 0, 0.993); color: #f7f7f7; text-decoration: none; cursor: pointer;">
+      <i class="fas fa-sign-out-alt" style="color: white;"></i> <span data-i18n="logout" style="color: white;">Logout</span>
     </button>
   </div>
 </header>
