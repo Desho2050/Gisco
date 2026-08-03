@@ -148,13 +148,13 @@ input, select { font-size: 16px; /* Prevents iOS zoom */ }
 /* Designer Credit */
 #Desho {
   background: linear-gradient(90deg, #02da05 0%, #06e7c2 50%, #cff705 100%);
-  color: rgb(0, 0, 0);
+  color: rgb(251, 250, 250);
   border-radius: 20px;
   font-weight: bold;
   animation: pulse 5s infinite;
 }
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(2, 218, 5, 0.4); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(2, 218, 6, 0.655); }
   50% { box-shadow: 0 0 0 8px rgba(6, 231, 194, 0); }
 }
 
@@ -349,7 +349,7 @@ input:focus, select:focus, textarea:focus {
     <i class="fas fa-chart-line"></i> Reports
   </button>
   <div class="top-nav-spacer"></div>
-  <button type="button" onclick="refreshOracleDataFromDatabase()" class="top-nav-btn" style="color: #059669;">
+  <button type="button" onclick="refreshOracleDataFromDatabase()" class="top-nav-btn" style="color: #059669;background: linear-gradient(135deg, #217e0a 0%, #193608 50%, #1e9506 100%); color: white; border-radius: 12px; padding: 8px 12px; font-weight: bold;">
     <i class="fas fa-sync-alt"></i> Refresh
   </button>
   <div class="hidden sm:block text-xs text-slate-400 px-3" style="white-space: nowrap;">
@@ -370,7 +370,7 @@ input:focus, select:focus, textarea:focus {
 
 <div class="flex flex-1 overflow-hidden relative">
   <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto custom-scrollbar relative w-full" style="background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 50%, #99f6e4 100%);">
+  <main class="flex-1 overflow-y-auto custom-scrollbar relative w-full" style="background: linear-gradient(135deg, #014837 0%, #16f8c7 50%, #003e32 100%);">
     <!-- Pull to Refresh Indicator -->
     <div class="ptr-indicator" id="ptrIndicator">
       <div class="loader loader-sm"></div>
@@ -378,52 +378,52 @@ input:focus, select:focus, textarea:focus {
     </div>
 
     <!-- VIEW 1: DASHBOARD -->
-    <div id="view-dashboard" class="view-section active p-4 md:p-8">
+    <div id="view-dashboard" class="view-section active p-4 md:p-8" >
       <!-- Dashboard Header -->
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
-        <div>
-          <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Dashboard</h1>
-          <p class="text-sm text-slate-600 mt-1">Welcome back! Here's your overview.</p>
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3" style="height: 25px;margin-bottom: 20px; margin-top: 5px;">
+        <div> 
+          <h1 class="text-2xl md:text-3xl font-bold text-slate-800" style="color: white;">Dashboard</h1>
+          <p class="text-sm text-slate-600 mt-1" style="color: white;">Welcome back! Here's your overview.</p>
         </div>
         <span class="text-xs font-mono bg-white px-3 py-2 rounded-lg shadow-sm text-slate-600 border" id="currentDateDisplay"></span>
       </div>
 
       <!-- Stats Row -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6" >
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover " style="background: linear-gradient(135deg, #5b086d 0%, #f816da 50%, #830866 100%); padding: 20px; border-radius: 16px;">
           <div class="min-w-0">
-            <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate">Total Items</p>
-            <h3 class="text-xl md:text-2xl font-bold text-slate-800 mt-1" id="dashTotalItems">-</h3>
+            <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate" style="color: white;">Total Items</p>
+            <h3 class="text-xl md:text-2xl font-bold text-slate-800 mt-1" id="dashTotalItems" style="color: white;">-</h3>
           </div>
           <div class="bg-blue-50 p-2 md:p-3 rounded-xl text-blue-600 shrink-0">
             <i class="fas fa-cubes text-lg md:text-xl"></i>
           </div>
         </div>
         
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openLowStockModal()">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openLowStockModal()" style="background: linear-gradient(135deg, #6f0101 0%, #f8a116 50%, #6b0000 100%); padding: 20px; border-radius: 16px;">
           <div class="min-w-0">
-            <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate">Low Stock</p>
-            <h3 class="text-xl md:text-2xl font-bold text-danger mt-1" id="dashLowStock">-</h3>
+            <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate" style="color: white;">Low Stock</p>
+            <h3 class="text-xl md:text-2xl font-bold text-danger mt-1" id="dashLowStock" style="color: white;">-</h3>
           </div>
           <div class="bg-red-50 p-2 md:p-3 rounded-xl text-danger shrink-0">
             <i class="fas fa-exclamation-triangle text-lg md:text-xl"></i>
           </div>
         </div>
         
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openTodayInModal()">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openTodayInModal()" style="background: linear-gradient(135deg, #0f4801 0%, #69f816 50%, #0a3e00 100%); padding: 20px; border-radius: 16px;">
           <div class="min-w-0">
-            <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate">Today's In</p>
-            <h3 class="text-xl md:text-2xl font-bold text-success mt-1" id="dashTodayIn">-</h3>
+            <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate" style="color: white;">Today's In</p>
+            <h3 class="text-xl md:text-2xl font-bold text-success mt-1" id="dashTodayIn" style="color: white;">-</h3>
           </div>
           <div class="bg-green-50 p-2 md:p-3 rounded-xl text-success shrink-0">
             <i class="fas fa-arrow-down text-lg md:text-xl"></i>
           </div>
         </div>
         
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openTodayOutModal()">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openTodayOutModal()" style="background: linear-gradient(135deg, #3b0148 0%, #16a5f8 50%, #3e2d00 100%); padding: 20px; border-radius: 16px;">
           <div class="min-w-0">
-            <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate">Today's Out</p>
-            <h3 class="text-xl md:text-2xl font-bold text-warning mt-1" id="dashTodayOut">-</h3>
+            <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate" style="color: white;">Today's Out</p>
+            <h3 class="text-xl md:text-2xl font-bold text-warning mt-1" id="dashTodayOut" style="color: white;">-</h3>
           </div>
           <div class="bg-orange-50 p-2 md:p-3 rounded-xl text-warning shrink-0">
             <i class="fas fa-arrow-up text-lg md:text-xl"></i>
@@ -431,48 +431,48 @@ input:focus, select:focus, textarea:focus {
         </div>
       </div>
 
-      <!-- Quick Transaction Form -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-1">
-          <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-5 md:p-6 lg:sticky lg:top-4">
-            <div class="flex justify-between items-center mb-5">
-              <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <i class="fas fa-plus-circle text-blue-500"></i>
-                </div>
-                Quick Transaction
-              </h2>
-              <span id="roleBadge" class="text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold">
-                <i class="fas fa-user text-[10px]"></i> <span id="userRoleDisplay">-</span>
-              </span>
-            </div>
-            
-            <form id="transactionForm" onsubmit="handleTransactionSubmit(event)">
+      <!-- Quick Transaction Form (Horizontal) -->
+      <div class="mb-6" style="width: 100%;display:grid;grid-template-columns: 1fr 2fr;">
+        <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-5 md:p-6" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);">
+          <div class="flex justify-between items-center mb-5" >
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2" style="color: white; ">
+              <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                <i class="fas fa-plus-circle text-blue-500" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);"></i>
+              </div style="color: white;">
+              Quick Transaction
+            </h2>
+            <span id="roleBadge" class="text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold">
+              <i class="fas fa-user text-[10px]"></i> <span id="userRoleDisplay">-</span>
+            </span>
+          </div>
+          
+          <form id="transactionForm" onsubmit="handleTransactionSubmit(event)">
+           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end"></div>
               <!-- Transaction Type -->
-              <div class="mb-5">
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Transaction Type</label>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Type</label>
                 <div class="flex gap-2 bg-slate-100 p-1 rounded-xl">
-                  <label class="flex-1 cursor-pointer transaction-type-option active-in rounded-lg" id="inLabel" onclick="highlightTransactionType('IN')">
+                  <label class="flex-1 cursor-pointer transaction-type-option active-in rounded-lg" id="inLabel" onclick="highlightTransactionType('IN')" style="background: linear-gradient(135deg, #0f4801 0%, #69f816 50%, #0a3e00 100%);">
                     <input type="radio" name="type" value="IN" checked class="peer sr-only">
-                    <div class="text-center py-3 rounded-lg border-2 border-success bg-white shadow-sm text-success transition-all font-bold mobile-touch-target">
-                      <i class="fas fa-arrow-down mr-1"></i> IN
+                    <div class="text-center py-2 rounded-lg border-2 border-success bg-white shadow-sm text-success transition-all font-bold text-sm mobile-touch-target">
+                      <i class="fas fa-arrow-down" style="color: white;"></i> IN
                     </div>
                   </label>
-                  <label class="flex-1 cursor-pointer transaction-type-option rounded-lg" id="outLabel" onclick="highlightTransactionType('OUT')">
+                  <label class="flex-1 cursor-pointer transaction-type-option rounded-lg" id="outLabel" onclick="highlightTransactionType('OUT')" style="background: linear-gradient(135deg, #3b0148 0%, #16a5f8 50%, #3e2d00 100%);">
                     <input type="radio" name="type" value="OUT" class="peer sr-only">
-                    <div class="text-center py-3 rounded-lg border-2 border-transparent text-slate-600 transition-all font-bold mobile-touch-target">
-                      <i class="fas fa-arrow-up mr-1"></i> OUT
+                    <div class="text-center py-2 rounded-lg border-2 border-transparent text-slate-600 transition-all font-bold text-sm mobile-touch-target">
+                      <i class="fas fa-arrow-up" style="color: white;"></i> OUT
                     </div>
                   </label>
                 </div>
-                <p id="roleInfo" class="text-xs text-slate-500 mt-2">
-                  <i class="fas fa-info-circle"></i> <span id="roleInfoText">Select transaction type</span>
+                <p id="roleInfo" class="text-xs text-slate-500 mt-1">
+                  <i class="fas fa-info-circle"></i> <span id="roleInfoText" style="color: white;">Select type</span>
                 </p>
               </div>
-
+            
               <!-- Material Search -->
-              <div class="mb-5 custom-select-container">
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Material <span class="text-danger">*</span></label>
+              <div class="lg:col-span-2" >
+                <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Material <span class="text-danger">*</span></label>
                 <div class="relative">
                   <input type="text" id="materialSearchInput" class="custom-select-input pl-10" placeholder="Search materials..." autocomplete="off" onkeyup="filterMaterials()" onclick="toggleMaterialList(true)">
                   <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
@@ -480,69 +480,74 @@ input:focus, select:focus, textarea:focus {
                 <select id="materialSelect" class="hidden"></select>
                 <div id="materialList" class="custom-select-list custom-scrollbar"></div>
                 
-                <div id="stockInfoBox" class="hidden mt-3 p-3 bg-green-50 border border-green-200 rounded-xl text-sm flex justify-between items-center">
-                  <span class="text-slate-600 font-medium">Current Stock:</span>
+                <div id="stockInfoBox" class="hidden mt-2 p-2 bg-green-50 border border-green-200 rounded-lg text-xs flex justify-between items-center">
+                  <span class="text-slate-600 font-medium">Stock:</span>
                   <span class="font-bold text-green-700" id="currentStockDisplay">-</span>
                 </div>
-                <div id="oracleCodeBox" class="hidden mt-2 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm">
-                  <span class="text-slate-600 font-medium">Oracle Code:</span>
-                  <span class="font-bold text-blue-700 ml-2" id="oracleCodeDisplay">-</span>
+                <div id="oracleCodeBox" class="hidden mt-1 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs">
+                  <span class="text-slate-600 font-medium">Oracle:</span>
+                  <span class="font-bold text-blue-700 ml-1" id="oracleCodeDisplay">-</span>
                 </div>
-                <p id="materialError" class="text-danger text-xs mt-2 hidden font-semibold"><i class="fas fa-exclamation-circle mr-1"></i>Please select a material</p>
+                <p id="materialError" class="text-danger text-xs mt-1 hidden font-semibold"><i class="fas fa-exclamation-circle mr-1"></i>Please select a material</p>
               </div>
 
               <!-- Quantity -->
-              <div class="mb-5">
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Quantity <span class="text-danger">*</span></label>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Qty <span class="text-danger">*</span></label>
                 <div class="relative">
                   <input type="number" id="qtyInput" min="1" placeholder="0" inputmode="numeric" pattern="[0-9]*" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-lg font-semibold mobile-touch-target" required>
                   <i class="fas fa-hashtag absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 </div>
               </div>
 
-              <input type="hidden" id="notesInput" value="Mobile Entry">
-              
-              <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-4 rounded-xl shadow-md transition transform active:scale-95 flex justify-center items-center gap-2 mobile-touch-target btn-press text-base">
-                <i class="fas fa-check-circle"></i>
-                <span>Record Transaction</span>
-              </button>
-            </form>
-          </div>
-        </div>
+              <!-- Submit -->
+              <div>
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 px-4 rounded-xl shadow-md transition transform active:scale-95 flex justify-center items-center gap-2 mobile-touch-target btn-press text-sm h-[50px]">
+                  <i class="fas fa-check-circle"></i>
+                  <span>Record</span>
+                </button>
+              </div>
+            </div>
 
-        <!-- Recent Activity -->
-        <div class="lg:col-span-2">
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <h2 class="font-bold text-slate-700 flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center">
-                  <i class="fas fa-history text-slate-600"></i>
-                </div>
-                Recent Activity
-              </h2>
-              <button onclick="loadDashboardTransactions()" class="text-blue-600 hover:text-blue-800 text-sm font-semibold p-2 rounded-lg hover:bg-blue-50 transition mobile-touch-target">
-                <i class="fas fa-sync-alt mr-1"></i>Refresh
-              </button>
-            </div>
-            <div class="table-container scroll-shadow-right">
-              <table class="w-full text-left text-sm text-slate-600">
-                <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0">
-                  <tr>
-                    <th class="px-4 py-3">Date</th>
-                    <th class="px-4 py-3">Material</th>
-                    <th class="px-4 py-3 hidden sm:table-cell">Oracle</th>
-                    <th class="px-4 py-3">Type</th>
-                    <th class="px-4 py-3">Qty</th>
-                    <th class="px-4 py-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="dashboardTableBody" class="divide-y divide-slate-100"></tbody>
-              </table>
-            </div>
+            <input type="hidden" id="notesInput" value="Mobile Entry">
+          </form>
+       
+      
+
+      <!-- Recent Activity -->
+      <div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <h2 class="font-bold text-slate-700 flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center">
+                <i class="fas fa-history text-slate-600"></i>
+              </div>
+              Recent Activity
+            </h2>
+            <button onclick="loadDashboardTransactions()" class="text-blue-600 hover:text-blue-800 text-sm font-semibold p-2 rounded-lg hover:bg-blue-50 transition mobile-touch-target">
+              <i class="fas fa-sync-alt mr-1"></i>Refresh
+            </button>
+          </div>
+          <div class="table-container scroll-shadow-right">
+            <table class="w-full text-left text-sm text-slate-600">
+              <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0">
+                <tr>
+                  <th class="px-4 py-3">Date</th>
+                  <th class="px-4 py-3">Material</th>
+                  <th class="px-4 py-3 hidden sm:table-cell">Oracle</th>
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3">Qty</th>
+                  <th class="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
+    </div>
+     </div>
 
     <!-- VIEW 2: INVENTORY -->
     <div id="view-inventory" class="view-section p-4 md:p-8">
@@ -1399,6 +1404,11 @@ function filterMaterials() {
   const list = document.getElementById('materialList');
   list.innerHTML = '';
   
+  if (!filter) {
+    list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-search mr-2"></i>Type to search materials...</div>';
+    return;
+  }
+  
   if (allOracleMaterials.length === 0) {
     list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-box-open mr-2"></i>No materials available</div>';
     return;
@@ -1522,15 +1532,15 @@ function highlightTransactionType(type) {
   const inLabel = document.getElementById('inLabel');
   const outLabel = document.getElementById('outLabel');
   
-  if (type === 'IN') {
-    inLabel.classList.add('active-in');
+  if (type === 'OUT') {
+    inLabel.classList.add('active-out');
     inLabel.querySelector('div').classList.add('border-success', 'bg-white', 'shadow-sm', 'text-success');
     inLabel.querySelector('div').classList.remove('border-transparent', 'text-slate-600');
     outLabel.classList.remove('active-out');
     outLabel.querySelector('div').classList.remove('border-warning', 'bg-white', 'shadow-sm', 'text-warning');
     outLabel.querySelector('div').classList.add('border-transparent', 'text-slate-600');
   } else {
-    outLabel.classList.add('active-out');
+    outLabel.classList.add('active-in');
     outLabel.querySelector('div').classList.add('border-warning', 'bg-white', 'shadow-sm', 'text-warning');
     outLabel.querySelector('div').classList.remove('border-transparent', 'text-slate-600');
     inLabel.classList.remove('active-in');
@@ -1779,8 +1789,16 @@ allMaterials = data;
 }
 
 function filterInventory() {
-  const term = document.getElementById('inventorySearch').value.toLowerCase();
+  const term = document.getElementById('inventorySearch').value.toLowerCase().trim();
   const rows = document.getElementById('inventoryTableBody').querySelectorAll('tr');
+  
+  if (!term) {
+    rows.forEach(row => {
+      row.style.display = 'none';
+    });
+    return;
+  }
+  
   rows.forEach(row => {
     const text = row.innerText.toLowerCase();
     row.style.display = text.includes(term) ? '' : 'none';
