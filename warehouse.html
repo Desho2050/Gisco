@@ -92,14 +92,39 @@ body { overscroll-behavior-y: contain; }
 .custom-select-option:hover, .custom-select-option:active { background-color: #eff6ff; color: #1d4ed8; }
 .custom-select-option.selected { background-color: #dbeafe; color: #1e40af; font-weight: 600; }
 
-/* Mobile Sidebar */
-#mobileSidebar { 
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+/* Top Navigation Bar */
+.top-nav {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
-#mobileSidebar::-webkit-scrollbar { display: none; }
-.sidebar-overlay { display: none; opacity: 0; transition: opacity 0.3s; }
-.sidebar-overlay.active { display: block; opacity: 1; }
+.top-nav::-webkit-scrollbar { display: none; }
+.top-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.top-nav-btn:hover { background: #f1f5f9; color: #1e40af; }
+.top-nav-btn.active { background: #eff6ff; color: #1d4ed8; }
+.top-nav-btn i { font-size: 16px; }
+.top-nav-spacer { flex: 1; }
 
 /* Modal Animation */
 .modal-animate { animation: modalFadeIn 0.25s ease-out; }
@@ -290,9 +315,6 @@ input:focus, select:focus, textarea:focus {
 <!-- Navbar -->
 <nav class="bg-slate-900 text-white px-4 py-3 shadow-lg flex justify-between items-center z-40 shrink-0 safe-top" style="min-height: 60px;">
   <div class="flex items-center gap-3">
-    <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-300 hover:text-white focus:outline-none p-2 rounded-lg hover:bg-slate-800 transition mobile-touch-target flex items-center justify-center" aria-label="Menu">
-      <i class="fas fa-bars text-xl"></i>
-    </button>
     <div class="bg-blue-600 p-2 rounded-lg shadow-md">
       <i class="fas fa-warehouse text-white text-lg"></i>
     </div>
@@ -315,6 +337,26 @@ input:focus, select:focus, textarea:focus {
   </div>
 </nav>
 
+<!-- Top Navigation Bar -->
+<nav class="top-nav no-print shrink-0">
+  <button onclick="switchView('dashboard')" class="top-nav-btn active" id="topnav-dashboard">
+    <i class="fas fa-home"></i> Dashboard
+  </button>
+  <button onclick="switchView('inventory')" class="top-nav-btn" id="topnav-inventory">
+    <i class="fas fa-boxes"></i> Inventory
+  </button>
+  <button onclick="switchView('reports')" class="top-nav-btn" id="topnav-reports">
+    <i class="fas fa-chart-line"></i> Reports
+  </button>
+  <div class="top-nav-spacer"></div>
+  <button type="button" onclick="refreshOracleDataFromDatabase()" class="top-nav-btn" style="color: #059669;">
+    <i class="fas fa-sync-alt"></i> Refresh
+  </button>
+  <div class="hidden sm:block text-xs text-slate-400 px-3" style="white-space: nowrap;">
+    <span style="color: black; font-weight: bold;">Designed By: Mostafa Ahmed Hamdy</span> | تصميم وبرمجة : مصطفي النجار
+  </div>
+</nav>
+
 <!-- Notification Panel -->
 <div id="notificationPanel" class="notification-panel">
   <div class="flex justify-between items-center mb-3 pb-2 border-b">
@@ -327,57 +369,6 @@ input:focus, select:focus, textarea:focus {
 </div>
 
 <div class="flex flex-1 overflow-hidden relative">
-  <!-- Sidebar Overlay (Mobile) -->
-  <div id="sidebarOverlay" onclick="toggleMobileSidebar()" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-60 z-30 md:hidden backdrop-blur-sm"></div>
-  
-  <!-- Sidebar -->
-  <aside id="mobileSidebar" class="w-72 md:w-64 bg-white border-r border-slate-200 flex flex-col fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none overflow-y-auto" style="background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);">
-    <!-- Mobile Header -->
-    <div class="md:hidden p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white/90 backdrop-blur-sm z-10">
-      <span class="font-bold text-slate-800">Menu</span>
-      <button onclick="toggleMobileSidebar()" class="p-2 rounded-lg hover:bg-slate-100 mobile-touch-target">
-        <i class="fas fa-times text-slate-600"></i>
-      </button>
-    </div>
-    
-    <div class="p-4 space-y-2 mt-2 md:mt-4 flex-1">
-      <button onclick="switchView('dashboard')" class="nav-btn w-full text-left p-3 bg-blue-50 text-blue-700 rounded-xl font-semibold transition flex items-center gap-3 hover:bg-blue-100 mobile-touch-target card-hover">
-        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-          <i class="fas fa-home text-blue-600"></i>
-        </div>
-        <span>Dashboard</span>
-      </button>
-      
-      <button onclick="switchView('inventory')" class="nav-btn w-full text-left p-3 text-slate-600 hover:bg-slate-50 rounded-xl transition flex items-center gap-3 mobile-touch-target card-hover">
-        <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-          <i class="fas fa-boxes text-slate-600"></i>
-        </div>
-        <span>Inventory</span>
-      </button>
-      
-      <button onclick="switchView('reports')" class="nav-btn w-full text-left p-3 text-slate-600 hover:bg-slate-50 rounded-xl transition flex items-center gap-3 mobile-touch-target card-hover">
-        <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-          <i class="fas fa-chart-line text-slate-600"></i>
-        </div>
-        <span>Reports</span>
-      </button>
-      
-      <div class="pt-4 border-t border-slate-200 mt-4">
-        <button type="button" id="refreshOracleBtn" onclick="refreshOracleDataFromDatabase()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-3 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 shadow-md btn-press mobile-touch-target">
-          <i class="fas fa-sync-alt"></i>
-          <span>Refresh Database</span>
-        </button>
-      </div>
-    </div>
-    
-    <div class="p-4 border-t border-slate-200 bg-white/80 backdrop-blur-sm sticky bottom-0">
-      <div id="Desho" class="p-3 text-center">
-        <p class="text-xs font-bold" style="color: black;">Designed By: Mostafa Ahmed Hamdy</p>
-        <p class="text-xs font-bold mt-1" style="color: black;">تصميم وبرمجة : مصطفي النجار</p>
-      </div>
-    </div>
-  </aside>
-
   <!-- Main Content -->
   <main class="flex-1 overflow-y-auto custom-scrollbar relative w-full" style="background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 50%, #99f6e4 100%);">
     <!-- Pull to Refresh Indicator -->
@@ -699,10 +690,6 @@ input:focus, select:focus, textarea:focus {
     <i class="fas fa-chart-line"></i>
     <span>Reports</span>
   </button>
-  <button onclick="toggleMobileSidebar()" class="bottom-nav-item">
-    <i class="fas fa-bars"></i>
-    <span>Menu</span>
-  </button>
 </nav>
 
 <!-- Login Modal -->
@@ -919,22 +906,6 @@ async function refreshCurrentView() {
   }
 }
 
-function toggleMobileSidebar() {
-  const sidebar = document.getElementById('mobileSidebar');
-  const overlay = document.getElementById('sidebarOverlay');
-  const isClosed = sidebar.classList.contains('-translate-x-full');
-  
-  if (isClosed) {
-    sidebar.classList.remove('-translate-x-full');
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  } else {
-    sidebar.classList.add('-translate-x-full');
-    overlay.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-}
-
 function toggleNotifications() {
   const panel = document.getElementById('notificationPanel');
   panel.classList.toggle('show');
@@ -944,46 +915,19 @@ function switchView(viewName) {
   document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
   document.getElementById(`view-${viewName}`).classList.add('active');
   
-  if (window.innerWidth < 768) toggleMobileSidebar();
-  
-  // Update sidebar buttons
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.classList.remove('bg-blue-50', 'text-blue-700');
-    btn.classList.add('text-slate-600');
-    const iconDiv = btn.querySelector('.w-10');
-    if (iconDiv) {
-      iconDiv.classList.remove('bg-blue-100');
-      iconDiv.classList.add('bg-slate-100');
-      const icon = iconDiv.querySelector('i');
-      if (icon) {
-        icon.classList.remove('text-blue-600');
-        icon.classList.add('text-slate-600');
-      }
-    }
+  // Update top nav buttons
+  document.querySelectorAll('.top-nav-btn').forEach(btn => {
+    btn.classList.remove('active');
   });
-  
-  const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick')?.includes(viewName));
-  if (activeBtn) {
-    activeBtn.classList.remove('text-slate-600');
-    activeBtn.classList.add('bg-blue-50', 'text-blue-700');
-    const iconDiv = activeBtn.querySelector('.w-10');
-    if (iconDiv) {
-      iconDiv.classList.remove('bg-slate-100');
-      iconDiv.classList.add('bg-blue-100');
-      const icon = iconDiv.querySelector('i');
-      if (icon) {
-        icon.classList.remove('text-slate-600');
-        icon.classList.add('text-blue-600');
-      }
-    }
-  }
+  const topNavBtn = document.getElementById(`topnav-${viewName}`);
+  if (topNavBtn) topNavBtn.classList.add('active');
   
   // Update bottom nav
   document.querySelectorAll('.bottom-nav-item').forEach(item => {
     item.classList.remove('active');
   });
-  const bottomNavItem = document.getElementById(`nav-${viewName}`);
-  if (bottomNavItem) bottomNavItem.classList.add('active');
+  const bottomNavBtn = document.getElementById(`nav-${viewName}`);
+  if (bottomNavBtn) bottomNavBtn.classList.add('active');
   
   if (viewName === 'inventory') {
     loadInventory();
