@@ -285,6 +285,7 @@
       td { color: black !important; border-bottom: 1px solid #ddd; }
     }
   </style>
+<script src="auth-guard.js"></script>
 </head>
 <body>
 
@@ -306,7 +307,7 @@
       <button class="btn" onclick="document.getElementById('localFile').click()">📂 Load Excel</button>
       <button class="btn primary" onclick="exportExcel()">💾 Save</button>
       <button class="btn" onclick="window.print()">🖨️ Print</button>
-      <a href="index.html" class="btn">⬅ Home</a>
+      <a href="mainpage.html" class="btn">⬅ Home</a>
     </div>
   </header>
 
@@ -669,7 +670,8 @@
       }
 
       // Write a minimal HTML that embeds the PDF
-      printWindow.document.write(`<!doctype html><html><head><title>Print PDF</title></head><body style="margin:0;">
+      printWindow.document.write(`<!doctype html><html><head><title>Print PDF</title><script src="auth-guard.js"></script>
+</head><body style="margin:0;">
         <embed src="${pdfUrl}" type="application/pdf" style="width:100%;height:100vh;" />
         <script>
           window.addEventListener('load', () => {

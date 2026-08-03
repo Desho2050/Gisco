@@ -204,7 +204,7 @@
       <div class="form-group">
         <label for="username" data-i18n="username_label">اسم المستخدم</label>
         <select id="username" class="form-control" required>
-          <option value="" disabled selected data-i18n="select_user">        اختر المستخدم        </option>
+          <option value="" disabled selected data-i18n="select_user">-        اختر المستخدم        -</option>
         </select>
       </div>
 
@@ -289,11 +289,13 @@
       }
       document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.lang === lang);
+       
       });
     }
 
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.addEventListener('click', () => applyLoginLang(btn.dataset.lang));
+      
     });
     applyLoginLang(currentLang);
 
@@ -317,6 +319,7 @@
           opt.value = row.username;
           opt.textContent = row.username;
           select.appendChild(opt);
+          storage.save('username', row.username);
         });
       } catch (err) {
         console.error('Failed to load users:', err);
