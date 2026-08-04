@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1030,6 +1031,135 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+/* ============ LOW STOCK PANEL ============ */
+.lowstock-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.lowstock-overlay.show {
+  display: block;
+  opacity: 1;
+}
+
+.lowstock-panel {
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  width: 420px;
+  max-height: 80vh;
+  background: var(--bg-primary);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lowstock-panel.show {
+  display: flex;
+}
+
+.lowstock-header {
+  padding: 18px 20px;
+  background: var(--gradient-warm);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lowstock-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lowstock-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: var(--transition);
+}
+
+.lowstock-close:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.lowstock-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.lowstock-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.lowstock-empty i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.lowstock-item {
+  padding: 14px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  transition: var(--transition);
+  border-right: 3px solid var(--accent-red);
+}
+
+.lowstock-item:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--card-hover);
+}
+
+.lowstock-item-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.lowstock-item-details {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .lowstock-panel {
+    width: calc(100% - 40px);
+    left: 20px;
+    right: 20px;
+  }
+}
+
 </style>
 <script src="auth-guard.js"></script>
 </head>
@@ -1066,6 +1196,11 @@ body {
     <button class="control-btn notification-btn" id="notificationBtn" title="Notifications">
       <i class="fas fa-bell"></i>
       <span class="notification-badge" id="notificationBadge">0</span>
+    </button>
+    
+    <button class="control-btn" id="lowStockBtn" title="Low Stock" style="background: rgba(251, 4, 4, 0.563); border-color: rgb(239, 68, 159); color: #fca5a5;">
+      <i class="fas fa-exclamation-triangle"> </i>lowStock Items
+      <span class="notification-badge" id="lowStockBadge" style="display:none;">0</span>
     </button>
     
     <select class="theme-select" id="themeSelect">
@@ -1112,6 +1247,25 @@ body {
   </div>
   <div class="notification-footer">
     <button id="markReadBtn" data-i18n="mark_as_read">تحديد كمقروء</button>
+  </div>
+</div>
+
+<!-- Low Stock Overlay -->
+<div class="lowstock-overlay" id="lowStockOverlay"></div>
+
+<!-- Low Stock Panel -->
+<div class="lowstock-panel" id="lowStockPanel">
+  <div class="lowstock-header">
+    <h3><i class="fas fa-exclamation-triangle"></i> <span id="lowStockHeaderTitle">Low Stock Items</span></h3>
+    <button class="lowstock-close" id="closeLowStockPanel">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  <div class="lowstock-content" id="lowStockContent">
+    <div class="lowstock-empty">
+      <i class="fas fa-box-open"></i>
+      <div id="noLowStockText">No low stock items</div>
+    </div>
   </div>
 </div>
 
@@ -1614,7 +1768,9 @@ const I18N = {
     leave_type_resignation: 'Resignation',
     days_today: 'Today',
     days_in: 'in {days} days',
-    file_prefix: 'File No: '
+    file_prefix: 'File No: ',
+    low_stock_title: 'Low Stock Items',
+    no_low_stock: 'No low stock items'
   },
   ar: {
     brand_title: 'شركة الخليج للخدمات الصناعية',
@@ -1688,7 +1844,9 @@ const I18N = {
     leave_type_resignation: 'استقالة',
     days_today: 'اليوم',
     days_in: 'خلال {days} أيام',
-    file_prefix: 'رقم الملف '
+    file_prefix: 'رقم الملف ',
+    low_stock_title: 'المواد منخفضة المخزون',
+    no_low_stock: 'لا توجد مواد منخفضة المخزون'
   }
 };
 
@@ -1843,6 +2001,78 @@ function autoOpenNotifications() {
   }
 }
 
+function openLowStockPanel() {
+  const panel = document.getElementById('lowStockPanel');
+  const overlay = document.getElementById('lowStockOverlay');
+  const content = document.getElementById('lowStockContent');
+  const dict = I18N[currentLang] || I18N.ar;
+  
+  const headerTitle = document.getElementById('lowStockHeaderTitle');
+  const noStockText = document.getElementById('noLowStockText');
+  if (headerTitle) headerTitle.textContent = dict.low_stock_title || 'Low Stock Items';
+  if (noStockText) noStockText.textContent = dict.no_low_stock || 'No low stock items';
+  
+  content.innerHTML = '<div class="lowstock-empty"><div class="loader"></div></div>';
+  panel.classList.add('show');
+  overlay.classList.add('show');
+  
+  const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
+  const lowStockSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  
+  lowStockSupabase.from('materials').select('*').then(({ data, error }) => {
+    if (error) {
+      content.innerHTML = '<div class="lowstock-empty"><div>Error loading low stock items</div></div>';
+      return;
+    }
+    
+    const lowStockItems = (data || []).filter(m => (m.current_stock || 0) <= (m.min_stock_threshold || 0));
+    
+    if (lowStockItems.length === 0) {
+      content.innerHTML = `<div class="lowstock-empty"><i class="fas fa-check-circle"></i><div>${dict.no_low_stock || 'No low stock items'}</div></div>`;
+      return;
+    }
+    
+    let html = '';
+    lowStockItems.forEach(item => {
+      html += `
+        <div class="lowstock-item">
+          <div class="lowstock-item-title">${item.name || 'Unknown'}</div>
+          <div class="lowstock-item-details">
+            Code: ${item.oracle_code || 'N/A'} | Stock: ${item.current_stock || 0} | Min: ${item.min_stock_threshold || 0}
+          </div>
+        </div>
+      `;
+    });
+    content.innerHTML = html;
+  });
+}
+
+function closeLowStockPanel() {
+  document.getElementById('lowStockPanel').classList.remove('show');
+  document.getElementById('lowStockOverlay').classList.remove('show');
+}
+
+async function loadLowStockCount() {
+  try {
+    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
+    const lowStockSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    const { data, error } = await lowStockSupabase.from('materials').select('current_stock, min_stock_threshold');
+    if (error) return;
+    
+    const lowCount = (data || []).filter(m => (m.current_stock || 0) <= (m.min_stock_threshold || 0)).length;
+    const badge = document.getElementById('lowStockBadge');
+    if (badge) {
+      badge.textContent = lowCount;
+      badge.classList.toggle('show', lowCount > 0);
+    }
+  } catch (err) {
+    console.error('Low stock count error:', err);
+  }
+}
+
 // ===== CLOCK SYSTEM =====
 function updateClock() {
   const now = new Date();
@@ -1893,6 +2123,10 @@ const applyLang = (lang) => {
   document.getElementById('notificationHeaderTitle').textContent = dict.notification_center_title;
   document.getElementById('markReadBtn').textContent = dict.mark_as_read;
   document.getElementById('noNotificationsText').textContent = dict.no_notifications;
+  const lowStockHeaderTitle = document.getElementById('lowStockHeaderTitle');
+  const noLowStockText = document.getElementById('noLowStockText');
+  if (lowStockHeaderTitle) lowStockHeaderTitle.textContent = dict.low_stock_title || 'Low Stock Items';
+  if (noLowStockText) noLowStockText.textContent = dict.no_low_stock || 'No low stock items';
   
   if (notificationCenterVisible) renderNotifications();
   
@@ -1928,6 +2162,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('closeNotificationCenter').addEventListener('click', closeNotificationCenter);
   document.getElementById('markReadBtn').addEventListener('click', markNotificationsAsRead);
   document.getElementById('notificationOverlay').addEventListener('click', closeNotificationCenter);
+  
+  // Low Stock controls
+  document.getElementById('lowStockBtn').addEventListener('click', openLowStockPanel);
+  document.getElementById('closeLowStockPanel').addEventListener('click', closeLowStockPanel);
+  document.getElementById('lowStockOverlay').addEventListener('click', closeLowStockPanel);
   
   // Mock counters
   const setCount = (id, n) => {
@@ -2110,12 +2349,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('totalRecords').textContent = totalRecords.toLocaleString();
     updateNotificationBadge();
     autoOpenNotifications();
+    loadLowStockCount();
     
   } catch (err) {
     console.error('⚠️ Critical Supabase initialization error:', err);
     showToast('Failed to connect to database', 'error', 5000);
   }
 });
+
+function handleLogout() {
+  sessionStorage.removeItem('gisAuthenticated');
+  window.location.href = 'index.html';
+}
 </script>
 </body>
 </html>
