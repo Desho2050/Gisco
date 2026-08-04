@@ -1160,6 +1160,18 @@ body {
   }
 }
 
+#lowStockBtn.has-low-stock {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
+#lowStockBtn.no-low-stock {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.5);
+  color: #86efac;
+}
+
 </style>
 <script src="auth-guard.js"></script>
 </head>
@@ -1198,8 +1210,8 @@ body {
       <span class="notification-badge" id="notificationBadge">0</span>
     </button>
     
-    <button class="control-btn" id="lowStockBtn" title="Low Stock" style="background: rgba(251, 4, 4, 0.563); border-color: rgb(239, 68, 159); color: #fca5a5;">
-      <i class="fas fa-exclamation-triangle"> </i>lowStock Items
+    <button class="control-btn" id="lowStockBtn" title="Low Stock" data-lowstock>
+      <i class="fas fa-exclamation-triangle"></i>
       <span class="notification-badge" id="lowStockBadge" style="display:none;">0</span>
     </button>
     
@@ -1254,9 +1266,10 @@ body {
 <div class="lowstock-overlay" id="lowStockOverlay"></div>
 
 <!-- Low Stock Panel -->
-<div class="lowstock-panel" id="lowStockPanel">
+<div class="lowstock-panel" id="lowStockPanel" >
   <div class="lowstock-header">
-    <h3><i class="fas fa-exclamation-triangle"></i> <span id="lowStockHeaderTitle">Low Stock Items</span></h3>
+    <h3><i class="fas fa-exclamation-triangle"></i> 
+      <span id="lowStockHeaderTitle" >Low Stock Items</span></h3>
     <button class="lowstock-close" id="closeLowStockPanel">
       <i class="fas fa-times"></i>
     </button>
@@ -2027,6 +2040,11 @@ function openLowStockPanel() {
     }
     
     const lowStockItems = (data || []).filter(m => (m.current_stock || 0) <= (m.min_stock_threshold || 0));
+    const btn = document.getElementById('lowStockBtn');
+    if (btn) {
+      btn.classList.toggle('has-low-stock', lowStockItems.length > 0);
+      btn.classList.toggle('no-low-stock', lowStockItems.length === 0);
+    }
     
     if (lowStockItems.length === 0) {
       content.innerHTML = `<div class="lowstock-empty"><i class="fas fa-check-circle"></i><div>${dict.no_low_stock || 'No low stock items'}</div></div>`;
@@ -2064,9 +2082,14 @@ async function loadLowStockCount() {
     
     const lowCount = (data || []).filter(m => (m.current_stock || 0) <= (m.min_stock_threshold || 0)).length;
     const badge = document.getElementById('lowStockBadge');
+    const btn = document.getElementById('lowStockBtn');
     if (badge) {
       badge.textContent = lowCount;
       badge.classList.toggle('show', lowCount > 0);
+    }
+    if (btn) {
+      btn.classList.toggle('has-low-stock', lowCount > 0);
+      btn.classList.toggle('no-low-stock', lowCount === 0);
     }
   } catch (err) {
     console.error('Low stock count error:', err);
