@@ -2016,75 +2016,85 @@ function filterAddMaterialSuggestions() {
   const codeInput = document.getElementById('matOracleCode');
   const suggestions = document.getElementById('addMaterialSuggestions');
   const query = (nameInput.value || codeInput.value).toLowerCase().trim();
-  
+
   if (!query) {
     suggestions.classList.remove('active');
     suggestions.innerHTML = '';
     return;
   }
-  
-  const matches = allOracleMaterials.filter(item => {
-    return (item.code && item.code.toLowerCase().includes(query));
-  }).slice(0, 20);
-  
-  suggestions.innerHTML = '';
-  if (matches.length === 0) {
-    suggestions.classList.remove('active');
-    return;
-  }
-  
-  matches.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'custom-select-option';
-    div.innerHTML = `
-      <div class="flex-1 min-w-0">
-        <div class="font-semibold text-slate-800 truncate">${item.name}</div>
-        <div class="text-xs text-slate-500 truncate">${item.unit || 'N/A'} · ${item.code || 'N/A'}</div>
-      </div>
-    `;
-    div.onclick = () => selectAddMaterialSuggestion(item);
-    suggestions.appendChild(div);
+
+  console.log('[AddMaterial] searching recvd_materials and materials for:', query);
+
+  const recvdPromise = supabaseClient
+    .from('recvd_materials')
+    .select('code, "item-description", price')
+    .or(`code.ilike.%${query}%,"item-description".ilike.%${query}%`)
+    .limit(20);
+
+  const localMatches = (allMaterials || [])
+    .filter(m => (m.name || '').toLowerCase().includes(query) || (m.oracle_code || '').toLowerCase().includes(query))
+    .slice(0, 20)
+    .map(m => ({
+      source: 'materials',
+      code: m.oracle_code || '',
+      name: m.name || '',
+      price: m.price ?? 0
+    }));
+
+  recvdPromise.then(({ data, error }) => {
+    console.log('[AddMaterial] recvd_materials search response', { data, error });
+    let recvdMatches = [];
+    if (!error && data) {
+      recvdMatches = data.map(item => ({
+        source: 'recvd_materials',
+        code: item.code || '',
+        name: item['item-description'] || '',
+        price: item.price ?? 0
+      }));
+    }
+
+    const matches = [...recvdMatches, ...localMatches].slice(0, 20);
+
+    suggestions.innerHTML = '';
+    if (matches.length === 0) {
+      suggestions.classList.remove('active');
+      return;
+    }
+
+    matches.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'custom-select-option';
+      const sourceLabel = item.source === 'recvd_materials'
+        ? '<span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded ml-2">Received</span>'
+        : '<span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded ml-2">Inventory</span>';
+      div.innerHTML = `
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-slate-800 truncate">${item.name || 'N/A'} ${sourceLabel}</div>
+          <div class="text-xs text-slate-500 truncate">${item.code || 'N/A'} · $${item.price !== null && item.price !== undefined ? item.price : '0.00'}</div>
+        </div>
+      `;
+      div.onclick = () => selectAddMaterialSuggestion(item);
+      suggestions.appendChild(div);
+    });
+    suggestions.classList.add('active');
   });
-  
-  suggestions.classList.add('active');
 }
 
 function selectAddMaterialSuggestion(item) {
   console.log('[AddMaterial] selectAddMaterialSuggestion called', item);
   document.getElementById('matName').value = item.name || '';
   document.getElementById('matOracleCode').value = item.code || '';
-  document.getElementById('matUnit').value = item.unit || '';
+  document.getElementById('matUnit').value = 'nos';
+  if (item.price !== null && item.price !== undefined) {
+    document.getElementById('matPrice').value = item.price;
+    console.log('[AddMaterial] matPrice auto-filled with:', item.price);
+  } else {
+    document.getElementById('matPrice').value = '0';
+    console.log('[AddMaterial] no price on selected item; defaulted to 0');
+  }
   const suggestions = document.getElementById('addMaterialSuggestions');
   suggestions.classList.remove('active');
   suggestions.innerHTML = '';
-  if (item.code) {
-    const code = String(item.code).trim();
-    console.log('[AddMaterial] querying recvd_materials for code:', code);
-    supabaseClient.from('recvd_materials').select('price').ilike('code', `%${code}%`).maybeSingle().then(({ data, error }) => {
-      console.log('[AddMaterial] recvd_materials response', { data, error });
-      if (error) {
-        console.log('[AddMaterial] ilike failed, retrying exact match');
-        supabaseClient.from('recvd_materials').select('price').eq('code', code).maybeSingle().then(({ data: data2, error: error2 }) => {
-          console.log('[AddMaterial] recvd_materials exact match response', { data: data2, error: error2 });
-          if (data2 && data2.price !== null && data2.price !== undefined) {
-            document.getElementById('matPrice').value = data2.price;
-            console.log('[AddMaterial] matPrice auto-filled with:', data2.price);
-          } else {
-            console.log('[AddMaterial] no matching price found for code:', code);
-          }
-        });
-        return;
-      }
-      if (data && data.price !== null && data.price !== undefined) {
-        document.getElementById('matPrice').value = data.price;
-        console.log('[AddMaterial] matPrice auto-filled with:', data.price);
-      } else {
-        console.log('[AddMaterial] no matching price found for code:', code);
-      }
-    });
-  } else {
-    console.log('[AddMaterial] no code on selected item; skipping price lookup');
-  }
 }
 
 async function saveMaterial() {
