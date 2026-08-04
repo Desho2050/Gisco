@@ -739,24 +739,32 @@ input:focus, select:focus, textarea:focus {
       </button>
     </div>
     <input type="hidden" id="editMatId">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-      <div>
-        <label class="block text-sm text-slate-600 mb-2 font-semibold">Material Name <span class="text-danger">*</span></label>
-        <input type="text" id="matName" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" required>
+    <div class="relative" id="addMaterialSearchContainer">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm text-slate-600 mb-2 font-semibold">Material Name <span class="text-danger">*</span></label>
+          <input type="text" id="matName" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" placeholder="Start typing to search..." autocomplete="off" oninput="filterAddMaterialSuggestions()">
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-2 font-semibold">Oracle Code</label>
+          <input type="text" id="matOracleCode" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" placeholder="Start typing to search..." autocomplete="off" oninput="filterAddMaterialSuggestions()">
+        </div>
       </div>
-      <div>
-        <label class="block text-sm text-slate-600 mb-2 font-semibold">Oracle Code</label>
-        <input type="text" id="matOracleCode" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target">
-      </div>
+      <div id="addMaterialSuggestions" class="custom-select-list custom-scrollbar"></div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       <div>
         <label class="block text-sm text-slate-600 mb-2 font-semibold">Category</label>
-        <input type="text" id="matCategory" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target">
+        <select id="matCategory" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target">
+          <option value="General materials" selected>General materials</option>
+          <option value="Electrical">Electrical</option>
+          <option value="Mechanical">Mechanical</option>
+          <option value="other">other</option>
+        </select>
       </div>
       <div>
         <label class="block text-sm text-slate-600 mb-2 font-semibold">Unit <span class="text-danger">*</span></label>
-        <input type="text" id="matUnit" placeholder="PCS, KG, M" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" required>
+        <input type="text" id="matUnit" value="nos" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" required>
       </div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -872,6 +880,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = document.getElementById('materialList');
     if (container && list && !container.contains(e.target)) {
       toggleMaterialList(false);
+    }
+  });
+  
+  // Close add material suggestions on outside click
+  document.addEventListener('click', function(e) {
+    const container = document.getElementById('addMaterialSearchContainer');
+    const suggestions = document.getElementById('addMaterialSuggestions');
+    if (container && suggestions && !container.contains(e.target)) {
+      suggestions.classList.remove('active');
+      suggestions.innerHTML = '';
     }
   });
   
@@ -1854,7 +1872,6 @@ allMaterials = data;
         oracle_code: mat.oracle_code || '',
         category: mat.category || '',
         unit: mat.unit || '',
-        price: 0,
         current_stock: 0,
         min_stock_threshold: 0,
         _count: 0
@@ -1912,12 +1929,10 @@ allMaterials = data;
     tbody.appendChild(tr);
   });
   
-  // Footer total row — total inventory value (sum of price × stock)
   const totalRow = document.createElement('tr');
   totalRow.className = 'bg-slate-100';
   totalRow.innerHTML = `
-    <td colspan="5" class="px-6 py-4 text-right uppercase tracking-wide text-slate-600 font-bold">Total Inventory Value</td>
-    <td class="px-6 py-4"></td>
+    <td colspan="6" class="px-6 py-4 text-right uppercase tracking-wide text-slate-600 font-bold">Total Inventory Value</td>
     <td class="px-6 py-4 text-green-700 font-bold text-base">$${grandTotal.toFixed(2)}</td>
     <td colspan="3" class="px-6 py-4"></td>
   `;
@@ -1950,11 +1965,13 @@ function openAddMaterialModal() {
   document.getElementById('editMatId').value = '';
   document.getElementById('matName').value = '';
   document.getElementById('matOracleCode').value = '';
-  document.getElementById('matCategory').value = '';
-  document.getElementById('matUnit').value = '';
+  document.getElementById('matCategory').value = 'General materials';
+  document.getElementById('matUnit').value = 'nos';
   document.getElementById('matStock').value = '0';
   document.getElementById('matPrice').value = '0';
   document.getElementById('matThreshold').value = '5';
+  document.getElementById('addMaterialSuggestions').classList.remove('active');
+  document.getElementById('addMaterialSuggestions').innerHTML = '';
   const modal = document.getElementById('materialModal');
   modal.classList.remove('hidden');
   modal.classList.add('flex');
@@ -1972,7 +1989,7 @@ async function openEditMaterialModal(id) {
   document.getElementById('editMatId').value = id;
   document.getElementById('matName').value = mat.name || '';
   document.getElementById('matOracleCode').value = mat.oracle_code || '';
-  document.getElementById('matCategory').value = mat.category || '';
+  document.getElementById('matCategory').value = ['General materials', 'Electrical', 'Mechanical', 'other'].includes(mat.category) ? mat.category : 'General materials';
   document.getElementById('matUnit').value = mat.unit || '';
   document.getElementById('matStock').value = mat.current_stock || 0;
   document.getElementById('matPrice').value = mat.price ?? 0;
@@ -1987,6 +2004,87 @@ function closeMaterialModal() {
   const modal = document.getElementById('materialModal');
   modal.classList.add('hidden');
   modal.classList.remove('flex');
+  const suggestions = document.getElementById('addMaterialSuggestions');
+  if (suggestions) {
+    suggestions.classList.remove('active');
+    suggestions.innerHTML = '';
+  }
+}
+
+function filterAddMaterialSuggestions() {
+  const nameInput = document.getElementById('matName');
+  const codeInput = document.getElementById('matOracleCode');
+  const suggestions = document.getElementById('addMaterialSuggestions');
+  const query = (nameInput.value || codeInput.value).toLowerCase().trim();
+  
+  if (!query) {
+    suggestions.classList.remove('active');
+    suggestions.innerHTML = '';
+    return;
+  }
+  
+  const matches = allOracleMaterials.filter(item => {
+    return (item.code && item.code.toLowerCase().includes(query));
+  }).slice(0, 20);
+  
+  suggestions.innerHTML = '';
+  if (matches.length === 0) {
+    suggestions.classList.remove('active');
+    return;
+  }
+  
+  matches.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'custom-select-option';
+    div.innerHTML = `
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold text-slate-800 truncate">${item.name}</div>
+        <div class="text-xs text-slate-500 truncate">${item.unit || 'N/A'} · ${item.code || 'N/A'}</div>
+      </div>
+    `;
+    div.onclick = () => selectAddMaterialSuggestion(item);
+    suggestions.appendChild(div);
+  });
+  
+  suggestions.classList.add('active');
+}
+
+function selectAddMaterialSuggestion(item) {
+  console.log('[AddMaterial] selectAddMaterialSuggestion called', item);
+  document.getElementById('matName').value = item.name || '';
+  document.getElementById('matOracleCode').value = item.code || '';
+  document.getElementById('matUnit').value = item.unit || '';
+  const suggestions = document.getElementById('addMaterialSuggestions');
+  suggestions.classList.remove('active');
+  suggestions.innerHTML = '';
+  if (item.code) {
+    const code = String(item.code).trim();
+    console.log('[AddMaterial] querying recvd_materials for code:', code);
+    supabaseClient.from('recvd_materials').select('price').ilike('code', `%${code}%`).maybeSingle().then(({ data, error }) => {
+      console.log('[AddMaterial] recvd_materials response', { data, error });
+      if (error) {
+        console.log('[AddMaterial] ilike failed, retrying exact match');
+        supabaseClient.from('recvd_materials').select('price').eq('code', code).maybeSingle().then(({ data: data2, error: error2 }) => {
+          console.log('[AddMaterial] recvd_materials exact match response', { data: data2, error: error2 });
+          if (data2 && data2.price !== null && data2.price !== undefined) {
+            document.getElementById('matPrice').value = data2.price;
+            console.log('[AddMaterial] matPrice auto-filled with:', data2.price);
+          } else {
+            console.log('[AddMaterial] no matching price found for code:', code);
+          }
+        });
+        return;
+      }
+      if (data && data.price !== null && data.price !== undefined) {
+        document.getElementById('matPrice').value = data.price;
+        console.log('[AddMaterial] matPrice auto-filled with:', data.price);
+      } else {
+        console.log('[AddMaterial] no matching price found for code:', code);
+      }
+    });
+  } else {
+    console.log('[AddMaterial] no code on selected item; skipping price lookup');
+  }
 }
 
 async function saveMaterial() {
