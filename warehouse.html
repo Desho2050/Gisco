@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -432,7 +433,7 @@ input:focus, select:focus, textarea:focus {
       </div>
 
       <!-- Quick Transaction Form (Horizontal) -->
-      <div class="" style="width: 100%;display:grid;grid-template-columns: 1fr 2fr;">
+      <div class="" style="width: 100%;height:100%;display:grid;grid-template-columns: 1fr 2fr;gap:10px;" >
         <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-5 md:p-6" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);">
           <div class="flex justify-between items-center mb-5" >
             <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2" style="color: white; ">
@@ -474,12 +475,12 @@ input:focus, select:focus, textarea:focus {
               <div class="lg:col-span-2" >
                 <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Material <span class="text-danger">*</span></label>
                 <div class="relative">
-                  <input type="text" id="materialSearchInput" class="custom-select-input pl-10" placeholder="Search materials..." autocomplete="off" onkeyup="filterMaterials()" onclick="toggleMaterialList(true)">
+<input type="text" id="materialSearchInput" class="custom-select-input pl-10" placeholder="Search materials..." autocomplete="off" onkeyup="onMaterialSearchKeyup()" onclick="toggleMaterialList(true)">
                   <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                </div>
-                <select id="materialSelect" class="hidden"></select>
-                <div id="materialList" class="custom-select-list custom-scrollbar"></div>
                 
+                <select id="materialSelect" class="hidden"></select>
+                <div id="materialList" class="custom-select-list custom-scrollbar" style="margin-top: 10px; width:1000px; background:linear-gradient(135deg, #80e085 0%, #e0f56d 50%, #c7bb4c 100%);"></div>
+                </div>
                 <div id="stockInfoBox" class="hidden mt-2 p-2 bg-green-50 border border-green-200 rounded-lg text-xs flex justify-between items-center">
                   <span class="text-slate-600 font-medium">Stock:</span>
                   <span class="font-bold text-green-700" id="currentStockDisplay">-</span>
@@ -502,7 +503,7 @@ input:focus, select:focus, textarea:focus {
 
               <!-- Submit -->
               <div>
-                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 px-4 rounded-xl shadow-md transition transform active:scale-95 flex justify-center items-center gap-2 mobile-touch-target btn-press text-sm h-[50px]">
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3 px-4 rounded-xl shadow-md transition transform active:scale-95 flex justify-center items-center gap-2 mobile-touch-target btn-press text-sm h-[50px]" style="margin-top: 10px;">
                   <i class="fas fa-check-circle"></i>
                   <span>Record</span>
                 </button>
@@ -547,7 +548,7 @@ input:focus, select:focus, textarea:focus {
       </div>
     </div>
     </div>
-     </div>
+    
 
     <!-- VIEW 2: INVENTORY -->
     <div id="view-inventory" class="view-section p-4 md:p-8">
@@ -594,7 +595,7 @@ input:focus, select:focus, textarea:focus {
         </div>
       </div>
     </div>
-
+ </div>
     <!-- VIEW 3: REPORTS -->
     <div id="view-reports" class="view-section p-4 md:p-8">
       <div class="mb-6">
@@ -1156,6 +1157,21 @@ function getCachedOracleData() {
   }
 }
 
+// Simple, fast string hash for cache change detection
+function quickHash(str) {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (h2 >>> 0).toString(16) + (h1 >>> 0).toString(16);
+}
+
+let oracleCacheHash = null;
+
 function saveOracleDataToCache(items) {
   const compactItems = (items || [])
     .slice(0, ORACLE_CACHE_MAX_ITEMS)
@@ -1165,17 +1181,29 @@ function saveOracleDataToCache(items) {
       material_id: item.material_id || '', current_stock: item.current_stock ?? 0,
       oracle_code: item.oracle_code || item.code || ''
     }));
-    
-  try { saveOracleCacheToIDB(compactItems); } catch (e) {}
+  
+  // Only persist when the data actually changed (one write at load, not on every fetch)
+  const hash = quickHash(JSON.stringify(compactItems));
+  if (hash === oracleCacheHash) return;
+  oracleCacheHash = hash;
+  
+  // Single write: prefer IndexedDB (larger capacity), fall back to localStorage only if IDB fails
   try {
-    localStorage.setItem(ORACLE_CACHE_KEY, JSON.stringify({ updatedAt: new Date().toISOString(), items: compactItems }));
-  } catch (error) {
-    try { localStorage.removeItem(ORACLE_CACHE_KEY); } catch {}
+    saveOracleCacheToIDB(compactItems);
+  } catch (e) {
+    try {
+      localStorage.setItem(ORACLE_CACHE_KEY, JSON.stringify({ updatedAt: new Date().toISOString(), items: compactItems }));
+    } catch (err) {
+      try { localStorage.removeItem(ORACLE_CACHE_KEY); } catch {}
+    }
   }
 }
 
+let oracleDBPromise = null;
+
 function openOracleIDB() {
-  return new Promise((resolve, reject) => {
+  if (oracleDBPromise) return oracleDBPromise;
+  oracleDBPromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(ORACLE_IDB_DB, 1);
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
@@ -1184,8 +1212,9 @@ function openOracleIDB() {
       }
     };
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => { oracleDBPromise = null; reject(request.error); };
   });
+  return oracleDBPromise;
 }
 
 async function saveOracleCacheToIDB(items) {
@@ -1398,6 +1427,32 @@ function toggleMaterialList(show) {
   }
 }
 
+// Debounce search input so we don't re-render on every keystroke
+let searchDebounceTimer = null;
+function onMaterialSearchKeyup() {
+  const list = document.getElementById('materialList');
+  if (!list.classList.contains('active')) return;
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(filterMaterials, 120);
+}
+
+// Escape HTML to avoid breaking markup / injection
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '<', '>': '>', '"': '"', "'": '&#39;'
+  }[c]));
+}
+
+// Wrap the matched substring in a <mark> highlight
+function highlight(text, filter) {
+  const escaped = escapeHtml(text);
+  if (!filter) return escaped;
+  const idx = escaped.toLowerCase().indexOf(filter);
+  if (idx === -1) return escaped;
+  const match = escaped.slice(idx, idx + filter.length);
+  return escaped.slice(0, idx) + '<mark class="bg-yellow-200 rounded px-0.5">' + match + '</mark>' + escaped.slice(idx + filter.length);
+}
+
 function filterMaterials() {
   const input = document.getElementById('materialSearchInput');
   const filter = input.value.toLowerCase().trim();
@@ -1414,10 +1469,25 @@ function filterMaterials() {
     return;
   }
   
-  const filtered = allOracleMaterials.filter(item => {
-    const searchText = `${item.name} ${item.code || ''} ${item.unit || ''}`.toLowerCase();
-    return searchText.includes(filter);
-  }).slice(0, ORACLE_SEARCH_LIMIT);
+  // Score each item: exact code > exact name > prefix > substring (name/code/unit)
+  const scored = [];
+  for (const item of allOracleMaterials) {
+    const name = (item.name || '').toLowerCase();
+    const code = (item.code || '').toLowerCase();
+    const unit = (item.unit || '').toLowerCase();
+    
+    let score = -1;
+    if (name === filter || code === filter) score = 100;
+    else if (name.startsWith(filter) || code.startsWith(filter)) score = 80;
+    else if (name.includes(filter) || code.includes(filter)) score = 60;
+    else if (unit.includes(filter)) score = 40;
+    else if (`${name} ${code} ${unit}`.includes(filter)) score = 20;
+    
+    if (score > 0) scored.push({ item, score });
+  }
+  
+  scored.sort((a, b) => b.score - a.score);
+  const filtered = scored.slice(0, ORACLE_SEARCH_LIMIT).map(s => s.item);
   
   if (filtered.length === 0) {
     list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-search mr-2"></i>No matching materials</div>';
@@ -1427,10 +1497,10 @@ function filterMaterials() {
       div.className = 'custom-select-option';
       div.innerHTML = `
         <div class="flex-1 min-w-0">
-          <div class="font-semibold text-slate-800 truncate">${item.name}</div>
-          <div class="text-xs text-slate-500 truncate">${item.unit} · ${item.code || 'N/A'}</div>
+          <div class="font-semibold text-slate-800 truncate">${highlight(item.name, filter)}</div>
+          <div class="text-xs text-slate-500 truncate">${escapeHtml(item.unit)} · ${highlight(item.code || 'N/A', filter)}</div>
         </div>
-        ${item.stockValue !== null && item.stockValue !== undefined ? `<div class="text-sm font-bold text-green-600 ml-2 shrink-0">${item.stockValue}</div>` : ''}
+        ${item.stockValue !== null && item.stockValue !== undefined ? `<div class="text-sm font-bold text-green-600 ml-2 shrink-0">${escapeHtml(item.stockValue)}</div>` : ''}
       `;
       div.dataset.id = item.material_id || '';
       div.dataset.name = item.name;
@@ -1505,7 +1575,8 @@ async function loadDashboardTransactions() {
     const mat = allMaterials.find(m => m.id === tx.material_id);
     const matName = mat ? mat.name : 'Unknown';
     const oracleCode = mat ? (mat.oracle_code || 'N/A') : 'N/A';
-    const isLocked = tx.transaction_date !== todayStr;
+const isLocked = tx.transaction_date !== todayStr;
+    const isAdmin = userRole === 'admin';
     const color = tx.type === 'IN' ? 'text-success' : 'text-warning';
     const sign = tx.type === 'IN' ? '+' : '-';
     
@@ -1518,7 +1589,7 @@ async function loadDashboardTransactions() {
       <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${tx.type === 'IN' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${tx.type}</span></td>
       <td class="px-4 py-3 font-bold ${color}">${sign}${tx.quantity}</td>
       <td class="px-4 py-3 text-right">
-        ${isLocked ? '<span class="text-slate-300 text-xs"><i class="fas fa-lock"></i></span>' : `<button onclick="deleteTransaction('${tx.id}')" class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition mobile-touch-target"><i class="fas fa-trash"></i></button>`}
+        ${isLocked && !isAdmin ? '<span class="text-slate-300 text-xs"><i class="fas fa-lock"></i></span>' : `<button onclick="deleteTransaction('${tx.id}')" class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition mobile-touch-target" title="Delete"><i class="fas fa-trash"></i></button>`}
       </td>
     `;
     tbody.appendChild(tr);
@@ -1657,6 +1728,16 @@ function resetBtn(btn, text) {
   btn.innerHTML = text;
 }
 
+function formatSupabaseError(error) {
+  if (!error) return 'Unknown error';
+  const parts = [];
+  if (error.message) parts.push(error.message);
+  if (error.details) parts.push(error.details);
+  if (error.hint) parts.push(error.hint);
+  if (error.code) parts.push(`(Code: ${error.code})`);
+  return parts.join(' — ') || 'Unknown error';
+}
+
 async function deleteTransaction(id) {
   if (!confirm('Delete this entry? This cannot be undone.')) return;
   
@@ -1669,25 +1750,40 @@ async function deleteTransaction(id) {
     return;
   }
   
-  if (txData.transaction_date !== todayStr) {
+const isAdmin = userRole === 'admin';
+  
+  // Admin can delete any transaction row regardless of date or permission flags
+  if (txData.transaction_date !== todayStr && !isAdmin) {
     showToast('Cannot delete transactions older than today', "error");
     return;
   }
   
-  if (txData.type === 'IN' && !canDeleteIn) {
+  if (txData.type === 'IN' && !canDeleteIn && !isAdmin) {
     showToast('Permission Denied: Cannot delete IN transactions', "error");
     return;
   }
   
-  if (txData.type === 'OUT' && !canDeleteOut) {
+  if (txData.type === 'OUT' && !canDeleteOut && !isAdmin) {
     showToast('Permission Denied: Cannot delete OUT transactions', "error");
     return;
   }
   
-  const { error } = await supabaseClient.from('transactions').delete().eq('id', id);
+const { error } = await supabaseClient.from('transactions').delete().eq('id', id);
   
   if (error) {
-    showToast('Delete Error: ' + error.message, "error");
+    const errMsg = formatSupabaseError(error);
+    console.error('Delete transaction error:', error);
+if (error.code === '42501') {
+      showToast(errMsg + ' — The database RLS policy is blocking this delete. Contact the admin to allow DELETE on the transactions table.', "error");
+    } else if (error.code === 'PGRST116') {
+      showToast('Transaction not found (may already be deleted).', "error");
+    } else if (error.code === '23503') {
+      showToast('Delete Failed: Foreign key constraint violation.', "error");
+    } else if (error.code === 'P0001') {
+      showToast(errMsg + ' — A database trigger is blocking this delete. Contact the admin to remove/adjust the lock trigger.', "error");
+    } else {
+      showToast('Delete Error: ' + errMsg, "error");
+    }
   } else {
     const { data: mat } = await supabaseClient
       .from('materials').select('current_stock').eq('id', txData.material_id).single();
