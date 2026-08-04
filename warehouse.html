@@ -310,6 +310,8 @@ input:focus, select:focus, textarea:focus {
   .no-print { display: none !important; }
   body { background: white; }
 }
+
+
 </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
@@ -455,14 +457,14 @@ input:focus, select:focus, textarea:focus {
                 <div class="flex gap-2 bg-slate-100 p-1 rounded-xl">
                   <label class="flex-1 cursor-pointer transaction-type-option active-in rounded-lg" id="inLabel" onclick="highlightTransactionType('IN')" style="background: linear-gradient(135deg, #0f4801 0%, #69f816 50%, #0a3e00 100%);">
                     <input type="radio" name="type" value="IN" checked class="peer sr-only">
-                    <div class="text-center py-2 rounded-lg border-2 border-success bg-white shadow-sm text-success transition-all font-bold text-sm mobile-touch-target">
-                      <i class="fas fa-arrow-down" style="color: white;"></i> IN
+                    <div class="text-center py-2 rounded-lg border-2 border-success bg-white shadow-sm text-success transition-all font-bold text-sm mobile-touch-target" style="color:rgb(25, 0, 255);border-color: rgb(4, 28, 245);">
+                      <i class="fas fa-arrow-down" style="color: rgb(2, 38, 241);"></i> IN
                     </div>
                   </label>
-                  <label class="flex-1 cursor-pointer transaction-type-option rounded-lg" id="outLabel" onclick="highlightTransactionType('OUT')" style="background: linear-gradient(135deg, #3b0148 0%, #16a5f8 50%, #3e2d00 100%);">
+                  <label class="flex-1 cursor-pointer transaction-type-option rounded-lg" id="outLabel" onclick="highlightTransactionType('OUT')" style="background: linear-gradient(135deg, #01a187 0%, #16a5f8 50%, #03e4be 100%);color:white">
                     <input type="radio" name="type" value="OUT" class="peer sr-only">
-                    <div class="text-center py-2 rounded-lg border-2 border-transparent text-slate-600 transition-all font-bold text-sm mobile-touch-target">
-                      <i class="fas fa-arrow-up" style="color: white;"></i> OUT
+                    <div class="text-center py-2 rounded-lg border-2 border-transparent text-slate-600 transition-all font-bold text-sm mobile-touch-target" style="color:red;border-color: rgb(245, 4, 4);">
+                      <i class="fas fa-arrow-up" style="color: rgb(245, 4, 4);"></i> OUT
                     </div>
                   </label>
                 </div>
@@ -479,7 +481,7 @@ input:focus, select:focus, textarea:focus {
                   <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 
                 <select id="materialSelect" class="hidden"></select>
-                <div id="materialList" class="custom-select-list custom-scrollbar" style="margin-top: 10px; width:1000px; background:linear-gradient(135deg, #80e085 0%, #e0f56d 50%, #c7bb4c 100%);"></div>
+                <div id="materialList" class="custom-select-list custom-scrollbar" style="background-color: aquamarine;";></div>
                 </div>
                 <div id="stockInfoBox" class="hidden mt-2 p-2 bg-green-50 border border-green-200 rounded-lg text-xs flex justify-between items-center">
                   <span class="text-slate-600 font-medium">Stock:</span>
@@ -516,13 +518,13 @@ input:focus, select:focus, textarea:focus {
       
 
       <!-- Recent Activity -->
-      <div>
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" style="height:100%;">
-          <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+      <div >
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" style="background: linear-gradient(135deg, #e3fc03 0%, #86f58f 100%);">
+          <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center" >
             <h2 class="font-bold text-slate-700 flex items-center gap-2">
               <div class="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center">
                 <i class="fas fa-history text-slate-600"></i>
-              </div>
+              </div >
               Recent Activity
             </h2>
             <button onclick="loadDashboardTransactions()" class="text-blue-600 hover:text-blue-800 text-sm font-semibold p-2 rounded-lg hover:bg-blue-50 transition mobile-touch-target">
@@ -554,8 +556,8 @@ input:focus, select:focus, textarea:focus {
     <div id="view-inventory" class="view-section p-4 md:p-8">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Inventory</h1>
-          <p class="text-sm text-slate-600 mt-1">Manage your materials and stock levels</p>
+          <h1 class="text-2xl md:text-3xl font-bold text-slate-800" style="color:white" >Inventory</h1>
+          <p class="text-sm text-slate-600 mt-1" style="color:white";>Manage your materials and stock levels</p>
         </div>
         <button id="addMaterialBtn" onclick="openAddMaterialModal()" class="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-md transition btn-press mobile-touch-target flex items-center gap-2 hidden">
           <i class="fas fa-plus"></i> Add Material
@@ -597,10 +599,10 @@ input:focus, select:focus, textarea:focus {
     </div>
  </div>
     <!-- VIEW 3: REPORTS -->
-    <div id="view-reports" class="view-section p-4 md:p-8">
-      <div class="mb-6">
-        <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Reports</h1>
-        <p class="text-sm text-slate-600 mt-1">Analyze stock movements and trends</p>
+        <div id="view-reports" class="view-section p-4 md:p-8" style="background: linear-gradient(135deg, #080808 0%, #414141 100%);display:scroll;">
+          <div class="mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-800" style="color:white;">Reports</h1>
+        <p class="text-sm text-slate-600 mt-1" style="color:white;">Analyze stock movements and trends</p>
       </div>
 
       <!-- Filters -->
@@ -1295,7 +1297,7 @@ function renderOracleMaterialOptions(items) {
   
   const list = document.getElementById('materialList');
   if (!list) return;
-  list.innerHTML = '<div class="p-4 text-slate-500 text-center text-sm" style="background-color: #f0f0f0;"><i class="fas fa-search mr-2"></i>Type to search materials...</div>';
+  
   
   const previewCount = Math.min(ORACLE_SEARCH_LIMIT, items.length);
   
@@ -1460,7 +1462,7 @@ function filterMaterials() {
   list.innerHTML = '';
   
   if (!filter) {
-    list.innerHTML = '<div class="p-4 text-slate-500 text-center" style="background-color: #f0f0f0; margin: 0;"><i class="fas fa-search mr-2"></i>Type to search materials...</div>';
+   
     return;
   }
   
@@ -1655,8 +1657,20 @@ async function handleTransactionSubmit(e) {
     return;
   }
   
-  try {
-    if (!matId && selectedOracleMaterial) {
+try {
+    // Rule: OUT transactions are only allowed for materials that are already
+    // present in the inventory (i.e. have an existing record in 'materials').
+    // If the selected material is NOT registered and the user is trying to OUT,
+    // block the transaction. Auto-creation is only permitted for IN transactions.
+    if (type === 'OUT' && !matId) {
+      const matName = selectedOracleMaterial?.name || 'This material';
+      showToast(`Cannot OUT: ${matName} is not in the inventory. Please register it first (IN) or contact admin.`, "error");
+      resetBtn(btn, originalText);
+      return;
+    }
+
+    // Auto-create the material only for IN transactions when it is not yet registered.
+    if (!matId && selectedOracleMaterial && type === 'IN') {
       const { data: inserted, error: insertError } = await supabaseClient
         .from('materials')
         .insert([{
@@ -1890,7 +1904,7 @@ function filterInventory() {
   
   if (!term) {
     rows.forEach(row => {
-      row.style.display = 'none';
+      row.style.display = '';
     });
     return;
   }
