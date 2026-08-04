@@ -579,7 +579,7 @@ input:focus, select:focus, textarea:focus {
           </div>
         </div>
         <div class="table-container">
-          <table class="w-full text-left text-sm text-slate-600 min-w-[900px]">
+<table class="w-full text-left text-sm text-slate-600 min-w-[1100px]">
             <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0">
               <tr>
                 <th class="px-6 py-3">Material Name</th>
@@ -587,6 +587,8 @@ input:focus, select:focus, textarea:focus {
                 <th class="px-6 py-3">Category</th>
                 <th class="px-6 py-3">Unit</th>
                 <th class="px-6 py-3">Stock</th>
+                <th class="px-6 py-3">Price</th>
+                <th class="px-6 py-3">Total</th>
                 <th class="px-6 py-3">Min</th>
                 <th class="px-6 py-3">Status</th>
                 <th class="px-6 py-3 text-right">Actions</th>
@@ -757,7 +759,11 @@ input:focus, select:focus, textarea:focus {
         <input type="text" id="matUnit" placeholder="PCS, KG, M" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" required>
       </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div>
+        <label class="block text-sm text-slate-600 mb-2 font-semibold">Price <span class="text-danger">*</span></label>
+        <input type="number" id="matPrice" value="0" min="0" step="0.01" inputmode="decimal" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" placeholder="0.00" required>
+      </div>
       <div>
         <label class="block text-sm text-slate-600 mb-2 font-semibold">Current Stock</label>
         <input type="number" id="matStock" value="0" inputmode="numeric" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target">
@@ -1678,6 +1684,7 @@ try {
           oracle_code: selectedOracleMaterial.code || '',
           category: selectedOracleMaterial.type || '',
           unit: selectedOracleMaterial.unit || 'N/A',
+          price: 0,
           current_stock: 0, min_stock_threshold: 5
         }]).select().single();
         
@@ -1818,12 +1825,12 @@ if (error.code === '42501') {
 // ==========================================
 async function loadInventory() {
   const tbody = document.getElementById('inventoryTableBody');
-  tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8"><div class="loader"></div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8"><div class="loader"></div></td></tr>';
   
   const { data, error } = await supabaseClient.from('materials').select('*').order('name');
   
   if (error) {
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-red-500 py-8">Error loading inventory</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-red-500 py-8">Error loading inventory</td></tr>';
     return;
   }
   
@@ -1831,7 +1838,7 @@ allMaterials = data;
   tbody.innerHTML = '';
   
   if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-slate-400 py-8"><i class="fas fa-box-open text-2xl mb-2 block"></i>No materials found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-slate-400 py-8"><i class="fas fa-box-open text-2xl mb-2 block"></i>No materials found</td></tr>';
     return;
   }
   
@@ -1847,6 +1854,7 @@ allMaterials = data;
         oracle_code: mat.oracle_code || '',
         category: mat.category || '',
         unit: mat.unit || '',
+        price: 0,
         current_stock: 0,
         min_stock_threshold: 0,
         _count: 0
@@ -1859,9 +1867,11 @@ allMaterials = data;
     if (!grouped[key].name && mat.name) grouped[key].name = mat.name;
     if (!grouped[key].category && mat.category) grouped[key].category = mat.category;
     if (!grouped[key].unit && mat.unit) grouped[key].unit = mat.unit;
+    if (!grouped[key].price && mat.price) grouped[key].price = Number(mat.price) || 0;
   });
   const groupedList = Object.values(grouped);
   
+  let grandTotal = 0;
   groupedList.forEach(mat => {
     const isLow = mat.current_stock <= mat.min_stock_threshold;
     const statusHtml = isLow
@@ -1869,6 +1879,9 @@ allMaterials = data;
       : `<span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1"><i class="fas fa-check-circle"></i>OK</span>`;
     const rowClass = isLow ? 'bg-red-50' : 'hover:bg-slate-50 transition';
     const oracleCode = mat.oracle_code || 'N/A';
+    const price = Number(mat.price) || 0;
+    const total = price * mat.current_stock;
+    grandTotal += total;
     
     let actionButtons = '<span class="text-slate-400 text-xs">No access</span>';
     if (canEditMaterial || canDeleteMaterial) {
@@ -1890,12 +1903,25 @@ allMaterials = data;
       <td class="px-6 py-4">${mat.category || '<span class="text-slate-400">-</span>'}</td>
       <td class="px-6 py-4">${mat.unit}</td>
       <td class="px-6 py-4 font-bold ${isLow ? 'text-red-600' : 'text-slate-700'}">${mat.current_stock}</td>
+      <td class="px-6 py-4">$${price.toFixed(2)}</td>
+      <td class="px-6 py-4 font-bold text-slate-800">$${total.toFixed(2)}</td>
       <td class="px-6 py-4">${mat.min_stock_threshold}</td>
       <td class="px-6 py-4">${statusHtml}</td>
       <td class="px-6 py-4 text-right">${actionButtons}</td>
     `;
     tbody.appendChild(tr);
   });
+  
+  // Footer total row — total inventory value (sum of price × stock)
+  const totalRow = document.createElement('tr');
+  totalRow.className = 'bg-slate-100';
+  totalRow.innerHTML = `
+    <td colspan="5" class="px-6 py-4 text-right uppercase tracking-wide text-slate-600 font-bold">Total Inventory Value</td>
+    <td class="px-6 py-4"></td>
+    <td class="px-6 py-4 text-green-700 font-bold text-base">$${grandTotal.toFixed(2)}</td>
+    <td colspan="3" class="px-6 py-4"></td>
+  `;
+  tbody.appendChild(totalRow);
 }
 
 function filterInventory() {
@@ -1927,6 +1953,7 @@ function openAddMaterialModal() {
   document.getElementById('matCategory').value = '';
   document.getElementById('matUnit').value = '';
   document.getElementById('matStock').value = '0';
+  document.getElementById('matPrice').value = '0';
   document.getElementById('matThreshold').value = '5';
   const modal = document.getElementById('materialModal');
   modal.classList.remove('hidden');
@@ -1948,6 +1975,7 @@ async function openEditMaterialModal(id) {
   document.getElementById('matCategory').value = mat.category || '';
   document.getElementById('matUnit').value = mat.unit || '';
   document.getElementById('matStock').value = mat.current_stock || 0;
+  document.getElementById('matPrice').value = mat.price ?? 0;
   document.getElementById('matThreshold').value = mat.min_stock_threshold || 5;
   
   const modal = document.getElementById('materialModal');
@@ -1968,6 +1996,7 @@ async function saveMaterial() {
   const category = document.getElementById('matCategory').value.trim();
   const unit = document.getElementById('matUnit').value.trim();
   const stock = parseInt(document.getElementById('matStock').value) || 0;
+  const price = parseFloat(document.getElementById('matPrice').value) || 0;
   const threshold = parseInt(document.getElementById('matThreshold').value) || 5;
   
   if (!name) { showToast('Material name is required', "error"); return; }
@@ -1978,7 +2007,7 @@ async function saveMaterial() {
       if (!canEditMaterial) { showToast('Permission Denied', "error"); return; }
       const { error } = await supabaseClient.from('materials').update({
         name, oracle_code: oracleCode, category, unit,
-        current_stock: stock, min_stock_threshold: threshold
+        price, current_stock: stock, min_stock_threshold: threshold
       }).eq('id', id);
       if (error) throw error;
       showToast('Material updated successfully!', "success");
@@ -1986,7 +2015,7 @@ async function saveMaterial() {
       if (!canAddMaterial) { showToast('Permission Denied', "error"); return; }
       const { error } = await supabaseClient.from('materials').insert([{
         name, oracle_code: oracleCode, category, unit,
-        current_stock: stock, min_stock_threshold: threshold
+        price, current_stock: stock, min_stock_threshold: threshold
       }]);
       if (error) throw error;
       showToast('Material added successfully!', "success");
