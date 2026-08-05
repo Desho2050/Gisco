@@ -478,7 +478,7 @@ input:focus, select:focus, textarea:focus {
               <div class="lg:col-span-2" >
                 <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Material <span class="text-danger">*</span></label>
                 <div class="relative">
-<input type="text" id="materialSearchInput" class="custom-select-input pl-10" placeholder="Search materials..." autocomplete="off" onkeyup="onMaterialSearchKeyup()" onclick="toggleMaterialList(true)">
+<input type="text" id="materialSearchInput" class="custom-select-input pl-10" placeholder="Search materials..." autocomplete="off" onkeyup="onMaterialSearchKeyup()" onclick="toggleMaterialList(true)" style="color:black;">
                   <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 
                 <select id="materialSelect" class="hidden"></select>
@@ -499,7 +499,7 @@ input:focus, select:focus, textarea:focus {
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Qty <span class="text-danger">*</span></label>
                 <div class="relative">
-                  <input type="number" id="qtyInput" min="1" placeholder="0" inputmode="numeric" pattern="[0-9]*" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-lg font-semibold mobile-touch-target" required>
+                  <input type="number" id="qtyInput" min="1" placeholder="0" inputmode="numeric" pattern="[0-9]*" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-lg font-semibold mobile-touch-target" required style="color:black;">
                   <i class="fas fa-hashtag absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 </div>
               </div>
@@ -950,6 +950,11 @@ function toggleNotifications() {
 }
 
 function switchView(viewName) {
+  // Prevent non-admin users from navigating to the main (Dashboard) page
+  if (viewName === 'dashboard' && userRole !== 'admin') {
+    showToast('Access restricted: Dashboard is available for admins only', "error");
+    viewName = 'inventory';
+  }
   document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
   document.getElementById(`view-${viewName}`).classList.add('active');
   
@@ -1024,8 +1029,28 @@ async function loadUserRole() {
     canEditMaterial = data?.can_edit_material || false;
     canDeleteMaterial = data?.can_delete_material || false;
   }
-  updateRoleInfo();
+updateRoleInfo();
   updateInventoryPermissions();
+  updateNavVisibility();
+}
+
+function updateNavVisibility() {
+  const isAdmin = userRole === 'admin';
+  // Top nav Dashboard button
+  const topDash = document.getElementById('topnav-dashboard');
+  if (topDash) topDash.style.display = isAdmin ? '' : 'none';
+  // Bottom nav Home and Add buttons
+  const navDash = document.getElementById('nav-dashboard');
+  if (navDash) navDash.style.display = isAdmin ? '' : 'none';
+  const addBtn = document.querySelector('.bottom-nav-item[onclick*="switchView(\'dashboard\')"][style*="position: relative;"]');
+  if (addBtn) addBtn.style.display = isAdmin ? '' : 'none';
+  // If a non-admin is currently on the dashboard view, force them to the inventory view
+  if (!isAdmin) {
+    const dashView = document.getElementById('view-dashboard');
+    if (dashView && dashView.classList.contains('active')) {
+      switchView('inventory');
+    }
+  }
 }
 
 function updateInventoryPermissions() {
