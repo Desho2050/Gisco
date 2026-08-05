@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -65,7 +66,7 @@ body { overscroll-behavior-y: contain; }
 
 /* View Management */
 .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
-.view-section.active { display: block; }
+.view-section.active { display: block; color: white; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Searchable Dropdown - Mobile Enhanced */
@@ -329,7 +330,7 @@ input:focus, select:focus, textarea:focus {
   </div>
   <div class="flex items-center gap-2">
     <div class="relative">
-      <button onclick="toggleNotifications()" class="p-2 rounded-lg hover:bg-slate-800 transition mobile-touch-target flex items-center justify-center" aria-label="Notifications">
+      <button onclick="toggleNotifications()" class="p-2 rounded-lg hover:bg-slate-800 transition mobile-touch-target flex items-center justify-center" aria-label="Notifications" >
         <i class="fas fa-bell text-slate-300 text-lg"></i>
         <span class="notification-badge" id="notifBadge" style="display:none;">0</span>
       </button>
@@ -341,8 +342,8 @@ input:focus, select:focus, textarea:focus {
 </nav>
 
 <!-- Top Navigation Bar -->
-<nav class="top-nav no-print shrink-0">
-  <button onclick="switchView('dashboard')" class="top-nav-btn active" id="topnav-dashboard">
+<nav class="top-nav no-print shrink-0" style="background: linear-gradient(135deg, #02ff80 0%, #01f3fc 50%, #d7fd03 100%);">
+  <button onclick="switchView('dashboard')" class="top-nav-btn active" id="topnav-dashboard" >
     <i class="fas fa-home"></i> Dashboard
   </button>
   <button onclick="switchView('inventory')" class="top-nav-btn" id="topnav-inventory">
@@ -559,9 +560,14 @@ input:focus, select:focus, textarea:focus {
           <h1 class="text-2xl md:text-3xl font-bold text-slate-800" style="color:white" >Inventory</h1>
           <p class="text-sm text-slate-600 mt-1" style="color:white";>Manage your materials and stock levels</p>
         </div>
-        <button id="addMaterialBtn" onclick="openAddMaterialModal()" class="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-md transition btn-press mobile-touch-target flex items-center gap-2 hidden">
-          <i class="fas fa-plus"></i> Add Material
-        </button>
+<div class="flex items-center gap-2">
+          <button onclick="printInventory()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-md transition btn-press mobile-touch-target flex items-center gap-2">
+            <i class="fas fa-print"></i> Print
+          </button>
+          <button id="addMaterialBtn" onclick="openAddMaterialModal()" class="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-md transition btn-press mobile-touch-target flex items-center gap-2 hidden">
+            <i class="fas fa-plus"></i> Add Material
+          </button>
+        </div>
       </div>
 
       <!-- Permissions Display -->
@@ -2317,6 +2323,181 @@ function exportReport() {
 }
 
 // ==========================================
+// PRINT FUNCTIONS
+// ==========================================
+function openPrintWindow(title, tableHtml, summaryHtml) {
+  const printWindow = window.open('', '_blank', 'width=900,height=700');
+  if (!printWindow) {
+    showToast('Please allow pop-ups to print', "error");
+    return;
+  }
+  const dateStr = new Date().toLocaleString();
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${title}</title>
+      <style>
+        body { font-family: Arial, sans-serif; color: #0f172a; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #2563eb; padding-bottom: 12px; margin-bottom: 16px; }
+        .header h1 { margin: 0; font-size: 22px; color: #1e40af; }
+        .header .meta { font-size: 12px; color: #64748b; text-align: right; }
+        .summary { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 13px; }
+        .summary strong { color: #1e40af; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background: #1e40af; color: #fff; padding: 8px 6px; text-align: left; font-size: 11px; text-transform: uppercase; }
+        td { padding: 6px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f8fafc; }
+        .low { color: #dc2626; font-weight: bold; }
+        .ok { color: #16a34a; font-weight: bold; }
+        .total-row td { font-weight: bold; background: #e0e7ff; }
+        .footer { margin-top: 24px; font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+        @media print { body { padding: 0; } .no-print { display: none; } }
+        .no-print { margin-top: 16px; }
+        .no-print button { background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; cursor: pointer; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>${title}</h1>
+        <div class="meta">4378M Project<br>Warehouse Management<br>${dateStr}</div>
+      </div>
+      ${summaryHtml || ''}
+      ${tableHtml}
+      <div class="footer">Generated by 4378M Project Warehouse Management System</div>
+      <div class="no-print">
+        <button onclick="window.print()">Print</button>
+      <\/div>
+    <\/body>
+    <\/html>
+  `);
+  printWindow.document.close();
+}
+
+function printInventory() {
+  if (!allMaterials || allMaterials.length === 0) {
+    showToast('No inventory data to print', "error");
+    return;
+  }
+  
+  // Group by oracle code (matching what loadInventory displays)
+  const grouped = {};
+  allMaterials.forEach(mat => {
+    const key = (mat.oracle_code || '').toString().trim() || mat.name;
+    if (!grouped[key]) {
+      grouped[key] = {
+        name: mat.name,
+        oracle_code: mat.oracle_code || '',
+        category: mat.category || '',
+        unit: mat.unit || '',
+        current_stock: 0,
+        min_stock_threshold: 0,
+        price: Number(mat.price) || 0
+      };
+    }
+    grouped[key].current_stock += Number(mat.current_stock) || 0;
+    grouped[key].min_stock_threshold += Number(mat.min_stock_threshold) || 0;
+    if (!grouped[key].name && mat.name) grouped[key].name = mat.name;
+    if (!grouped[key].category && mat.category) grouped[key].category = mat.category;
+    if (!grouped[key].unit && mat.unit) grouped[key].unit = mat.unit;
+    if (!grouped[key].price && mat.price) grouped[key].price = Number(mat.price) || 0;
+  });
+  const groupedList = Object.values(grouped);
+  
+  let grandTotal = 0;
+  let rows = '';
+  groupedList.forEach(mat => {
+    const price = Number(mat.price) || 0;
+    const total = price * mat.current_stock;
+    grandTotal += total;
+    const isLow = mat.current_stock <= mat.min_stock_threshold;
+    const status = isLow ? '<span class="low">LOW</span>' : '<span class="ok">OK</span>';
+    rows += `
+      <tr>
+        <td>${escapeHtml(mat.name)}</td>
+        <td>${escapeHtml(mat.oracle_code || 'N/A')}</td>
+        <td>${escapeHtml(mat.category || '-')}</td>
+        <td>${escapeHtml(mat.unit)}</td>
+        <td>${mat.current_stock}</td>
+        <td>$${price.toFixed(2)}</td>
+        <td>$${total.toFixed(2)}</td>
+        <td>${mat.min_stock_threshold}</td>
+        <td>${status}</td>
+      </tr>
+    `;
+  });
+  
+  const tableHtml = `
+    <table>
+      <thead>
+        <tr>
+          <th>Material</th><th>Oracle Code</th><th>Category</th><th>Unit</th>
+          <th>Stock</th><th>Price</th><th>Total</th><th>Min</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+        <tr class="total-row">
+          <td colspan="6" style="text-align:right;">Total Inventory Value</td>
+          <td>$${grandTotal.toFixed(2)}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+  
+  const summaryHtml = `
+    <div class="summary">
+      <span>Total Items: <strong>${groupedList.length}</strong></span>
+      <span>Total Value: <strong>$${grandTotal.toFixed(2)}</strong></span>
+    </div>
+  `;
+  
+  openPrintWindow('Inventory Report', tableHtml, summaryHtml);
+}
+
+function printLowStock() {
+  const lowStockItems = allMaterials.filter(m => m.current_stock <= m.min_stock_threshold);
+  
+  if (lowStockItems.length === 0) {
+    showToast('No low stock items to print', "error");
+    return;
+  }
+  
+  let rows = '';
+  lowStockItems.forEach(mat => {
+    rows += `
+      <tr>
+        <td>${escapeHtml(mat.name || 'Unknown')}</td>
+        <td>${escapeHtml(mat.oracle_code || mat.code || 'N/A')}</td>
+        <td>${mat.current_stock ?? 0}</td>
+        <td>${mat.min_stock_threshold ?? 0}</td>
+        <td><span class="low">LOW</span></td>
+      </tr>
+    `;
+  });
+  
+  const tableHtml = `
+    <table>
+      <thead>
+        <tr>
+          <th>Material</th><th>Oracle Code</th><th>Current Stock</th><th>Min Threshold</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  
+  const summaryHtml = `
+    <div class="summary">
+      <span>Low Stock Items: <strong>${lowStockItems.length}</strong></span>
+    </div>
+  `;
+  
+  openPrintWindow('Low Stock Report', tableHtml, summaryHtml);
+}
+
+// ==========================================
 // DASHBOARD POPUP MODALS
 // ==========================================
 async function openLowStockModal() {
@@ -2435,10 +2616,15 @@ function closeTodayOutModal() {
 <div id="lowStockModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
   <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl modal-animate modal-mobile-full md:max-w-2xl overflow-y-auto max-h-[90vh]">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+<h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
         <i class="fas fa-exclamation-triangle text-red-500"></i> Low Stock Items
       </h3>
-      <button onclick="closeLowStockModal()" class="p-2 rounded-lg hover:bg-slate-100 mobile-touch-target"><i class="fas fa-times"></i></button>
+      <div class="flex items-center gap-2">
+        <button onclick="printLowStock()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md transition btn-press mobile-touch-target flex items-center gap-2">
+          <i class="fas fa-print"></i> Print
+        </button>
+        <button onclick="closeLowStockModal()" class="p-2 rounded-lg hover:bg-slate-100 mobile-touch-target"><i class="fas fa-times"></i></button>
+      </div>
     </div>
     <div class="table-container">
       <table class="w-full text-sm">
