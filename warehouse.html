@@ -416,10 +416,13 @@ input:focus, select:focus, textarea:focus {
           </div>
         </div>
         
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openLowStockModal()" style="background: linear-gradient(135deg, #6f0101 0%, #f8a116 50%, #6b0000 100%); padding: 20px; border-radius: 16px;">
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover cursor-pointer" onclick="openLowStockModal()" style="background: linear-gradient(135deg, #6f0101 0%, #f8a116 50%, #6b0000 100%); padding: 20px; border-radius: 16px;">
           <div class="min-w-0">
             <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate" style="color: white;">Low Stock</p>
             <h3 class="text-xl md:text-2xl font-bold text-danger mt-1" id="dashLowStock" style="color: white;">-</h3>
+            <button onclick="event.stopPropagation(); printLowStock()" class="mt-2 bg-white/90 hover:bg-white text-red-600 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition btn-press flex items-center gap-1.5 mobile-touch-target" title="Print Low Stock">
+              <i class="fas fa-print"></i> Print
+            </button>
           </div>
           <div class="bg-red-50 p-2 md:p-3 rounded-xl text-danger shrink-0" style="background: linear-gradient(135deg, #6f0101 0%, #f8a116 50%, #6b0000 100%);color:white">
             <i class="fas fa-exclamation-triangle text-lg md:text-xl"></i>
@@ -430,6 +433,9 @@ input:focus, select:focus, textarea:focus {
           <div class="min-w-0">
             <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate" style="color: white;">Today's In</p>
             <h3 class="text-xl md:text-2xl font-bold text-success mt-1" id="dashTodayIn" style="color: white;">-</h3>
+            <button onclick="event.stopPropagation(); printTodayIn()" class="mt-2 bg-white/90 hover:bg-white text-green-600 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition btn-press flex items-center gap-1.5 mobile-touch-target" title="Print Today's In">
+              <i class="fas fa-print"></i> Print
+            </button>
           </div>
           <div class="bg-green-50 p-2 md:p-3 rounded-xl text-success shrink-0" style="background: linear-gradient(135deg, #0f4801 0%, #69f816 50%, #0a3e00 100%);color:white">
             <i class="fas fa-arrow-down text-lg md:text-xl" ></i>
@@ -440,6 +446,9 @@ input:focus, select:focus, textarea:focus {
           <div class="min-w-0">
             <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate" style="color: white;">Today's Out</p>
             <h3 class="text-xl md:text-2xl font-bold text-warning mt-1" id="dashTodayOut" style="color: white;">-</h3>
+            <button onclick="event.stopPropagation(); printTodayOut()" class="mt-2 bg-white/90 hover:bg-white text-orange-600 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition btn-press flex items-center gap-1.5 mobile-touch-target" title="Print Today's Out">
+              <i class="fas fa-print"></i> Print
+            </button>
           </div>
           <div class="bg-orange-50 p-2 md:p-3 rounded-xl text-warning shrink-0" style="background: linear-gradient(135deg, #3b0148 0%, #16a5f8 50%, #3e2d00 100%);color:white">
             <i class="fas fa-arrow-up text-lg md:text-xl"></i>
@@ -3042,23 +3051,26 @@ const summaryHtml = `
   openPrintWindow('Low Stock Report', tableHtml, summaryHtml);
 }
 
-function printTodayIn() {
-  const tbody = document.getElementById('todayInTableBody');
-  if (!tbody || !tbody.querySelector('tr') || tbody.innerText.includes('No IN transactions')) {
-    showToast('No IN transactions to print', "error");
+async function printTodayIn() {
+  const { data, error } = await supabaseClient.from('transactions').select('material_id, quantity, created_at').eq('transaction_date', todayStr).eq('type', 'IN').order('created_at', { ascending: false });
+  
+  if (error || !data || data.length === 0) {
+    showToast('No IN transactions today to print', "error");
     return;
   }
   
   let rows = '';
-  tbody.querySelectorAll('tr').forEach(tr => {
-    const cells = tr.querySelectorAll('td');
-    if (cells.length < 4) return;
+  data.forEach(tx => {
+    const mat = allMaterials.find(m => m.id === tx.material_id);
+    const matName = mat ? mat.name : 'Unknown';
+    const oracleCode = mat ? (mat.oracle_code || mat.code || 'N/A') : 'N/A';
+    const time = new Date(tx.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     rows += `
       <tr>
-        <td>${escapeHtml(cells[0].innerText)}</td>
-        <td>${escapeHtml(cells[1].innerText)}</td>
-        <td>+${cells[2].innerText}</td>
-        <td>${escapeHtml(cells[3].innerText)}</td>
+        <td>${escapeHtml(matName)}</td>
+        <td>${escapeHtml(oracleCode)}</td>
+        <td>+${tx.quantity}</td>
+        <td>${escapeHtml(time)}</td>
       </tr>
     `;
   });
@@ -3076,7 +3088,7 @@ function printTodayIn() {
   
   const summaryHtml = `
     <div class="summary">
-      <span>Today's In Items: <strong>${tbody.querySelectorAll('tr').length}</strong></span>
+      <span>Today's In Items: <strong>${data.length}</strong></span>
       <span>Date: <strong>${todayStr}</strong></span>
     </div>
   `;
@@ -3084,23 +3096,26 @@ function printTodayIn() {
   openPrintWindow('Today\'s In Items Report', tableHtml, summaryHtml);
 }
 
-function printTodayOut() {
-  const tbody = document.getElementById('todayOutTableBody');
-  if (!tbody || !tbody.querySelector('tr') || tbody.innerText.includes('No OUT transactions')) {
-    showToast('No OUT transactions to print', "error");
+async function printTodayOut() {
+  const { data, error } = await supabaseClient.from('transactions').select('material_id, quantity, created_at').eq('transaction_date', todayStr).eq('type', 'OUT').order('created_at', { ascending: false });
+  
+  if (error || !data || data.length === 0) {
+    showToast('No OUT transactions today to print', "error");
     return;
   }
   
   let rows = '';
-  tbody.querySelectorAll('tr').forEach(tr => {
-    const cells = tr.querySelectorAll('td');
-    if (cells.length < 4) return;
+  data.forEach(tx => {
+    const mat = allMaterials.find(m => m.id === tx.material_id);
+    const matName = mat ? mat.name : 'Unknown';
+    const oracleCode = mat ? (mat.oracle_code || mat.code || 'N/A') : 'N/A';
+    const time = new Date(tx.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     rows += `
       <tr>
-        <td>${escapeHtml(cells[0].innerText)}</td>
-        <td>${escapeHtml(cells[1].innerText)}</td>
-        <td>-${cells[2].innerText}</td>
-        <td>${escapeHtml(cells[3].innerText)}</td>
+        <td>${escapeHtml(matName)}</td>
+        <td>${escapeHtml(oracleCode)}</td>
+        <td>-${tx.quantity}</td>
+        <td>${escapeHtml(time)}</td>
       </tr>
     `;
   });
@@ -3118,7 +3133,7 @@ function printTodayOut() {
   
   const summaryHtml = `
     <div class="summary">
-      <span>Today's Out Items: <strong>${tbody.querySelectorAll('tr').length}</strong></span>
+      <span>Today's Out Items: <strong>${data.length}</strong></span>
       <span>Date: <strong>${todayStr}</strong></span>
     </div>
   `;
