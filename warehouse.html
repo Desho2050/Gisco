@@ -123,7 +123,7 @@ body { overscroll-behavior-y: contain; }
   font-family: inherit;
   border-radius: 15px;
   border: solid 2px;
-  border-color: #69f816;
+  border-color: rgb(250, 252, 249);
   background: linear-gradient(90deg, #02fa2b 85%, #e0f003 90%, #05d1af 80%);
 }
 .top-nav-btn:hover { background: #f1f5f9; color: #1e40af; }
@@ -327,7 +327,7 @@ input:focus, select:focus, textarea:focus {
     </div>
     <div class="hidden sm:block">
       <span class="font-bold text-base tracking-wide block">4378M Project</span>
-      <span class="text-xs text-slate-400">Warehouse Management</span>
+      <span class="text-xs text-slate-400" style="border-color:white; border-top:white;border-bottom:whitesmoke" border:2px;>Warehouse Management</span>
     </div>
     <span class="font-bold text-lg tracking-wide sm:hidden">Stock</span>
   </div>
@@ -396,12 +396,12 @@ input:focus, select:focus, textarea:focus {
 
       <!-- Stats Row -->
       <div class="grid grid-cols-2 xl:grid-cols-5 gap-3 md:gap-4 mb-6" >
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover " style="background: linear-gradient(135deg, #5b086d 0%, #f816da 50%, #830866 100%); padding: 20px; border-radius: 16px;">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between card-hover " style="background: linear-gradient(135deg, #00645f 0%, #164bf8 50%, #081a83 100%); padding: 20px; border-radius: 16px;">
           <div class="min-w-0">
             <p class="text-[10px] md:text-xs text-slate-500 uppercase font-bold tracking-wider truncate" style="color: white;">Total Items</p>
             <h3 class="text-xl md:text-2xl font-bold text-slate-800 mt-1" id="dashTotalItems" style="color: white;">-</h3>
           </div>
-          <div class="bg-blue-50 p-2 md:p-3 rounded-xl text-blue-600 shrink-0" style="background: linear-gradient(135deg, #5b086d 0%, #f816da 50%, #830866 100%);color:white">
+          <div class="bg-blue-50 p-2 md:p-3 rounded-xl text-blue-600 shrink-0" style="background: linear-gradient(135deg, #00645f 0%, #164bf8 50%, #081a83 100%);color:white">
             <i class="fas fa-cubes text-lg md:text-xl"></i>
           </div>
         </div>
@@ -510,7 +510,7 @@ input:focus, select:focus, textarea:focus {
                   <span class="font-bold text-green-700" id="currentStockDisplay">-</span>
                 </div>
                 <div id="oracleCodeBox" class="hidden mt-1 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs">
-                  <span class="text-slate-600 font-medium">Oracle:</span>
+                  <span class="text-slate-600 font-medium" >Oracle:</span>
                   <span class="font-bold text-blue-700 ml-1" id="oracleCodeDisplay">-</span>
                 </div>
                 <p id="materialError" class="text-danger text-xs mt-1 hidden font-semibold"><i class="fas fa-exclamation-circle mr-1"></i>Please select a material</p>
@@ -546,25 +546,25 @@ input:focus, select:focus, textarea:focus {
       <!-- Recent Activity -->
       <div >
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" style="background: linear-gradient(135deg, #e3fc03 0%, #86f58f 100%);">
-          <div class="p-4 border-b border-slate-100 bg-slate-50">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <h2 class="font-bold text-slate-700 flex items-center gap-2">
+          <div class="p-4 border-b border-slate-100 bg-slate-50"style="background:black;">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3" >
+              <h2 class="font-bold text-slate-700 flex items-center gap-2" style="color:white;" >
                 <div class="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center">
-                  <i class="fas fa-history text-slate-600"></i>
+                  <i class="fas fa-history text-slate-600" ></i>
                 </div >
                 Recent Activity
               </h2>
-              <div class="flex flex-wrap items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2" >
                 <div class="flex items-center gap-1.5">
-                  <label class="text-xs font-semibold text-slate-500">From</label>
+                  <label class="text-xs font-semibold text-slate-500" style="color:white;">From</label>
                   <input type="date" id="recentActivityStart" onchange="loadDashboardTransactions()" class="p-2 border-2 border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" style="color:black;">
                 </div>
-                <div class="flex items-center gap-1.5">
-                  <label class="text-xs font-semibold text-slate-500">To</label>
+                <div class="flex items-center gap-1.5" >
+                  <label class="text-xs font-semibold text-slate-500"style="color:white;">To</label>
                   <input type="date" id="recentActivityEnd" onchange="loadDashboardTransactions()" class="p-2 border-2 border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" style="color:black;">
-                </div>
-                <button onclick="loadDashboardTransactions()" class="text-blue-600 hover:text-blue-800 text-sm font-semibold p-2 rounded-lg hover:bg-blue-50 transition mobile-touch-target">
-                  <i class="fas fa-sync-alt mr-1"></i>Refresh
+                </div style="border-radius:15px;border:1px;border-color:white;">
+                <button onclick="loadDashboardTransactions()" class="text-blue-600 hover:text-blue-800 text-sm font-semibold p-2 rounded-lg hover:gray transition mobile-touch-target" style="color:white;border-radius:15px;border:1px;border-color:white;">
+                  <i class="fas fa-sync-alt mr-1" style="color:white;"></i>Refresh
                 </button>
               </div>
             </div>
@@ -572,14 +572,14 @@ input:focus, select:focus, textarea:focus {
           <div class="table-container scroll-shadow-right">
             <table class="w-full text-left text-sm text-slate-600">
               <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0">
-                <tr>
-                  <th class="px-4 py-3">Date</th>
-                  <th class="px-4 py-3">Material</th>
-                  <th class="px-4 py-3 hidden sm:table-cell">Oracle</th>
-                  <th class="px-4 py-3">Type</th>
-                  <th class="px-4 py-3">Qty</th>
-                  <th class="px-4 py-3">Notes</th>
-                  <th class="px-4 py-3 text-right">Action</th>
+                <tr style="background:linear-gradient(  135deg, #363636 0%, #000801 100%);">
+                  <th class="px-4 py-3" style="color:rgb(250, 250, 250);">Date</th>
+                  <th class="px-4 py-3" style="color:rgb(250, 250, 250);">Material</th>
+                  <th class="px-4 py-3 hidden sm:table-cell" style="color:white;">Oracle</th>
+                  <th class="px-4 py-3" style="color:rgb(250, 250, 250);">Type</th>
+                  <th class="px-4 py-3" style="color:white;">Qty</th>
+                  <th class="px-4 py-3" style="color:white">Notes</th>
+                  <th class="px-4 py-3 text-right" style="color:white;">Action</th>
                 </tr>
               </thead>
               <tbody id="dashboardTableBody" class="divide-y divide-slate-100"></tbody>
