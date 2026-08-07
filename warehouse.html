@@ -542,16 +542,28 @@ input:focus, select:focus, textarea:focus {
       <!-- Recent Activity -->
       <div >
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" style="background: linear-gradient(135deg, #e3fc03 0%, #86f58f 100%);">
-          <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center" >
-            <h2 class="font-bold text-slate-700 flex items-center gap-2">
-              <div class="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center">
-                <i class="fas fa-history text-slate-600"></i>
-              </div >
-              Recent Activity
-            </h2>
-            <button onclick="loadDashboardTransactions()" class="text-blue-600 hover:text-blue-800 text-sm font-semibold p-2 rounded-lg hover:bg-blue-50 transition mobile-touch-target">
-              <i class="fas fa-sync-alt mr-1"></i>Refresh
-            </button>
+          <div class="p-4 border-b border-slate-100 bg-slate-50">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <h2 class="font-bold text-slate-700 flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center">
+                  <i class="fas fa-history text-slate-600"></i>
+                </div >
+                Recent Activity
+              </h2>
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="flex items-center gap-1.5">
+                  <label class="text-xs font-semibold text-slate-500">From</label>
+                  <input type="date" id="recentActivityStart" onchange="loadDashboardTransactions()" class="p-2 border-2 border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" style="color:black;">
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <label class="text-xs font-semibold text-slate-500">To</label>
+                  <input type="date" id="recentActivityEnd" onchange="loadDashboardTransactions()" class="p-2 border-2 border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" style="color:black;">
+                </div>
+                <button onclick="loadDashboardTransactions()" class="text-blue-600 hover:text-blue-800 text-sm font-semibold p-2 rounded-lg hover:bg-blue-50 transition mobile-touch-target">
+                  <i class="fas fa-sync-alt mr-1"></i>Refresh
+                </button>
+              </div>
+            </div>
           </div>
           <div class="table-container scroll-shadow-right">
             <table class="w-full text-left text-sm text-slate-600">
@@ -993,9 +1005,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('en-US', dateOptions);
   
-  const date = new Date();
+const date = new Date();
   document.getElementById('reportStart').value = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
   document.getElementById('reportEnd').value = todayStr;
+  
+  // Initialize Recent Activity date range filter (default to today)
+  const recentStart = document.getElementById('recentActivityStart');
+  const recentEnd = document.getElementById('recentActivityEnd');
+  if (recentStart) recentStart.value = todayStr;
+  if (recentEnd) recentEnd.value = todayStr;
   
   await checkSession();
   
@@ -1770,7 +1788,17 @@ async function loadDashboardTransactions() {
   const tbody = document.getElementById('dashboardTableBody');
   tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8"><div class="loader"></div></td></tr>';
   
-  const { data, error } = await supabaseClient.from('transactions').select('*').order('created_at', { ascending: false }).limit(10);
+  const startEl = document.getElementById('recentActivityStart');
+  const endEl = document.getElementById('recentActivityEnd');
+  const start = startEl ? startEl.value : todayStr;
+  const end = endEl ? endEl.value : todayStr;
+  
+  let query = supabaseClient.from('transactions').select('*');
+  if (start) query = query.gte('transaction_date', start);
+  if (end) query = query.lte('transaction_date', end);
+  query = query.order('created_at', { ascending: false }).limit(10);
+  
+  const { data, error } = await query;
   
   if (error) {
     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-4">Error loading data</td></tr>';
@@ -1946,8 +1974,7 @@ document.getElementById('transactionForm').reset();
     selectedMaterialId = '';
     selectedOracleMaterial = null;
     
-    showToast(`Transaction recorded successfully!`, "success");
-    highlightTransactionType('IN'); // Reset to IN
+showToast(`Transaction recorded successfully!`, "success");
     await initApp();
     
   } catch (err) {
