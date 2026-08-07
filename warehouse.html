@@ -121,11 +121,16 @@ body { overscroll-behavior-y: contain; }
   white-space: nowrap;
   transition: all 0.2s;
   font-family: inherit;
+  border-radius: 15px;
+  border: solid 2px;
+  border-color: #69f816;
+  background: linear-gradient(90deg, #02fa2b 85%, #e0f003 90%, #05d1af 80%);
 }
 .top-nav-btn:hover { background: #f1f5f9; color: #1e40af; }
-.top-nav-btn.active { background: #eff6ff; color: #1d4ed8; }
+.top-nav-btn.active { background: #d7fd01; color: #002da8; }
 .top-nav-btn i { font-size: 16px; }
 .top-nav-spacer { flex: 1; }
+
 
 /* Modal Animation */
 .modal-animate { animation: modalFadeIn 0.25s ease-out; }
@@ -341,22 +346,21 @@ input:focus, select:focus, textarea:focus {
 
 <!-- Top Navigation Bar -->
 <nav class="top-nav no-print shrink-0" style="background: linear-gradient(135deg, #02ff80 0%, #01f3fc 50%, #d7fd03 100%);">
-  <button onclick="switchView('dashboard')" class="top-nav-btn active" id="topnav-dashboard" >
-    <i class="fas fa-home"></i> Dashboard
+  <button onclick="switchView('dashboard')" class="top-nav-btn active" id="topnav-dashboard" style="color:black;">
+    <i class="fas fa-home" style="color:black;"></i> Dashboard
   </button>
-  <button onclick="switchView('inventory')" class="top-nav-btn" id="topnav-inventory">
-    <i class="fas fa-boxes"></i> Inventory
+  <button onclick="switchView('inventory')" class="top-nav-btn" id="topnav-inventory" style="color:black;">
+    <i class="fas fa-boxes" style="color:black;"></i> Inventory
   </button>
-  <button onclick="switchView('reports')" class="top-nav-btn" id="topnav-reports">
-    <i class="fas fa-chart-line"></i> Reports
+  <button onclick="switchView('reports')" class="top-nav-btn" id="topnav-reports" style="color:black;">
+    <i class="fas fa-chart-line" style="color:black;"></i> Reports
   </button>
   <div class="top-nav-spacer"></div>
-  <button type="button" onclick="refreshOracleDataFromDatabase()" class="top-nav-btn" style="color: #059669;background: linear-gradient(135deg, #217e0a 0%, #193608 50%, #1e9506 100%); color: white; border-radius: 12px; padding: 8px 12px; font-weight: bold;">
+  <button type="button" onclick="refreshOracleDataFromDatabase()" class="top-nav-btn" id="topnav-refresh" style="color:black;">
     <i class="fas fa-sync-alt"></i> Refresh
   </button>
   <div class="hidden sm:block text-xs text-slate-400 px-3" style="white-space: nowrap;">
-    <span style="color: black; font-weight: bold;">Designed By: Mostafa Ahmed Hamdy</span> | تصميم وبرمجة : مصطفي النجار
-  </div>
+    <span style="color: black; font-weight: bold;">Designed By: Mostafa Ahmed Hamdy |   تصميم وبرمجة : مصطفي النجار</div></span> 
 </nav>
 
 <!-- Notification Panel -->
