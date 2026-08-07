@@ -111,23 +111,19 @@ body { overscroll-behavior-y: contain; }
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  border-radius: 10px;
+  border-radius: 15px;
   font-size: 14px;
   font-weight: 600;
-  color: #fdfeff;
-  background: transparent;
-  border: none;
+  color: #e2f3eb;
+  background: linear-gradient(135deg, #1e3a2f 0%, #0e2a22 100%);
+  border: 2px solid rgba(109, 219, 173, 0.35);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
   font-family: inherit;
-  border-radius: 15px;
-  border: solid 2px;
-  border-color: rgb(250, 252, 249);
-  background: linear-gradient(90deg, #648a6a 85%, #6ddbad 90%, #828584 80%);
 }
-.top-nav-btn:hover { background: #f1f5f9; color: #1e40af; }
-.top-nav-btn.active { background: #00976a; color: #ffffff; }
+.top-nav-btn:hover { background: linear-gradient(135deg, #2a5a4a 0%, #1a3a30 100%); color: #ffffff; border-color: rgba(109, 219, 173, 0.7); }
+.top-nav-btn.active { background: linear-gradient(135deg, #1f9d6b 0%, #0f7a52 100%); color: #ffffff; border-color: rgba(109, 219, 173, 0.9); }
 .top-nav-btn i { font-size: 16px; }
 .top-nav-spacer { flex: 1; }
 
@@ -346,17 +342,17 @@ input:focus, select:focus, textarea:focus {
 
 <!-- Top Navigation Bar -->
 <nav class="top-nav no-print shrink-0" style="background: linear-gradient(135deg, #141414 0%, #0e1e1f 50%, #1c2001 100%);border:2px;border-color:white;">
-  <button onclick="switchView('dashboard')" class="top-nav-btn active" id="topnav-dashboard" style="color:black;">
-    <i class="fas fa-home" style="color:black;"></i> Dashboard
+<button onclick="switchView('dashboard')" class="top-nav-btn active" id="topnav-dashboard">
+    <i class="fas fa-home"></i> Dashboard
   </button>
-  <button onclick="switchView('inventory')" class="top-nav-btn" id="topnav-inventory" style="color:black;">
-    <i class="fas fa-boxes" style="color:black;"></i> Inventory
+  <button onclick="switchView('inventory')" class="top-nav-btn" id="topnav-inventory">
+    <i class="fas fa-boxes"></i> Inventory
   </button>
-  <button onclick="switchView('reports')" class="top-nav-btn" id="topnav-reports" style="color:black;">
-    <i class="fas fa-chart-line" style="color:black;"></i> Reports
+  <button onclick="switchView('reports')" class="top-nav-btn" id="topnav-reports">
+    <i class="fas fa-chart-line"></i> Reports
   </button>
   <div class="top-nav-spacer"></div>
-  <button type="button" onclick="refreshOracleDataFromDatabase()" class="top-nav-btn" id="topnav-refresh" style="color:black;">
+  <button type="button" onclick="refreshOracleDataFromDatabase()" class="top-nav-btn" id="topnav-refresh">
     <i class="fas fa-sync-alt"></i> Refresh
   </button>
   <div class="hidden sm:block text-xs text-slate-400 px-3" style="white-space: nowrap;">
@@ -687,7 +683,7 @@ input:focus, select:focus, textarea:focus {
     </div>
  </div>
 <!-- VIEW 3: REPORTS -->
-        <div id="view-reports" class="view-section p-4 md:p-8" style="background: linear-gradient(135deg, #080808 0%, #414141 100%); overflow-y: auto; overflow-x: hidden; height: 100%;">
+        <div id="view-reports" class="view-section p-4 md:p-8" style="background: linear-gradient(135deg, #026666 0%, #00836d 100%); overflow-y: auto; overflow-x: hidden; height: 100%;">
           <div class="mb-6">
         <h1 class="text-2xl md:text-3xl font-bold text-slate-800" style="color:white;">Reports</h1>
         <p class="text-sm text-slate-600 mt-1" style="color:white;">Analyze stock movements and trends</p>
