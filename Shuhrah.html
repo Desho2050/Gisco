@@ -670,7 +670,7 @@
       }
 
       // Write a minimal HTML that embeds the PDF
-      printWindow.document.write(`<!doctype html><html><head><title>Print PDF</title><script src="auth-guard.js"></script>
+      printWindow.document.write(`<!doctype html><html><head><title>Print PDF</title><script src="auth-guard.js"><\/script>
 </head><body style="margin:0;">
         <embed src="${pdfUrl}" type="application/pdf" style="width:100%;height:100vh;" />
         <script>
