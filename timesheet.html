@@ -1803,7 +1803,7 @@ function isRamadanDate(date) {
             }
         }
         
-      function addNewEmpRow() {
+        function addNewEmpRow() {
     empCodes.push({ code: '', name: '', not: '', wot: '' });
     renderEmpTable();
     
@@ -1863,18 +1863,6 @@ function handleEmpTableInput(e) {
         function renderEmpTable() {
     // 1. SAVE FOCUS STATE: Remember which input is currently focused before we destroy the DOM
     const activeEl = document.activeElement;
-
-    // Convert supabase cache into empCodes list: if a code has no name2 in Supabase,
-    // skip it completely (remove from table), as requested.
-    // Note: We only do this when the cache has been populated (size > 0).
-    if (employeeNameCache && employeeNameCache.size > 0) {
-        empCodes = empCodes.filter(empEntry => {
-            const code = String(empEntry.code || '').trim();
-            if (!code) return false;
-            const cachedName = employeeNameCache.get(code) || '';
-            return String(cachedName).trim().length > 0;
-        });
-    }
 
     let focusIndex = -1;
     let focusField = '';
@@ -2077,7 +2065,7 @@ function checkDuplicates() {
             return isValid;
         }
         
-       function updateGenerateButton() {
+        function updateGenerateButton() {
     const hasDuplicates = empCodes.some((empData, i) => {
         const code = empData.code || '';
         return isDuplicateEmpCode(code, i);
