@@ -7,7 +7,6 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <meta name="google-adsense-account" content="ca-pub-2618924252061294">
 <style>
 :root {
 --primary: #fa08a9;
@@ -901,7 +900,42 @@ font-weight: bold;
 transition: transform 0.2s;
 }
 .phd-tag .remove-phd:hover {
-transform: scale(1.2);
+    transform: scale(1.2);
+}
+.off-days-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+.off-day-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background: white;
+    user-select: none;
+}
+.off-day-checkbox:hover {
+    border-color: var(--primary);
+    background: rgba(250, 8, 169, 0.05);
+}
+.off-day-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+.off-day-checkbox.checked {
+    border-color: var(--primary);
+    background: rgba(250, 8, 169, 0.1);
+    color: var(--primary);
 }
 .format-preservation-note {
 background: #f0f9ff;
@@ -1079,6 +1113,19 @@ margin: 20px 0;
                     <i class="fas fa-exclamation-triangle"></i> Please select both start and end dates for Ramadan
                 </div>
             </div>
+        
+        <div class="phd-container" style="margin-top: 15px;">
+            <h3 class="card-title" style="margin: 10px 0; border: none;">
+                <i class="fas fa-calendar-times"></i> Select OFF Days
+            </h3>
+            <div class="off-days-container" id="offDaysContainer">
+                <label class="off-day-checkbox" data-day="Sunday"><input type="checkbox" value="0" /> Sunday</label>
+                <label class="off-day-checkbox" data-day="Monday"><input type="checkbox" value="1" /> Monday</label>
+                <label class="off-day-checkbox" data-day="Tuesday"><input type="checkbox" value="2" /> Tuesday</label>
+                <label class="off-day-checkbox" data-day="Wednesday"><input type="checkbox" value="3" /> Wednesday</label>
+                <label class="off-day-checkbox" data-day="Friday"><input type="checkbox" value="5" /> Friday</label>
+                <label class="off-day-checkbox" data-day="Saturday"><input type="checkbox" value="6" /> Saturday</label>
+            </div>
         </div>
     </div>
 </div>
@@ -1195,6 +1242,7 @@ let empCodes = [];
         let templateWorkBook = null;
         const REQUIRED_HEADERS = ['DATE', 'EmpCode', 'Event', 'Wplace', 'Worked', 'NOT', 'WOT'];
         let publicHolidays = [];
+        let offDays = [];
         let headerRowIdx = 0;
         let templateColumnMap = null;
        let isRamadanEnabled = false;
@@ -1375,6 +1423,20 @@ let empCodes = [];
     });
 
     initRamadanListeners(); // Initialize Ramadan listeners
+
+    // OFF days listener
+    document.getElementById('offDaysContainer').addEventListener('change', function() {
+        offDays = Array.from(this.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+        document.querySelectorAll('.off-day-checkbox').forEach(label => {
+            const cb = label.querySelector('input[type="checkbox"]');
+            if (cb.checked) {
+                label.classList.add('checked');
+            } else {
+                label.classList.remove('checked');
+            }
+        });
+        updateGenerateButton();
+    });
 }
         
         function handleTemplateFile(e) {
@@ -2183,7 +2245,7 @@ function checkDuplicates() {
                 while (currentDate <= endDate) {
                     dates.push({
                         date: new Date(currentDate),
-                        isSunday: currentDate.getDay() === 0,
+                        isOffDay: offDays.includes(currentDate.getDay()),
                         isPhd: isPublicHoliday(currentDate)
                     });
                     currentDate.setDate(currentDate.getDate() + 1);
@@ -2195,13 +2257,13 @@ function checkDuplicates() {
                     const notTotal = parseInt(empData.not) || 0;
                     const wotTotal = parseInt(empData.wot) || 0;
                     
-                    const nonSundayRows = dates.filter(d => !d.isSunday && !d.isPhd).length;
+                    const nonOffDayRows = dates.filter(d => !d.isOffDay && !d.isPhd).length;
                     const notDistribution = new Array(dates.length).fill(0);
                     let remainingNOT = notTotal;
                     
-                    if (nonSundayRows > 0) {
+                    if (nonOffDayRows > 0) {
                         for (let i = 0; i < dates.length && remainingNOT > 0; i++) {
-                            if (!dates[i].isSunday && !dates[i].isPhd) {
+                            if (!dates[i].isOffDay && !dates[i].isPhd) {
                                 const allocation = Math.min(2, remainingNOT);
                                 notDistribution[i] = allocation;
                                 remainingNOT -= allocation;
@@ -2209,14 +2271,14 @@ function checkDuplicates() {
                         }
                     }
                     
-                    const sundayOrPhdRows = dates.filter(d => d.isSunday || d.isPhd).length;
+                    const offDayOrPhdRows = dates.filter(d => d.isOffDay || d.isPhd).length;
                     const wotDistribution = new Array(dates.length).fill(0);
                     let remainingWOT = wotTotal;
                     
-                    if (sundayOrPhdRows > 0 && remainingWOT > 0) {
-                        const idealAllocation = Math.min(8, Math.floor(remainingWOT / sundayOrPhdRows));
+                    if (offDayOrPhdRows > 0 && remainingWOT > 0) {
+                        const idealAllocation = Math.min(8, Math.floor(remainingWOT / offDayOrPhdRows));
                         for (let i = 0; i < dates.length; i++) {
-                            if (dates[i].isSunday || dates[i].isPhd) {
+                            if (dates[i].isOffDay || dates[i].isPhd) {
                                 const allocation = Math.min(idealAllocation, remainingWOT);
                                 wotDistribution[i] = allocation;
                                 remainingWOT -= allocation;
@@ -2224,7 +2286,7 @@ function checkDuplicates() {
                         }
                         if (remainingWOT > 0) {
                             for (let i = 0; i < dates.length && remainingWOT > 0; i++) {
-                                if ((dates[i].isSunday || dates[i].isPhd) && wotDistribution[i] < 10) {
+                                if ((dates[i].isOffDay || dates[i].isPhd) && wotDistribution[i] < 10) {
                                     const canAllocate = Math.min(10 - wotDistribution[i], remainingWOT);
                                     wotDistribution[i] += canAllocate;
                                     remainingWOT -= canAllocate;
@@ -2241,7 +2303,7 @@ function checkDuplicates() {
         event = 'PHD';
         worked = 0;
         finalNOT = 0;
-    } else if (dateInfo.isSunday) {
+    } else if (dateInfo.isOffDay) {
         event = 'OFF';
         worked = 0;
         finalNOT = 0;
