@@ -223,6 +223,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="gis-auth.js"></script>
   <script>
     // ============================================
     // SUPABASE CONFIG - Replace with your values
@@ -230,9 +232,7 @@
  
     // ⚠ ï¸ڈ SECURITY: Use the 'anon' (public) key from Supabase Dashboard → Settings → API
     // NEVER use the service_role key in frontend code — it bypasses Row Level Security!
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = GisSupabase.create();
     // ============================================
     // I18N
     // ============================================
@@ -247,6 +247,11 @@
         login_btn: 'تسجيل الدخول',
         login_success: 'تم تسجيل الدخول بنجاح',
         login_failed: 'اسم المستخدم أو كلمة المرور غير صحيحة',
+        signing_in: 'جارٍ تسجيل الدخول...',
+        users_load_failed: 'تعذّر تحميل قائمة المستخدمين. تحقق من الاتصال.',
+        too_many_requests: 'محاولات كثيرة جداً. انتظر قليلاً ثم أعد المحاولة.',
+        account_not_ready: 'هذا الحساب غير مكتمل في النظام الجديد. راجع المسؤول.',
+        network_error: 'خطأ في الاتصال بالخادم. حاول مرة أخرى.',
         footer: 'جميع الحقوق محفوظة © مصطفي النجار ::Desho Smartware::',
         lockout_title: 'تم تجاوز عدد المحاولات',
         lockout_msg: 'تم تعطيل النموذج مؤقتاً. يرجى الانتظار',
@@ -264,6 +269,11 @@
         login_btn: 'Login',
         login_success: 'Login successful',
         login_failed: 'Invalid username or password',
+        signing_in: 'Signing in...',
+        users_load_failed: 'Could not load the user list. Check your connection.',
+        too_many_requests: 'Too many attempts. Please wait a moment and try again.',
+        account_not_ready: 'This account is not set up in the new system yet. Contact your administrator.',
+        network_error: 'Could not reach the server. Please try again.',
         footer: 'All rights reserved © Mostafa Alnajar ::Desho Smartware::',
         lockout_title: 'Too many failed attempts',
         lockout_msg: 'Login is temporarily disabled. Please wait',
@@ -303,52 +313,29 @@
     // ============================================
     // DROPDOWN POPULATION
     // ============================================
+    // One function, one source. Before the migration this block had
+    // two loadUsers() declarations with the same name; the second
+    // silently won and the first was dead code.
+    // GisAuth.usernames() prefers the gis_login_usernames() RPC, so
+    // the list keeps working after db/003 closes public.login to
+    // the anon role.
     async function loadUsers() {
+      const select = document.getElementById('username');
       try {
-        const { data, error } = await supabaseClient
-          .from('login')
-          .select('username')
-          .order('username', { ascending: true });
+        const names = await GisAuth.usernames();
 
-        if (error) throw error;
-
-        const select = document.getElementById('username');
-        // Keep the first option
         while (select.options.length > 1) select.remove(1);
-        data.forEach(row => {
+        names.forEach(username => {
           const opt = document.createElement('option');
-          opt.value = row.username;
-          opt.textContent = row.username;
-          select.appendChild(opt);
-          storage.save('username', row.username);
-        });
-      } catch (err) {
-        console.error('Failed to load users:', err);
-      }
-    }
-async function loadUsers() {
-      try {
-        const { data, error } = await supabaseClient
-          .from('login')
-          .select('username')
-          .order('username', { ascending: true });
-
-        if (error) throw error;
-
-        const select = document.getElementById('username');
-        // Keep the first option
-        while (select.options.length > 1) select.remove(1);
-        data.forEach(row => {
-          const opt = document.createElement('option');
-          opt.value = row.username;
-          opt.textContent = row.username;
+          opt.value = username;
+          opt.textContent = username;
           select.appendChild(opt);
         });
-        if (select.options.length > 1) {
-          select.selectedIndex = 1;
-        }
+        // Do not preselect: an empty value is what makes the
+        // "choose a user" warning reachable.
       } catch (err) {
         console.error('Failed to load users:', err);
+        showAlert(I18N[currentLang].users_load_failed, 'warning');
       }
     }
     loadUsers();
@@ -449,6 +436,69 @@ async function loadUsers() {
       setTimeout(() => { alertBox.className = 'alert'; }, 5000);
     }
 
+    // Reaching the dashboard requires a Supabase (GoTrue) session.
+    // If one is already in localStorage there is nothing to ask.
+    (async () => {
+      try {
+        if (await GisAuth.hasValidSession()) window.location.replace('mainpage.html');
+      } catch (e) { /* fall through to the form */ }
+    })();
+
+    function registerFailure() {
+      incrementFailedAttempts();
+      const attempts = getFailedAttempts();
+      if (attempts >= MAX_ATTEMPTS) {
+        setLockout();
+        showAlert(`${I18N[currentLang].login_failed}. ${I18N[currentLang].lockout_title}`, 'error');
+        startLockoutCountdown();
+      } else {
+        showAlert(`${I18N[currentLang].login_failed} (${attempts}/${MAX_ATTEMPTS})`, 'error');
+      }
+    }
+
+    function onSignedIn() {
+      resetFailedAttempts();
+      // Only needed while other pages still honour the old boolean;
+      // harmless otherwise and removed with the migration flag.
+      if (GisAuth.ALLOW_LEGACY_LOGIN) {
+        try { sessionStorage.setItem('gisAuthenticated', 'true'); } catch (e) { /* ignore */ }
+      }
+      document.getElementById('password').value = '';
+      showAlert(I18N[currentLang].login_success, 'success');
+      // replace(), not href: the login page should not sit in the
+      // history behind the dashboard.
+      setTimeout(() => { window.location.replace('mainpage.html'); }, 800);
+    }
+
+    /* ------------------------------------------------------------
+       Migration-only path. Reads public.login including the
+       plaintext password column, exactly what the old build did.
+       It runs ONLY while GisAuth.ALLOW_PLAINTEXT_LOGIN_FALLBACK is
+       true, and only when Supabase Auth refused the credentials -
+       GoTrue cannot tell us "no such account" vs "wrong password"
+       (both are invalid_grant), so while this is enabled a wrong
+       password also causes one table read.
+       Turn it off with db/002 + db/003 applied; db/003 closes the
+       table, which makes this branch fail closed by itself.
+       ------------------------------------------------------------ */
+    async function legacyPlaintextLogin(username, password) {
+      if (!GisAuth.ALLOW_PLAINTEXT_LOGIN_FALLBACK) return false;
+      try {
+        const { data, error } = await supabaseClient
+          .from('login')
+          .select('*')
+          .eq('username', username)
+          .maybeSingle();
+        if (error || !data) return false;
+        return typeof data.password === 'string' && data.password === password;
+      } catch (err) {
+        console.warn('Legacy login fallback unavailable:', err && err.message);
+        return false;
+      }
+    }
+
+    const loginBtn = document.getElementById('loginBtn');
+
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('username').value;
@@ -459,55 +509,50 @@ async function loadUsers() {
         return;
       }
 
-      // Check lockout
       if (isLockedOut()) {
         updateLockoutUI(getRemainingLockout());
         return;
       }
 
-      try {
-        // Query the login table for the selected username
-        const { data, error } = await supabaseClient
-          .from('login')
-          .select('*')
-          .eq('username', username)
-          .single();
+      loginBtn.disabled = true;
+      const originalLabel = loginBtn.textContent;
+      loginBtn.textContent = I18N[currentLang].signing_in;
 
-        if (error || !data) {
-          incrementFailedAttempts();
-          const attempts = getFailedAttempts();
-          if (attempts >= MAX_ATTEMPTS) {
-            setLockout();
-            showAlert(`${I18N[currentLang].login_failed}. ${I18N[currentLang].lockout_title}`, 'error');
-            startLockoutCountdown();
-          } else {
-            showAlert(`${I18N[currentLang].login_failed} (${attempts}/${MAX_ATTEMPTS})`, 'error');
-          }
+      try {
+        // Primary path: GoTrue verifies the bcrypt hash and issues
+        // the JWT that every data request now carries.
+        const result = await GisAuth.signIn(username, password);
+
+        if (result.ok) {
+          onSignedIn();
           return;
         }
 
-        // Verify password (plain-text comparison as requested)
-        if (data.password === password) {
-          resetFailedAttempts();
-          sessionStorage.setItem('gisAuthenticated', 'true');
-          showAlert(I18N[currentLang].login_success, 'success');
-          setTimeout(() => {
-            window.location.href = 'mainpage.html';
-          }, 800);
-        } else {
-          incrementFailedAttempts();
-          const attempts = getFailedAttempts();
-          if (attempts >= MAX_ATTEMPTS) {
-            setLockout();
-            showAlert(`${I18N[currentLang].login_failed}. ${I18N[currentLang].lockout_title}`, 'error');
-            startLockoutCountdown();
-          } else {
-            showAlert(`${I18N[currentLang].login_failed} (${attempts}/${MAX_ATTEMPTS})`, 'error');
-          }
+        if (result.code === 'too_many_requests' || result.status === 429) {
+          setLockout();
+          showAlert(I18N[currentLang].too_many_requests, 'error');
+          startLockoutCountdown();
+          return;
         }
+
+        if (result.code === 'email_not_confirmed') {
+          showAlert(I18N[currentLang].account_not_ready, 'warning');
+          return;
+        }
+
+        if (await legacyPlaintextLogin(username, password)) {
+          console.warn('[GISCO] signed in through the plaintext fallback - finish db/002 and db/003, then set ALLOW_PLAINTEXT_LOGIN_FALLBACK = false');
+          onSignedIn();
+          return;
+        }
+
+        registerFailure();
       } catch (err) {
         console.error(err);
-        showAlert('System error. Please try again.', 'error');
+        showAlert(I18N[currentLang].network_error, 'error');
+      } finally {
+        loginBtn.disabled = isLockedOut();
+        loginBtn.textContent = originalLabel;
       }
     });
 

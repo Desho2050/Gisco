@@ -11,6 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="gis-auth.js"></script>
   <!-- Added SheetJS for Excel (XLSX/XLS) parsing -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 	<meta name="google-adsense-account" content="ca-pub-2618924252061294">
@@ -302,29 +304,36 @@
   <script>
     // ⚠️ SECURITY: Use the 'anon' (public) key from Supabase Dashboard → Settings → API
     // NEVER use the service_role key in frontend code — it bypasses Row Level Security!
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
 
-    console.log('[DB] Creating Supabase client with URL:', SUPABASE_URL);
+    console.log('[DB] Creating Supabase client with URL:', GisSupabase.URL);
+
+    // This page logs every request. It used to get that by building a
+    // private client with global.fetch plus auth.persistSession:false.
+    // Two changes were needed:
+    //   * persistSession:false means the client holds no JWT, so every
+    //     request leaves as role anon - which db/003 locks out.
+    //   * a second GoTrueClient on the same page (GisAuth creates the
+    //     shared one) means two writers racing on the same localStorage
+    //     session key.
+    // So the logger now wraps window.fetch for this page only, and the
+    // client is the single shared instance every other page uses.
+    const __giscoRawFetch = window.fetch.bind(window);
+    window.fetch = (...args) => {
+      console.log('[DB] NETWORK REQUEST →', args[0]);
+      return __giscoRawFetch(...args)
+        .then(res => {
+          console.log('[DB] NETWORK RESPONSE ←', res.status, res.statusText, String(args[0]));
+          return res;
+        })
+        .catch(err => {
+          console.error('[DB] NETWORK ERROR for', String(args[0]), err);
+          throw err;
+        });
+    };
+
     let supabaseClient;
     try {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: { persistSession: false },
-            global: {
-                fetch: (...args) => {
-                    console.log('[DB] NETWORK REQUEST →', args[0]);
-                    return fetch(...args)
-                        .then(res => {
-                            console.log('[DB] NETWORK RESPONSE ←', res.status, res.statusText, String(args[0]));
-                            return res;
-                        })
-                        .catch(err => {
-                            console.error('[DB] NETWORK ERROR for', String(args[0]), err);
-                            throw err;
-                        });
-                }
-            }
-        });
+        supabaseClient = GisSupabase.create();
         console.log('[DB] Supabase client created successfully.');
     } catch (e) {
         console.error('[DB] FAILED to create Supabase client:', e);

@@ -1616,6 +1616,50 @@ body {
       </div>
     </div>
 
+    <!-- SIM cards -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+          <i class="fas fa-sim-card"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_sim_title">Company SIM Register</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_sim_desc">Track SIM cards issued to employees and their transfer history.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="simCount">loading…</strong></div>
+        <a href="SIM.html" class="card-btn" data-i18n="open_sim">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
+    <!-- Company vehicles -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #14b8a6, #0d9488);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #14b8a6, #0d9488);">
+          <i class="fas fa-car"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_vehicle_title">Company Vehicle Register</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_vehicle_desc">Track vehicles issued to employees and their transfer history.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="vehicleCount">loading…</strong></div>
+        <a href="CompanyVehicles.html" class="card-btn" data-i18n="open_vehicle">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
     <!-- ============ NEW: Reports (AC Maintenance) ============ -->
     <div class="module-card" style="--card-gradient: linear-gradient(135deg, #0891b2, #6366f1);">
       <div class="card-header">
@@ -1647,6 +1691,8 @@ body {
 
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="gis-auth.js"></script>
 
 <script>
 // ===== GLOBAL STATE =====
@@ -1734,6 +1780,12 @@ const I18N = {
     open_wo: 'Open',
     EMP_Card: '4378M Staff Management',
     EMP_Card_Desc: 'Open 4378M Staff Management.',
+    card_sim_title: 'Company SIM Register',
+    card_sim_desc: 'Track SIM cards issued to employees and their transfer history.',
+    open_sim: 'Open',
+    card_vehicle_title: 'Company Vehicle Register',
+    card_vehicle_desc: 'Track vehicles issued to employees and their transfer history.',
+    open_vehicle: 'Open',
     new_badge: 'New',
     data_label: 'Data:',
     rows_suffix: ' rows',
@@ -1810,6 +1862,12 @@ const I18N = {
     open_wo: 'فتح',
     EMP_Card: 'ادارة الموظفين 4378M',
     EMP_Card_Desc: 'افتح ادارة الموظفين.',
+    card_sim_title: 'سجل شرائح الاتصال',
+    card_sim_desc: 'متابعة الشرائح المسلّمة للموظفين وسجل تحويلاتها.',
+    open_sim: 'فتح',
+    card_vehicle_title: 'سجل مركبات الشركة',
+    card_vehicle_desc: 'متابعة المركبات المسلّمة للموظفين وسجل تحويلاتها.',
+    open_vehicle: 'فتح',
     new_badge: 'جديد',
     data_label: 'البيانات:',
     rows_suffix: ' نتيجة',
@@ -2030,9 +2088,7 @@ function openLowStockPanel() {
   panel.classList.add('show');
   overlay.classList.add('show');
   
-  const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
-  const lowStockSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const lowStockSupabase = GisSupabase.create();
   
   lowStockSupabase.from('materials').select('*').then(({ data, error }) => {
     if (error) {
@@ -2074,9 +2130,7 @@ function closeLowStockPanel() {
 
 async function loadLowStockCount() {
   try {
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
-    const lowStockSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const lowStockSupabase = GisSupabase.create();
     
     const { data, error } = await lowStockSupabase.from('materials').select('current_stock, min_stock_threshold');
     if (error) return;
@@ -2213,6 +2267,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setCount('tasksCount', 0);
   setCount('pettyCashCount', 0);
   setCount('warehouseCount', 0);
+  setCount('simCount', 0);
+  setCount('vehicleCount', 0);
   setCount('reportsCount', 29); // NEW: Reports card mock count
 });
 
@@ -2221,9 +2277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     // ⚠️ SECURITY: Use the 'anon' (public) key from Supabase Dashboard → Settings → API
     // NEVER use the service_role key in frontend code — it bypasses Row Level Security!
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
-    const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+    const supabaseClient = GisSupabase.create();
     
     const updateCount = (id, value) => {
       const el = document.getElementById(id);
@@ -2233,6 +2287,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     
     let totalRecords = 0;
+    
+    // SIM cards
+    try {
+      const { count, error: simError } = await supabaseClient
+        .from('sim_cards')
+        .select('id', { count: 'exact', head: true });
+      
+      if (simError) throw simError;
+      
+      updateCount('simCount', count || 0);
+    } catch (simErr) {
+      console.warn('SIM count:', simErr.message || simErr);
+      updateCount('simCount', null);
+    }
+
+    // Company vehicles
+    try {
+      const { count, error: vehicleError } = await supabaseClient
+        .from('company_vehicles')
+        .select('id', { count: 'exact', head: true });
+
+      if (vehicleError) throw vehicleError;
+
+      updateCount('vehicleCount', count || 0);
+    } catch (vehicleErr) {
+      console.warn('Vehicle count:', vehicleErr.message || vehicleErr);
+      updateCount('vehicleCount', null);
+    }
     
     // Leaves
     try {
@@ -2382,8 +2464,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function handleLogout() {
-  sessionStorage.removeItem('gisAuthenticated');
-  window.location.href = 'index.html';
+  // auth-guard.js owns the real logout: it revokes the session
+  // server-side and wipes the cached rosters/materials this app
+  // keeps in IndexedDB and localStorage. This function used to be
+  // just sessionStorage.removeItem() plus an href, which left a
+  // valid Supabase session in localStorage - pressing Back put you
+  // straight back inside the dashboard.
+  //
+  // A top-level function declaration here overwrites the guard's
+  // window.handleLogout, so delegate to the named export instead.
+  if (typeof window.gisGuardLogout === 'function') {
+    window.gisGuardLogout();
+    return;
+  }
+  if (window.GisAuth && typeof window.GisAuth.gotoLogin === 'function') {
+    window.GisAuth.gotoLogin();
+    return;
+  }
+  try { sessionStorage.removeItem('gisAuthenticated'); } catch (e) { /* ignore */ }
+  window.location.replace('index.html');
 }
 </script>
 </body>

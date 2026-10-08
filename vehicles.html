@@ -7,6 +7,8 @@
   <title>Admin - Vehicle Usage Overview</title>
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="gis-auth.js"></script>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- jsPDF -->
@@ -237,9 +239,7 @@
 
   <script>
     // Supabase config
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
-    const supabaseClient = supabase.createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
+    const supabaseClient = GisSupabase.create();
 
     let allEntries = [];
     let vehicles = {};

@@ -268,10 +268,10 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="gis-auth.js"></script>
   <script>
-    const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = GisSupabase.create();
 
     const I18N = {
       ar: {
@@ -291,6 +291,10 @@
         change_failed: 'فشل تغيير كلمة المرور',
         password_mismatch: 'كلمة المرور الجديدة وتأكيدها غير متطابقين',
         old_password_incorrect: 'كلمة المرور الحالية غير صحيحة',
+        password_too_short: 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل',
+        changing_password: 'جارٍ التغيير...',
+        users_load_failed: 'تعذّر تحميل المستخدمين. تحقق من الاتصال.',
+        network_error: 'خطأ في الاتصال بالخادم. حاول مرة أخرى.',
         footer: 'جميع الحقوق محفوظة © GISCO'
       },
       en: {
@@ -310,6 +314,10 @@
         change_failed: 'Failed to change password',
         password_mismatch: 'New password and confirmation do not match',
         old_password_incorrect: 'Current password is incorrect',
+        password_too_short: 'New password must be at least 6 characters',
+        changing_password: 'Changing...',
+        users_load_failed: 'Could not load the user list. Check your connection.',
+        network_error: 'Could not reach the server. Please try again.',
         footer: 'All rights reserved © GISCO'
       }
     };
@@ -347,31 +355,6 @@
     });
     applyLang(currentLang);
 
-    // Load users into dropdown
-    async function loadUsers() {
-      try {
-        const { data, error } = await supabaseClient
-          .from('login')
-          .select('username')
-          .order('username', { ascending: true });
-
-        if (error) throw error;
-
-        const select = document.getElementById('username');
-        while (select.options.length > 1) select.remove(1);
-        data.forEach(row => {
-          const opt = document.createElement('option');
-          opt.value = row.username;
-          opt.textContent = row.username;
-          select.appendChild(opt);
-        });
-      } catch (err) {
-        console.error('Failed to load users:', err);
-      }
-    }
-
-    loadUsers();
-
     // Alert helper
     const alertBox = document.getElementById('alertBox');
     function showAlert(message, type) {
@@ -379,6 +362,35 @@
       alertBox.textContent = message;
       setTimeout(() => { alertBox.className = 'alert'; }, 5000);
     }
+
+    // Load users into dropdown, then preselect the signed-in one.
+    // Changing a password is only allowed for the current session,
+    // so the dropdown is a confirmation rather than a chooser.
+    async function loadUsers() {
+      const select = document.getElementById('username');
+      try {
+        const [names, me] = await Promise.all([GisAuth.usernames(), GisAuth.currentUser()]);
+
+        while (select.options.length > 1) select.remove(1);
+        names.forEach(username => {
+          const opt = document.createElement('option');
+          opt.value = username;
+          opt.textContent = username;
+          select.appendChild(opt);
+        });
+
+        if (me) {
+          const mine = String(GisAuth.usernameFromUser(me)).toLowerCase();
+          const match = names.find(n => String(n).toLowerCase() === mine);
+          if (match) select.value = match;
+        }
+      } catch (err) {
+        console.error('Failed to load users:', err);
+        showAlert(I18N[currentLang].users_load_failed, 'warning');
+      }
+    }
+
+    loadUsers();
 
     // Change password handler
     const changePasswordForm = document.getElementById('changePasswordForm');
@@ -399,42 +411,43 @@
         return;
       }
 
+      // GoTrue itself refuses a password under 6 characters; saying
+      // it here avoids a round trip that looks like a server error.
+      if (newPassword.length < 6) {
+        showAlert(I18N[currentLang].password_too_short, 'error');
+        return;
+      }
+
+      const btn = document.getElementById('changePasswordBtn');
+      const originalLabel = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = I18N[currentLang].changing_password;
+
       try {
-        // Fetch current user record
-        const { data, error } = await supabaseClient
-          .from('login')
-          .select('*')
-          .eq('username', username)
-          .single();
+        // The current password is verified by signing in with it, so
+        // knowledge of it is proven server-side rather than by
+        // comparing a plaintext column fetched over the anon key.
+        // The new value is then stored as a bcrypt hash by GoTrue;
+        // this page never sees or sends a hash.
+        const result = await GisAuth.changePassword(username, oldPassword, newPassword);
 
-        if (error || !data) {
-          showAlert(I18N[currentLang].change_failed, 'error');
-          return;
+        if (result.ok) {
+          if (result.legacyPlaintext) {
+            console.warn('[GISCO] password written to public.login in plaintext - re-run db/002_create_auth_users.sql so the bcrypt copy is updated, then set ALLOW_PLAINTEXT_LOGIN_FALLBACK = false');
+            showAlert(I18N[currentLang].change_success + '. ' + result.error, 'warning');
+          } else {
+            showAlert(I18N[currentLang].change_success, 'success');
+          }
+          changePasswordForm.reset();
+        } else {
+          showAlert(result.error || I18N[currentLang].change_failed, 'error');
         }
-
-        // Verify old password
-        if (data.password !== oldPassword) {
-          showAlert(I18N[currentLang].old_password_incorrect, 'error');
-          return;
-        }
-
-        // Update password
-        const { error: updateError } = await supabaseClient
-          .from('login')
-          .update({ password: newPassword })
-          .eq('username', username);
-
-        if (updateError) {
-          console.error('Update error:', updateError);
-          showAlert(I18N[currentLang].change_failed, 'error');
-          return;
-        }
-
-        showAlert(I18N[currentLang].change_success, 'success');
-        changePasswordForm.reset();
       } catch (err) {
         console.error(err);
-        showAlert('System error. Please try again.', 'error');
+        showAlert(I18N[currentLang].network_error, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
       }
     });
   </script>

@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Employee Management System | Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="gis-auth.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -869,10 +871,8 @@
 
   <script>
     // ⚠️ CRITICAL: Replace this with your 'anon' (public) key from Supabase Dashboard!
-   const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDg2Njc5MCwiZXhwIjoyMDgwNDQyNzkwfQ.XivlPCcELbiLHljLZFBZoJSBp2HQDz2mhZzzxP0F4ow';
 
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = GisSupabase.create();
 
 
     const LANGUAGES = {
@@ -1202,8 +1202,6 @@
       loadEmployees();
       setTimeout(() => showToast('💡 Tip: Press Ctrl+N to add, Ctrl+S to save', 'success'), 2000);
     });
-
-    setInterval(() => { if (!document.getElementById('formPopup').classList.contains('active')) loadEmployees(); }, 300000);
   </script>
 </body>
 </html>

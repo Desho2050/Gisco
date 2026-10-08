@@ -12,6 +12,8 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="gis-auth.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 tailwind.config = {
@@ -139,8 +141,12 @@ input, select { font-size: 16px; /* Prevents iOS zoom */ }
 /* Transaction Type Highlighting */
 .transaction-type-option { cursor: pointer; transition: all 0.2s; user-select: none; -webkit-user-select: none; }
 .transaction-type-option:active { transform: scale(0.98); }
-.transaction-type-option.active-in { background-color: #dcfce7; border-color: #22c55e !important; }
-.transaction-type-option.active-out { background-color: #fef3c7; border-color: #f59e0b !important; }
+/* Only the chosen type is coloured, so IN and OUT can never both
+   look active. Deliberately no Tailwind colour utilities on the
+   face: the CDN injects its styles after this block and would win. */
+.transaction-type-face { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+.transaction-type-option.active-in .transaction-type-face { background: #dcfce7; border-color: #22c55e; color: #15803d; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25); }
+.transaction-type-option.active-out .transaction-type-face { background: #fee2e2; border-color: #ef4444; color: #b91c1c; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25); }
 
 /* Permission Badge */
 .permission-badge { font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: 600; }
@@ -479,16 +485,16 @@ input:focus, select:focus, textarea:focus {
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Type</label>
                 <div class="flex gap-2 bg-slate-100 p-1 rounded-xl">
-                  <label class="flex-1 cursor-pointer transaction-type-option active-in rounded-lg" id="inLabel" onclick="highlightTransactionType('IN')" style="background: linear-gradient(135deg, #0f4801 0%, #69f816 50%, #0a3e00 100%);">
-                    <input type="radio" name="type" value="IN" checked class="peer sr-only">
-                    <div class="text-center py-2 rounded-lg border-2 border-success bg-white shadow-sm text-success transition-all font-bold text-sm mobile-touch-target" style="color:rgb(25, 0, 255);border-color: rgb(4, 28, 245);">
-                      <i class="fas fa-arrow-down" style="color: rgb(2, 38, 241);"></i> IN
+                  <label class="flex-1 cursor-pointer transaction-type-option rounded-lg" id="inLabel" onclick="highlightTransactionType('IN')">
+                    <input type="radio" name="type" value="IN" class="peer sr-only">
+                    <div class="transaction-type-face text-center py-2 rounded-lg border-2 transition-all font-bold text-sm mobile-touch-target">
+                      <i class="fas fa-arrow-down"></i> IN
                     </div>
                   </label>
-                  <label class="flex-1 cursor-pointer transaction-type-option rounded-lg" id="outLabel" onclick="highlightTransactionType('OUT')" style="background: linear-gradient(135deg, #01a187 0%, #16a5f8 50%, #03e4be 100%);color:white">
-                    <input type="radio" name="type" value="OUT" class="peer sr-only">
-                    <div class="text-center py-2 rounded-lg border-2 border-transparent text-slate-600 transition-all font-bold text-sm mobile-touch-target" style="color:red;border-color: rgb(245, 4, 4);">
-                      <i class="fas fa-arrow-up" style="color: rgb(245, 4, 4);"></i> OUT
+                  <label class="flex-1 cursor-pointer transaction-type-option rounded-lg active-out" id="outLabel" onclick="highlightTransactionType('OUT')">
+                    <input type="radio" name="type" value="OUT" checked class="peer sr-only">
+                    <div class="transaction-type-face text-center py-2 rounded-lg border-2 transition-all font-bold text-sm mobile-touch-target">
+                      <i class="fas fa-arrow-up"></i> OUT
                     </div>
                   </label>
                 </div>
@@ -500,12 +506,12 @@ input:focus, select:focus, textarea:focus {
               <!-- Material Search -->
               <div class="lg:col-span-2" >
                 <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Material <span class="text-danger">*</span></label>
-                <div class="relative">
-<input type="text" id="materialSearchInput" class="custom-select-input pl-10" placeholder="Search materials..." autocomplete="off" onkeyup="onMaterialSearchKeyup()" onclick="toggleMaterialList(true)" style="color:black;">
+                <div class="relative" id="materialContainer">
+                  <input type="text" id="materialSearchInput" class="custom-select-input pl-10" placeholder="Search materials..." autocomplete="off" onkeyup="onMaterialSearchKeyup()" onclick="toggleMaterialList(true)" style="color:black;">
                   <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 
                 <select id="materialSelect" class="hidden"></select>
-                <div id="materialList" class="custom-select-list custom-scrollbar" style="background-color: aquamarine;";></div>
+                <div id="materialList" class="custom-select-list custom-scrollbar" style="background-color: aquamarine;"></div>
                 </div>
                 <div id="stockInfoBox" class="hidden mt-2 p-2 bg-green-50 border border-green-200 rounded-lg text-xs flex justify-between items-center">
                   <span class="text-slate-600 font-medium">Stock:</span>
@@ -518,11 +524,35 @@ input:focus, select:focus, textarea:focus {
                 <p id="materialError" class="text-danger text-xs mt-1 hidden font-semibold"><i class="fas fa-exclamation-circle mr-1"></i>Please select a material</p>
               </div>
 
+              <!-- Receiver - only collected for OUT transactions -->
+              <div class="lg:col-span-2 hidden" id="receiverField">
+                <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Receiver <span class="text-danger">*</span></label>
+                <div class="relative custom-select-container" id="receiverContainer">
+                  <input type="text" id="receiverSearchInput" class="custom-select-input pl-10 pr-10" placeholder="Search employee name or file no..." autocomplete="off" onkeyup="onReceiverSearchKeyup()" onclick="toggleReceiverList(true)" style="color:black;">
+                  <i class="fas fa-user-check absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                  <button type="button" id="receiverClearBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-600 p-2 rounded-lg mobile-touch-target" onclick="clearReceiver()" title="Clear receiver"><i class="fas fa-times-circle"></i></button>
+                  <div id="receiverList" class="custom-select-list custom-scrollbar" style="background-color: aquamarine;"></div>
+                </div>
+                <p id="receiverError" class="text-danger text-xs mt-1 hidden font-semibold"><i class="fas fa-exclamation-circle mr-1"></i>Select the employee receiving this material</p>
+              </div>
+
+              <!-- Location - only collected for OUT transactions -->
+              <div class="lg:col-span-2 hidden" id="locationField">
+                <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Location <span class="text-danger">*</span></label>
+                <div class="relative custom-select-container" id="locationContainer">
+                  <input type="text" id="locationSearchInput" class="custom-select-input pl-10 pr-10" placeholder="Pick a site or type your own..." autocomplete="off" onkeyup="onLocationSearchKeyup()" onclick="toggleLocationList(true)" style="color:black;">
+                  <i class="fas fa-map-marker-alt absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                  <button type="button" id="locationClearBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-600 p-2 rounded-lg mobile-touch-target" onclick="clearLocation()" title="Clear location"><i class="fas fa-times-circle"></i></button>
+                  <div id="locationList" class="custom-select-list custom-scrollbar" style="background-color: aquamarine;"></div>
+                </div>
+                <p id="locationError" class="text-danger text-xs mt-1 hidden font-semibold"><i class="fas fa-exclamation-circle mr-1"></i>Select or type where this material was used</p>
+              </div>
+
               <!-- Quantity -->
               <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Qty <span class="text-danger">*</span></label>
                 <div class="relative">
-                  <input type="number" id="qtyInput" min="1" placeholder="0" inputmode="numeric" pattern="[0-9]*" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-lg font-semibold mobile-touch-target" required style="color:black;">
+                  <input type="number" id="qtyInput" value="1" min="1" inputmode="numeric" pattern="[0-9]*" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-lg font-semibold mobile-touch-target" required style="color:black;">
                   <i class="fas fa-hashtag absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 </div>
               </div>
@@ -580,6 +610,8 @@ input:focus, select:focus, textarea:focus {
                   <th class="px-4 py-3 hidden sm:table-cell" style="color:white;">Oracle</th>
                   <th class="px-4 py-3" style="color:rgb(250, 250, 250);">Type</th>
                   <th class="px-4 py-3" style="color:white;">Qty</th>
+                  <th class="px-4 py-3" style="color:white;">Receiver</th>
+                  <th class="px-4 py-3" style="color:white;">Location</th>
                   <th class="px-4 py-3" style="color:white">Notes</th>
                   <th class="px-4 py-3 text-right" style="color:white;">Action</th>
                 </tr>
@@ -707,10 +739,22 @@ input:focus, select:focus, textarea:focus {
             <input type="date" id="reportEnd" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target" style="color:black">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Material</label>
-            <select id="reportMaterial" class="w-full p-3 border-2 border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target bg-white" style="color:black">
-              <option value="">All Materials</option>
-            </select>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Materials</label>
+            <div class="relative custom-select-container" id="reportMaterialContainer">
+              <button type="button" id="reportMaterialToggle" class="custom-select-input text-left flex items-center justify-between gap-2 mobile-touch-target" style="color:black;" onclick="toggleReportMaterialPanel()">
+                <span id="reportMaterialSummary" class="truncate">All Materials</span>
+                <i class="fas fa-chevron-down text-slate-400 text-xs shrink-0"></i>
+              </button>
+              <div id="reportMaterialPanel" class="custom-select-list" style="background-color: aquamarine; padding: 8px;">
+                <div class="flex gap-2 mb-2">
+                  <input type="text" id="reportMaterialSearch" class="flex-1 p-2 border-2 border-slate-200 rounded-lg text-sm outline-none" style="color:black;min-height:44px;" placeholder="Search materials..." autocomplete="off" onkeyup="renderReportMaterialOptions()">
+                  <button type="button" class="text-xs font-bold text-blue-700 px-3 rounded-lg border-2 border-blue-200 mobile-touch-target" style="min-height:44px;" onclick="selectAllVisibleReportMaterials()" title="Select every material the search shows">Select visible</button>
+                  <button type="button" class="text-xs font-bold text-red-600 px-3 rounded-lg border-2 border-red-200 mobile-touch-target" style="min-height:44px;" onclick="clearReportMaterialSelection()" title="Back to all materials">Clear</button>
+                </div>
+                <div id="reportMaterialOptions" class="custom-scrollbar" style="max-height:260px;overflow-y:auto;"></div>
+                <p id="reportMaterialCount" class="text-xs text-slate-500 mt-2 px-1"></p>
+              </div>
+            </div>
           </div>
           <button onclick="generateReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-md transition btn-press mobile-touch-target flex items-center justify-center gap-2">
             <i class="fas fa-chart-bar"></i> Generate
@@ -808,6 +852,8 @@ input:focus, select:focus, textarea:focus {
                 <th class="px-6 py-3">Oracle</th>
                 <th class="px-6 py-3">Type</th>
                 <th class="px-6 py-3">Quantity</th>
+                <th class="px-6 py-3">Receiver</th>
+                <th class="px-6 py-3">Location</th>
                 <th class="px-6 py-3">Notes</th>
               </tr>
             </thead>
@@ -829,7 +875,7 @@ input:focus, select:focus, textarea:focus {
     <i class="fas fa-boxes"></i>
     <span>Inventory</span>
   </button>
-  <button onclick="highlightTransactionType('IN'); switchView('dashboard'); setTimeout(() => document.getElementById('materialSearchInput').focus(), 300)" class="bottom-nav-item" style="position: relative;">
+  <button onclick="switchView('dashboard'); setTimeout(() => document.getElementById('materialSearchInput').focus(), 300)" class="bottom-nav-item" style="position: relative;">
     <div class="w-12 h-12 -mt-6 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg">
       <i class="fas fa-plus text-lg"></i>
     </div>
@@ -853,8 +899,12 @@ input:focus, select:focus, textarea:focus {
     </div>
     <div class="space-y-4">
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
-        <input type="email" id="loginEmail" placeholder="you@example.com" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target">
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Username</label>
+        <!-- The account behind this form is keyed on a synthetic
+             email built from the username (see gis-auth.js), so no
+             one has to type an address they never use. A value that
+             already contains @ is passed through untouched. -->
+        <input type="text" id="loginEmail" autocomplete="username" placeholder="your GISCO username" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mobile-touch-target">
       </div>
       <div>
         <label class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
@@ -973,25 +1023,52 @@ input:focus, select:focus, textarea:focus {
 // ==========================================
 // 1. CONFIGURATION
 // ==========================================
-const SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = GisSupabase.create();
 
 let currentUser = null;
 let userRole = null;
 let canStockIn = false;
-const todayStr = new Date().toISOString().split('T')[0];
+// Local calendar date, not the UTC one. toISOString() is still
+// "yesterday" until 04:00 here (UTC+4), which dated early-shift
+// transactions as the day before and then hid them from "today".
+function localDateStr(d) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+const todayStr = localDateStr(new Date());
 let allMaterials = [];
 let allOracleMaterials = [];
 let reportData = [];
 let selectedOracleMaterial = null;
 let selectedMaterialId = '';
+let allEmployees = [];
+let selectedReceiver = null;
+let selectedLocation = '';
 let canDeleteIn = false;
 let canDeleteOut = false;
 
 const ORACLE_CACHE_KEY = 'warehouse_oracle_cache_v2';
 const ORACLE_CACHE_MAX_ITEMS = 100000;
 const ORACLE_SEARCH_LIMIT = 50;
+const RECEIVER_SEARCH_LIMIT = 40;
+// The eight sites GISCO issues material to. Stored as free text in
+// transactions.location, so a site not listed here is still allowed
+// - the operator can type it. Spelling is normalised against this
+// list when a pick comes from the dropdown.
+const TX_LOCATIONS = [
+  'AL HAIL 43',
+  'AL HAIL 73',
+  'SEIH ALBANAH',
+  'SEIH ALBANAH MUSANADA',
+  'SEIH ALBANAH KATEBA',
+  'FUJAIRAH AIRPORT',
+  'FUJAIRAH NAVY BASE',
+  'AL JAZEERA AL HAMRAH'
+];
+// Recent Activity used to stop at 10 rows, so a busy day simply
+// lost transactions from the list. The panel scrolls; Reports is
+// unbounded.
+const DASHBOARD_TX_LIMIT = 500;
 
 const ORACLE_IDB_DB = 'gisco_warehouse_db';
 const ORACLE_IDB_STORE = 'oracle_cache';
@@ -1012,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('en-US', dateOptions);
   
 const date = new Date();
-  document.getElementById('reportStart').value = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+  document.getElementById('reportStart').value = localDateStr(new Date(date.getFullYear(), date.getMonth(), 1));
   document.getElementById('reportEnd').value = todayStr;
   
   // Initialize Recent Activity date range filter (default to today)
@@ -1023,12 +1100,45 @@ const date = new Date();
   
   await checkSession();
   
+  // OUT is the markup default. Sync the highlight, the radio and the
+  // receiver field with whatever is actually checked after load.
+  highlightTransactionType(document.querySelector('input[name="type"]:checked')?.value || 'OUT');
+
   // Close dropdown on outside click
   document.addEventListener('click', function(e) {
-    const container = document.querySelector('.custom-select-container');
+    const container = document.getElementById('materialContainer');
     const list = document.getElementById('materialList');
     if (container && list && !container.contains(e.target)) {
       toggleMaterialList(false);
+    }
+  });
+
+  // Same for the receiver picker: tapping anywhere outside the box
+  // collapses the employee list.
+  document.addEventListener('click', function(e) {
+    const container = document.getElementById('receiverContainer');
+    const list = document.getElementById('receiverList');
+    if (container && list && !container.contains(e.target)) {
+      toggleReceiverList(false);
+    }
+  });
+
+  // ...and the same for the location combobox.
+  document.addEventListener('click', function(e) {
+    const container = document.getElementById('locationContainer');
+    const list = document.getElementById('locationList');
+    if (container && list && !container.contains(e.target)) {
+      toggleLocationList(false);
+    }
+  });
+
+  // The report material panel stays open while you tick boxes, so it
+  // only closes on a click outside it.
+  document.addEventListener('click', function(e) {
+    const container = document.getElementById('reportMaterialContainer');
+    const panel = document.getElementById('reportMaterialPanel');
+    if (container && panel && !container.contains(e.target)) {
+      toggleReportMaterialPanel(false);
     }
   });
   
@@ -1149,13 +1259,17 @@ async function checkSession() {
 }
 
 async function loadUserRole() {
-  const { data, error } = await supabaseClient
-    .from('user_roles')
-    .select('role, can_stock_in, can_delete_in_transactions, can_delete_out_transactions, can_add_material, can_edit_material, can_delete_material')
-    .eq('user_id', currentUser.id)
-    .single();
-    
-  if (error) {
+  // gis_my_role() is SECURITY DEFINER and returns only the caller's
+  // own row. After db/003 the user_roles table is closed to direct
+  // reads on purpose: querying it straight is what let any signed-in
+  // user see (and rewrite) everyone's permission flags, including
+  // their own. GisAuth.myRole() falls back to the direct read while
+  // the migration is still in progress.
+  const data = await GisAuth.myRole();
+
+  if (!data) {
+    // Fail closed: an unknown role means no privileges, and the old
+    // code already treated a missing row this way.
     userRole = 'Storekeeper';
     canStockIn = false;
     canDeleteIn = false;
@@ -1240,27 +1354,30 @@ function toggleLoginModal() {
 function handleLogin() { toggleLoginModal(); }
 
 async function performLogin() {
-  const email = document.getElementById('loginEmail').value;
+  const identifier = document.getElementById('loginEmail').value;
   const password = document.getElementById('loginPass').value;
   const btn = event.target;
   const originalText = btn.innerText;
-  
-  if (!email || !password) {
-    alert('Please enter email and password');
+
+  if (!identifier || !password) {
+    alert('Please enter username and password');
     return;
   }
-  
+
   btn.disabled = true;
   btn.innerText = 'Signing In...';
-  
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  
-  if (error) {
-    alert('Login failed: ' + error.message);
+
+  // GisAuth.signIn accepts the username and adds the synthetic
+  // domain; a value that already looks like an address is used as
+  // typed, so anyone who saved their old email login still works.
+  const result = await GisAuth.signIn(identifier, password);
+
+  if (!result.ok) {
+    alert('Login failed: ' + result.error);
     btn.disabled = false;
     btn.innerText = originalText;
   } else {
-    currentUser = data.user;
+    currentUser = result.user;
     await loadUserRole();
     updateAuthUI(true);
     toggleLoginModal();
@@ -1271,7 +1388,11 @@ async function performLogin() {
 }
 
 async function handleLogout() {
-  await supabaseClient.auth.signOut();
+  await GisAuth.signOut();
+  // This page caches materials and transaction history locally; a
+  // logout on a shared device must take them with it. Awaited,
+  // because reloading first abandons the IndexedDB deletes.
+  await GisAuth.clearLocalData();
   currentUser = null;
   userRole = null;
   canStockIn = false;
@@ -1281,6 +1402,9 @@ async function handleLogout() {
   canEditMaterial = false;
   canDeleteMaterial = false;
   updateAuthUI(false);
+  // Kept as a reload, not a redirect: this page is designed to be
+  // browsable while showing its own Login modal, and the previous
+  // behaviour was to stay here logged out.
   location.reload();
 }
 
@@ -1290,7 +1414,7 @@ function updateAuthUI(isLoggedIn) {
     authSection.innerHTML = `
       <div class="flex items-center gap-2">
         <span class="text-xs px-2 py-1 rounded-lg font-semibold ${userRole === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}">
-          ${userRole?.toUpperCase()}
+          ${escapeHtml(userRole?.toUpperCase() || '')}
         </span>
         <button onclick="handleLogout()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg transition mobile-touch-target">
           <i class="fas fa-sign-out-alt mr-1"></i>Logout
@@ -1306,6 +1430,7 @@ function updateAuthUI(isLoggedIn) {
 async function initApp() {
   try {
     await loadMaterials();
+    await loadEmployees();
     await loadOracleMaterials();
     await loadDashboardStats();
     await loadDashboardTransactions();
@@ -1324,7 +1449,14 @@ function showToast(message, type = 'info') {
   const icon = type === 'error' ? 'fa-exclamation-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
   
   toast.className = `fixed bottom-24 left-4 right-4 md:left-auto md:right-4 md:w-96 ${bgColor} text-white px-4 py-3 rounded-xl shadow-lg z-50 animate-slide-up flex items-center gap-3`;
-  toast.innerHTML = `<i class="fas ${icon}"></i><span class="font-medium">${message}</span>`;
+  // message carries Supabase error text and, through formatSupabaseError,
+  // database values. Plain text, never markup.
+  const iconEl = document.createElement('i');
+  iconEl.className = `fas ${icon}`;
+  const textEl = document.createElement('span');
+  textEl.className = 'font-medium';
+  textEl.textContent = message;
+  toast.append(iconEl, textEl);
   
   document.body.appendChild(toast);
   setTimeout(() => {
@@ -1346,6 +1478,21 @@ async function loadMaterials() {
   }
   allMaterials = data || [];
   populateReportMaterials();
+}
+
+// Receiver candidates come from the employee roster (EMP.html / emps).
+// Only the fields the picker needs are pulled.
+async function loadEmployees() {
+  const { data, error } = await supabaseClient
+    .from('emps')
+    .select('code, name, name2, job, employeeid')
+    .order('code', { ascending: true });
+  if (error) {
+    console.error('Error loading employees:', error);
+    showToast('Failed to load the employee list', 'error');
+    return;
+  }
+  allEmployees = (data || []).filter(e => e && (e.name || e.code));
 }
 
 function getCachedOracleData() {
@@ -1542,10 +1689,10 @@ function renderOracleMaterialOptions(items) {
     div.className = 'custom-select-option';
     div.innerHTML = `
       <div class="flex-1 min-w-0">
-        <div class="font-semibold text-slate-800 truncate">${item.name}</div>
-        <div class="text-xs text-slate-500 truncate">${item.unit} · ${item.code || 'N/A'}</div>
+        <div class="font-semibold text-slate-800 truncate">${escapeHtml(item.name)}</div>
+        <div class="text-xs text-slate-500 truncate">${escapeHtml(item.unit)} · ${escapeHtml(item.code || 'N/A')}</div>
       </div>
-      ${item.stockValue !== null && item.stockValue !== undefined ? `<div class="text-sm font-bold text-green-600 ml-2 shrink-0">${item.stockValue}</div>` : ''}
+      ${item.stockValue !== null && item.stockValue !== undefined ? `<div class="text-sm font-bold text-green-600 ml-2 shrink-0">${escapeHtml(item.stockValue)}</div>` : ''}
     `;
     div.dataset.id = item.material_id || '';
     div.dataset.name = item.name;
@@ -1647,7 +1794,9 @@ function toggleMaterialList(show) {
 let searchDebounceTimer = null;
 function onMaterialSearchKeyup() {
   const list = document.getElementById('materialList');
-  if (!list.classList.contains('active')) return;
+  // Typing always means "show me options", even when the list was closed
+  // (a click on the input can be swallowed before the dropdown opens).
+  list.classList.add('active');
   clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(filterMaterials, 120);
 }
@@ -1655,7 +1804,7 @@ function onMaterialSearchKeyup() {
 // Escape HTML to avoid breaking markup / injection
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '<', '>': '>', '"': '"', "'": '&#39;'
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
 }
 
@@ -1669,16 +1818,44 @@ function highlight(text, filter) {
   return escaped.slice(0, idx) + '<mark class="bg-yellow-200 rounded px-0.5">' + match + '</mark>' + escaped.slice(idx + filter.length);
 }
 
+// The label selectMaterial() writes into the box. Kept so that reopening
+// the dropdown on a finished pick searches the name, not the literal
+// "Name (unit)" string (which never matches anything and read as
+// "no results").
+let materialPickedLabel = '';
+
+function renderMaterialOptions(materials, filter) {
+  const list = document.getElementById('materialList');
+  materials.forEach(mat => {
+    const div = document.createElement('div');
+    div.className = 'custom-select-option';
+    div.innerHTML = `
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold text-slate-800 truncate">${highlight(mat.name, filter)}</div>
+        <div class="text-xs text-slate-500 truncate">${escapeHtml(mat.unit || 'N/A')} · ${highlight(mat.oracle_code || 'N/A', filter)}</div>
+      </div>
+      <div class="text-sm font-bold text-green-600 ml-2 shrink-0">${escapeHtml(mat.current_stock ?? 0)}</div>
+    `;
+    div.dataset.id = mat.id;
+    div.dataset.name = mat.name;
+    div.dataset.unit = mat.unit;
+    div.dataset.stock = mat.current_stock ?? 0;
+    div.dataset.oracleCode = mat.oracle_code || 'N/A';
+    div.onclick = () => selectMaterial(mat.id, mat.name, mat.unit, mat.current_stock ?? 0, mat.oracle_code || 'N/A');
+    list.appendChild(div);
+  });
+}
+
 function filterMaterials() {
   const input = document.getElementById('materialSearchInput');
-  const filter = input.value.toLowerCase().trim();
   const list = document.getElementById('materialList');
+  let filter = input.value.toLowerCase().trim();
   list.innerHTML = '';
-  
-  if (!filter) {
-    return;
+
+  if (materialPickedLabel && input.value === materialPickedLabel) {
+    filter = materialPickedLabel.toLowerCase().replace(/\s*\([^)]*\)\s*$/, '').trim();
   }
-  
+
   // Search directly against the inventory items (allMaterials) so ALL items
   // are searchable, regardless of whether they exist in the Oracle table.
   const availableInventoryItems = (allMaterials || []).filter(material => {
@@ -1689,6 +1866,12 @@ function filterMaterials() {
 
   if (availableInventoryItems.length === 0) {
     list.innerHTML = '<div class="p-4 text-slate-500 text-center" style="background-color: #f0f0f0; margin: 0;"><i class="fas fa-box-open mr-2"></i>No items available in inventory</div>';
+    return;
+  }
+
+  // An empty box should browse the inventory, not show a blank dropdown.
+  if (!filter) {
+    renderMaterialOptions(availableInventoryItems.slice(0, ORACLE_SEARCH_LIMIT), '');
     return;
   }
 
@@ -1715,24 +1898,7 @@ function filterMaterials() {
   if (filtered.length === 0) {
     list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-search mr-2"></i>No matching inventory items</div>';
   } else {
-    filtered.forEach(mat => {
-      const div = document.createElement('div');
-      div.className = 'custom-select-option';
-      div.innerHTML = `
-        <div class="flex-1 min-w-0">
-          <div class="font-semibold text-slate-800 truncate">${highlight(mat.name, filter)}</div>
-          <div class="text-xs text-slate-500 truncate">${escapeHtml(mat.unit || 'N/A')} · ${highlight(mat.oracle_code || 'N/A', filter)}</div>
-        </div>
-        <div class="text-sm font-bold text-green-600 ml-2 shrink-0">${escapeHtml(mat.current_stock ?? 0)}</div>
-      `;
-      div.dataset.id = mat.id;
-      div.dataset.name = mat.name;
-      div.dataset.unit = mat.unit;
-      div.dataset.stock = mat.current_stock ?? 0;
-      div.dataset.oracleCode = mat.oracle_code || 'N/A';
-      div.onclick = () => selectMaterial(mat.id, mat.name, mat.unit, mat.current_stock ?? 0, mat.oracle_code || 'N/A');
-      list.appendChild(div);
-    });
+    renderMaterialOptions(filtered, filter);
   }
 }
 
@@ -1740,7 +1906,8 @@ function selectMaterial(id, name, unit, stock, oracleCode) {
   const select = document.getElementById('materialSelect');
   select.value = id;
   selectedMaterialId = id;
-  document.getElementById('materialSearchInput').value = `${name} (${unit})`;
+  materialPickedLabel = `${name} (${unit})`;
+  document.getElementById('materialSearchInput').value = materialPickedLabel;
   document.getElementById('currentStockDisplay').innerText = `${stock} ${unit}`;
   document.getElementById('stockInfoBox').classList.remove('hidden');
   document.getElementById('oracleCodeDisplay').innerText = oracleCode || 'N/A';
@@ -1753,6 +1920,264 @@ function selectMaterial(id, name, unit, stock, oracleCode) {
   ) || null;
   
   toggleMaterialList(false);
+}
+
+// ==========================================
+// 5b. RECEIVER PICKER (employee search for OUT)
+// ==========================================
+
+// One display string is reused everywhere: the transaction row, the
+// input box and the export all show the same "name (code / employeeid)"
+// so a receiver recorded last month reads the same way today.
+// A plain slash, not a middot, so the CSV stays readable in Excel.
+function receiverLabel(emp) {
+  if (!emp) return '';
+  const fileNo = [emp.code, emp.employeeid]
+    .map(v => String(v ?? '').trim())
+    .filter(v => v);
+  const name = String(emp.name ?? '').trim();
+  return fileNo.length ? `${name} (${fileNo.join(' / ')})` : name;
+}
+
+function toggleReceiverList(show) {
+  const list = document.getElementById('receiverList');
+  if (!list) return;
+  if (show) {
+    if (!allEmployees.length) loadEmployees();
+    // Tapping the box while it still displays a previous pick means
+    // "change the receiver", not "search for that whole label".
+    const input = document.getElementById('receiverSearchInput');
+    if (input && selectedReceiver && input.value === receiverLabel(selectedReceiver)) {
+      input.value = '';
+    }
+    list.classList.add('active');
+    filterReceivers();
+  } else {
+    list.classList.remove('active');
+  }
+}
+
+let receiverSearchDebounceTimer = null;
+function onReceiverSearchKeyup() {
+  const list = document.getElementById('receiverList');
+  if (!list || !list.classList.contains('active')) return;
+  clearTimeout(receiverSearchDebounceTimer);
+  receiverSearchDebounceTimer = setTimeout(filterReceivers, 120);
+}
+
+function filterReceivers() {
+  const input = document.getElementById('receiverSearchInput');
+  const list = document.getElementById('receiverList');
+  if (!input || !list) return;
+
+  const filter = input.value.toLowerCase().trim();
+  list.innerHTML = '';
+
+  if (!allEmployees.length) {
+    list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-users mr-2"></i>Employee list is empty</div>';
+    return;
+  }
+
+  // Scoring matches the material picker: exact > prefix > substring,
+  // and it covers the Arabic name, the English name and both numbers.
+  let hits;
+  if (!filter) {
+    hits = allEmployees.slice(0, RECEIVER_SEARCH_LIMIT);
+  } else {
+    const scored = [];
+    for (const emp of allEmployees) {
+      const name = (emp.name || '').toString().toLowerCase();
+      const name2 = (emp.name2 || '').toString().toLowerCase();
+      const code = (emp.code || '').toString().toLowerCase();
+      const empId = (emp.employeeid || '').toString().toLowerCase();
+
+      let score = -1;
+      if (name === filter || name2 === filter || code === filter || empId === filter) score = 100;
+      else if (code.startsWith(filter) || empId.startsWith(filter) || name.startsWith(filter) || name2.startsWith(filter)) score = 80;
+      else if (name.includes(filter) || name2.includes(filter)) score = 60;
+      else if (code.includes(filter) || empId.includes(filter)) score = 50;
+      else if (`${name} ${name2} ${code} ${empId}`.includes(filter)) score = 20;
+
+      if (score > 0) scored.push({ emp, score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    hits = scored.slice(0, RECEIVER_SEARCH_LIMIT).map(s => s.emp);
+  }
+
+  if (!hits.length) {
+    list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-search mr-2"></i>No matching employee</div>';
+    return;
+  }
+
+  hits.forEach(emp => {
+    const div = document.createElement('div');
+    div.className = 'custom-select-option' + (selectedReceiver && String(selectedReceiver.code) === String(emp.code) ? ' selected' : '');
+    const fileLine = [emp.code, emp.employeeid].map(v => String(v ?? '').trim()).filter(v => v).join(' / ');
+    div.innerHTML = `
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold text-slate-800 truncate">${highlight(emp.name, filter)}</div>
+        <div class="text-xs text-slate-500 truncate">${highlight(fileLine, filter)}${emp.job ? ' · ' + escapeHtml(emp.job) : ''}</div>
+      </div>
+      <i class="fas fa-user text-slate-300 ml-2 shrink-0"></i>
+    `;
+    div.onclick = () => selectReceiver(emp.code);
+    list.appendChild(div);
+  });
+}
+
+function selectReceiver(code) {
+  const emp = allEmployees.find(e => String(e.code) === String(code));
+  if (!emp) return;
+  selectedReceiver = emp;
+  document.getElementById('receiverSearchInput').value = receiverLabel(emp);
+  document.getElementById('receiverError').classList.add('hidden');
+  document.getElementById('receiverClearBtn').classList.remove('hidden');
+  toggleReceiverList(false);
+}
+
+function clearReceiver() {
+  selectedReceiver = null;
+  document.getElementById('receiverSearchInput').value = '';
+  document.getElementById('receiverClearBtn').classList.add('hidden');
+}
+
+// transactionForm.reset() wipes every field inside the form, receiver
+// included. The roster pick is meant to survive it, so re-apply it
+// after every reset.
+function restoreReceiverField() {
+  const input = document.getElementById('receiverSearchInput');
+  const clearBtn = document.getElementById('receiverClearBtn');
+  if (!input || !clearBtn) return;
+  if (selectedReceiver) {
+    input.value = receiverLabel(selectedReceiver);
+    clearBtn.classList.remove('hidden');
+  } else {
+    input.value = '';
+    clearBtn.classList.add('hidden');
+  }
+}
+
+// ==========================================
+// 5c. LOCATION PICKER (site combobox for OUT)
+// ==========================================
+
+// A combobox, not a select: the input both filters the eight known
+// sites and carries a site nobody has added to the list yet.
+// The typed text is the value, so nothing has to be picked from the
+// dropdown for a record to save.
+function normalizeLocation(text) {
+  const t = String(text ?? '').trim().replace(/\s+/g, ' ');
+  if (!t) return '';
+  const known = TX_LOCATIONS.find(loc => loc.toLowerCase() === t.toLowerCase());
+  return known || t;
+}
+
+// Read the box, fall back to the stored pick, and make that the pick.
+// Called on submit and nowhere else, so a stray tap that empties the
+// box cannot lose a site already chosen.
+function commitLocation() {
+  const input = document.getElementById('locationSearchInput');
+  const typed = input ? input.value.trim() : '';
+  selectedLocation = normalizeLocation(typed || selectedLocation);
+  return selectedLocation;
+}
+
+function toggleLocationList(show) {
+  const list = document.getElementById('locationList');
+  if (!list) return;
+  if (show) {
+    list.classList.add('active');
+    filterLocations();
+    // The box normally displays the previous pick. Select it so the
+    // first keystroke replaces it instead of appending to it.
+    const input = document.getElementById('locationSearchInput');
+    if (input && input.value && input.value === selectedLocation) input.select();
+  } else {
+    list.classList.remove('active');
+  }
+}
+
+let locationSearchDebounceTimer = null;
+function onLocationSearchKeyup() {
+  const list = document.getElementById('locationList');
+  if (!list || !list.classList.contains('active')) {
+    toggleLocationList(true);
+    return;
+  }
+  clearTimeout(locationSearchDebounceTimer);
+  locationSearchDebounceTimer = setTimeout(filterLocations, 120);
+}
+
+function filterLocations() {
+  const input = document.getElementById('locationSearchInput');
+  const list = document.getElementById('locationList');
+  if (!input || !list) return;
+
+  const filter = input.value.trim();
+  const upper = filter.toUpperCase();
+  const fold = filter.toLowerCase();
+  const hits = upper ? TX_LOCATIONS.filter(loc => loc.toUpperCase().includes(upper)) : TX_LOCATIONS.slice();
+
+  list.innerHTML = '';
+
+  // Free text that is not a known site still needs a way to be
+  // accepted explicitly, otherwise the list looks like it rejected it.
+  if (upper && !TX_LOCATIONS.some(loc => loc.toLowerCase() === upper.toLowerCase())) {
+    const custom = document.createElement('div');
+    custom.className = 'custom-select-option';
+    custom.innerHTML = `
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold text-slate-800 truncate">Use "${highlight(filter, fold)}"</div>
+        <div class="text-xs text-slate-500">Not a listed site - it will be saved as you typed it</div>
+      </div>
+      <i class="fas fa-keyboard text-slate-300 ml-2 shrink-0"></i>
+    `;
+    custom.onclick = () => selectLocation(filter);
+    list.appendChild(custom);
+  }
+
+  if (!hits.length && !upper) {
+    list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-map-marker-alt mr-2"></i>No locations</div>';
+    return;
+  }
+
+  hits.forEach(loc => {
+    const div = document.createElement('div');
+    div.className = 'custom-select-option' + (loc === selectedLocation ? ' selected' : '');
+    div.innerHTML = `
+      <div class="flex-1 min-w-0 font-semibold text-slate-800 truncate">${highlight(loc, fold)}</div>
+      <i class="fas fa-map-marker-alt text-slate-300 ml-2 shrink-0"></i>
+    `;
+    div.onclick = () => selectLocation(loc);
+    list.appendChild(div);
+  });
+}
+
+function selectLocation(value) {
+  selectedLocation = normalizeLocation(value);
+  const input = document.getElementById('locationSearchInput');
+  if (input) input.value = selectedLocation;
+  document.getElementById('locationError').classList.add('hidden');
+  document.getElementById('locationClearBtn').classList.toggle('hidden', !selectedLocation);
+  toggleLocationList(false);
+}
+
+function clearLocation() {
+  selectedLocation = '';
+  const input = document.getElementById('locationSearchInput');
+  if (input) input.value = '';
+  document.getElementById('locationClearBtn').classList.add('hidden');
+}
+
+// transactionForm.reset() wipes the location box too, so re-apply the
+// site kept for the next transaction.
+function restoreLocationField() {
+  const input = document.getElementById('locationSearchInput');
+  const clearBtn = document.getElementById('locationClearBtn');
+  if (!input || !clearBtn) return;
+  input.value = selectedLocation || '';
+  clearBtn.classList.toggle('hidden', !selectedLocation);
+  toggleLocationList(false);
 }
 
 // ==========================================
@@ -1792,7 +2217,7 @@ async function loadDashboardStats() {
 
 async function loadDashboardTransactions() {
   const tbody = document.getElementById('dashboardTableBody');
-  tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8"><div class="loader"></div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8"><div class="loader"></div></td></tr>';
   
   const startEl = document.getElementById('recentActivityStart');
   const endEl = document.getElementById('recentActivityEnd');
@@ -1802,18 +2227,18 @@ async function loadDashboardTransactions() {
   let query = supabaseClient.from('transactions').select('*');
   if (start) query = query.gte('transaction_date', start);
   if (end) query = query.lte('transaction_date', end);
-  query = query.order('created_at', { ascending: false }).limit(10);
+  query = query.order('created_at', { ascending: false }).limit(DASHBOARD_TX_LIMIT);
   
   const { data, error } = await query;
   
   if (error) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-4">Error loading data</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-red-500 py-4">Error loading data</td></tr>';
     return;
   }
   
   tbody.innerHTML = '';
   if (!data || data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400 py-8"><i class="fas fa-inbox text-2xl mb-2 block"></i>No recent activity</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-slate-400 py-8"><i class="fas fa-inbox text-2xl mb-2 block"></i>No recent activity</td></tr>';
     return;
   }
   
@@ -1829,17 +2254,27 @@ const isLocked = tx.transaction_date !== todayStr;
     const tr = document.createElement('tr');
     tr.className = "hover:bg-slate-50 transition";
     tr.innerHTML = `
-      <td class="px-4 py-3 text-xs whitespace-nowrap">${tx.transaction_date}</td>
-      <td class="px-4 py-3 font-medium text-sm">${matName}</td>
-      <td class="px-4 py-3 text-xs font-mono text-slate-500 hidden sm:table-cell">${oracleCode}</td>
-      <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${tx.type === 'IN' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${tx.type}</span></td>
-      <td class="px-4 py-3 font-bold ${color}">${sign}${tx.quantity}</td>
+      <td class="px-4 py-3 text-xs whitespace-nowrap">${escapeHtml(tx.transaction_date)}</td>
+      <td class="px-4 py-3 font-medium text-sm">${escapeHtml(matName)}</td>
+      <td class="px-4 py-3 text-xs font-mono text-slate-500 hidden sm:table-cell">${escapeHtml(oracleCode)}</td>
+      <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg text-xs font-bold ${tx.type === 'IN' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${escapeHtml(tx.type)}</span></td>
+      <td class="px-4 py-3 font-bold ${color}">${sign}${escapeHtml(tx.quantity)}</td>
+      <td class="px-4 py-3 text-xs text-slate-600 max-w-[170px] truncate" title="${escapeHtml(tx.receiver || '')}">${escapeHtml(tx.receiver || '-')}</td>
+      <td class="px-4 py-3 text-xs text-slate-600 max-w-[150px] truncate" title="${escapeHtml(tx.location || '')}">${escapeHtml(tx.location || '-')}</td>
       <td class="px-4 py-3 text-xs text-slate-500 max-w-[180px] truncate" title="${escapeHtml(tx.notes || '')}">${escapeHtml(tx.notes || '-')}</td>
       <td class="px-4 py-3 text-right">
-        ${isLocked && !isAdmin ? '<span class="text-slate-300 text-xs"><i class="fas fa-lock"></i></span>' : `<button onclick="deleteTransaction('${tx.id}')" class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition mobile-touch-target" title="Delete"><i class="fas fa-trash"></i></button>`}
+        ${isLocked && !isAdmin ? '<span class="text-slate-300 text-xs"><i class="fas fa-lock"></i></span>' : `<button data-tx-id="${escapeHtml(tx.id)}" class="delete-tx-btn text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition mobile-touch-target" title="Delete"><i class="fas fa-trash"></i></button>`}
       </td>
     `;
     tbody.appendChild(tr);
+  });
+  if (data.length >= DASHBOARD_TX_LIMIT) {
+    const more = document.createElement('tr');
+    more.innerHTML = `<td colspan="9" class="text-center py-3 text-xs text-slate-500">Showing the newest ${DASHBOARD_TX_LIMIT} entries in this range - pick a shorter date range or use Reports for everything.</td>`;
+    tbody.appendChild(more);
+  }
+  tbody.querySelectorAll('.delete-tx-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteTransaction(btn.dataset.txId));
   });
 }
 
@@ -1849,22 +2284,25 @@ const isLocked = tx.transaction_date !== todayStr;
 function highlightTransactionType(type) {
   const inLabel = document.getElementById('inLabel');
   const outLabel = document.getElementById('outLabel');
-  
-  if (type === 'OUT') {
-    outLabel.classList.add('active-out');
-    outLabel.querySelector('div').classList.add('border-warning', 'bg-white', 'shadow-sm', 'text-warning');
-    outLabel.querySelector('div').classList.remove('border-transparent', 'text-slate-600');
-    inLabel.classList.remove('active-in');
-    inLabel.querySelector('div').classList.remove('border-success', 'bg-white', 'shadow-sm', 'text-success');
-    inLabel.querySelector('div').classList.add('border-transparent', 'text-slate-600');
-  } else {
-    inLabel.classList.add('active-in');
-    inLabel.querySelector('div').classList.add('border-success', 'bg-white', 'shadow-sm', 'text-success');
-    inLabel.querySelector('div').classList.remove('border-transparent', 'text-slate-600');
-    outLabel.classList.remove('active-out');
-    outLabel.querySelector('div').classList.remove('border-warning', 'bg-white', 'shadow-sm', 'text-warning');
-    outLabel.querySelector('div').classList.add('border-transparent', 'text-slate-600');
-  }
+
+  inLabel.classList.toggle('active-in', type === 'IN');
+  outLabel.classList.toggle('active-out', type === 'OUT');
+
+  // The submit handler reads the radio, so keep it in step with the
+  // highlight even when this is called from code rather than a click.
+  const radio = document.querySelector(`input[name="type"][value="${type}"]`);
+  if (radio) radio.checked = true;
+
+  // Receiver is a stock-out concept: an IN puts material away, so
+  // no one receives it. The selection itself is kept in memory.
+  const receiverField = document.getElementById('receiverField');
+  if (receiverField) receiverField.classList.toggle('hidden', type !== 'OUT');
+  if (type !== 'OUT') toggleReceiverList(false);
+
+  // Same for the site the material is used at.
+  const locationField = document.getElementById('locationField');
+  if (locationField) locationField.classList.toggle('hidden', type !== 'OUT');
+  if (type !== 'OUT') toggleLocationList(false);
 }
 
 async function handleTransactionSubmit(e) {
@@ -1907,6 +2345,30 @@ let matId = selectedMaterialId || document.getElementById('materialSelect').valu
     resetBtn(btn, originalText);
     return;
   }
+
+  // OUT must say who took the material; IN does not have a receiver.
+  if (type === 'OUT' && !selectedReceiver) {
+    document.getElementById('receiverError').classList.remove('hidden');
+    document.getElementById('receiverSearchInput').focus();
+    toggleReceiverList(true);
+    showToast('Please select the employee receiving this material', "error");
+    resetBtn(btn, originalText);
+    return;
+  }
+
+  // OUT must also say which site the material went to. The box accepts
+  // free text, so the value is whatever it holds, falling back to the
+  // pick kept from the previous transaction.
+  const txLocation = type === 'OUT' ? commitLocation() : '';
+  if (type === 'OUT' && !txLocation) {
+    document.getElementById('locationError').classList.remove('hidden');
+    document.getElementById('locationSearchInput').focus();
+    toggleLocationList(true);
+    showToast('Please select or type the location this material was used at', "error");
+    resetBtn(btn, originalText);
+    return;
+  }
+  document.getElementById('locationError').classList.add('hidden');
   
 try {
     // Rule: OUT transactions are only allowed for materials that are already
@@ -1960,7 +2422,9 @@ try {
     }
     
     const { error: txError } = await supabaseClient.from('transactions').insert([{
-      material_id: matId, type, quantity: qty, notes, transaction_date: todayStr
+      material_id: matId, type, quantity: qty, notes, transaction_date: todayStr,
+      receiver: type === 'OUT' ? receiverLabel(selectedReceiver) : null,
+      location: type === 'OUT' ? txLocation : null
     }]);
     
     if (txError) throw new Error('Transaction Record Failed: ' + txError.message);
@@ -1972,13 +2436,21 @@ try {
     if (stockError) throw new Error('Stock Update Failed: ' + stockError.message);
     
 document.getElementById('transactionForm').reset();
-    highlightTransactionType('IN');
+    // Reset clears every field in the form; the receiver and the site
+    // are the two the warehouse keeper wants to keep for the next
+    // transaction when a whole batch goes to the same place.
+    restoreReceiverField();
+    restoreLocationField();
+    // form.reset() returns the radios to their markup default (OUT).
+    // Re-assert the type just used so it only ever changes by hand.
+    highlightTransactionType(type);
     document.getElementById('materialSearchInput').value = '';
     document.getElementById('currentStockDisplay').innerText = '-';
     document.getElementById('stockInfoBox').classList.add('hidden');
     document.getElementById('oracleCodeDisplay').innerText = '-';
     document.getElementById('oracleCodeBox').classList.add('hidden');
     selectedMaterialId = '';
+    materialPickedLabel = '';
     selectedOracleMaterial = null;
     
 showToast(`Transaction recorded successfully!`, "success");
@@ -2141,10 +2613,10 @@ async function loadInventory() {
     if (canEditMaterial || canDeleteMaterial) {
       actionButtons = '<div class="flex justify-end gap-1">';
       if (canEditMaterial) {
-        actionButtons += `<button onclick="openEditMaterialModal('${mat.id}')" class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition mobile-touch-target" title="Edit"><i class="fas fa-edit"></i></button>`;
+        actionButtons += `<button data-material-id="${escapeHtml(mat.id)}" class="edit-material-btn text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition mobile-touch-target" title="Edit"><i class="fas fa-edit"></i></button>`;
       }
       if (canDeleteMaterial) {
-        actionButtons += `<button onclick="openDeleteConfirmModal('${mat.id}')" class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition mobile-touch-target" title="Delete"><i class="fas fa-trash"></i></button>`;
+               actionButtons += `<button data-material-id="${escapeHtml(mat.id)}" class="delete-material-btn text-red-500 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition mobile-touch-target" title="Delete"><i class="fas fa-trash"></i></button>`;
       }
       actionButtons += '</div>';
     }
@@ -2153,19 +2625,22 @@ async function loadInventory() {
     tr.className = rowClass;
     tr.dataset.name = (mat.name || '').toString().trim();
     tr.innerHTML = `
-      <td class="px-6 py-4 font-medium text-slate-900">${mat.name}</td>
-      <td class="px-6 py-4 text-xs font-mono text-slate-500">${oracleCode}</td>
-      <td class="px-6 py-4">${mat.category || '<span class="text-slate-400">-</span>'}</td>
-      <td class="px-6 py-4">${mat.unit}</td>
-      <td class="px-6 py-4 font-bold ${isLow ? 'text-red-600' : 'text-slate-700'}">${mat.current_stock}</td>
+      <td class="px-6 py-4 font-medium text-slate-900">${escapeHtml(mat.name)}</td>
+      <td class="px-6 py-4 text-xs font-mono text-slate-500">${escapeHtml(oracleCode)}</td>
+      <td class="px-6 py-4">${mat.category ? escapeHtml(mat.category) : '<span class="text-slate-400">-</span>'}</td>
+      <td class="px-6 py-4">${escapeHtml(mat.unit)}</td>
+      <td class="px-6 py-4 font-bold ${isLow ? 'text-red-600' : 'text-slate-700'}">${escapeHtml(mat.current_stock)}</td>
       <td class="px-6 py-4">$${price.toFixed(2)}</td>
       <td class="px-6 py-4 font-bold text-slate-800">$${total.toFixed(2)}</td>
-      <td class="px-6 py-4">${mat.min_stock_threshold}</td>
+      <td class="px-6 py-4">${escapeHtml(mat.min_stock_threshold)}</td>
       <td class="px-6 py-4">${statusHtml}</td>
       <td class="px-6 py-4 text-right">${actionButtons}</td>
     `;
     tbody.appendChild(tr);
   });
+  
+  tbody.querySelectorAll('.edit-material-btn').forEach(btn => btn.addEventListener('click', () => openEditMaterialModal(btn.dataset.materialId)));
+  tbody.querySelectorAll('.delete-material-btn').forEach(btn => btn.addEventListener('click', () => openDeleteConfirmModal(btn.dataset.materialId)));
   
   const totalRow = document.createElement('tr');
   totalRow.className = 'bg-slate-100';
@@ -2275,12 +2750,14 @@ function renderInventoryErrors() {
         <td class="px-6 py-4">${escapeHtml(item.category || '-')}</td>
         <td class="px-6 py-4">${escapeHtml(item.current_stock ?? '0')}</td>
         <td class="px-6 py-4 text-right">
-          <button onclick="deleteInventoryErrorRow('${item.id || ''}')" class="text-red-600 hover:text-red-800 font-semibold text-sm">Delete row</button>
+          <button data-item-id="${escapeHtml(item.id || '')}" class="delete-error-row text-red-600 hover:text-red-800 font-semibold text-sm">Delete row</button>
         </td>
       `;
       body.appendChild(row);
     });
   });
+
+  body.querySelectorAll('.delete-error-row').forEach(btn => btn.addEventListener('click', () => deleteInventoryErrorRow(btn.dataset.itemId)));
 }
 
 async function deleteInventoryErrorRow(id) {
@@ -2426,8 +2903,8 @@ function filterAddMaterialSuggestions() {
         : '<span class="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded ml-2">Inventory</span>';
       div.innerHTML = `
         <div class="flex-1 min-w-0">
-          <div class="font-semibold text-slate-800 truncate">${item.name || 'N/A'} ${sourceLabel}</div>
-          <div class="text-xs text-slate-500 truncate">${item.code || 'N/A'} · $${item.price !== null && item.price !== undefined ? item.price : '0.00'}</div>
+          <div class="font-semibold text-slate-800 truncate">${escapeHtml(item.name || 'N/A')} ${sourceLabel}</div>
+          <div class="text-xs text-slate-500 truncate">${escapeHtml(item.code || 'N/A')} · $${escapeHtml(item.price !== null && item.price !== undefined ? item.price : '0.00')}</div>
         </div>
       `;
       div.onclick = () => selectAddMaterialSuggestion(item);
@@ -2564,25 +3041,133 @@ document.getElementById('deleteConfirmModal').classList.add('hidden');
 // ==========================================
 // 9. REPORTS
 // ==========================================
+
+// Multi-select material filter. An empty selection means "every
+// material", which is what the report used to do unconditionally, so
+// the default behaviour is unchanged.
+let reportMaterialNames = [];
+let reportMaterialMeta = new Map();
+let reportMaterialSelection = new Set();
+
 function populateReportMaterials() {
-  const select = document.getElementById('reportMaterial');
-  if (!select) return;
-  const currentValue = select.value;
-  const names = new Set((allMaterials || []).map(m => (m.name || '').toString().trim()).filter(Boolean).sort((a,b)=>a.localeCompare(b)));
-  select.innerHTML = '<option value="">All Materials</option>';
-  names.forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    select.appendChild(opt);
+  const names = new Set();
+  const meta = new Map();
+  (allMaterials || []).forEach(m => {
+    const name = (m.name || '').toString().trim();
+    if (!name) return;
+    names.add(name);
+    if (!meta.has(name)) meta.set(name, (m.oracle_code || '').toString().trim() || 'N/A');
   });
-  if (currentValue && names.has(currentValue)) select.value = currentValue;
+  reportMaterialNames = [...names].sort((a, b) => a.localeCompare(b));
+  reportMaterialMeta = meta;
+  // A material deleted or renamed since the list was built must not
+  // keep filtering the report invisibly.
+  reportMaterialSelection = new Set([...reportMaterialSelection].filter(name => names.has(name)));
+  renderReportMaterialOptions();
+  updateReportMaterialSummary();
+}
+
+function toggleReportMaterialPanel(force) {
+  const panel = document.getElementById('reportMaterialPanel');
+  if (!panel) return;
+  const show = force === undefined ? !panel.classList.contains('active') : force;
+  panel.classList.toggle('active', show);
+  if (show) renderReportMaterialOptions();
+}
+
+function visibleReportMaterialNames() {
+  const input = document.getElementById('reportMaterialSearch');
+  const filter = input ? input.value.toLowerCase().trim() : '';
+  if (!filter) return reportMaterialNames;
+  return reportMaterialNames.filter(name =>
+    name.toLowerCase().includes(filter) || (reportMaterialMeta.get(name) || '').toLowerCase().includes(filter)
+  );
+}
+
+function renderReportMaterialOptions() {
+  const box = document.getElementById('reportMaterialOptions');
+  if (!box) return;
+
+  const visible = visibleReportMaterialNames();
+  box.innerHTML = '';
+
+  if (!reportMaterialNames.length) {
+    box.innerHTML = '<div class="p-4 text-slate-500 text-center text-sm"><i class="fas fa-box-open mr-2"></i>No materials in inventory</div>';
+  } else if (!visible.length) {
+    box.innerHTML = '<div class="p-4 text-slate-500 text-center text-sm"><i class="fas fa-search mr-2"></i>No matching material</div>';
+  }
+
+  visible.forEach(name => {
+    const checked = reportMaterialSelection.has(name);
+    const div = document.createElement('div');
+    div.className = 'custom-select-option' + (checked ? ' selected' : '');
+    div.innerHTML = `
+      <div class="flex-1 min-w-0 text-left">
+        <div class="font-semibold text-slate-800 truncate">${escapeHtml(name)}</div>
+        <div class="text-xs text-slate-500 truncate">${escapeHtml(reportMaterialMeta.get(name) || 'N/A')}</div>
+      </div>
+      <i class="fas ${checked ? 'fa-check-square text-blue-600' : 'fa-square text-slate-300'} ml-2 shrink-0"></i>
+    `;
+    div.onclick = () => toggleReportMaterial(name);
+    box.appendChild(div);
+  });
+
+  const count = document.getElementById('reportMaterialCount');
+  if (count) {
+    count.textContent = reportMaterialSelection.size
+      ? `${reportMaterialSelection.size} of ${reportMaterialNames.length} materials selected`
+      : `Nothing selected - the report covers all ${reportMaterialNames.length} materials`;
+  }
+}
+
+function toggleReportMaterial(name) {
+  if (reportMaterialSelection.has(name)) reportMaterialSelection.delete(name);
+  else reportMaterialSelection.add(name);
+  renderReportMaterialOptions();
+  updateReportMaterialSummary();
+}
+
+function selectAllVisibleReportMaterials() {
+  visibleReportMaterialNames().forEach(name => reportMaterialSelection.add(name));
+  renderReportMaterialOptions();
+  updateReportMaterialSummary();
+}
+
+function clearReportMaterialSelection() {
+  reportMaterialSelection.clear();
+  renderReportMaterialOptions();
+  updateReportMaterialSummary();
+}
+
+// Full list for the printed/CSV header, where naming every material is
+// the point.
+function reportMaterialFilterLabel() {
+  if (!reportMaterialSelection.size) return 'All Materials';
+  return [...reportMaterialSelection].join(', ');
+}
+
+// Short form for the filter button, which is one line wide.
+function updateReportMaterialSummary() {
+  const el = document.getElementById('reportMaterialSummary');
+  if (!el) return;
+  const n = reportMaterialSelection.size;
+  const label = n === 1 ? [...reportMaterialSelection][0]
+    : n ? `${n} materials selected`
+    : 'All Materials';
+  el.textContent = label;
+  el.title = reportMaterialFilterLabel();
+}
+
+// null means "do not filter", so callers never confuse "nothing
+// selected" with "an empty result set".
+function getReportMaterialSelection() {
+  return reportMaterialSelection.size ? new Set(reportMaterialSelection) : null;
 }
 
 async function generateReport() {
   const start = document.getElementById('reportStart').value;
   const end = document.getElementById('reportEnd').value;
-  const selectedMaterial = document.getElementById('reportMaterial').value;
+  const selectedMaterials = getReportMaterialSelection();
   if (!start || !end) return showToast('Select dates', "error");
   
   const btn = event.target.closest('button');
@@ -2609,10 +3194,10 @@ async function generateReport() {
   }
   
   let filtered = data || [];
-  if (selectedMaterial) {
+  if (selectedMaterials) {
     filtered = filtered.filter(tx => {
       const mat = (allMaterials || []).find(m => m.id === tx.material_id);
-      return mat && (mat.name || '').toString().trim() === selectedMaterial;
+      return mat && selectedMaterials.has((mat.name || '').toString().trim());
     });
   }
   
@@ -2648,9 +3233,9 @@ async function generateReport() {
       const row = document.createElement('tr');
       row.className = 'hover:bg-slate-50';
       row.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap">${date}</td>
-        <td class="px-6 py-4 text-green-700 font-semibold">${stats.in}</td>
-        <td class="px-6 py-4 text-orange-700 font-semibold">${stats.out}</td>
+        <td class="px-6 py-4 whitespace-nowrap">${escapeHtml(date)}</td>
+        <td class="px-6 py-4 text-green-700 font-semibold">${escapeHtml(stats.in)}</td>
+        <td class="px-6 py-4 text-orange-700 font-semibold">${escapeHtml(stats.out)}</td>
         <td class="px-6 py-4 font-bold ${net >= 0 ? 'text-slate-800' : 'text-red-600'}">${net}</td>
       `;
       dailyActivityBody.appendChild(row);
@@ -2659,7 +3244,7 @@ async function generateReport() {
   
   
   if (reportData.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400"><i class="fas fa-inbox text-2xl mb-2 block"></i>No transactions in this period</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-400"><i class="fas fa-inbox text-2xl mb-2 block"></i>No transactions in this period</td></tr>';
     itemSummaryBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400"><i class="fas fa-boxes text-2xl mb-2 block"></i>No item summary available</td></tr>';
   } else {
     const itemSummary = {};
@@ -2670,11 +3255,13 @@ async function generateReport() {
       const tr = document.createElement('tr');
       tr.className = "hover:bg-slate-50";
       tr.innerHTML = `
-        <td class="px-6 py-4">${tx.transaction_date}</td>
-        <td class="px-6 py-4">${matName}</td>
-        <td class="px-6 py-4 text-xs font-mono text-slate-500">${oracleCode}</td>
-        <td class="px-6 py-4"><span class="px-2 py-1 rounded-lg text-xs font-bold ${tx.type === 'IN' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${tx.type}</span></td>
-        <td class="px-6 py-4 font-bold">${tx.quantity}</td>
+        <td class="px-6 py-4">${escapeHtml(tx.transaction_date)}</td>
+        <td class="px-6 py-4">${escapeHtml(matName)}</td>
+        <td class="px-6 py-4 text-xs font-mono text-slate-500">${escapeHtml(oracleCode)}</td>
+        <td class="px-6 py-4"><span class="px-2 py-1 rounded-lg text-xs font-bold ${tx.type === 'IN' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${escapeHtml(tx.type)}</span></td>
+        <td class="px-6 py-4 font-bold">${escapeHtml(tx.quantity)}</td>
+        <td class="px-6 py-4 text-xs text-slate-600 max-w-[200px] truncate" title="${escapeHtml(tx.receiver || '')}">${escapeHtml(tx.receiver || '-')}</td>
+        <td class="px-6 py-4 text-xs text-slate-600 max-w-[160px] truncate" title="${escapeHtml(tx.location || '')}">${escapeHtml(tx.location || '-')}</td>
         <td class="px-6 py-4 text-sm text-slate-500 max-w-[220px] truncate" title="${escapeHtml(tx.notes || '')}">${escapeHtml(tx.notes || '-')}</td>
       `;
       tbody.appendChild(tr);
@@ -2695,8 +3282,8 @@ async function generateReport() {
       row.innerHTML = `
         <td class="px-6 py-4 font-medium">${escapeHtml(summary.name)}</td>
         <td class="px-6 py-4 text-xs font-mono text-slate-500">${escapeHtml(summary.oracleCode)}</td>
-        <td class="px-6 py-4 text-green-700 font-semibold">${summary.in}</td>
-        <td class="px-6 py-4 text-orange-700 font-semibold">${summary.out}</td>
+        <td class="px-6 py-4 text-green-700 font-semibold">${escapeHtml(summary.in)}</td>
+        <td class="px-6 py-4 text-orange-700 font-semibold">${escapeHtml(summary.out)}</td>
         <td class="px-6 py-4 font-bold ${net >= 0 ? 'text-slate-800' : 'text-red-600'}">${net}</td>
         <td class="px-6 py-4 text-sm text-slate-500 max-w-[260px] truncate" title="${escapeHtml(noteText)}">${escapeHtml(noteText)}</td>
       `;
@@ -2708,13 +3295,15 @@ async function generateReport() {
 function exportReport() {
   if (!reportData || reportData.length === 0) return showToast('No data to export', "error");
   
-  let csv = "Date,Material,Oracle Code,Type,Quantity,Notes\n";
+  let csv = "Date,Material,Oracle Code,Type,Quantity,Receiver,Location,Notes\n";
   reportData.forEach(row => {
     const mat = allMaterials.find(m => m.id === row.material_id);
     const matName = mat ? mat.name : row.material_id;
     const oracleCode = mat ? (mat.oracle_code || 'N/A') : 'N/A';
     const notes = (row.notes || '').replace(/\r?\n/g, ' ').replace(/"/g, '""');
-    csv += `${row.transaction_date},"${matName}","${oracleCode}",${row.type},${row.quantity},"${notes}"\n`;
+    const receiver = (row.receiver || '').replace(/\r?\n/g, ' ').replace(/"/g, '""');
+    const site = (row.location || '').replace(/\r?\n/g, ' ').replace(/"/g, '""');
+    csv += `${row.transaction_date},"${matName}","${oracleCode}",${row.type},${row.quantity},"${receiver}","${site}","${notes}"\n`;
   });
   
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -2734,7 +3323,7 @@ function printReport() {
 
   const start = document.getElementById('reportStart').value;
   const end = document.getElementById('reportEnd').value;
-  const selectedMaterial = document.getElementById('reportMaterial').value;
+  const selectedMaterial = reportMaterialFilterLabel();
 
   const summaryHtml = `
     <div class="summary">
@@ -2744,7 +3333,7 @@ function printReport() {
       <span>Period: <strong>${start} → ${end}</strong></span>
     </div>
     <div class="summary" style="margin-top:-8px;">
-      <span>Filter (Material): <strong>${selectedMaterial || 'All Materials'}</strong></span>
+      <span>Filter (Materials): <strong>${selectedMaterial}</strong></span>
     </div>
   `;
 
@@ -2756,6 +3345,8 @@ function printReport() {
     const matName = mat ? mat.name : row.material_id;
     const oracleCode = mat ? (mat.oracle_code || 'N/A') : 'N/A';
     const notes = escapeHtml(row.notes || '-');
+    const receiver = escapeHtml(row.receiver || '-');
+    const site = escapeHtml(row.location || '-');
     detailRows += `
       <tr>
         <td>${escapeHtml(row.transaction_date)}</td>
@@ -2763,6 +3354,8 @@ function printReport() {
         <td>${escapeHtml(oracleCode)}</td>
         <td>${escapeHtml(row.type)}</td>
         <td>${row.quantity}</td>
+        <td>${receiver}</td>
+        <td>${site}</td>
         <td>${notes}</td>
       </tr>
     `;
@@ -2794,7 +3387,7 @@ function printReport() {
   const detailTable = `
     <h3 style="font-size:14px;color:#1e40af;margin:0 0 8px;">Detailed Transactions</h3>
     <table>
-      <thead><tr><th>Date</th><th>Material</th><th>Oracle</th><th>Type</th><th>Quantity</th><th>Notes</th></tr></thead>
+      <thead><tr><th>Date</th><th>Material</th><th>Oracle</th><th>Type</th><th>Quantity</th><th>Receiver</th><th>Location</th><th>Notes</th></tr></thead>
       <tbody>${detailRows}</tbody>
     </table>
   `;
@@ -2808,7 +3401,7 @@ function printItemSummary() {
 
   const start = document.getElementById('reportStart').value;
   const end = document.getElementById('reportEnd').value;
-  const selectedMaterial = document.getElementById('reportMaterial').value;
+  const selectedMaterial = reportMaterialFilterLabel();
 
   const itemSummary = {};
   let summaryRows = '';
@@ -2848,7 +3441,7 @@ function printItemSummary() {
     <div class="summary">
       <span>Total Items: <strong>${Object.keys(itemSummary).length}</strong></span>
       <span>Period: <strong>${start} → ${end}</strong></span>
-      <span>Filter (Material): <strong>${selectedMaterial || 'All Materials'}</strong></span>
+      <span>Filter (Materials): <strong>${selectedMaterial}</strong></span>
     </div>
   `;
 
@@ -2860,7 +3453,7 @@ function printDetailedTransactions() {
 
   const start = document.getElementById('reportStart').value;
   const end = document.getElementById('reportEnd').value;
-  const selectedMaterial = document.getElementById('reportMaterial').value;
+  const selectedMaterial = reportMaterialFilterLabel();
 
   let detailRows = '';
   let totalIn = 0, totalOut = 0;
@@ -2869,6 +3462,8 @@ function printDetailedTransactions() {
     const matName = mat ? mat.name : row.material_id;
     const oracleCode = mat ? (mat.oracle_code || 'N/A') : 'N/A';
     const notes = escapeHtml(row.notes || '-');
+    const receiver = escapeHtml(row.receiver || '-');
+    const site = escapeHtml(row.location || '-');
     detailRows += `
       <tr>
         <td>${escapeHtml(row.transaction_date)}</td>
@@ -2876,6 +3471,8 @@ function printDetailedTransactions() {
         <td>${escapeHtml(oracleCode)}</td>
         <td>${escapeHtml(row.type)}</td>
         <td>${row.quantity}</td>
+        <td>${receiver}</td>
+        <td>${site}</td>
         <td>${notes}</td>
       </tr>
     `;
@@ -2886,7 +3483,7 @@ function printDetailedTransactions() {
   const tableHtml = `
     <h3 style="font-size:14px;color:#1e40af;margin:0 0 8px;">Detailed Transactions</h3>
     <table>
-      <thead><tr><th>Date</th><th>Material</th><th>Oracle</th><th>Type</th><th>Quantity</th><th>Notes</th></tr></thead>
+      <thead><tr><th>Date</th><th>Material</th><th>Oracle</th><th>Type</th><th>Quantity</th><th>Receiver</th><th>Location</th><th>Notes</th></tr></thead>
       <tbody>${detailRows}</tbody>
     </table>
   `;
@@ -2899,7 +3496,7 @@ function printDetailedTransactions() {
       <span>Period: <strong>${start} → ${end}</strong></span>
     </div>
     <div class="summary" style="margin-top:-8px;">
-      <span>Filter (Material): <strong>${selectedMaterial || 'All Materials'}</strong></span>
+      <span>Filter (Materials): <strong>${selectedMaterial}</strong></span>
     </div>
   `;
 
@@ -2920,7 +3517,7 @@ function openPrintWindow(title, tableHtml, summaryHtml) {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>${title}</title>
+      <title>${escapeHtml(title)}</title>
       <style>
         body { font-family: Arial, sans-serif; color: #0f172a; padding: 24px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #2563eb; padding-bottom: 12px; margin-bottom: 16px; }
@@ -3195,10 +3792,10 @@ async function openLowStockModal() {
     const tr = document.createElement('tr');
     tr.className = 'border-b border-slate-100 hover:bg-slate-50';
     tr.innerHTML = `
-      <td class="px-4 py-3 font-medium text-slate-800">${mat.name || 'Unknown'}</td>
-      <td class="px-4 py-3 text-slate-600">${mat.oracle_code || mat.code || 'N/A'}</td>
-      <td class="px-4 py-3 font-bold text-red-600">${mat.current_stock ?? 0}</td>
-      <td class="px-4 py-3 text-slate-600">${mat.min_stock_threshold ?? 0}</td>
+      <td class="px-4 py-3 font-medium text-slate-800">${escapeHtml(mat.name || 'Unknown')}</td>
+      <td class="px-4 py-3 text-slate-600">${escapeHtml(mat.oracle_code || mat.code || 'N/A')}</td>
+      <td class="px-4 py-3 font-bold text-red-600">${escapeHtml(mat.current_stock ?? 0)}</td>
+      <td class="px-4 py-3 text-slate-600">${escapeHtml(mat.min_stock_threshold ?? 0)}</td>
       <td class="px-4 py-3"><span class="px-2 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-bold">LOW</span></td>
     `;
     tbody.appendChild(tr);
@@ -3234,9 +3831,9 @@ async function openTodayInModal() {
     const tr = document.createElement('tr');
     tr.className = 'border-b border-slate-100 hover:bg-slate-50';
     tr.innerHTML = `
-      <td class="px-4 py-3 font-medium text-slate-800">${matName}</td>
-      <td class="px-4 py-3 text-slate-600">${oracleCode}</td>
-      <td class="px-4 py-3 font-bold text-green-600">+${tx.quantity}</td>
+      <td class="px-4 py-3 font-medium text-slate-800">${escapeHtml(matName)}</td>
+      <td class="px-4 py-3 text-slate-600">${escapeHtml(oracleCode)}</td>
+      <td class="px-4 py-3 font-bold text-green-600">+${escapeHtml(tx.quantity)}</td>
       <td class="px-4 py-3 text-slate-500 text-xs">${time}</td>
     `;
     tbody.appendChild(tr);
@@ -3272,9 +3869,9 @@ async function openTodayOutModal() {
     const tr = document.createElement('tr');
     tr.className = 'border-b border-slate-100 hover:bg-slate-50';
     tr.innerHTML = `
-      <td class="px-4 py-3 font-medium text-slate-800">${matName}</td>
-      <td class="px-4 py-3 text-slate-600">${oracleCode}</td>
-      <td class="px-4 py-3 font-bold text-orange-600">-${tx.quantity}</td>
+      <td class="px-4 py-3 font-medium text-slate-800">${escapeHtml(matName)}</td>
+      <td class="px-4 py-3 text-slate-600">${escapeHtml(oracleCode)}</td>
+      <td class="px-4 py-3 font-bold text-orange-600">-${escapeHtml(tx.quantity)}</td>
       <td class="px-4 py-3 text-slate-500 text-xs">${time}</td>
     `;
     tbody.appendChild(tr);

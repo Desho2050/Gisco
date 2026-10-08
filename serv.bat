@@ -48,7 +48,7 @@ if defined HAS_NODE (
     start "GISCO Server 5173" cmd /c "cd /d \"%~dp0\" && npx --yes http-server -p 5173 -c-1"
   )
   timeout /t 2 >nul
-  start "GISCO Dashboard" "http://127.0.0.1:5173/main%20page.html"
+  start "GISCO Login" "http://127.0.0.1:5173/index.html"
   goto :EOF
 )
 
@@ -56,7 +56,7 @@ if defined HAS_PY (
   echo [INFO] Node not available. Using Python (py) simple server on 5173.
   start "GISCO Server 5173" cmd /c "cd /d \"%~dp0\" && py -m http.server 5173"
   timeout /t 2 >nul
-  start "GISCO Dashboard" "http://127.0.0.1:5173/main%20page.html"
+  start "GISCO Login" "http://127.0.0.1:5173/index.html"
   goto :EOF
 )
 
@@ -64,7 +64,7 @@ if defined HAS_PYTHON (
   echo [INFO] Node not available. Using Python simple server on 5173.
   start "GISCO Server 5173" cmd /c "cd /d \"%~dp0\" && python -m http.server 5173"
   timeout /t 2 >nul
-  start "GISCO Dashboard" "http://127.0.0.1:5173/main%20page.html"
+  start "GISCO Login" "http://127.0.0.1:5173/index.html"
   goto :EOF
 )
 
@@ -78,7 +78,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "
   $h.Prefixes.Add($prefix);
   $h.Start();
   Write-Host ('[INFO] PowerShell server running at ' + $prefix);
-  Start-Process 'http://127.0.0.1:5173/main%20page.html';
+  Start-Process 'http://127.0.0.1:5173/index.html';
   while ($h.IsListening) {
     $ctx = $h.GetContext();
     $reqPath = [System.Uri]::UnescapeDataString($ctx.Request.Url.AbsolutePath.TrimStart('/'));
