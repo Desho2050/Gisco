@@ -129,6 +129,22 @@
   checkAuth();
 
   /* ------------------------------------------------------------
+     A token minted before a signing-key rotation still decodes as
+     unexpired, so the synchronous pass above cannot see that the
+     database has stopped trusting it. Once the page owns its
+     scripts, re-check against GoTrue and bounce if it refuses.
+     ------------------------------------------------------------ */
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!readStoredSession()) return;
+    if (!window.GisAuth || typeof window.GisAuth.requireSession !== 'function') return;
+    Promise.resolve(window.GisAuth.requireSession()).then(function (ok) {
+      if (!ok) redirectToLogin();
+    }, function () {
+      /* Keep the synchronous decision rather than guessing. */
+    });
+  });
+
+  /* ------------------------------------------------------------
      Back / forward cache. A page restored from bfcache does not
      re-run scripts, so pageshow with persisted=true is where we
      re-verify.

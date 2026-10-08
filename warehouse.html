@@ -1249,6 +1249,13 @@ async function checkSession() {
     return;
   }
   if (data.session) {
+    // A stored session can carry a token signed by a key that has since been
+    // revoked; it still decodes as unexpired but every query then fails.
+    // requireSession() asks GoTrue, so the operator sees the login form.
+    if (!(await GisAuth.requireSession())) {
+      updateAuthUI(false);
+      return;
+    }
     currentUser = data.session.user;
     await loadUserRole();
     updateAuthUI(true);

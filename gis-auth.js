@@ -143,7 +143,13 @@
     var jwt = claims(s.access_token);
     if (!jwt) return false;
     if (jwt.exp && jwt.exp * 1000 <= Date.now()) return false;
-    return true;
+    /* Local claims cannot tell a live token from one signed by a revoked
+       key: such a token stays "unexpired" for its whole lifetime while the
+       database refuses every request it carries. Ask GoTrue, which verifies
+       with the same key set PostgREST uses, so a dead session sends the
+       operator to the login page instead of a wall of empty tables. */
+    var res = await client().auth.getUser();
+    return !res.error && !!(res.data && res.data.user);
   }
 
   /* ------------------------------------------------------------
