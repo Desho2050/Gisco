@@ -9,12 +9,14 @@
    read, edit and delete the whole database.
 
    RULES FOR THIS FILE
-   1. Only the 'anon' (public) key may ever live here. A runtime
+   1. Only a PUBLIC browser key may ever live here - the new
+      'sb_publishable_...' key, or a legacy 'anon' JWT. A runtime
       guard below enforces that and refuses to build a client
       otherwise. Do not weaken it.
    2. If you need extra privilege for an operation, add a Postgres
       RPC or an Edge Function and call that - never add a
-      privileged key to the browser.
+      privileged key to the browser. A 'sb_secret_...' key and a
+      'service_role' JWT are both refused by that guard.
    3. Load this file AFTER the supabase-js CDN tag and BEFORE any
       inline script that calls GisSupabase.create().
 
@@ -22,20 +24,24 @@
    The key is read from window.GIS_ENV first (so a deployed site can
    inject it without editing this file) and falls back to the
    constant below. After rotating keys in Supabase Dashboard ->
-   Settings -> API, update it in this ONE place only.
+   Settings -> API Keys, update it in this ONE place only.
    ============================================================ */
 (function () {
   'use strict';
 
   var SUPABASE_URL = 'https://gecghwcqgxmitcsjbnst.supabase.co';
 
-  // ⚠ anon key only. The guard in create() rejects anything else.
-  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlY2dod2NxZ3htaXRjc2pibnN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4NjY3OTAsImV4cCI6MjA4MDQ0Mjc5MH0.0Kia3U-TVkSF1_4GGeeu4l3o2APMvL-xug-k8iQMM9g';
+  // Public browser key. The guard in create() rejects anything else.
+  var SUPABASE_ANON_KEY = 'sb_publishable_3WmMzqEIJIJGzL5sspMLlQ_7biSX42Q';
 
   /* ------------------------------------------------------------
-     Decode the role claim from a Supabase JWT without verifying
-     its signature. We only care which role the key was minted
-     for, which is safe to read from the payload.
+     Which role a configured key carries.
+
+     New-style keys carry the role in their prefix: sb_publishable_
+     is the public browser key, sb_secret_ is privileged. Legacy
+     keys are JWTs whose payload names the role; we decode it
+     without verifying the signature, which is safe to read from a
+     payload and is the only reason this function exists.
      ------------------------------------------------------------ */
   function roleOf(jwt) {
     try {
@@ -47,6 +53,13 @@
     } catch (e) {
       return null;
     }
+  }
+
+  function keyRole(key) {
+    var s = String(key || '');
+    if (s.indexOf('sb_publishable_') === 0) return 'anon';
+    if (s.indexOf('sb_secret') === 0) return 'service_role';
+    return roleOf(s);
   }
 
   var banner = '%c[GISCO Supabase]';
@@ -105,13 +118,14 @@
       var url = (window.GIS_ENV && window.GIS_ENV.SUPABASE_URL) || SUPABASE_URL;
       var key = (window.GIS_ENV && window.GIS_ENV.SUPABASE_ANON_KEY) || SUPABASE_ANON_KEY;
 
-      var role = roleOf(key);
+      var role = keyRole(key);
       if (role !== 'anon') {
         complain(
           'configured key has role "' + (role || 'unreadable') + '". ' +
-          'Only the anon public key is allowed in browser code - a non-anon ' +
-          'key bypasses Row Level Security. Rotate it in Supabase Dashboard ' +
-          '-> Settings -> API and put the new anon key in supabase-config.js.'
+          'Only a public browser key is allowed here - a secret or ' +
+          'service_role key bypasses Row Level Security. Put the ' +
+          'sb_publishable_... key from Supabase Dashboard -> Settings ' +
+          '-> API Keys in supabase-config.js.'
         );
       }
 
