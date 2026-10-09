@@ -34,6 +34,7 @@
       --border: #334155; --shadow: 0 4px 6px -1px rgba(0,0,0,.3); --shadow-lg: 0 20px 25px -5px rgba(0,0,0,.5);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    button, a.btn, .view-tab, .loc-chip, .emp-option, .part-x, .btn-icon { touch-action: manipulation; }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: linear-gradient(135deg, var(--bg) 0%, #e0e7ff 100%);
@@ -279,6 +280,8 @@
     .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-secondary); }
     .empty-state i { font-size: 2.8rem; margin-bottom: .8rem; opacity: .45; display: block; }
     .print-title, .print-footer { display: none; }
+    /* Paper-saving register for the Detailed month view; see detPrint. */
+    .det-print-table { display: none; }
     .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%;
                animation: spin .7s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -300,12 +303,24 @@
       .btn { padding: .7rem .9rem; }
       .table-pad { padding: 0 .9rem .9rem; }
 
+      /* One-thumb reach: bigger tap targets and a save bar that stays
+         above the bottom nav while the long entry form scrolls. */
+      .part-x { width: 44px; height: 44px; font-size: 1.05rem; }
+      #view-entry .form-actions { position: sticky; bottom: calc(5.1rem + env(safe-area-inset-bottom)); z-index: 40;
+                                  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+                                  box-shadow: var(--shadow); padding: .55rem; margin-top: .8rem; }
+      .controls .btn { flex: 1 1 130px; }
+      .day-nav input { min-width: 0; }
+      .loc-chip { min-height: 46px; font-size: .82rem; }
+      .view-tab, .bottom-nav-item { -webkit-tap-highlight-color: rgba(99,102,241,.18); }
+      .emp-option:active, .loc-chip:active, .btn:active { transform: scale(.98); }
+
       /* Reports become stacked cards instead of a sideways-scrolling table. */
       .cards-mode thead { display: none; }
       .cards-mode tr { display: block; margin-bottom: .7rem; border: 1px solid var(--border); border-radius: 10px;
-                      padding: .5rem .7rem; background: var(--surface); }
-      .cards-mode td { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .3rem 0;
-                       border: none; font-size: .85rem; text-align: start; }
+                      padding: .55rem .75rem; background: var(--surface); }
+      .cards-mode td { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .38rem 0;
+                       border: none; font-size: .9rem; text-align: start; }
       .cards-mode td.num { text-align: end; }
       .cards-mode td::before { content: attr(data-label); font-weight: 700; color: var(--text-secondary); font-size: .7rem;
                                text-transform: uppercase; letter-spacing: .3px; }
@@ -333,7 +348,20 @@
       table { min-width: 0 !important; font-size: 8pt !important; border-collapse: collapse !important; }
       th { background: #eef2ff !important; color: #000 !important; padding: .3rem .4rem !important; position: static; border: 1px solid #94a3b8 !important; }
       td { padding: .3rem .4rem !important; border: 1px solid #cbd5e1 !important; font-size: 8pt !important; }
+      tfoot td { position: static !important; }
       tbody tr, .task-card { page-break-inside: avoid; }
+
+      /* Detailed month prints as a compressed register instead of the
+         on-screen 7-column table (det-compact is set by detPrint). */
+      body.det-compact #view-detail .stats-container,
+      body.det-compact #view-detail .table-wrapper { display: none !important; }
+      body.det-compact .det-print-table { display: block !important; }
+      .det-print-table table { min-width: 0 !important; font-size: 7pt !important; }
+      .det-print-table th { padding: .12rem .25rem !important; font-size: 7pt !important; }
+      .det-print-table td { padding: .1rem .25rem !important; font-size: 7pt !important; line-height: 1.2; }
+      .det-print-table thead { display: table-header-group; }
+      .det-print-table .grp td { background: #eef2ff !important; font-weight: 800; }
+      .det-print-table .foot-note { font-size: 7pt; color: #333; margin-top: .2rem; }
       .badge { background: none !important; color: #000 !important; padding: 0 !important; }
       .print-title { display: block !important; text-align: center; font-weight: 700; margin: .4rem 0 !important; font-size: 1rem !important; color: #000 !important; }
       .print-footer { display: block !important; text-align: center; font-size: 8pt; color: #333; margin-top: .6rem; }
@@ -536,6 +564,7 @@
         </div>
         <div class="stats-container" id="detStats" style="padding:1rem 1.25rem 0"></div>
         <div class="table-wrapper table-pad" id="detTableWrap"></div>
+        <div class="det-print-table" id="detPrintTable"></div>
       </div>
     </section>
 
@@ -951,7 +980,12 @@
       const q = el('sheetSearch').value.trim().toLowerCase();
       const pool = employees.filter(e => !q || [e.code, e.name, e.name2, e.employeeid, e.job]
         .some(v => String(v || '').toLowerCase().includes(q)));
-      return pool;
+      // Browse by name: the picker is ordered like the register it feeds,
+      // collated in the language the operator is reading.
+      const key = e => String(currentLang === 'ar'
+        ? (empNameAr(e) || empNameEn(e)) : (empNameEn(e) || empNameAr(e))).trim();
+      return pool.sort((a, b) => key(a).localeCompare(key(b), currentLang === 'ar' ? 'ar' : 'en')
+        || String(a.code).localeCompare(String(b.code)));
     }
     function renderSheetList() {
       if (!sheetDraft) sheetDraft = [];
@@ -1504,6 +1538,50 @@
     }
     let detRows = [];
 
+    /* Compact one-line-per-employee register for paper: grouped by day,
+       day rows carry that day's subtotal, and the header repeats on
+       every printed page. Built only at print time from detRows. */
+    function buildDetPrintTable() {
+      const t = T();
+      if (!detRows.length) { el('detPrintTable').innerHTML = ''; return; }
+      const byDay = new Map();
+      detRows.forEach(r => {
+        if (!byDay.has(r.work_date)) byDay.set(r.work_date, []);
+        byDay.get(r.work_date).push(r);
+      });
+      const days = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+      let body = '';
+      days.forEach(([d, rs]) => {
+        rs.sort((a, b) => String(a.employee_code).localeCompare(String(b.employee_code)));
+        body += `<tr class="grp"><td colspan="5">${esc(d)} · ${esc(dayLabel(d))} — ${fmtH(sum(rs.map(r => r.hours)))} ${esc(t.hoursUnit)}</td></tr>`;
+        rs.forEach(r => {
+          body += `<tr>
+            <td>${esc(r.employee_code)}</td>
+            <td>${esc(nameOf(r.employee_code, r.employee_name, r.employee_name_en))}</td>
+            <td>${esc(r.location)}</td>
+            <td>${esc(r.time_start || '-')} - ${esc(r.time_end || '-')}</td>
+            <td class="num">${fmtH(r.hours)}${r.hours_overridden ? '*' : ''}</td>
+          </tr>`;
+        });
+      });
+      el('detPrintTable').innerHTML = `
+        <table>
+          <thead><tr>
+            <th>${esc(t.colCode)}</th><th>${esc(t.colName)}</th><th>${esc(t.colLoc)}</th>
+            <th>${esc(t.colTimes)}</th><th class="num">${esc(t.colHours)}</th>
+          </tr></thead>
+          <tbody>${body}</tbody>
+          <tfoot><tr><td colspan="4">${esc(t.stTotal)}</td><td class="num">${fmtH(sum(detRows.map(r => r.hours)))}</td></tr></tfoot>
+        </table>
+        <div class="foot-note">* ${esc(t.manual)}</div>`;
+    }
+    function printDetailCompact() {
+      buildDetPrintTable();
+      document.body.classList.add('det-compact');
+      window.print();
+      setTimeout(() => document.body.classList.remove('det-compact'), 400);
+    }
+
     /* ---------- export ---------- */
     function exportCSV(name, headers, rows) {
       const csv = [headers, ...rows].map(r => r.map(c => `"${String(c ?? '').replaceAll('"', '""')}"`).join(',')).join('\r\n');
@@ -1563,7 +1641,10 @@
     /* ---------- wiring ---------- */
     function bind() {
       el('langBtn').addEventListener('click', toggleLanguage);
-      el('printBtn').addEventListener('click', () => window.print());
+      el('printBtn').addEventListener('click', () => {
+        if (currentView === 'detail') printDetailCompact();
+        else window.print();
+      });
       el('refreshBtn').addEventListener('click', async () => {
         const date = el('workDate').value;
         await loadEmployees();
@@ -1686,7 +1767,7 @@
       el('detMonth').addEventListener('change', () => { renderDetail(); saveSticky(); });
       el('detLoc').addEventListener('change', renderDetail);
       el('detFilter').addEventListener('input', () => { clearTimeout(bind._d); bind._d = setTimeout(renderDetail, 220); });
-      el('detPrint').addEventListener('click', () => window.print());
+      el('detPrint').addEventListener('click', printDetailCompact);
       el('detCsv').addEventListener('click', () => {
         const c = detailColumns();
         exportCSV(`overtime_${el('detMonth').value}.csv`, c.headers, c.rows);
