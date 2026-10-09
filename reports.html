@@ -1003,13 +1003,13 @@
 
             <div class="config-body">
                 <div class="config-input-group">
-                    <label><i class="fas fa-link"></i> GitHub Raw URL for reports.xlsx</label>
+                    <label><i class="fas fa-link"></i> Source for reports.xlsx</label>
                     <input 
                         type="text" 
                         id="githubUrl" 
                         class="config-input"
-                        value="https://raw.githubusercontent.com/Desho2050/Gisco/main/reports.xlsx"
-                        placeholder="https://raw.githubusercontent.com/username/repo/main/reports.xlsx"
+                        value="reports.xlsx"
+                        placeholder="reports.xlsx, or any full URL"
                     >
                 </div>
                 <div class="config-actions">
@@ -1027,15 +1027,13 @@
                 </div>
 
                 <div class="config-help" id="configHelp">
-                    <strong><i class="fas fa-info-circle"></i> How to get your GitHub Raw URL:</strong><br><br>
-                    1. Upload <code>reports.xlsx</code> to any GitHub repository<br>
-                    2. Navigate to the file on GitHub<br>
-                    3. Click the <strong>"Raw"</strong> button at the top right of the file<br>
-                    4. Copy the URL from your browser's address bar<br>
-                    5. Paste it above and click <strong>Fetch Data</strong><br><br>
-                    <strong>Example URL format:</strong><br>
-                    <code>https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/reports.xlsx</code><br><br>
-                    <strong>⚠️ Important:</strong> Make sure your repository is <strong>public</strong>.
+                    <strong><i class="fas fa-info-circle"></i> Where the data comes from:</strong><br><br>
+                    1. Keep <code>reports.xlsx</code> next to this page and leave the box as
+                    <code>reports.xlsx</code> &mdash; that is the normal setup.<br>
+                    2. To read from somewhere else, paste a full <code>https://</code> URL instead.<br>
+                    3. Click <strong>Fetch Data</strong>, then <strong>Save</strong> to keep that choice on this device.<br><br>
+                    <strong>Note:</strong> a GitHub <em>raw</em> URL only works while that repository is
+                    public, so do not point this at the GISCO repository.
                 </div>
             </div>
         </div>
@@ -1277,7 +1275,15 @@
             const savedAutoRefresh = localStorage.getItem('github_auto_refresh');
             const savedInterval = localStorage.getItem('github_refresh_interval');
 
-            if (savedUrl) document.getElementById('githubUrl').value = savedUrl;
+            // Devices that saved the GitHub raw URL keep it in localStorage.
+            // That URL is gone now the repository is private, so point them
+            // back at the copy served next to this page.
+            const isOldRepoRaw = /^https:\/\/raw\.githubusercontent\.com\/Desho2050\/Gisco\/.+reports\.xlsx$/i.test((savedUrl || '').trim());
+            if (isOldRepoRaw) {
+                localStorage.removeItem('github_reports_url');
+            } else if (savedUrl) {
+                document.getElementById('githubUrl').value = savedUrl;
+            }
             if (savedAutoRefresh === 'true') document.getElementById('autoRefreshToggle').checked = true;
             if (savedInterval) document.getElementById('refreshInterval').value = savedInterval;
 

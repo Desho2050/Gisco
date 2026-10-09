@@ -1487,8 +1487,8 @@ input[type="date"] { color-scheme: dark; }
 const supabaseClient = GisSupabase.create();
 
 const THEME_KEY = 'wo_theme_preference';
-const PDF_CACHE_KEY = 'pdf_url_cache_v3';
-let PDF_URL_CACHE = JSON.parse(localStorage.getItem(PDF_CACHE_KEY) || '{}');
+const DOC_BUCKET = 'gisco-docs';
+const PDF_BLOB_CACHE = new Map();
 const CACHE_TTL = 60 * 60 * 1000;
 const HIDDEN_ROWS_KEY = 'hidden_work_orders_v1';
 const ROW_COLORS_KEY = 'row_colors_v1';
@@ -1534,24 +1534,23 @@ Chart.defaults.borderColor = chartColors.border;
 Chart.defaults.font.family = 'Inter, sans-serif';
 
 // ============ HELPERS ============
-function isCacheValid(ts) { return Date.now() - ts < CACHE_TTL; }
-function getCachedPdfUrls(filename) {
-  const cached = PDF_URL_CACHE[filename.toLowerCase()];
-  if (cached && isCacheValid(cached.ts)) return { direct: cached.direct, google: cached.google };
-  return null;
-}
-function setCachedPdfUrls(filename, direct, google) {
-  PDF_URL_CACHE[filename.toLowerCase()] = { direct, google, ts: Date.now() };
-  localStorage.setItem(PDF_CACHE_KEY, JSON.stringify(PDF_URL_CACHE));
-}
-async function resolvePdfUrls(file) {
-  const cached = getCachedPdfUrls(file);
-  if (cached) return cached;
-  if (!file.toLowerCase().endsWith('.pdf')) file += '.pdf';
-  const ghPagesUrl = `https://desho2050.github.io/Gisco/${encodeURIComponent(file)}`;
-  const googleUrl = `https://docs.google.com/gview?url=${encodeURIComponent(ghPagesUrl)}&embedded=true`;
-  setCachedPdfUrls(file, ghPagesUrl, googleUrl);
-  return { direct: ghPagesUrl, google: googleUrl };
+function normalizeDocName(file) { return /\.pdf$/i.test(file) ? file : file + '.pdf'; }
+
+async function resolvePdfBlobUrl(file) {
+  const name = normalizeDocName(file);
+  const key = name.toLowerCase();
+  const hit = PDF_BLOB_CACHE.get(key);
+  if (hit && Date.now() - hit.ts < CACHE_TTL) return hit.url;
+
+  // The bucket is private, so this request carries the signed-in user's
+  // token and nothing else can fetch the scan. A blob URL is only valid
+  // inside this page, which is why the old localStorage URL cache is gone.
+  const { data, error } = await GisAuth.client().storage.from(DOC_BUCKET).download(name);
+  if (error) throw error;
+
+  const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+  PDF_BLOB_CACHE.set(key, { url, ts: Date.now() });
+  return url;
 }
 function isNumericOnly(val) {
   if (val === null || val === undefined) return false;
@@ -1658,6 +1657,7 @@ let ALL_ROWS = [];
 let PDF_MAP = {};
 let NOTIFIED_WO = new Set();
 let currentPdfDirectUrl = '';
+let currentPdfFileName = '';
 
 function showToast(message, duration = 20000) {
   let container = document.getElementById('toastContainer');
@@ -1698,9 +1698,15 @@ async function loadRemotePdfMap() {
 }
 
 async function openPdfViewerFromFile(file, title) {
-  const urls = await resolvePdfUrls(file);
-  currentPdfDirectUrl = urls.direct;
-  return openPdfViewer(urls.google, title);
+  try {
+    const url = await resolvePdfBlobUrl(file);
+    currentPdfDirectUrl = url;
+    currentPdfFileName = normalizeDocName(file);
+    openPdfViewer(url, title);
+  } catch (e) {
+    showToast('Could not open ' + file + '. Sign in again if your session expired.', 8000);
+  }
+  return false;
 }
 
 function openPdfViewer(url, title) {
@@ -1726,6 +1732,7 @@ function openPdfViewer(url, title) {
     overlay.setAttribute('aria-hidden', 'true');
     document.getElementById('pdfFrame').src = 'about:blank';
     currentPdfDirectUrl = '';
+    currentPdfFileName = '';
   }
   if (closeBtn) closeBtn.addEventListener('click', closePdf);
   if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closePdf(); });
@@ -1734,7 +1741,7 @@ function openPdfViewer(url, title) {
       if (currentPdfDirectUrl) {
         const a = document.createElement('a');
         a.href = currentPdfDirectUrl;
-        a.download = currentPdfDirectUrl.split('/').pop() || 'document.pdf';
+        a.download = currentPdfFileName || 'document.pdf';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

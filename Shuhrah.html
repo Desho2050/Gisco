@@ -9,6 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   
   <!-- External Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="gis-auth.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -543,43 +546,33 @@
       XLSX.writeFile(wb, 'GISCO_Purchase_Summary.xlsx');
     }
 
-    // --- PDF Popup Viewer ---
-    const PDF_CACHE_KEY = 'pdf_url_cache_v3';
-    let PDF_URL_CACHE = JSON.parse(localStorage.getItem(PDF_CACHE_KEY) || '{}');
+    // --- PDF viewer: documents come from private Supabase Storage ---
+    const DOC_BUCKET = 'gisco-docs';
+    const PDF_BLOB_CACHE = new Map();
     const CACHE_TTL = 60 * 60 * 1000;
 
-    function isCacheValid(ts) { return Date.now() - ts < CACHE_TTL; }
-
-    function getCachedPdfUrls(filename) {
-      const key = String(filename || '').toLowerCase();
-      const cached = PDF_URL_CACHE[key];
-      if (cached && isCacheValid(cached.ts)) return { direct: cached.direct, google: cached.google };
-      return null;
-    }
-
-    function setCachedPdfUrls(filename, direct, google) {
-      const key = String(filename || '').toLowerCase();
-      PDF_URL_CACHE[key] = { direct, google, ts: Date.now() };
-      localStorage.setItem(PDF_CACHE_KEY, JSON.stringify(PDF_URL_CACHE));
-    }
-
-    async function resolvePdfUrls(file) {
-      const cached = getCachedPdfUrls(file);
-      if (cached) return cached;
-
+    function normalizeDocName(file) {
       const safe = String(file || '').trim();
-      if (!safe) return { direct: '', google: '' };
+      return /\.pdf$/i.test(safe) ? safe : safe + '.pdf';
+    }
 
-      const normalized = safe.toLowerCase().endsWith('.pdf') ? safe : `${safe}.pdf`;
+    async function resolvePdfBlobUrl(file) {
+      const name = normalizeDocName(file);
+      if (!name) return '';
+      const key = name.toLowerCase();
+      const hit = PDF_BLOB_CACHE.get(key);
+      if (hit && Date.now() - hit.ts < CACHE_TTL) return hit.url;
 
-      // Direct file URL hosted by GitHub Pages
-      const ghPagesUrl = `https://desho2050.github.io/Gisco/${encodeURIComponent(normalized)}`;
+      // The bucket is private, so this request carries the signed-in
+      // user's token and nothing else can fetch the purchase order.
+      // A blob URL is only valid inside this page, which is why the
+      // old localStorage URL cache is gone.
+      const { data, error } = await GisAuth.client().storage.from(DOC_BUCKET).download(name);
+      if (error) throw error;
 
-      // Google viewer URL (better for inline embedding when GitHub/raw headers are restrictive)
-      const googleUrl = `https://docs.google.com/gview?url=${encodeURIComponent(ghPagesUrl)}&embedded=true`;
-
-      setCachedPdfUrls(normalized, ghPagesUrl, googleUrl);
-      return { direct: ghPagesUrl, google: googleUrl };
+      const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+      PDF_BLOB_CACHE.set(key, { url, ts: Date.now() });
+      return url;
     }
 
 
@@ -587,8 +580,13 @@
       const order = String(orderName || '').trim();
       if (!order) return;
 
-      const { google } = await resolvePdfUrls(order);
-      const url = google;
+      let url;
+      try {
+        url = await resolvePdfBlobUrl(order);
+      } catch (e) {
+        alert('Could not open ' + order + '. Check that the document is in the gisco-docs store, or sign in again if your session expired.');
+        return;
+      }
       const modal = document.getElementById('pdfModal');
       const overlay = document.getElementById('pdfOverlay');
       const title = document.getElementById('pdfTitle');
@@ -693,12 +691,18 @@
       const order = String(orderName || '').trim();
       if (!order) return;
 
-      const { direct } = await resolvePdfUrls(order);
+      let direct;
+      try {
+        direct = await resolvePdfBlobUrl(order);
+      } catch (e) {
+        alert('Could not download ' + order + '. Check that the document is in the gisco-docs store.');
+        return;
+      }
       if (!direct) return;
 
       const a = document.createElement('a');
       a.href = direct;
-      a.download = `${order}.pdf`;
+      a.download = `${normalizeDocName(order)}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
