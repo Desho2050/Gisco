@@ -333,6 +333,10 @@
         });
         // Do not preselect: an empty value is what makes the
         // "choose a user" warning reachable.
+        Preselect the first user so the operator only has to type
+        // the password. The placeholder stays in the list as the
+        // visible "no user" state before the names arrive.
+        if (names.length > 0) select.value = names[0];
       } catch (err) {
         console.error('Failed to load users:', err);
         showAlert(I18N[currentLang].users_load_failed, 'warning');
