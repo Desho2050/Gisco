@@ -230,7 +230,7 @@
     // SUPABASE CONFIG - Replace with your values
     // ============================================
  
-    // ⚠ ï¸ڈ SECURITY: Use the 'anon' (public) key from Supabase Dashboard → Settings → API
+    // ⚠ ï¸ڈ SECURITY: Use the 'anon' (public) key from Supabase Dashboard → Settings → API
     // NEVER use the service_role key in frontend code — it bypasses Row Level Security!
     const supabaseClient = GisSupabase.create();
     // ============================================
@@ -331,9 +331,7 @@
           opt.textContent = username;
           select.appendChild(opt);
         });
-        // Do not preselect: an empty value is what makes the
-        // "choose a user" warning reachable.
-        Preselect the first user so the operator only has to type
+        // Preselect the first user so the operator only has to type
         // the password. The placeholder stays in the list as the
         // visible "no user" state before the names arrive.
         if (names.length > 0) select.value = names[0];
