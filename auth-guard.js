@@ -112,13 +112,25 @@
     return false;
   }
 
+  /* Which page to bounce back from.
+     A protected page like Overtime.html appends its own name, so the login
+     form can return the visitor there after a successful sign-in instead of
+     always landing on the dashboard. That is what makes a shared page link
+     behave as a private URL: form first, requested page after. */
+  function loginUrl() {
+    var here = decodeURIComponent(String(location.pathname || '').split('/').pop() || '');
+    if (!here || here === LOGIN_PAGE || !/\.html$/i.test(here)) return LOGIN_PAGE;
+    return LOGIN_PAGE + '?next=' + encodeURIComponent(here);
+  }
+
   function redirectToLogin() {
+    var target = loginUrl();
     try {
       // replace() so a protected page never stays in the history
       // stack for the Back button to restore.
-      window.location.replace(LOGIN_PAGE);
+      window.location.replace(target);
     } catch (e) {
-      window.location.href = LOGIN_PAGE;
+      window.location.href = target;
     }
   }
 

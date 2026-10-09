@@ -438,11 +438,27 @@
       setTimeout(() => { alertBox.className = 'alert'; }, 5000);
     }
 
+    /* Where a finished sign-in goes.
+       auth-guard.js adds ?next=<page> when it bounces an unauthenticated
+       visitor to this form, so a shared link like /Overtime.html lands the
+       user on that page after logging in rather than on the dashboard.
+       Only a bare page name in this folder is accepted - never a scheme,
+       host or path - so a crafted link cannot redirect out of the app. */
+    const HOME_PAGE = 'mainpage.html';
+    function landingPage() {
+      let next = '';
+      try { next = new URLSearchParams(location.search).get('next') || ''; } catch (e) { return HOME_PAGE; }
+      if (!next.toLowerCase().endsWith('.html')) return HOME_PAGE;
+      if (!/^[A-Za-z0-9][A-Za-z0-9 ._-]*$/.test(next)) return HOME_PAGE;
+      if (next === 'index.html') return HOME_PAGE;
+      return next;
+    }
+
     // Reaching the dashboard requires a Supabase (GoTrue) session.
     // If one is already in localStorage there is nothing to ask.
     (async () => {
       try {
-        if (await GisAuth.hasValidSession()) window.location.replace('mainpage.html');
+        if (await GisAuth.hasValidSession()) window.location.replace(landingPage());
       } catch (e) { /* fall through to the form */ }
     })();
 
@@ -469,7 +485,7 @@
       showAlert(I18N[currentLang].login_success, 'success');
       // replace(), not href: the login page should not sit in the
       // history behind the dashboard.
-      setTimeout(() => { window.location.replace('mainpage.html'); }, 800);
+      setTimeout(() => { window.location.replace(landingPage()); }, 800);
     }
 
     /* ------------------------------------------------------------
