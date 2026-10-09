@@ -760,6 +760,45 @@ tbody td:last-child {
   font-size: 10px;
 }
 
+/* A document cell holds the link plus its own upload icon. Field phones are
+   the main target, so the icon keeps a 28px hit box even though it looks small. */
+.doc-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.doc-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: -3px;
+  padding: 0;
+  border: 1px solid var(--accent-green);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-green);
+  font-size: 11px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.doc-upload-btn:hover {
+  background: rgba(16, 185, 129, 0.18);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.doc-upload-btn:disabled {
+  opacity: .45;
+  cursor: progress;
+}
+
+@media print {
+  .doc-upload-btn { display: none; }
+}
+
 .progress-cell {
   position: relative;
   height: 20px;
@@ -1204,6 +1243,8 @@ input[type="date"] { color-scheme: dark; }
 <main class="container">
   <section class="controls">
     <button class="btn primary add-row-btn" id="addRowBtn"><i class="fas fa-plus"></i> Add Work Order</button>
+    <button class="btn" id="uploadDocsBtn" title="Attach scanned PO, DO or WO papers"><i class="fas fa-file-arrow-up"></i> Upload Attachments</button>
+    <input type="file" id="docPicker" accept="application/pdf,.pdf" style="display:none;">
 
     <!-- Search box -->
     <div class="filter-group search-group">
@@ -1552,6 +1593,136 @@ async function resolvePdfBlobUrl(file) {
   PDF_BLOB_CACHE.set(key, { url, ts: Date.now() });
   return url;
 }
+
+/* Drops a cached blob so the next open reads the store again. Called after any
+   successful upload, otherwise a replaced scan would still show the old one. */
+function invalidateDocCache(name) {
+  const key = normalizeDocName(name).toLowerCase();
+  const hit = PDF_BLOB_CACHE.get(key);
+  if (hit) {
+    URL.revokeObjectURL(hit.url);
+    PDF_BLOB_CACHE.delete(key);
+  }
+}
+
+/* A document cell is built from DOM nodes, and the storage key travels in a
+   data attribute. Inline onclick strings used to break on names carrying an
+   apostrophe ("USED AC'S"), which left three of 218 links dead. */
+function buildDocCell(td, file, label, title) {
+  const wrap = document.createElement('span');
+  wrap.className = 'doc-cell';
+
+  const link = document.createElement('a');
+  link.className = 'lpo-btn';
+  link.href = '#';
+  link.textContent = label;
+  link.dataset.docOpen = file;
+  link.dataset.docTitle = title;
+  link.title = 'Open ' + file;
+
+  const up = document.createElement('button');
+  up.type = 'button';
+  up.className = 'doc-upload-btn';
+  up.innerHTML = '<i class="fas fa-upload"></i>';
+  up.dataset.docUpload = file;
+  up.title = 'Upload ' + file;
+
+  wrap.append(link, up);
+  td.appendChild(wrap);
+}
+
+const DOC_MAX_BYTES = 25 * 1024 * 1024;
+let docUploadBusy = false;
+
+function isPdfFile(f) {
+  return f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+}
+
+async function putDoc(file, targetName) {
+  const name = normalizeDocName(targetName);
+  const bucket = () => GisAuth.client().storage.from(DOC_BUCKET);
+
+  const first = await bucket().upload(name, file, { contentType: 'application/pdf', upsert: false });
+  if (!first.error) { invalidateDocCache(name); return { status: 'uploaded', name }; }
+
+  const exists = /already exists/i.test(first.error.message || '') || String(first.error.statusCode) === '409';
+  if (!exists) throw first.error;
+
+  const answer = confirm(name + ' is already stored.\n\nReplace it with this scan?\n\nCancel keeps the existing file.');
+  if (!answer) return { status: 'skipped', name };
+
+  const again = await bucket().upload(name, file, { contentType: 'application/pdf', upsert: true });
+  if (again.error) throw again.error;
+  invalidateDocCache(name);
+  return { status: 'replaced', name };
+}
+
+async function uploadDocs(files, fixedName) {
+  if (docUploadBusy) return;
+  docUploadBusy = true;
+  const counts = { uploaded: 0, replaced: 0, skipped: 0 };
+  const problems = [];
+
+  try {
+    for (const f of files) {
+      const label = fixedName || f.name;
+      if (!isPdfFile(f)) { problems.push(label + ' is not a PDF'); continue; }
+      if (f.size > DOC_MAX_BYTES) { problems.push(label + ' is over 25 MB'); continue; }
+      try {
+        const r = await putDoc(f, fixedName || f.name);
+        if (r.status === 'skipped') counts.skipped++;
+        else counts[r.status]++;
+      } catch (e) {
+        problems.push(label + ' failed: ' + ((e && e.message) || 'storage error'));
+      }
+    }
+  } finally {
+    docUploadBusy = false;
+    document.querySelectorAll('.doc-upload-btn:disabled').forEach(b => { b.disabled = false; });
+  }
+
+  const parts = [];
+  if (counts.uploaded) parts.push(counts.uploaded + ' uploaded');
+  if (counts.replaced) parts.push(counts.replaced + ' replaced');
+  if (counts.skipped) parts.push(counts.skipped + ' kept as was');
+  if (problems.length) parts.push(problems.length + ' not stored (' + problems.slice(0, 2).join('; ') + ')');
+  showToast(parts.length ? parts.join(', ') + '.' : 'Nothing was uploaded.', 8000);
+}
+
+function pickDoc(multiple, ownerBtn) {
+  if (docUploadBusy) return;
+  const input = document.getElementById('docPicker');
+  if (!input) return;
+  input.multiple = multiple;
+  input.value = '';
+  input.onchange = () => {
+    const chosen = Array.from(input.files || []);
+    if (!chosen.length) return;
+    if (ownerBtn) ownerBtn.disabled = true;
+    uploadDocs(chosen, multiple ? null : (ownerBtn && ownerBtn.dataset.docUpload) || null);
+  };
+  input.click();
+}
+
+// One delegated handler serves every document link and upload icon in the table,
+// so re-rendering the rows never orphans a listener.
+document.querySelector('#dataTable tbody').addEventListener('click', (e) => {
+  const link = e.target.closest('[data-doc-open]');
+  if (link) {
+    e.preventDefault();
+    openPdfViewerFromFile(link.dataset.docOpen, link.dataset.docTitle);
+    return;
+  }
+  const up = e.target.closest('[data-doc-upload]');
+  if (up) {
+    e.preventDefault();
+    pickDoc(false, up);
+  }
+});
+
+// Bulk attach: each chosen PDF is stored under its own filename, which is how
+// the PO/DOPO/WO keys are already named on disk.
+document.getElementById('uploadDocsBtn').addEventListener('click', () => pickDoc(true));
 function isNumericOnly(val) {
   if (val === null || val === undefined) return false;
   if (typeof val === 'number') return Number.isFinite(val);
@@ -2059,8 +2230,8 @@ function renderRows(rows) {
         const raw = row[h.key] ?? '';
         const name = String(raw).trim();
         if (name) {
-          const file = name.toLowerCase().endsWith('.pdf') ? name : name + '.pdf';
-          td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
+          const file = normalizeDocName(name);
+          buildDocCell(td, file, name, `${file} ${cam} (${loc})`);
           handled = true;
         } else { td.textContent = ''; handled = true; }
       } else if (h.key === 'do_doc') {
@@ -2072,7 +2243,7 @@ function renderRows(rows) {
           const base = lpoName ? lpoName.replace(/\.pdf$/i, '') : doLabel.replace(/\.pdf$/i, '');
           const file = lpoName ? `DO${base}.pdf` : (/^DOPO/.test(base) ? `${base}.pdf` : `DO${base}.pdf`);
           const label = doLabel || (lpoName ? `DO${base}` : `DO${base}`);
-          td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} ${cam} (${loc})')" title="Open ${file}">${label}</a>`;
+          buildDocCell(td, file, label, `${file} ${cam} (${loc})`);
           handled = true;
         } else { td.textContent = ''; handled = true; }
       } else if (h.key === 'wo_pdf') {
@@ -2087,7 +2258,7 @@ function renderRows(rows) {
             else if (/^WO\d+$/i.test(name)) file = `${name}.pdf`;
             else file = `${name}.pdf`;
           }
-          td.innerHTML = `<a class="lpo-btn" href="#" onclick="return openPdfViewerFromFile('${file}','${file} (${lpoRaw}) ${cam} (${loc})')" title="Open ${file}">${name}</a>`;
+          buildDocCell(td, file, name, `${file} (${lpoRaw}) ${cam} (${loc})`);
           handled = true;
         } else { td.textContent = ''; handled = true; }
            } else if (h.key === 'cost' || h.key === 'amount') {
