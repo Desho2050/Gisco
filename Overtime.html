@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#4f46e5">
+  <title>Daily Overtime | GISCO</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="gis-auth.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #ec4899;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      --radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --tap: 48px;
+    }
+    [data-theme="dark"] {
+      --bg: #0f172a; --surface: #1e293b; --text: #f1f5f9; --text-secondary: #94a3b8;
+      --border: #334155; --shadow: 0 4px 6px -1px rgba(0,0,0,.3); --shadow-lg: 0 20px 25px -5px rgba(0,0,0,.5);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--bg) 0%, #e0e7ff 100%);
+      color: var(--text); line-height: 1.6; min-height: 100vh; transition: var(--transition);
+      -webkit-text-size-adjust: 100%;
+    }
+    [data-theme="dark"] body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); }
+
+    /* ---------------- header ---------------- */
+    header {
+      background: rgba(255,255,255,.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border); padding: .75rem 1.25rem;
+      padding-top: calc(.75rem + env(safe-area-inset-top));
+      position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow);
+    }
+    [data-theme="dark"] header { background: rgba(30,41,59,.85); }
+    .header-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: .75rem; }
+    .brand { display: flex; align-items: center; gap: .6rem; min-width: 0; }
+    .brand-icon {
+      width: 42px; height: 42px; flex: 0 0 42px; background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 11px; display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(99,102,241,.4);
+    }
+    h1 { font-size: 1.15rem; font-weight: 700; line-height: 1.25;
+         background: linear-gradient(135deg, var(--primary), var(--secondary));
+         -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .brand-sub { font-size: .72rem; color: var(--text-secondary); }
+    .header-actions { display: flex; gap: .5rem; align-items: center; }
+
+    .btn { padding: .7rem 1.1rem; border: none; border-radius: var(--radius); font-size: .9rem; font-weight: 600; cursor: pointer;
+           display: inline-flex; align-items: center; justify-content: center; gap: .5rem; transition: var(--transition);
+           min-height: var(--tap); font-family: inherit; text-decoration: none; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; box-shadow: 0 4px 15px rgba(99,102,241,.35); }
+    .btn-success { background: linear-gradient(135deg, var(--success), #059669); color: #fff; }
+    .btn-danger { background: linear-gradient(135deg, var(--danger), #dc2626); color: #fff; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 2px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-icon { width: var(--tap); height: var(--tap); padding: 0; border-radius: 12px; flex: 0 0 auto; }
+    .btn-block { width: 100%; }
+    .btn:disabled { opacity: .55; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    .btn-small { padding: .4rem .6rem; font-size: .78rem; border-radius: 8px; min-height: 38px; }
+
+    /* ---------------- view switcher ---------------- */
+    .view-tabs { max-width: 1400px; margin: 0 auto; padding: .85rem 1.25rem 0; display: flex; gap: .5rem; overflow-x: auto;
+                 scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .view-tabs::-webkit-scrollbar { display: none; }
+    .view-tab { flex: 0 0 auto; padding: .6rem 1rem; border: 2px solid var(--border); border-radius: 999px; background: var(--surface);
+                color: var(--text-secondary); font-weight: 600; font-size: .85rem; cursor: pointer; display: inline-flex; align-items: center;
+                gap: .45rem; min-height: 44px; transition: var(--transition); font-family: inherit; white-space: nowrap; }
+    .view-tab.active { border-color: var(--primary); color: var(--primary); background: rgba(99,102,241,.1); }
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fade .25s ease-out; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 1rem 1.25rem calc(2rem + env(safe-area-inset-bottom)); }
+    .glass-card { background: rgba(255,255,255,.75); backdrop-filter: blur(12px); border-radius: var(--radius);
+                  border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.25rem; }
+    [data-theme="dark"] .glass-card { background: rgba(30,41,59,.72); }
+    .card-head { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;
+                 align-items: center; gap: .75rem; flex-wrap: wrap; background: rgba(255,255,255,.4); }
+    [data-theme="dark"] .card-head { background: rgba(15,23,42,.35); }
+    .card-head h2 { font-size: 1rem; display: flex; align-items: center; gap: .55rem; color: var(--text); }
+    .card-head h2 i { color: var(--primary); }
+    .card-body { padding: 1.25rem; }
+
+    /* ---------------- forms ---------------- */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: .4rem; }
+    .form-group.span-all { grid-column: 1 / -1; }
+    .form-group label { font-size: .8rem; font-weight: 600; color: var(--text-secondary); margin-inline-start: .25rem; }
+    .req { color: var(--danger); }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: .8rem .9rem; border: 2px solid var(--border); border-radius: 10px;
+      background: var(--surface); color: var(--text); font-size: 16px; font-family: inherit; transition: var(--transition);
+      min-height: var(--tap);
+    }
+    .form-group textarea { min-height: 76px; resize: vertical; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+    }
+    /* iOS zooms the page on any input under 16px; date/time/number pickers are the common case here. */
+    input[type="date"], input[type="time"], input[type="number"] { font-variant-numeric: tabular-nums; }
+    .form-actions { display: flex; gap: .7rem; margin-top: 1.1rem; flex-wrap: wrap; }
+    .field-note { font-size: .74rem; color: var(--text-secondary); margin-inline-start: .25rem; }
+
+    .day-nav { display: flex; gap: .4rem; align-items: center; }
+    .day-nav .btn-icon { width: 44px; height: 44px; flex: 0 0 44px; border: 2px solid var(--border); background: var(--surface);
+                         color: var(--text); border-radius: 10px; cursor: pointer; font-size: .95rem; }
+    .day-nav .btn-icon:active { background: rgba(99,102,241,.14); }
+    .day-nav input { flex: 1 1 auto; }
+
+    .chip-row { display: flex; gap: .45rem; flex-wrap: wrap; }
+    .loc-chip { padding: .5rem .8rem; min-height: 42px; border: 2px solid var(--border); border-radius: 999px; background: var(--surface);
+                color: var(--text-secondary); font-size: .78rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+                transition: var(--transition); font-family: inherit; letter-spacing: .2px; }
+    .loc-chip.active { border-color: var(--primary); color: #fff; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); }
+    .loc-scroll { display: flex; gap: .45rem; overflow-x: auto; padding-bottom: .5rem; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+    .loc-scroll .loc-chip { flex: 0 0 auto; }
+
+    .hours-preview { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; padding: .7rem .9rem; border-radius: 10px;
+                     background: rgba(99,102,241,.09); border: 1px dashed var(--primary); }
+    .hours-preview b { font-size: 1.4rem; color: var(--primary-dark); font-variant-numeric: tabular-nums; }
+    [data-theme="dark"] .hours-preview b { color: #a5b4fc; }
+    .hours-preview span { font-size: .76rem; color: var(--text-secondary); }
+
+    /* ---------------- participants ---------------- */
+    .emp-picker-bar { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin-bottom: .9rem; }
+    .sel-count { font-size: .82rem; font-weight: 700; color: var(--primary); background: rgba(99,102,241,.12);
+                 padding: .35rem .75rem; border-radius: 999px; }
+    .part-list { display: flex; flex-direction: column; gap: .55rem; }
+    .part-row { display: grid; grid-template-columns: 1fr auto auto; gap: .6rem; align-items: center; padding: .6rem .75rem;
+                border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+    .part-row .who { min-width: 0; }
+    .part-row .who b { display: block; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .part-row .who span { font-size: .74rem; color: var(--text-secondary); }
+    .part-row input[type="number"] { width: 84px; padding: .5rem .6rem; font-size: 15px; text-align: center;
+                                     border: 2px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); min-height: 44px; }
+    .part-row input.overridden { border-color: var(--warning); background: rgba(245,158,11,.08); }
+    .part-x { border: none; background: rgba(239,68,68,.12); color: var(--danger); width: 36px; height: 36px; border-radius: 8px;
+              cursor: pointer; font-size: .9rem; flex: 0 0 auto; }
+    .empty-hint { padding: 1.1rem; text-align: center; color: var(--text-secondary); font-size: .85rem; border: 1px dashed var(--border); border-radius: 10px; }
+
+    /* ---------------- task cards (daily list) ---------------- */
+    .task-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin-bottom: .85rem; overflow: hidden; }
+    .task-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; padding: .85rem 1rem;
+                background: rgba(99,102,241,.07); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .task-top .t-meta { display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }
+    .task-desc { font-size: .9rem; font-weight: 600; margin-top: .2rem; }
+    .task-body { padding: .35rem 1rem .75rem; }
+    .p-line { display: flex; justify-content: space-between; gap: .6rem; padding: .38rem 0; border-bottom: 1px dashed var(--border); font-size: .86rem; }
+    .p-line:last-child { border-bottom: none; }
+    .p-line .h { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+    .task-foot { display: flex; justify-content: space-between; align-items: center; gap: .6rem; padding: .6rem 1rem;
+                 border-top: 1px solid var(--border); background: var(--bg); flex-wrap: wrap; }
+    .badge { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .6rem; border-radius: 20px; font-size: .72rem; font-weight: 700; }
+    .badge-loc { background: rgba(99,102,241,.14); color: var(--primary-dark); }
+    [data-theme="dark"] .badge-loc { color: #a5b4fc; }
+    .badge-time { background: rgba(6,182,212,.14); color: #0e7490; }
+    [data-theme="dark"] .badge-time { color: #67e8f9; }
+    .badge-man { background: rgba(245,158,11,.16); color: #b45309; }
+    [data-theme="dark"] .badge-man { color: #fcd34d; }
+    .badge-total { background: rgba(16,185,129,.16); color: #059669; }
+    [data-theme="dark"] .badge-man, [data-theme="dark"] .badge-total { color: #6ee7b7; }
+
+    /* ---------------- stats / kpi ---------------- */
+    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .85rem; margin-bottom: 1.25rem; }
+    .stat-card { background: var(--surface); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow);
+                 display: flex; align-items: center; gap: .8rem; border: 1px solid var(--border); }
+    .stat-icon { width: 46px; height: 46px; flex: 0 0 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; color: #fff; }
+    .stat-icon.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .stat-icon.green { background: linear-gradient(135deg, #10b981, #059669); }
+    .stat-icon.pink { background: linear-gradient(135deg, #ec4899, #be185d); }
+    .stat-icon.amber { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .stat-icon.gray { background: linear-gradient(135deg, #64748b, #475569); }
+    .stat-info h3 { font-size: .74rem; color: var(--text-secondary); font-weight: 600; }
+    .stat-info .value { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+
+    .bar-list { display: flex; flex-direction: column; gap: .5rem; }
+    .bar-row { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; gap: .6rem; align-items: center; font-size: .82rem; }
+    .bar-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+    .bar-track { background: var(--border); border-radius: 999px; height: 12px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width .4s ease; }
+    .bar-row .val { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+
+    /* ---------------- tables ---------------- */
+    .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 720px; }
+    th { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: .7rem .8rem; text-align: start;
+         font-weight: 600; font-size: .76rem; text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; position: sticky; top: 0; z-index: 5; }
+    td { padding: .65rem .8rem; border-bottom: 1px solid var(--border); font-size: .87rem; }
+    tbody tr { background: var(--surface); }
+    tbody tr:nth-child(even) { background: rgba(248,250,252,.6); }
+    [data-theme="dark"] tbody tr:nth-child(even) { background: rgba(15,23,42,.4); }
+    td.mono, td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    td.num { text-align: end; font-weight: 700; }
+    tfoot td { background: rgba(99,102,241,.12); font-weight: 800; position: sticky; bottom: 0; }
+    .sub { display: block; font-size: .72rem; color: var(--text-secondary); }
+    .muted { color: var(--text-secondary); }
+    tr.emp-head { cursor: pointer; }
+    tr.emp-head:hover td { background: rgba(99,102,241,.08); }
+    tr.emp-detail > td { background: var(--bg) !important; padding: 0 0 0 0; }
+    [dir="rtl"] tr.emp-detail > td { padding: 0; }
+    .mini-table { min-width: 0; }
+    .mini-table th { background: rgba(99,102,241,.18); color: var(--text); }
+    .table-pad { padding: 0 1.25rem 1.25rem; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-end; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .controls .form-group { flex: 1 1 180px; min-width: 150px; }
+
+    /* ---------------- employee sheet (multi-select) ---------------- */
+    .popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px);
+                     display: flex; justify-content: center; align-items: flex-end; z-index: 1000; opacity: 0; visibility: hidden; transition: var(--transition); }
+    .popup-overlay.active { opacity: 1; visibility: visible; }
+    .popup-content { background: var(--surface); width: 100%; max-width: 720px; border-radius: 20px 20px 0 0; max-height: 92vh;
+                     display: flex; flex-direction: column; overflow: hidden; transform: translateY(30px); transition: var(--transition); }
+    .popup-overlay.active .popup-content { transform: none; }
+    .popup-header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; padding: 1rem 1.15rem;
+                    display: flex; justify-content: space-between; align-items: center; gap: .75rem; }
+    .popup-header h2 { font-size: 1.05rem; display: flex; align-items: center; gap: .5rem; }
+    .close-popup { background: rgba(255,255,255,.22); border: none; width: 40px; height: 40px; border-radius: 50%; color: #fff;
+                   font-size: 1.15rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+    .popup-body { padding: 1rem 1.15rem; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1 1 auto; }
+    .popup-foot { padding: .85rem 1.15rem calc(.85rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--border);
+                  display: flex; gap: .6rem; justify-content: space-between; align-items: center; background: var(--surface); flex-wrap: wrap; }
+    .search-wrapper { position: relative; margin-bottom: .75rem; }
+    .search-wrapper i { position: absolute; inset-inline-start: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
+    .search-wrapper input { width: 100%; padding: .85rem 1rem .85rem 2.6rem; border: 2px solid var(--border); border-radius: var(--radius);
+                            background: var(--surface); color: var(--text); font-size: 16px; min-height: var(--tap); }
+    [dir="rtl"] .search-wrapper input { padding: .85rem 2.6rem .85rem 1rem; }
+    .emp-option { display: flex; align-items: center; gap: .7rem; padding: .65rem .5rem; border-bottom: 1px solid var(--border); cursor: pointer; min-height: 56px; }
+    .emp-option:active { background: rgba(99,102,241,.1); }
+    .emp-option input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--primary); flex: 0 0 22px; cursor: pointer; }
+    .emp-option .txt { min-width: 0; flex: 1 1 auto; }
+    .emp-option .txt b { display: block; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .emp-option .txt span { font-size: .74rem; color: var(--text-secondary); }
+    .emp-option .code { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--primary); font-size: .85rem; white-space: nowrap; }
+    .list-limit { text-align: center; font-size: .76rem; color: var(--text-secondary); padding: .6rem; }
+
+    /* ---------------- mobile chrome ---------------- */
+    .bottom-nav { display: none; position: fixed; bottom: 0; inset-inline: 0; background: var(--surface); border-top: 1px solid var(--border);
+                  padding: .4rem .4rem calc(.4rem + env(safe-area-inset-bottom)); z-index: 90; box-shadow: 0 -4px 12px rgba(0,0,0,.08); }
+    .bottom-nav-inner { display: flex; justify-content: space-around; }
+    .bottom-nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: .3rem .35rem;
+                       color: var(--text-secondary); font-size: .6rem; font-weight: 700; min-width: 58px; min-height: 46px; border: none;
+                       background: none; cursor: pointer; border-radius: 10px; gap: .15rem; font-family: inherit; }
+    .bottom-nav-item i { font-size: 1.1rem; }
+    .bottom-nav-item.active { color: var(--primary); background: rgba(99,102,241,.1); }
+    .fab { display: none; position: fixed; inset-inline-end: 1.1rem; bottom: calc(5.4rem + env(safe-area-inset-bottom)); width: 58px; height: 58px;
+           border-radius: 50%; border: none; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; font-size: 1.4rem;
+           box-shadow: 0 10px 25px rgba(99,102,241,.45); z-index: 95; cursor: pointer; align-items: center; justify-content: center; }
+
+    .toast-container { position: fixed; top: 1rem; inset-inline: 1rem; z-index: 2000; display: flex; flex-direction: column; gap: .6rem; }
+    .toast { background: var(--surface); border-radius: 12px; padding: .85rem 1rem; box-shadow: var(--shadow-lg);
+             display: flex; align-items: center; gap: .7rem; font-size: .85rem; border-inline-start: 4px solid var(--success);
+             animation: fade .25s ease-out; }
+    .toast.error { border-inline-start-color: var(--danger); }
+    .toast.warning { border-inline-start-color: var(--warning); }
+    .toast-icon { font-size: 1.15rem; }
+    .toast.success .toast-icon { color: var(--success); }
+    .toast.error .toast-icon { color: var(--danger); }
+    .toast.warning .toast-icon { color: var(--warning); }
+
+    .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-secondary); }
+    .empty-state i { font-size: 2.8rem; margin-bottom: .8rem; opacity: .45; display: block; }
+    .print-title, .print-footer { display: none; }
+    .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%;
+               animation: spin .7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      header { padding: .6rem .8rem; padding-top: calc(.6rem + env(safe-area-inset-top)); }
+      h1 { font-size: 1rem; }
+      .brand-sub { display: none; }
+      .view-tabs { display: none; }
+      .bottom-nav { display: block; }
+      .fab { display: flex; }
+      .container { padding: .85rem .8rem calc(6.5rem + env(safe-area-inset-bottom)); }
+      .card-body, .controls { padding: .9rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .stats-container { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+      .stat-card { padding: .75rem; gap: .6rem; }
+      .stat-icon { width: 38px; height: 38px; flex-basis: 38px; font-size: 1rem; }
+      .stat-info .value { font-size: 1.2rem; }
+      .btn { padding: .7rem .9rem; }
+      .table-pad { padding: 0 .9rem .9rem; }
+
+      /* Reports become stacked cards instead of a sideways-scrolling table. */
+      .cards-mode thead { display: none; }
+      .cards-mode tr { display: block; margin-bottom: .7rem; border: 1px solid var(--border); border-radius: 10px;
+                      padding: .5rem .7rem; background: var(--surface); }
+      .cards-mode td { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .3rem 0;
+                       border: none; font-size: .85rem; text-align: start; }
+      .cards-mode td.num { text-align: end; }
+      .cards-mode td::before { content: attr(data-label); font-weight: 700; color: var(--text-secondary); font-size: .7rem;
+                               text-transform: uppercase; letter-spacing: .3px; }
+      .cards-mode { min-width: 0; }
+      .cards-mode tfoot td { background: none; position: static; }
+      tr.emp-detail > td { display: block; padding: 0; }
+      tr.emp-detail > td::before { content: none; }
+    }
+    @media (min-width: 769px) {
+      .popup-overlay { align-items: center; }
+      .popup-content { border-radius: 20px; }
+    }
+
+    @media print {
+      @page { margin: .6cm; }
+      .view-tabs, .bottom-nav, .fab, .header-actions, .controls, .popup-overlay, .toast-container,
+      .no-print, .empty-state, .emp-picker-bar, .form-actions { display: none !important; }
+      body { background: #fff !important; color: #000 !important; }
+      header { position: static !important; background: #fff !important; box-shadow: none !important; border-bottom: 1px solid #000 !important; padding: .3rem 0 !important; }
+      h1 { -webkit-text-fill-color: #000 !important; color: #000 !important; background: none !important; font-size: 1.1rem !important; }
+      .brand-icon { display: none !important; }
+      .container { padding: 0 !important; max-width: 100% !important; }
+      .glass-card { background: #fff !important; box-shadow: none !important; border: 1px solid #94a3b8 !important; backdrop-filter: none !important; }
+      .table-wrapper { overflow: visible !important; }
+      table { min-width: 0 !important; font-size: 8pt !important; border-collapse: collapse !important; }
+      th { background: #eef2ff !important; color: #000 !important; padding: .3rem .4rem !important; position: static; border: 1px solid #94a3b8 !important; }
+      td { padding: .3rem .4rem !important; border: 1px solid #cbd5e1 !important; font-size: 8pt !important; }
+      tbody tr, .task-card { page-break-inside: avoid; }
+      .badge { background: none !important; color: #000 !important; padding: 0 !important; }
+      .print-title { display: block !important; text-align: center; font-weight: 700; margin: .4rem 0 !important; font-size: 1rem !important; color: #000 !important; }
+      .print-footer { display: block !important; text-align: center; font-size: 8pt; color: #333; margin-top: .6rem; }
+      .sub, .muted { color: #334 !important; }
+    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 5px; }
+  </style>
+<script src="auth-guard.js"></script>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-stopwatch"></i></div>
+        <div>
+          <h1 data-lang-key="brand">Daily Overtime</h1>
+          <div class="brand-sub" data-lang-key="brandSub">GISCO field overtime register</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary btn-icon" href="mainpage.html" title="Dashboard"><i class="fas fa-arrow-left"></i></a>
+        <button class="btn btn-secondary btn-icon" id="refreshBtn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+        <button class="btn btn-secondary btn-icon" id="langBtn" title="Language"><i class="fas fa-language"></i></button>
+        <button class="btn btn-secondary btn-icon" id="printBtn" title="Print"><i class="fas fa-print"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="view-tabs no-print" id="viewTabs">
+    <button class="view-tab active" data-view="entry"><i class="fas fa-plus-circle"></i> <span data-lang-key="navEntry">Entry</span></button>
+    <button class="view-tab" data-view="daily"><i class="fas fa-calendar-day"></i> <span data-lang-key="navDaily">Daily report</span></button>
+    <button class="view-tab" data-view="employee"><i class="fas fa-user-check"></i> <span data-lang-key="navEmployee">Per employee</span></button>
+    <button class="view-tab" data-view="summary"><i class="fas fa-chart-bar"></i> <span data-lang-key="navSummary">Monthly summary</span></button>
+    <button class="view-tab" data-view="detail"><i class="fas fa-list-alt"></i> <span data-lang-key="navDetail">Detailed month</span></button>
+  </div>
+
+  <main class="container">
+    <div class="print-title" id="printTitle"></div>
+
+    <!-- ============ ENTRY ============ -->
+    <section class="view-section active" id="view-entry">
+      <div class="glass-card">
+        <div class="card-head">
+          <h2><i class="fas fa-pen-to-square"></i> <span id="formTitle" data-lang-key="formNew">New overtime task</span></h2>
+          <button class="btn btn-secondary btn-small" id="cancelEditBtn" style="display:none"><i class="fas fa-times"></i> <span data-lang-key="cancelEdit">Cancel editing</span></button>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="workDate" data-lang-key="lblDate">Date <span class="req">*</span></label>
+              <div class="day-nav">
+                <button class="btn-icon" id="dayPrev" title="-1"><i class="fas fa-chevron-right"></i></button>
+                <input type="date" id="workDate">
+                <button class="btn-icon" id="dayNext" title="+1"><i class="fas fa-chevron-left"></i></button>
+              </div>
+              <div class="field-note" id="dayName">&nbsp;</div>
+            </div>
+
+            <div class="form-group">
+              <label for="timeStart" data-lang-key="lblStart">Time start</label>
+              <input type="time" id="timeStart" value="17:00">
+            </div>
+
+            <div class="form-group">
+              <label for="timeEnd" data-lang-key="lblEnd">Time end</label>
+              <input type="time" id="timeEnd" value="20:00">
+            </div>
+
+            <div class="form-group span-all">
+              <label data-lang-key="lblHours">Overtime hours (auto from times)</label>
+              <div class="hours-preview">
+                <b id="hoursPreview">3.00</b>
+                <span data-lang-key="hoursUnit">hours</span>
+                <span id="rawDuration" class="muted"></span>
+              </div>
+            </div>
+
+            <div class="form-group span-all">
+              <label for="locSearch" data-lang-key="lblLocation">Location <span class="req">*</span></label>
+              <div class="loc-scroll" id="locChips"></div>
+              <input type="text" id="locSearch" list="locList" autocomplete="off" data-lang-placeholder="phLoc" placeholder="Type or pick a site">
+              <datalist id="locList"></datalist>
+              <div class="field-note" data-lang-key="noteLoc">Any site name is allowed - type one that is not in the list.</div>
+            </div>
+
+            <div class="form-group span-all">
+              <label for="taskDesc" data-lang-key="lblTask">Task description <span class="req">*</span></label>
+              <textarea id="taskDesc" rows="2" data-lang-placeholder="phTask" placeholder="What was done"></textarea>
+            </div>
+
+            <div class="form-group span-all">
+              <label for="taskNotes" data-lang-key="lblNotes">Notes (optional)</label>
+              <input type="text" id="taskNotes" data-lang-placeholder="phNotes" placeholder="Vehicle, supervisor, PO number...">
+            </div>
+
+            <div class="form-group span-all">
+              <label data-lang-key="lblEmployees">Employees on this task <span class="req">*</span></label>
+              <div class="emp-picker-bar">
+                <button class="btn btn-secondary" id="openEmpBtn"><i class="fas fa-users"></i> <span data-lang-key="pickEmployees">Select employees</span></button>
+                <span class="sel-count" id="selCount">0</span>
+                <button class="btn btn-secondary btn-small" id="sameAsLastBtn"><i class="fas fa-clone"></i> <span data-lang-key="sameAsLast">Last crew</span></button>
+              </div>
+              <div class="part-list" id="partList"></div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-secondary" id="clearFormBtn"><i class="fas fa-eraser"></i> <span data-lang-key="clearForm">Clear form</span></button>
+            <button class="btn btn-primary" id="saveBtn" style="flex:1 1 200px"><i class="fas fa-floppy-disk"></i> <span data-lang-key="save" id="saveLabel">Save task</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-head">
+          <h2><i class="fas fa-clipboard-list"></i> <span data-lang-key="todayTasks">Tasks on this day</span></h2>
+          <span class="badge badge-total" id="dayTotalBadge">0 h</span>
+        </div>
+        <div class="card-body" id="dayTasks" style="padding-top:.9rem"></div>
+      </div>
+    </section>
+
+    <!-- ============ DAILY REPORT ============ -->
+    <section class="view-section" id="view-daily">
+      <div class="glass-card">
+        <div class="controls no-print">
+          <div class="form-group" style="flex:0 1 220px">
+            <label for="dailyDate" data-lang-key="lblDate2">Report day</label>
+            <div class="day-nav">
+              <button class="btn-icon" id="dailyPrev"><i class="fas fa-chevron-right"></i></button>
+              <input type="date" id="dailyDate">
+              <button class="btn-icon" id="dailyNext"><i class="fas fa-chevron-left"></i></button>
+            </div>
+          </div>
+          <button class="btn btn-secondary" id="dailyCsv"><i class="fas fa-file-csv"></i> CSV</button>
+          <button class="btn btn-secondary" id="dailyPrint"><i class="fas fa-print"></i> <span data-lang-key="print">Print</span></button>
+        </div>
+        <div class="stats-container" id="dailyStats" style="padding:1rem 1.25rem 0"></div>
+        <div class="card-body" id="dailyBody"></div>
+      </div>
+    </section>
+
+    <!-- ============ PER EMPLOYEE ============ -->
+    <section class="view-section" id="view-employee">
+      <div class="glass-card">
+        <div class="controls no-print">
+          <div class="form-group" style="flex:0 1 190px">
+            <label for="empMonth" data-lang-key="lblMonth">Month</label>
+            <select id="empMonth"></select>
+          </div>
+          <div class="form-group">
+            <label for="empFilter" data-lang-key="lblEmpFilter">Find employee</label>
+            <input type="text" id="empFilter" data-lang-placeholder="phEmp" placeholder="File number or name">
+          </div>
+          <button class="btn btn-secondary" id="empCsv"><i class="fas fa-file-csv"></i> CSV</button>
+          <button class="btn btn-secondary" id="empPrint"><i class="fas fa-print"></i> <span data-lang-key="print">Print</span></button>
+        </div>
+        <div class="stats-container" id="empStats" style="padding:1rem 1.25rem 0"></div>
+        <div class="table-wrapper table-pad" id="empTableWrap"></div>
+      </div>
+    </section>
+
+    <!-- ============ MONTHLY SUMMARY ============ -->
+    <section class="view-section" id="view-summary">
+      <div class="glass-card">
+        <div class="controls no-print">
+          <div class="form-group" style="flex:0 1 190px">
+            <label for="sumMonth" data-lang-key="lblMonth">Month</label>
+            <select id="sumMonth"></select>
+          </div>
+          <button class="btn btn-secondary" id="sumCsv"><i class="fas fa-file-csv"></i> CSV</button>
+          <button class="btn btn-secondary" id="sumPrint"><i class="fas fa-print"></i> <span data-lang-key="print">Print</span></button>
+        </div>
+        <div class="stats-container" id="sumStats" style="padding:1rem 1.25rem 0"></div>
+        <div class="card-body" id="sumBody"></div>
+      </div>
+    </section>
+
+    <!-- ============ DETAILED MONTH ============ -->
+    <section class="view-section" id="view-detail">
+      <div class="glass-card">
+        <div class="controls no-print">
+          <div class="form-group" style="flex:0 1 190px">
+            <label for="detMonth" data-lang-key="lblMonth">Month</label>
+            <select id="detMonth"></select>
+          </div>
+          <div class="form-group" style="flex:0 1 190px">
+            <label for="detLoc" data-lang-key="lblLocFilter">Location</label>
+            <select id="detLoc"></select>
+          </div>
+          <div class="form-group">
+            <label for="detFilter" data-lang-key="lblEmpFilter2">Employee</label>
+            <input type="text" id="detFilter" data-lang-placeholder="phEmp" placeholder="File number or name">
+          </div>
+          <button class="btn btn-secondary" id="detCsv"><i class="fas fa-file-csv"></i> CSV</button>
+          <button class="btn btn-success" id="detXlsx"><i class="fas fa-file-excel"></i> Excel</button>
+          <button class="btn btn-secondary" id="detPrint"><i class="fas fa-print"></i> <span data-lang-key="print">Print</span></button>
+        </div>
+        <div class="stats-container" id="detStats" style="padding:1rem 1.25rem 0"></div>
+        <div class="table-wrapper table-pad" id="detTableWrap"></div>
+      </div>
+    </section>
+
+    <div class="print-footer"><span data-lang-key="generated">Generated</span>: <span id="printDate"></span> · GISCO</div>
+  </main>
+
+  <button class="fab no-print" id="fabBtn" title="New task"><i class="fas fa-plus"></i></button>
+
+  <nav class="bottom-nav no-print">
+    <div class="bottom-nav-inner">
+      <button class="bottom-nav-item active" data-view="entry"><i class="fas fa-plus-circle"></i><span data-lang-key="navEntryShort">Entry</span></button>
+      <button class="bottom-nav-item" data-view="daily"><i class="fas fa-calendar-day"></i><span data-lang-key="navDailyShort">Daily</span></button>
+      <button class="bottom-nav-item" data-view="employee"><i class="fas fa-user-check"></i><span data-lang-key="navEmpShort">Employee</span></button>
+      <button class="bottom-nav-item" data-view="summary"><i class="fas fa-chart-bar"></i><span data-lang-key="navSumShort">Summary</span></button>
+      <button class="bottom-nav-item" data-view="detail"><i class="fas fa-list-alt"></i><span data-lang-key="navDetShort">Detail</span></button>
+    </div>
+  </nav>
+
+  <!-- employee multi-select sheet -->
+  <div class="popup-overlay" id="empSheet">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h2><i class="fas fa-users"></i> <span data-lang-key="sheetTitle">Select employees</span></h2>
+        <button class="close-popup" id="sheetClose">&times;</button>
+      </div>
+      <div class="popup-body">
+        <div class="search-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="search" id="sheetSearch" autocomplete="off" data-lang-placeholder="phSearch" placeholder="File number, Arabic or English name">
+        </div>
+        <div style="display:flex; gap:.6rem; margin-bottom:.7rem; flex-wrap:wrap">
+          <button class="btn btn-secondary btn-small" id="selAllBtn"><i class="fas fa-check-double"></i> <span data-lang-key="selAll">Select all shown</span></button>
+          <button class="btn btn-secondary btn-small" id="selNoneBtn"><i class="fas fa-xmark"></i> <span data-lang-key="selNone">Clear all</span></button>
+        </div>
+        <div id="sheetList"></div>
+      </div>
+      <div class="popup-foot">
+        <span class="sel-count" id="sheetCount">0</span>
+        <button class="btn btn-primary" id="sheetDone"><i class="fas fa-check"></i> <span data-lang-key="done">Done</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- delete confirm -->
+  <div class="popup-overlay" id="confirmSheet">
+    <div class="popup-content" style="max-width:460px">
+      <div class="popup-header">
+        <h2><i class="fas fa-triangle-exclamation"></i> <span data-lang-key="confirmTitle">Confirm</span></h2>
+        <button class="close-popup" id="confirmClose">&times;</button>
+      </div>
+      <div class="popup-body"><p id="confirmText" style="font-size:.95rem"></p></div>
+      <div class="popup-foot">
+        <button class="btn btn-secondary" id="confirmNo" data-lang-key="no">No</button>
+        <button class="btn btn-danger" id="confirmYes"><i class="fas fa-trash"></i> <span data-lang-key="yes">Yes, delete</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toasts"></div>
+
+  <script>
+    const supabaseClient = GisSupabase.create();
+
+    /* ---------- sites ---------- */
+    /* Same free-text rule as transactions.location (db/006): these are the
+       known sites, and anything typed by the supervisor is still stored. */
+    const OT_LOCATIONS = [
+      'AL HAIL 43',
+      'AL HAIL 73',
+      'AL HAIL MUSANDA',
+      'FUJAIRAH AIRPORT',
+      'FUJAIRAH NAVY BASE',
+      'SEIH ALBANAH MUSANADA',
+      'SEIH ALBANAH KATEBA',
+      'AL JAZEIRA AL HAMRAH',
+      'THOUBAN'
+    ];
+
+    const LANGUAGES = {
+      en: {
+        brand: 'Daily Overtime', brandSub: 'GISCO field overtime register',
+        tipDashboard: 'Back to dashboard',
+        navEntry: 'Entry', navDaily: 'Daily report', navEmployee: 'Per employee', navSummary: 'Monthly summary', navDetail: 'Detailed month',
+        navEntryShort: 'Entry', navDailyShort: 'Daily', navEmpShort: 'Employee', navSumShort: 'Summary', navDetShort: 'Detail',
+        formNew: 'New overtime task', formEdit: 'Edit overtime task', cancelEdit: 'Cancel editing',
+        lblDate: 'Date *', lblDate2: 'Report day', lblStart: 'Time start', lblEnd: 'Time end',
+        lblHours: 'Overtime hours (auto from times)', hoursUnit: 'hours',
+        lblLocation: 'Location *', lblTask: 'Task description *', lblNotes: 'Notes (optional)',
+        lblEmployees: 'Employees on this task *', lblMonth: 'Month', lblEmpFilter: 'Find employee', lblEmpFilter2: 'Employee',
+        lblLocFilter: 'Location', noteLoc: 'Any site name is allowed - type one that is not in the list.',
+        phLoc: 'Type or pick a site', phTask: 'What was done', phNotes: 'Vehicle, supervisor, PO number...',
+        phSearch: 'File number, Arabic or English name', phEmp: 'File number or name',
+        pickEmployees: 'Select employees', sameAsLast: 'Last crew', clearForm: 'Clear form', save: 'Save task', saving: 'Saving...',
+        refresh: 'Reload employees and reports',
+        update: 'Update task', print: 'Print', generated: 'Generated', allLocations: 'All locations',
+        sheetTitle: 'Select employees', selAll: 'Select all shown', selNone: 'Clear all', done: 'Done',
+        confirmTitle: 'Confirm', yes: 'Yes, delete', no: 'No',
+        todayTasks: 'Tasks on this day', stTotal: 'Total hours', stTasks: 'Tasks', stEmps: 'Employees', stDays: 'Days worked',
+        stSites: 'Sites', stAvg: 'Avg hours / day', stOver: 'Hand-entered', stRows: 'Rows',
+        colDate: 'Date', colCode: 'File no', colName: 'Employee', colLoc: 'Location', colTask: 'Task',
+        colFrom: 'From', colTo: 'To', colHours: 'Hours', colTimes: 'Time', colSource: 'Hours source',
+        colDays: 'Days', colTasks: 'Tasks', colEmps: 'Employees', colByLoc: 'By location', colByDay: 'By day', colTop: 'Top employees',
+        calc: 'Calculated', manual: 'Hand-entered', perDay: 'hours per day',
+        noData: 'No overtime recorded for this period', noRows: 'Nothing here yet',
+        pickNone: 'No employees picked', emptyHint: 'No employees selected yet - use the button above.',
+        loaded: 'Loaded', loading: 'Loading...', loadFailed: 'Could not load', saveFailed: 'Could not save',
+        saved: 'Task saved', updated: 'Task updated', deleted: 'Task deleted', deleteConfirm: 'Delete this task and its overtime hours for all employees?',
+        needDate: 'Pick a date', needLoc: 'Location is required', needTask: 'Task description is required',
+        needEmp: 'Select at least one employee', needHours: 'Hours must be greater than zero for at least one employee',
+        badTime: 'Check the start and end times', employeesLoaded: 'employees',
+        editLoaded: 'Task loaded for editing', searchMore: 'keep typing to see more',
+        crewSaved: 'Crew remembered for the next task',
+        actDup: 'Duplicate as a new task', actEdit: 'Edit this task', actDel: 'Delete this task', actRemove: 'Remove from crew',
+        language: 'Change language',
+        printDaily: 'Daily overtime report', printEmp: 'Overtime per employee', printSum: 'Monthly overtime summary', printDet: 'Detailed overtime register',
+        dayNames: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+        monthNames: ['January','February','March','April','May','June','July','August','September','October','November','December']
+      },
+      ar: {
+        brand: 'العمل الإضافي اليومي', brandSub: 'سجل الساعات الإضافية بالموقع',
+        tipDashboard: 'العودة للرئيسية',
+        navEntry: 'إدخال', navDaily: 'تقرير يومي', navEmployee: 'لكل موظف', navSummary: 'ملخص الشهر', navDetail: 'تفصيل الشهر',
+        navEntryShort: 'إدخال', navDailyShort: 'يومي', navEmpShort: 'موظف', navSumShort: 'ملخص', navDetShort: 'تفصيل',
+        formNew: 'مهمة عمل إضافي جديدة', formEdit: 'تعديل مهمة عمل إضافي', cancelEdit: 'إلغاء التعديل',
+        lblDate: 'التاريخ *', lblDate2: 'يوم التقرير', lblStart: 'بداية الوقت', lblEnd: 'نهاية الوقت',
+        lblHours: 'عدد ساعات العمل الإضافي (محسوبة تلقائياً)', hoursUnit: 'ساعة',
+        lblLocation: 'الموقع *', lblTask: 'وصف المهمة *', lblNotes: 'ملاحظات (اختياري)',
+        lblEmployees: 'الموظفون في هذه المهمة *', lblMonth: 'الشهر', lblEmpFilter: 'بحث بموظف', lblEmpFilter2: 'الموظف',
+        lblLocFilter: 'الموقع', noteLoc: 'يمكن كتابة أي موقع غير موجود في القائمة.',
+        phLoc: 'اكتب أو اختر الموقع', phTask: 'ما تم تنفيذه', phSearch: 'رقم الملف أو الاسم', phNotes: 'مركبة، مشرف، رقم أمر...',
+        phEmp: 'رقم الملف أو الاسم',
+        pickEmployees: 'اختيار الموظفين', sameAsLast: 'آخر فريق', clearForm: 'تفريغ النموذج', save: 'حفظ المهمة', saving: 'جارٍ الحفظ...',
+        refresh: 'إعادة تحميل الموظفين والتقارير',
+        update: 'تحديث المهمة', print: 'طباعة', generated: 'تاريخ الطباعة', allLocations: 'كل المواقع',
+        sheetTitle: 'اختيار الموظفين', selAll: 'تحديد كل الظاهر', selNone: 'إلغاء التحديد', done: 'تم',
+        confirmTitle: 'تأكيد', yes: 'نعم، احذف', no: 'لا',
+        todayTasks: 'مهام هذا اليوم', stTotal: 'إجمالي الساعات', stTasks: 'المهام', stEmps: 'الموظفون', stDays: 'أيام العمل',
+        stSites: 'المواقع', stAvg: 'متوسط الساعات/يوم', stOver: 'إدخال يدوي', stRows: 'السطور',
+        colDate: 'التاريخ', colCode: 'رقم الملف', colName: 'الموظف', colLoc: 'الموقع', colTask: 'المهمة',
+        colFrom: 'من', colTo: 'إلى', colHours: 'الساعات', colTimes: 'الوقت', colSource: 'مصدر الساعات',
+        colDays: 'الأيام', colTasks: 'المهام', colEmps: 'الموظفون', colByLoc: 'حسب الموقع', colByDay: 'حسب اليوم', colTop: 'أكثر الموظفين',
+        calc: 'محسوب', manual: 'يدوي', perDay: 'ساعة/يوم',
+        noData: 'لا توجد ساعات إضافية لهذه الفترة', noRows: 'لا يوجد شيء بعد',
+        pickNone: 'لم يتم اختيار موظفين', emptyHint: 'لم يتم اختيار موظفين - استخدم الزر بالأعلى.',
+        loaded: 'تم التحميل', loading: 'جارٍ التحميل...', loadFailed: 'تعذّر التحميل', saveFailed: 'تعذّر الحفظ',
+        saved: 'تم حفظ المهمة', updated: 'تم تحديث المهمة', deleted: 'تم حذف المهمة', deleteConfirm: 'حذف هذه المهمة وكل ساعات موظفيها؟',
+        needDate: 'اختر التاريخ', needLoc: 'الموقع مطلوب', needTask: 'وصف المهمة مطلوب',
+        needEmp: 'اختر موظفاً واحداً على الأقل', needHours: 'يجب أن تكون الساعات أكبر من صفر لموظف واحد على الأقل',
+        badTime: 'راجع وقت البداية والنهاية', employeesLoaded: 'موظف',
+        editLoaded: 'تم تحميل المهمة للتعديل', searchMore: 'أكمل الكتابة لعرض المزيد',
+        crewSaved: 'تم حفظ الفريق للمهمة التالية',
+        actDup: 'نسخ كمهمة جديدة', actEdit: 'تعديل المهمة', actDel: 'حذف المهمة', actRemove: 'إزالة من الفريق',
+        language: 'تغيير اللغة',
+        printDaily: 'تقرير الساعات الإضافي اليومي', printEmp: 'الساعات الإضافية لكل موظف', printSum: 'ملخص الساعات الإضافي الشهري', printDet: 'سجل الساعات الإضافي التفصيلي',
+        dayNames: ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],
+        monthNames: ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
+      }
+    };
+
+    let currentLang = localStorage.getItem('overtime-lang') || 'ar';
+    function T() { return LANGUAGES[currentLang]; }
+
+    /* ---------- state ---------- */
+    const LS_DRAFT = 'gis-overtime-draft';
+    const LS_STICKY = 'gis-overtime-sticky';
+    let employees = [];
+    let selected = [];            // [{ code, name, name2, job, hours, overridden }]
+    let lastCrew = [];
+    let editingTaskId = null;
+    let currentRecorded = null;
+    let reportCache = {};         // 'YYYY-MM' -> entries
+    let currentView = 'entry';
+    let saveBusy = false;
+
+    /* ---------- helpers ---------- */
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function todayStr() { return localDateStr(new Date()); }
+    function localDateStr(d) {
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    }
+    function toMin(hm) {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(String(hm || '').trim());
+      return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+    }
+    function hmOf(v) { return String(v || '').slice(0, 5); }
+    function rawMinutes(start, end) {
+      const a = toMin(start), b = toMin(end);
+      if (a === null || b === null) return null;
+      let d = b - a;
+      if (d < 0) d += 24 * 60;      // ran past midnight
+      return d;
+    }
+    function defaultHours(start, end) {
+      const mins = rawMinutes(start, end);
+      if (mins === null) return null;
+      return Math.floor(mins / 15) * 15 / 60;   // down to quarter hours
+    }
+    function fmtH(v) {
+      const n = Number(v || 0);
+      return (Math.round(n * 100) / 100).toFixed(2).replace(/\.?0+$/, '') || '0';
+    }
+    function sum(arr) { return arr.reduce((a, b) => a + Number(b || 0), 0); }
+    function ymOf(dateStr) { return String(dateStr || '').slice(0, 7); }
+    function monthBounds(ym) {
+      const [y, m] = ym.split('-').map(Number);
+      const p = n => String(n).padStart(2, '0');
+      return { from: `${y}-${p(m)}-01`, to: `${y}-${p(m)}-${p(new Date(y, m, 0).getDate())}` };
+    }
+    function monthLabel(ym) {
+      const [y, m] = ym.split('-').map(Number);
+      const names = T().monthNames;
+      return currentLang === 'ar' ? `${names[m - 1]} ${y}` : `${names[m - 1]} ${y}`;
+    }
+    function dayLabel(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d)) return dateStr;
+      const names = T().dayNames;
+      if (currentLang === 'ar') return `${names[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+      return `${names[d.getDay()]} ${d.getDate()} ${T().monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    }
+    function empNameAr(e) { return String(e.employee_name || e.name || '').trim(); }
+    function empNameEn(e) { return String(e.employee_name_en || e.name2 || '').trim(); }
+    function nameOf(code, nameAr, nameEn) {
+      return currentLang === 'ar' ? (nameAr || nameEn || code) : (nameEn || nameAr || code);
+    }
+    function showToast(msg, kind) {
+      const box = document.getElementById('toasts');
+      const el = document.createElement('div');
+      const k = kind || 'success';
+      const icon = k === 'error' ? 'fa-circle-exclamation' : k === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-check';
+      el.className = `toast ${k}`;
+      el.innerHTML = `<i class="toast-icon fas ${icon}"></i><span>${esc(msg)}</span>`;
+      box.appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 320); }, 3200);
+    }
+
+    /* ---------- persistence ---------- */
+    function stickyState() {
+      return { entryDate: el('workDate').value, location: el('locSearch').value,
+               timeStart: el('timeStart').value, timeEnd: el('timeEnd').value,
+               dailyDate: el('dailyDate').value, empMonth: el('empMonth').value,
+               sumMonth: el('sumMonth').value, detMonth: el('detMonth').value,
+               lastCrew: lastCrew.map(x => x.code) };
+    }
+    function el(id) { return document.getElementById(id); }
+    function saveSticky() { try { localStorage.setItem(LS_STICKY, JSON.stringify(stickyState())); } catch (e) {} }
+    function loadSticky() { try { return JSON.parse(localStorage.getItem(LS_STICKY) || '{}'); } catch (e) { return {}; } }
+    function saveDraft() {
+      try {
+        localStorage.setItem(LS_DRAFT, JSON.stringify({
+          taskDesc: el('taskDesc').value, taskNotes: el('taskNotes').value,
+          participants: selected.map(s => ({ code: s.code, hours: s.hours, overridden: s.overridden }))
+        }));
+      } catch (e) {}
+    }
+    function loadDraft() { try { return JSON.parse(localStorage.getItem(LS_DRAFT) || '{}'); } catch (e) { return {}; } }
+
+    /* ---------- language ---------- */
+    function applyLanguage() {
+      const t = T();
+      document.documentElement.lang = currentLang;
+      document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-lang-key]').forEach(node => {
+        const k = node.getAttribute('data-lang-key');
+        if (t[k]) node.textContent = t[k];
+      });
+      document.querySelectorAll('[data-lang-placeholder]').forEach(node => {
+        const k = node.getAttribute('data-lang-placeholder');
+        if (t[k]) node.setAttribute('placeholder', t[k]);
+      });
+      el('refreshBtn').title = t.refresh;
+      el('printBtn').title = t.print;
+      el('langBtn').title = t.language;
+      el('fabBtn').title = t.formNew;
+      el('langBtn').title = t.language;
+      document.querySelector('a[href="mainpage.html"]').title = t.tipDashboard;
+      // The day steppers point the way the reader's timeline runs.
+      const back = currentLang === 'ar' ? 'fa-chevron-right' : 'fa-chevron-left';
+      const fwd = currentLang === 'ar' ? 'fa-chevron-left' : 'fa-chevron-right';
+      el('dayPrev').innerHTML = `<i class="fas ${back}"></i>`;
+      el('dayNext').innerHTML = `<i class="fas ${fwd}"></i>`;
+      el('dailyPrev').innerHTML = `<i class="fas ${back}"></i>`;
+      el('dailyNext').innerHTML = `<i class="fas ${fwd}"></i>`;
+      document.querySelector('a[href="mainpage.html"] i').className = `fas ${back}`;
+      el('saveLabel').textContent = editingTaskId ? t.update : t.save;
+      el('formTitle').textContent = editingTaskId ? t.formEdit : t.formNew;
+      el('printDate').textContent = new Date().toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-GB');
+      document.title = `${t.brand} | GISCO`;
+      ['empMonth', 'sumMonth', 'detMonth'].forEach(id => fillMonthSelect(id));
+      renderLocChips();
+      renderDayName();
+      paintForm();
+      renderDayTasks(dayTasks);
+      if (currentView !== 'entry') showView(currentView, true);
+    }
+    function toggleLanguage() {
+      currentLang = currentLang === 'ar' ? 'en' : 'ar';
+      localStorage.setItem('overtime-lang', currentLang);
+      applyLanguage();
+    }
+
+    /* ---------- employees ---------- */
+    async function loadEmployees() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('emps')
+          .select('code, name, name2, job, employeeid')
+          .order('code', { ascending: true });
+        if (error) throw error;
+        employees = (data || []).filter(e => e && String(e.code || '').trim());
+        showToast(`${employees.length} ${T().employeesLoaded} - ${T().loaded}`, 'success');
+      } catch (err) {
+        console.error('emps load:', err);
+        showToast(`${T().loadFailed}: ${err.message || err}`, 'error');
+      }
+    }
+    function findEmployee(code) {
+      return employees.find(e => String(e.code).trim() === String(code).trim()) || null;
+    }
+
+    /* ---------- location chips ---------- */
+    let knownLocations = [...OT_LOCATIONS];
+    function renderLocChips() {
+      const extra = [...new Set(Object.values(reportCache).flat().map(r => r.location))]
+        .filter(Boolean).filter(l => !OT_LOCATIONS.includes(l)).sort();
+      const list = [...OT_LOCATIONS, ...extra];
+      knownLocations = list;
+      el('locChips').innerHTML = list.map(l =>
+        `<button type="button" class="loc-chip${el('locSearch').value.trim().toUpperCase() === l ? ' active' : ''}" data-loc="${esc(l)}">${esc(l)}</button>`
+      ).join('');
+      el('locList').innerHTML = list.map(l => `<option value="${esc(l)}"></option>`).join('');
+    }
+
+    /* ---------- hours preview ---------- */
+    function recompute() {
+      const start = el('timeStart').value, end = el('timeEnd').value;
+      const dh = defaultHours(start, end);
+      const mins = rawMinutes(start, end);
+      el('hoursPreview').textContent = dh === null ? '--' : fmtH(dh);
+      el('rawDuration').textContent = mins === null ? ''
+        : `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')} h`;
+      // Untouched hours follow the window; hand-entered ones stay as typed.
+      selected.forEach(s => { if (!s.overridden) s.hours = dh === null ? 0 : dh; });
+      paintForm();
+      saveDraft();
+    }
+    function renderDayName() {
+      const v = el('workDate').value;
+      el('dayName').textContent = v ? dayLabel(v) : '';
+    }
+
+    /* ---------- participants ---------- */
+    function addParticipant(emp, hours) {
+      if (selected.some(s => s.code === emp.code)) return;
+      const dh = hours !== undefined ? hours : (defaultHours(el('timeStart').value, el('timeEnd').value) ?? 0);
+      selected.push({ code: emp.code, name: empNameAr(emp), name2: empNameEn(emp), job: emp.job || '',
+                      hours: Number(dh) || 0, overridden: hours !== undefined });
+      paintForm();
+    }
+    function removeParticipant(code) {
+      selected = selected.filter(s => s.code !== code);
+      paintForm();
+    }
+    /* Repainting the list on every keystroke would drop the caret the
+       operator is typing into, so this updates the row in place. */
+    function setHours(input, code, value) {
+      const s = selected.find(x => x.code === code);
+      if (!s) return;
+      const dh = defaultHours(el('timeStart').value, el('timeEnd').value) ?? 0;
+      s.hours = Math.max(0, Math.min(24, Number(value) || 0));
+      s.overridden = Math.abs(s.hours - dh) > 0.001;
+      input.classList.toggle('overridden', s.overridden);
+      saveDraft();
+    }
+    function paintForm() {
+      el('selCount').textContent = selected.length;
+      const box = el('partList');
+      if (!selected.length) { box.innerHTML = `<div class="empty-hint">${esc(T().emptyHint)}</div>`; saveDraft(); return; }
+      box.innerHTML = selected.map(s => `
+        <div class="part-row" data-code="${esc(s.code)}">
+          <div class="who">
+            <b>${esc(nameOf(s.code, s.name, s.name2))}</b>
+            <span>${esc(s.code)}${s.job ? ' · ' + esc(s.job) : ''}</span>
+          </div>
+          <input type="number" inputmode="decimal" min="0" max="24" step="0.25" value="${fmtH(s.hours)}"
+                 class="${s.overridden ? 'overridden' : ''}" data-hours="${esc(s.code)}" aria-label="${esc(T().colHours)}">
+          <button class="part-x" data-remove="${esc(s.code)}" title="${esc(T().actRemove)}"><i class="fas fa-xmark"></i></button>
+        </div>`).join('');
+      saveDraft();
+    }
+
+    /* ---------- employee sheet ---------- */
+    let sheetDraft = null;   // copy of selected while the sheet is open
+    function openSheet() {
+      sheetDraft = selected.map(s => ({ ...s }));
+      el('sheetSearch').value = '';
+      el('empSheet').classList.add('active');
+      renderSheetList();
+      setTimeout(() => el('sheetSearch').focus(), 200);
+    }
+    function closeSheet() {
+      if (!sheetDraft) { el('empSheet').classList.remove('active'); return; }
+      el('empSheet').classList.remove('active');
+      selected = sheetDraft.map(s => ({ ...s }));
+      sheetDraft = null;
+      paintForm();
+      saveDraft();
+    }
+    function sheetMatches() {
+      const q = el('sheetSearch').value.trim().toLowerCase();
+      const pool = employees.filter(e => !q || [e.code, e.name, e.name2, e.employeeid, e.job]
+        .some(v => String(v || '').toLowerCase().includes(q)));
+      return pool;
+    }
+    function renderSheetList() {
+      if (!sheetDraft) sheetDraft = [];
+      const rows = sheetMatches();
+      const LIMIT = 150;
+      const shown = rows.slice(0, LIMIT);
+      el('sheetList').innerHTML = (shown.length ? shown.map(e => {
+        const on = sheetDraft.some(s => s.code === e.code);
+        return `
+        <label class="emp-option" data-code="${esc(e.code)}">
+          <input type="checkbox" ${on ? 'checked' : ''}>
+          <span class="txt"><b>${esc(currentLang === 'ar' ? (empNameAr(e) || empNameEn(e)) : (empNameEn(e) || empNameAr(e)))}</b>
+            <span>${esc([e.job, e.employeeid].filter(Boolean).join(' · '))}</span></span>
+          <span class="code">${esc(e.code)}</span>
+        </label>`;
+      }).join('') : `<div class="empty-state"><i class="fas fa-user-slash"></i>${esc(T().pickNone)}</div>`)
+        + (rows.length > LIMIT ? `<div class="list-limit">${esc(T().searchMore)} (${rows.length})</div>` : '');
+      el('sheetCount').textContent = sheetDraft.length;
+    }
+    function sheetToggle(code, force) {
+      if (!sheetDraft) sheetDraft = [];
+      const at = sheetDraft.findIndex(s => s.code === code);
+      if (force === false) { if (at >= 0) sheetDraft.splice(at, 1); }
+      else if (force === true) { if (at < 0) { const e = findEmployee(code); if (e) sheetDraft.push({ code: e.code, name: empNameAr(e), name2: empNameEn(e), job: e.job || '', hours: defaultHours(el('timeStart').value, el('timeEnd').value) ?? 0, overridden: false }); } }
+      else if (at >= 0) sheetDraft.splice(at, 1);
+      else { const e = findEmployee(code); if (e) sheetDraft.push({ code: e.code, name: empNameAr(e), name2: empNameEn(e), job: e.job || '', hours: defaultHours(el('timeStart').value, el('timeEnd').value) ?? 0, overridden: false }); }
+      el('sheetCount').textContent = sheetDraft.length;
+    }
+
+    /* ---------- data fetching ---------- */
+    async function fetchEntries(from, to) {
+      const key = ymOf(from) === ymOf(to) ? ymOf(from) : `${from}_${to}`;
+      if (reportCache[key]) return reportCache[key];
+      const rows = [];
+      let start = 0;
+      const chunk = 1000;
+      while (true) {
+        const { data, error } = await supabaseClient
+          .from('overtime_entries')
+          .select('id, task_id, work_date, employee_code, employee_name, employee_name_en, ot_hours, hours_overridden, notes, overtime_tasks ( location, task_desc, time_start, time_end )')
+          .gte('work_date', from)
+          .lte('work_date', to)
+          .order('work_date', { ascending: true })
+          .order('id', { ascending: true })
+          .range(start, start + chunk - 1);
+        if (error) throw error;
+        if (!data || !data.length) break;
+        rows.push(...data.map(flatEntry));
+        if (data.length < chunk) break;
+        start += chunk;
+      }
+      reportCache[key] = rows;
+      return rows;
+    }
+    function flatEntry(r) {
+      const t = r.overtime_tasks || {};
+      return { ...r, location: t.location || '', task_desc: t.task_desc || '',
+               time_start: hmOf(t.time_start), time_end: hmOf(t.time_end), hours: Number(r.ot_hours) || 0 };
+    }
+    function monthRows(ym, force) {
+      if (force) { const b = monthBounds(ym); delete reportCache[ym]; delete reportCache[`${b.from}_${b.to}`]; }
+      const b = monthBounds(ym);
+      return fetchEntries(b.from, b.to);
+    }
+
+    /* ---------- day tasks on the entry view ---------- */
+    let dayTasks = [];
+    async function loadDayTasks(date) {
+      if (!date) return;
+      const box = el('dayTasks');
+      box.innerHTML = `<div class="empty-state"><span class="spinner"></span> ${esc(T().loading)}</div>`;
+      try {
+        const [tRes, eRes] = await Promise.all([
+          supabaseClient.from('overtime_tasks').select('*').eq('work_date', date).order('created_at', { ascending: false }),
+          supabaseClient.from('overtime_entries').select('id, task_id, employee_code, employee_name, employee_name_en, ot_hours, hours_overridden')
+            .eq('work_date', date).order('employee_code', { ascending: true })
+        ]);
+        if (tRes.error) throw tRes.error;
+        const byTask = new Map();
+        (eRes.data || []).forEach(r => {
+          if (!byTask.has(r.task_id)) byTask.set(r.task_id, []);
+          byTask.get(r.task_id).push(r);
+        });
+        dayTasks = (tRes.data || []).map(t => ({ ...t, people: byTask.get(t.id) || [] }));
+        renderDayTasks(dayTasks);
+      } catch (err) {
+        console.error('day load:', err);
+        box.innerHTML = `<div class="empty-state"><i class="fas fa-plug-circle-xmark"></i>${esc(`${T().loadFailed}: ${err.message || err}`)}</div>`;
+      }
+    }
+    function taskCard(t, editable) {
+      const total = sum(t.people.map(p => p.ot_hours));
+      const badge = `<span class="badge badge-total">${fmtH(total)} ${esc(T().hoursUnit)}</span>`;
+      const foot = editable ? `
+        <div class="task-foot">
+          <span class="muted" style="font-size:.78rem">${t.people.length} ${esc(T().stEmps)}</span>
+          <span class="action-btns">
+            <button class="btn btn-secondary btn-small" data-dup="${esc(t.id)}" title="${esc(T().actDup)}"><i class="fas fa-clone"></i></button>
+            <button class="btn btn-secondary btn-small" data-edit="${esc(t.id)}" title="${esc(T().actEdit)}"><i class="fas fa-pen"></i></button>
+            <button class="btn btn-danger btn-small" data-del="${esc(t.id)}" title="${esc(T().actDel)}"><i class="fas fa-trash"></i></button>
+          </span>
+        </div>` : '';
+      return `
+      <div class="task-card" data-task="${esc(t.id)}">
+        <div class="task-top">
+          <div style="min-width:0">
+            <div class="t-meta">
+              <span class="badge badge-loc"><i class="fas fa-location-dot"></i> ${esc(t.location)}</span>
+              <span class="badge badge-time"><i class="fas fa-clock"></i> ${esc(hmOf(t.time_start) || '-')} - ${esc(hmOf(t.time_end) || '-')}</span>
+            </div>
+            <div class="task-desc">${esc(t.task_desc || '')}</div>
+            ${t.notes ? `<div class="sub">${esc(t.notes)}</div>` : ''}
+          </div>
+          ${badge}
+        </div>
+        <div class="task-body">
+          ${t.people.length ? t.people.map(p => `
+            <div class="p-line">
+              <span>${esc(nameOf(p.employee_code, p.employee_name, p.employee_name_en))} <span class="muted">${esc(p.employee_code)}</span>
+                ${p.hours_overridden ? `<span class="badge badge-man">${esc(T().manual)}</span>` : ''}</span>
+              <span class="h">${fmtH(p.ot_hours)}</span>
+            </div>`).join('') : `<div class="empty-hint">${esc(T().pickNone)}</div>`}
+        </div>
+        ${foot}
+      </div>`;
+    }
+    function renderDayTasks(list) {
+      const box = el('dayTasks');
+      if (!box) return;
+      const total = sum(list.flatMap(t => t.people.map(p => p.ot_hours)));
+      el('dayTotalBadge').textContent = `${fmtH(total)} ${T().hoursUnit}`;
+      box.innerHTML = list.length ? list.map(t => taskCard(t, true)).join('')
+        : `<div class="empty-state"><i class="fas fa-inbox"></i>${esc(T().noRows)}</div>`;
+    }
+
+    /* ---------- save ---------- */
+    function validateForm() {
+      const t = T();
+      if (!el('workDate').value) { showToast(t.needDate, 'error'); return null; }
+      const location = el('locSearch').value.trim().toUpperCase();
+      if (!location) { showToast(t.needLoc, 'error'); return null; }
+      if (!el('taskDesc').value.trim()) { showToast(t.needTask, 'error'); return null; }
+      if (!selected.length) { showToast(t.needEmp, 'error'); return null; }
+      if (!selected.some(s => Number(s.hours) > 0)) { showToast(t.needHours, 'error'); return null; }
+      const start = el('timeStart').value, end = el('timeEnd').value;
+      if ((start && !end) || (!start && end)) { showToast(t.badTime, 'error'); return null; }
+      return { location };
+    }
+    async function saveTask() {
+      if (saveBusy) return;
+      const ok = validateForm();
+      if (!ok) return;
+      saveBusy = true;
+      const btn = el('saveBtn');
+      btn.disabled = true;
+      el('saveLabel').textContent = T().saving;
+      try {
+        const dh = defaultHours(el('timeStart').value, el('timeEnd').value);
+        const task = {
+          work_date: el('workDate').value,
+          location: ok.location,
+          task_desc: el('taskDesc').value.trim(),
+          time_start: el('timeStart').value || null,
+          time_end: el('timeEnd').value || null,
+          hours_default: dh,
+          notes: el('taskNotes').value.trim() || null,
+          created_by: currentRecorded
+        };
+        let taskId = editingTaskId;
+        if (taskId) {
+          const { error } = await supabaseClient.from('overtime_tasks').update(task).eq('id', taskId);
+          if (error) throw error;
+          // Re-inserting the crew is simpler and safer than diffing it,
+          // and the entry rows carry no history worth keeping.
+          const { error: delErr } = await supabaseClient.from('overtime_entries').delete().eq('task_id', taskId);
+          if (delErr) throw delErr;
+        } else {
+          const { data, error } = await supabaseClient.from('overtime_tasks').insert(task).select('id').single();
+          if (error) throw error;
+          taskId = data.id;
+        }
+        const rows = selected.map(s => ({
+          task_id: taskId,
+          work_date: task.work_date,
+          employee_code: s.code,
+          employee_name: s.name || null,
+          employee_name_en: s.name2 || null,
+          ot_hours: Number(s.hours) || 0,
+          hours_overridden: !!s.overridden,
+          created_by: currentRecorded
+        }));
+        const { error: insErr } = await supabaseClient.from('overtime_entries').insert(rows);
+        if (insErr) throw insErr;
+
+        lastCrew = selected.map(s => ({ ...s }));
+        const wasEdit = !!editingTaskId;
+        clearReportCache(task.work_date);
+        exitEditMode();
+        showToast(wasEdit ? T().updated : T().saved, 'success');
+        saveSticky();
+        await loadDayTasks(task.work_date);
+      } catch (err) {
+        console.error('save:', err);
+        showToast(`${T().saveFailed}: ${err.message || err}`, 'error');
+      } finally {
+        saveBusy = false;
+        btn.disabled = false;
+        el('saveLabel').textContent = editingTaskId ? T().update : T().save;
+      }
+    }
+    function clearReportCache(date) {
+      const ym = ymOf(date);
+      const b = monthBounds(ym);
+      delete reportCache[ym];
+      delete reportCache[`${b.from}_${b.to}`];
+    }
+    function exitEditMode() {
+      editingTaskId = null;
+      el('cancelEditBtn').style.display = 'none';
+      el('formTitle').textContent = T().formNew;
+      el('saveLabel').textContent = T().save;
+      // Date, site and the time window stay exactly as the operator left
+      // them; only the per-task content clears for the next entry.
+      el('taskDesc').value = '';
+      el('taskNotes').value = '';
+      selected = [];
+      paintForm();
+    }
+    function resetForm() {
+      editingTaskId = null;
+      el('cancelEditBtn').style.display = 'none';
+      el('formTitle').textContent = T().formNew;
+      el('saveLabel').textContent = T().save;
+      el('taskDesc').value = '';
+      el('taskNotes').value = '';
+      el('locSearch').value = '';
+      el('timeStart').value = '17:00';
+      el('timeEnd').value = '20:00';
+      selected = [];
+      renderLocChips();
+      recompute();
+      renderDayName();
+      saveSticky();
+      try { localStorage.removeItem(LS_DRAFT); } catch (e) {}
+    }
+    function loadIntoForm(task, asNew) {
+      editingTaskId = asNew ? null : task.id;
+      el('workDate').value = task.work_date;
+      el('locSearch').value = task.location || '';
+      el('timeStart').value = hmOf(task.time_start);
+      el('timeEnd').value = hmOf(task.time_end);
+      el('taskDesc').value = task.task_desc || '';
+      el('taskNotes').value = task.notes || '';
+      const dh = defaultHours(el('timeStart').value, el('timeEnd').value) ?? 0;
+      selected = (task.people || []).map(p => ({
+        code: p.employee_code, name: p.employee_name || '', name2: p.employee_name_en || '',
+        job: (findEmployee(p.employee_code) || {}).job || '',
+        hours: Number(p.ot_hours) || dh, overridden: !!p.hours_overridden
+      }));
+      el('cancelEditBtn').style.display = editingTaskId ? 'inline-flex' : 'none';
+      el('formTitle').textContent = editingTaskId ? T().formEdit : T().formNew;
+      el('saveLabel').textContent = editingTaskId ? T().update : T().save;
+      renderLocChips();
+      renderDayName();
+      recompute();
+      showView('entry');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (editingTaskId) showToast(T().editLoaded, 'warning');
+    }
+    function confirmDelete(taskId) {
+      const t = dayTasks.find(x => x.id === taskId);
+      el('confirmText').textContent = `${T().deleteConfirm}\n${t ? `${t.work_date} · ${t.location}` : ''}`;
+      el('confirmSheet').classList.add('active');
+      el('confirmYes').onclick = async () => {
+        el('confirmSheet').classList.remove('active');
+        try {
+          const { error } = await supabaseClient.from('overtime_tasks').delete().eq('id', taskId);
+          if (error) throw error;
+          if (editingTaskId === taskId) resetForm();
+          clearReportCache(t ? t.work_date : todayStr());
+          showToast(T().deleted, 'success');
+          await loadDayTasks(el('workDate').value);
+        } catch (err) {
+          console.error('delete:', err);
+          showToast(`${T().saveFailed}: ${err.message || err}`, 'error');
+        }
+      };
+    }
+
+    /* ---------- views ---------- */
+    function showView(name, silent) {
+      currentView = name;
+      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+      const section = el('view-' + name);
+      if (section) section.classList.add('active');
+      document.querySelectorAll('.view-tab, .bottom-nav-item').forEach(b =>
+        b.classList.toggle('active', b.dataset.view === name));
+      el('fabBtn').style.display = name === 'entry' ? 'none' : '';
+      if (name === 'daily') renderDaily();
+      else if (name === 'employee') renderPerEmployee();
+      else if (name === 'summary') renderSummary();
+      else if (name === 'detail') renderDetail();
+      if (!silent) saveSticky();
+    }
+    function kpiCards(items) {
+      return items.map(([icon, cls, label, value]) => `
+        <div class="stat-card">
+          <div class="stat-icon ${cls}"><i class="fas ${icon}"></i></div>
+          <div class="stat-info"><h3>${esc(label)}</h3><div class="value">${esc(value)}</div></div>
+        </div>`).join('');
+    }
+    function barList(rows, unit) {
+      const max = Math.max(1, ...rows.map(r => r.value));
+      return `<div class="bar-list">` + rows.map(r => `
+        <div class="bar-row">
+          <span class="name" title="${esc(r.name)}">${esc(r.name)}</span>
+          <span class="bar-track"><span class="bar-fill" style="width:${Math.round(r.value / max * 100)}%"></span></span>
+          <span class="val">${fmtH(r.value)} ${unit === 'h' ? esc(T().hoursUnit) : esc(String(unit || ''))}</span>
+        </div>`).join('') + `</div>`;
+    }
+
+    /* ---------- daily report ---------- */
+    async function renderDaily(force) {
+      const date = el('dailyDate').value;
+      const body = el('dailyBody');
+      const stats = el('dailyStats');
+      if (!date) return;
+      body.innerHTML = `<div class="empty-state"><span class="spinner"></span> ${esc(T().loading)}</div>`;
+      try {
+        const rows = await monthRows(ymOf(date), force);
+        const ofDay = rows.filter(r => r.work_date === date);
+        el('printTitle').textContent = `${T().printDaily} - ${dayLabel(date)}`;
+        if (!ofDay.length) {
+          stats.innerHTML = '';
+          body.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i>${esc(T().noData)}</div>`;
+          dailyRows = [];
+          return;
+        }
+        const byTask = new Map();
+        ofDay.forEach(r => {
+          if (!byTask.has(r.task_id)) byTask.set(r.task_id, { id: r.task_id, location: r.location, task_desc: r.task_desc,
+                                                                time_start: r.time_start, time_end: r.time_end, people: [] });
+          byTask.get(r.task_id).people.push(r);
+        });
+        dailyRows = ofDay;
+        const tasks = [...byTask.values()];
+        stats.innerHTML = kpiCards([
+          ['fa-clock', 'blue', T().stTotal, fmtH(sum(ofDay.map(r => r.hours)))],
+          ['fa-clipboard-list', 'pink', T().stTasks, tasks.length],
+          ['fa-users', 'green', T().stEmps, new Set(ofDay.map(r => r.employee_code)).size],
+          ['fa-location-dot', 'amber', T().stSites, new Set(ofDay.map(r => r.location)).size]
+        ]);
+        body.innerHTML = tasks.map(t => taskCard({ ...t, notes: null }, false)).join('');
+      } catch (err) {
+        console.error('daily:', err);
+        body.innerHTML = `<div class="empty-state"><i class="fas fa-plug-circle-xmark"></i>${esc(`${T().loadFailed}: ${err.message || err}`)}</div>`;
+      }
+    }
+    let dailyRows = [];
+
+    /* ---------- per employee ---------- */
+    async function renderPerEmployee(force) {
+      const ym = el('empMonth').value;
+      const wrap = el('empTableWrap');
+      el('printTitle').textContent = `${T().printEmp} - ${monthLabel(ym)}`;
+      wrap.innerHTML = `<div class="empty-state"><span class="spinner"></span> ${esc(T().loading)}</div>`;
+      try {
+        const rows = await monthRows(ym, force);
+        const q = el('empFilter').value.trim().toLowerCase();
+        const groups = new Map();
+        rows.forEach(r => {
+          const code = r.employee_code;
+          if (!groups.has(code)) groups.set(code, { code, name: r.employee_name, name2: r.employee_name_en, entries: [] });
+          groups.get(code).entries.push(r);
+        });
+        let list = [...groups.values()].map(g => ({
+          ...g,
+          total: sum(g.entries.map(e => e.hours)),
+          days: new Set(g.entries.map(e => e.work_date)).size,
+          tasks: new Set(g.entries.map(e => e.task_id)).size,
+          manual: g.entries.filter(e => e.hours_overridden).length
+        })).filter(g => !q || [g.code, g.name, g.name2].some(v => String(v || '').toLowerCase().includes(q)))
+          .sort((a, b) => b.total - a.total);
+        empList = list;
+        el('empStats').innerHTML = rows.length ? kpiCards([
+          ['fa-clock', 'blue', T().stTotal, fmtH(sum(rows.map(r => r.hours)))],
+          ['fa-user-check', 'green', T().stEmps, groups.size],
+          ['fa-clipboard-list', 'pink', T().stTasks, new Set(rows.map(r => r.task_id)).size],
+          ['fa-hand', 'amber', T().stOver, rows.filter(r => r.hours_overridden).length]
+        ]) : '';
+        if (!list.length) { wrap.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i>${esc(T().noData)}</div>`; return; }
+        wrap.innerHTML = `
+          <table class="cards-mode">
+            <thead><tr>
+              <th>${esc(T().colCode)}</th><th>${esc(T().colName)}</th><th class="num">${esc(T().colDays)}</th>
+              <th class="num">${esc(T().colTasks)}</th><th class="num">${esc(T().colHours)}</th>
+            </tr></thead>
+            <tbody>${list.map((g, i) => `
+              <tr class="emp-head" data-emp="${i}">
+                <td data-label="${esc(T().colCode)}" class="mono">${esc(g.code)}</td>
+                <td data-label="${esc(T().colName)}">${esc(nameOf(g.code, g.name, g.name2))}
+                  ${g.manual ? `<span class="sub">${g.manual} ${esc(T().manual)}</span>` : ''}</td>
+                <td data-label="${esc(T().colDays)}" class="num">${g.days}</td>
+                <td data-label="${esc(T().colTasks)}" class="num">${g.tasks}</td>
+                <td data-label="${esc(T().colHours)}" class="num">${fmtH(g.total)}</td>
+              </tr>
+              <tr class="emp-detail" data-detail="${i}" style="display:none"><td colspan="5"></td></tr>`).join('')}
+            </tbody>
+            <tfoot><tr><td colspan="4" class="num">${esc(T().stTotal)}</td><td class="num">${fmtH(sum(list.map(g => g.total)))}</td></tr></tfoot>
+          </table>`;
+      } catch (err) {
+        console.error('perEmployee:', err);
+        wrap.innerHTML = `<div class="empty-state"><i class="fas fa-plug-circle-xmark"></i>${esc(`${T().loadFailed}: ${err.message || err}`)}</div>`;
+      }
+    }
+    let empList = [];
+    function toggleEmpDetail(i, open) {
+      const head = document.querySelector(`tr.emp-head[data-emp="${i}"]`);
+      const row = document.querySelector(`tr.emp-detail[data-detail="${i}"]`);
+      if (!row) return;
+      const cell = row.querySelector('td');
+      const show = open !== undefined ? open : row.style.display === 'none';
+      row.style.display = show ? '' : 'none';
+      if (head) head.classList.toggle('open', show);
+      if (!show) { cell.innerHTML = ''; return; }
+      const g = empList[i];
+      if (!g) { cell.innerHTML = ''; return; }
+      const entries = [...g.entries].sort((a, b) => a.work_date.localeCompare(b.work_date));
+      cell.innerHTML = `<div style="padding:.6rem .9rem">
+        <table class="mini-table cards-mode"><thead><tr>
+          <th>${esc(T().colDate)}</th><th>${esc(T().colLoc)}</th><th>${esc(T().colTask)}</th>
+          <th>${esc(T().colTimes)}</th><th class="num">${esc(T().colHours)}</th></tr></thead>
+          <tbody>${entries.map(e => `<tr>
+            <td data-label="${esc(T().colDate)}" class="mono">${esc(e.work_date)}</td>
+            <td data-label="${esc(T().colLoc)}">${esc(e.location)}</td>
+            <td data-label="${esc(T().colTask)}">${esc(e.task_desc || '')}</td>
+            <td data-label="${esc(T().colTimes)}" class="mono">${esc(e.time_start || '-')} - ${esc(e.time_end || '-')}</td>
+            <td data-label="${esc(T().colHours)}" class="num">${fmtH(e.hours)}${e.hours_overridden ? ` <span class="badge badge-man">${esc(T().manual)}</span>` : ''}</td>
+          </tr>`).join('')}</tbody></table></div>`;
+    }
+
+    /* ---------- monthly summary ---------- */
+    async function renderSummary(force) {
+      const ym = el('sumMonth').value;
+      const body = el('sumBody');
+      el('printTitle').textContent = `${T().printSum} - ${monthLabel(ym)}`;
+      body.innerHTML = `<div class="empty-state"><span class="spinner"></span> ${esc(T().loading)}</div>`;
+      try {
+        const rows = await monthRows(ym, force);
+        sumRows = rows;
+        if (!rows.length) { el('sumStats').innerHTML = ''; body.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i>${esc(T().noData)}</div>`; return; }
+        const total = sum(rows.map(r => r.hours));
+        const days = new Set(rows.map(r => r.work_date));
+        const byLoc = new Map(), byDay = new Map(), byEmp = new Map();
+        rows.forEach(r => {
+          byLoc.set(r.location, (byLoc.get(r.location) || 0) + r.hours);
+          byDay.set(r.work_date, (byDay.get(r.work_date) || 0) + r.hours);
+          const k = r.employee_code;
+          if (!byEmp.has(k)) byEmp.set(k, { name: r.employee_name, name2: r.employee_name_en, v: 0 });
+          const g = byEmp.get(k); g.v += r.hours;
+        });
+        el('sumStats').innerHTML = kpiCards([
+          ['fa-clock', 'blue', T().stTotal, fmtH(total)],
+          ['fa-user-check', 'green', T().stEmps, byEmp.size],
+          ['fa-calendar-day', 'pink', T().stDays, days.size],
+          ['fa-chart-simple', 'amber', T().stAvg, fmtH(total / Math.max(1, days.size))],
+          ['fa-location-dot', 'gray', T().stSites, byLoc.size]
+        ]);
+        const locRows = [...byLoc.entries()].map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+        const dayRows = [...byDay.entries()].map(([name, value]) => ({ name, value })).sort((a, b) => a.name.localeCompare(b.name));
+        const empRows = [...byEmp.entries()].map(([code, g]) => ({ name: `${nameOf(code, g.name, g.name2)} (${code})`, value: g.v }))
+          .sort((a, b) => b.value - a.value).slice(0, 12);
+        body.innerHTML = `
+          <div style="margin-bottom:1.25rem">
+            <h3 style="font-size:.88rem; margin-bottom:.6rem"><i class="fas fa-location-dot" style="color:var(--primary)"></i> ${esc(T().colByLoc)}</h3>
+            ${barList(locRows, 'h')}
+          </div>
+          <div style="margin-bottom:1.25rem">
+            <h3 style="font-size:.88rem; margin-bottom:.6rem"><i class="fas fa-user-check" style="color:var(--primary)"></i> ${esc(T().colTop)}</h3>
+            ${barList(empRows, 'h')}
+          </div>
+          <h3 style="font-size:.88rem; margin-bottom:.6rem"><i class="fas fa-calendar-days" style="color:var(--primary)"></i> ${esc(T().colByDay)}</h3>
+          <div class="table-wrapper"><table class="cards-mode">
+            <thead><tr><th>${esc(T().colDate)}</th><th class="num">${esc(T().colHours)}</th><th>${esc(T().perDay)}</th></tr></thead>
+            <tbody>${dayRows.map(d => `<tr>
+              <td data-label="${esc(T().colDate)}">${esc(d.name)} <span class="sub">${esc(dayLabel(d.name))}</span></td>
+              <td data-label="${esc(T().colHours)}" class="num">${fmtH(d.value)}</td>
+              <td data-label="${esc(T().perDay)}"><span class="bar-track"><span class="bar-fill" style="width:${Math.round(d.value / Math.max(1, ...dayRows.map(x => x.value)) * 100)}%"></span></span></td>
+            </tr>`).join('')}</tbody>
+            <tfoot><tr><td>${esc(T().stTotal)}</td><td class="num">${fmtH(total)}</td><td></td></tr></tfoot>
+          </table></div>`;
+      } catch (err) {
+        console.error('summary:', err);
+        body.innerHTML = `<div class="empty-state"><i class="fas fa-plug-circle-xmark"></i>${esc(`${T().loadFailed}: ${err.message || err}`)}</div>`;
+      }
+    }
+    let sumRows = [];
+
+    /* ---------- detailed month ---------- */
+    async function renderDetail(force) {
+      const ym = el('detMonth').value;
+      const wrap = el('detTableWrap');
+      el('printTitle').textContent = `${T().printDet} - ${monthLabel(ym)}`;
+      wrap.innerHTML = `<div class="empty-state"><span class="spinner"></span> ${esc(T().loading)}</div>`;
+      try {
+        const rows = await monthRows(ym, force);
+        const loc = el('detLoc').value;
+        const q = el('detFilter').value.trim().toLowerCase();
+        const filtered = rows.filter(r =>
+          (!loc || r.location === loc) &&
+          (!q || [r.employee_code, r.employee_name, r.employee_name_en].some(v => String(v || '').toLowerCase().includes(q))));
+        detRows = filtered;
+        const locs = [...new Set(rows.map(r => r.location))].filter(Boolean).sort();
+        const sel = el('detLoc');
+        // Rebuilding the option list resets its value, so the operator's
+        // pick is restored by hand after every repaint.
+        sel.innerHTML = `<option value="">${esc(T().allLocations)}</option>` +
+          locs.map(l => `<option value="${esc(l)}">${esc(l)}</option>`).join('');
+        sel.value = locs.includes(loc) ? loc : '';
+        el('detStats').innerHTML = filtered.length ? kpiCards([
+          ['fa-clock', 'blue', T().stTotal, fmtH(sum(filtered.map(r => r.hours)))],
+          ['fa-list-ol', 'green', T().stRows, filtered.length],
+          ['fa-user-check', 'pink', T().stEmps, new Set(filtered.map(r => r.employee_code)).size]
+        ]) : '';
+        if (!filtered.length) { wrap.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i>${esc(T().noData)}</div>`; return; }
+        wrap.innerHTML = `
+          <table class="cards-mode">
+            <thead><tr>
+              <th>${esc(T().colDate)}</th><th>${esc(T().colCode)}</th><th>${esc(T().colName)}</th>
+              <th>${esc(T().colLoc)}</th><th>${esc(T().colTask)}</th><th>${esc(T().colTimes)}</th>
+              <th class="num">${esc(T().colHours)}</th>
+            </tr></thead>
+            <tbody>${filtered.map(r => `
+              <tr>
+                <td data-label="${esc(T().colDate)}" class="mono">${esc(r.work_date)}</td>
+                <td data-label="${esc(T().colCode)}" class="mono">${esc(r.employee_code)}</td>
+                <td data-label="${esc(T().colName)}">${esc(nameOf(r.employee_code, r.employee_name, r.employee_name_en))}</td>
+                <td data-label="${esc(T().colLoc)}">${esc(r.location)}</td>
+                <td data-label="${esc(T().colTask)}">${esc(r.task_desc || '')}</td>
+                <td data-label="${esc(T().colTimes)}" class="mono">${esc(r.time_start || '-')} - ${esc(r.time_end || '-')}</td>
+                <td data-label="${esc(T().colHours)}" class="num">${fmtH(r.hours)}${r.hours_overridden ? ` <span class="badge badge-man">${esc(T().manual)}</span>` : ''}</td>
+              </tr>`).join('')}
+            </tbody>
+            <tfoot><tr><td colspan="6">${esc(T().stTotal)}</td><td class="num">${fmtH(sum(filtered.map(r => r.hours)))}</td></tr></tfoot>
+          </table>`;
+      } catch (err) {
+        console.error('detail:', err);
+        wrap.innerHTML = `<div class="empty-state"><i class="fas fa-plug-circle-xmark"></i>${esc(`${T().loadFailed}: ${err.message || err}`)}</div>`;
+      }
+    }
+    let detRows = [];
+
+    /* ---------- export ---------- */
+    function exportCSV(name, headers, rows) {
+      const csv = [headers, ...rows].map(r => r.map(c => `"${String(c ?? '').replaceAll('"', '""')}"`).join(',')).join('\r\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    function exportXLSX(name, headers, rows, sheetName) {
+      if (!window.XLSX) { showToast('SheetJS is not loaded', 'error'); return; }
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = headers.map((h, i) => {
+        const widest = rows.reduce((m, r) => Math.max(m, String(r[i] ?? '').length), 0);
+        return { wch: Math.min(38, Math.max(10, String(h).length + 4, widest + 2)) };
+      });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Overtime');
+      XLSX.writeFile(wb, name);
+    }
+    function detailColumns() {
+      const t = T();
+      return {
+        headers: [t.colDate, t.colCode, t.colName, t.colName + ' (EN)', t.colLoc, t.colTask, t.colFrom, t.colTo, t.colHours, t.colSource],
+        rows: detRows.map(r => [r.work_date, r.employee_code, r.employee_name || '', r.employee_name_en || '', r.location,
+          r.task_desc || '', r.time_start || '', r.time_end || '', Number(r.hours) || 0, r.hours_overridden ? t.manual : t.calc])
+      };
+    }
+    function dailyColumns() {
+      const t = T();
+      return {
+        headers: [t.colDate, t.colCode, t.colName, t.colLoc, t.colTask, t.colFrom, t.colTo, t.colHours],
+        rows: dailyRows.map(r => [r.work_date, r.employee_code, r.employee_name || r.employee_name_en || '', r.location,
+          r.task_desc || '', r.time_start || '', r.time_end || '', Number(r.hours) || 0])
+      };
+    }
+
+    /* ---------- month selects ---------- */
+    function fillMonthSelect(id) {
+      const sel = el(id);
+      const keep = sel.value;
+      const now = new Date();
+      const opts = [];
+      for (let i = 1; i >= -11; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const p = n => String(n).padStart(2, '0');
+        const ym = `${d.getFullYear()}-${p(d.getMonth() + 1)}`;
+        opts.push(`<option value="${ym}">${esc(monthLabel(ym))}</option>`);
+      }
+      sel.innerHTML = opts.join('');
+      // Rebuilding for a language change must not reset the month the
+      // operator is looking at.
+      sel.value = keep;
+    }
+
+    /* ---------- wiring ---------- */
+    function bind() {
+      el('langBtn').addEventListener('click', toggleLanguage);
+      el('printBtn').addEventListener('click', () => window.print());
+      el('refreshBtn').addEventListener('click', async () => {
+        const date = el('workDate').value;
+        await loadEmployees();
+        reportCache = {};
+        await loadDayTasks(date);
+        showView(currentView, true);
+      });
+
+      // entry form
+      ['workDate', 'timeStart', 'timeEnd', 'locSearch', 'taskDesc', 'taskNotes'].forEach(id => {
+        const node = el(id);
+        node.addEventListener('change', saveSticky);
+        node.addEventListener('input', saveSticky);
+      });
+      el('workDate').addEventListener('change', () => { renderDayName(); loadDayTasks(el('workDate').value); saveSticky(); });
+      el('timeStart').addEventListener('change', recompute);
+      el('timeEnd').addEventListener('change', recompute);
+      el('locSearch').addEventListener('input', () => {
+        const v = el('locSearch').value.trim().toUpperCase();
+        document.querySelectorAll('.loc-chip').forEach(c => c.classList.toggle('active', c.dataset.loc === v));
+      });
+      el('locChips').addEventListener('click', ev => {
+        const chip = ev.target.closest('.loc-chip');
+        if (!chip) return;
+        el('locSearch').value = chip.dataset.loc;
+        document.querySelectorAll('.loc-chip').forEach(c => c.classList.toggle('active', c === chip));
+        saveSticky();
+      });
+      el('dayPrev').addEventListener('click', () => shiftDay('workDate', -1));
+      el('dayNext').addEventListener('click', () => shiftDay('workDate', 1));
+      el('dailyPrev').addEventListener('click', () => shiftDay('dailyDate', -1));
+      el('dailyNext').addEventListener('click', () => shiftDay('dailyDate', 1));
+      el('partList').addEventListener('click', ev => {
+        const rm = ev.target.closest('[data-remove]');
+        if (rm) removeParticipant(rm.dataset.remove);
+      });
+      el('partList').addEventListener('input', ev => {
+        const h = ev.target.closest('[data-hours]');
+        if (h) setHours(h, h.dataset.hours, h.value);
+      });
+      el('openEmpBtn').addEventListener('click', openSheet);
+      el('sheetClose').addEventListener('click', closeSheet);
+      el('sheetDone').addEventListener('click', () => { closeSheet(); lastCrew = selected.map(s => ({ ...s })); saveSticky(); });
+      el('sheetSearch').addEventListener('input', renderSheetList);
+      el('sheetList').addEventListener('change', ev => {
+        const opt = ev.target.closest('.emp-option');
+        if (!opt) return;
+        sheetToggle(opt.dataset.code, ev.target.checked);
+      });
+      el('selAllBtn').addEventListener('click', () => { sheetMatches().slice(0, 150).forEach(e => sheetToggle(e.code, true)); renderSheetList(); });
+      el('selNoneBtn').addEventListener('click', () => { sheetDraft = []; el('sheetCount').textContent = '0'; renderSheetList(); });
+      el('sameAsLastBtn').addEventListener('click', () => {
+        if (!lastCrew.length) { showToast(T().pickNone, 'warning'); return; }
+        lastCrew.forEach(c => { const e = findEmployee(c.code); if (e) addParticipant(e, c.hours); });
+        showToast(T().crewSaved, 'success');
+      });
+      el('saveBtn').addEventListener('click', saveTask);
+      el('clearFormBtn').addEventListener('click', resetForm);
+      el('cancelEditBtn').addEventListener('click', resetForm);
+      el('fabBtn').addEventListener('click', () => { showView('entry'); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+      el('dayTasks').addEventListener('click', ev => {
+        const ed = ev.target.closest('[data-edit]');
+        const dl = ev.target.closest('[data-del]');
+        const dp = ev.target.closest('[data-dup]');
+        const id = (ed || dl || dp) && (ed?.dataset.edit || dl?.dataset.del || dp?.dataset.dup);
+        if (!id) return;
+        const task = dayTasks.find(t => t.id === id);
+        if (!task) return;
+        if (ed) loadIntoForm(task, false);
+        else if (dp) loadIntoForm(task, true);
+        else confirmDelete(id);
+      });
+
+      // tabs
+      document.querySelectorAll('.view-tab, .bottom-nav-item').forEach(b =>
+        b.addEventListener('click', () => showView(b.dataset.view)));
+
+      // reports
+      el('dailyDate').addEventListener('change', () => { renderDaily(); saveSticky(); });
+      el('dailyPrint').addEventListener('click', () => window.print());
+      el('dailyCsv').addEventListener('click', () => {
+        const c = dailyColumns();
+        exportCSV(`overtime_daily_${el('dailyDate').value}.csv`, c.headers, c.rows);
+      });
+      el('empMonth').addEventListener('change', () => { renderPerEmployee(); saveSticky(); });
+      el('empFilter').addEventListener('input', () => { clearTimeout(bind._t); bind._t = setTimeout(renderPerEmployee, 220); });
+      // A printed per-employee report is worthless without the rows behind
+      // each name, so every detail is opened just for the print pass.
+      el('empPrint').addEventListener('click', () => {
+        const closed = [...document.querySelectorAll('tr.emp-detail')].filter(r => r.style.display === 'none');
+        closed.forEach(r => toggleEmpDetail(Number(r.dataset.detail), true));
+        window.print();
+        setTimeout(() => closed.forEach(r => { const i = Number(r.dataset.detail); toggleEmpDetail(i, false); }), 400);
+      });
+      el('empCsv').addEventListener('click', () => {
+        const t = T();
+        exportCSV(`overtime_per_employee_${el('empMonth').value}.csv`,
+          [t.colCode, t.colName, t.colName + ' (EN)', t.colDays, t.colTasks, t.colHours],
+          empList.map(g => [g.code, g.name || '', g.name2 || '', g.days, g.tasks, Number(g.total.toFixed(2))]));
+      });
+      el('empTableWrap').addEventListener('click', ev => {
+        const head = ev.target.closest('.emp-head');
+        if (head) toggleEmpDetail(Number(head.dataset.emp));
+      });
+      el('sumMonth').addEventListener('change', () => { renderSummary(); saveSticky(); });
+      el('sumPrint').addEventListener('click', () => window.print());
+      el('sumCsv').addEventListener('click', () => {
+        const t = T();
+        const byLoc = new Map();
+        sumRows.forEach(r => {
+          if (!byLoc.has(r.location)) byLoc.set(r.location, { hours: 0, tasks: new Set(), emps: new Set() });
+          const g = byLoc.get(r.location);
+          g.hours += r.hours; g.tasks.add(r.task_id); g.emps.add(r.employee_code);
+        });
+        exportCSV(`overtime_summary_${el('sumMonth').value}.csv`, [t.colLoc, t.colHours, t.colTasks, t.colEmps],
+          [...byLoc.entries()].map(([l, g]) => [l, Number(g.hours.toFixed(2)), g.tasks.size, g.emps.size])
+            .sort((a, b) => b[1] - a[1]));
+      });
+      el('detMonth').addEventListener('change', () => { renderDetail(); saveSticky(); });
+      el('detLoc').addEventListener('change', renderDetail);
+      el('detFilter').addEventListener('input', () => { clearTimeout(bind._d); bind._d = setTimeout(renderDetail, 220); });
+      el('detPrint').addEventListener('click', () => window.print());
+      el('detCsv').addEventListener('click', () => {
+        const c = detailColumns();
+        exportCSV(`overtime_${el('detMonth').value}.csv`, c.headers, c.rows);
+      });
+      el('detXlsx').addEventListener('click', () => {
+        const c = detailColumns();
+        exportXLSX(`Overtime_${el('detMonth').value}.xlsx`, c.headers, c.rows, 'Overtime');
+      });
+      el('confirmClose').addEventListener('click', () => el('confirmSheet').classList.remove('active'));
+      el('confirmNo').addEventListener('click', () => el('confirmSheet').classList.remove('active'));
+      document.querySelectorAll('.popup-overlay').forEach(ov =>
+        ov.addEventListener('click', ev => { if (ev.target === ov && ov.id !== 'confirmSheet') closeSheet(); }));
+      document.addEventListener('keydown', ev => {
+        if (ev.key === 'Escape') { closeSheet(); el('confirmSheet').classList.remove('active'); }
+      });
+    }
+    function shiftDay(id, delta) {
+      const node = el(id);
+      const d = new Date((node.value || todayStr()) + 'T00:00:00');
+      d.setDate(d.getDate() + delta);
+      node.value = localDateStr(d);
+      node.dispatchEvent(new Event('change'));
+    }
+
+    /* ---------- boot ---------- */
+    window.addEventListener('DOMContentLoaded', async () => {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      bind();
+
+      const sticky = loadSticky();
+      const ym = ymOf(todayStr());
+      ['empMonth', 'sumMonth', 'detMonth'].forEach(id => fillMonthSelect(id));
+      el('workDate').value = sticky.entryDate || todayStr();
+      el('dailyDate').value = sticky.dailyDate || el('workDate').value;
+      el('timeStart').value = sticky.timeStart || '17:00';
+      el('timeEnd').value = sticky.timeEnd || '20:00';
+      el('locSearch').value = sticky.location || '';
+      el('empMonth').value = sticky.empMonth || ym;
+      el('sumMonth').value = sticky.sumMonth || ym;
+      el('detMonth').value = sticky.detMonth || ym;
+
+      applyLanguage();
+      recompute();
+      renderDayName();
+
+      const user = await GisAuth.currentUser().catch(() => null);
+      currentRecorded = user ? GisAuth.usernameFromUser(user) : null;
+
+      await loadEmployees();
+      const draft = loadDraft();
+      if (draft.taskDesc) el('taskDesc').value = draft.taskDesc;
+      if (draft.taskNotes) el('taskNotes').value = draft.taskNotes;
+      (draft.participants || []).forEach(p => {
+        const e = findEmployee(p.code);
+        if (e) selected.push({ code: e.code, name: empNameAr(e), name2: empNameEn(e), job: e.job || '',
+                               hours: Number(p.hours) || 0, overridden: !!p.overridden });
+      });
+      if (sticky.lastCrew?.length) lastCrew = sticky.lastCrew.map(c => findEmployee(c)).filter(Boolean)
+        .map(e => ({ code: e.code, name: empNameAr(e), name2: empNameEn(e), job: e.job || '', hours: 0, overridden: false }));
+      paintForm();
+      await loadDayTasks(el('workDate').value);
+      renderLocChips();
+    });
+  </script>
+</body>
+</html>

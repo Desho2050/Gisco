@@ -61,7 +61,8 @@ declare
     'emps','employee_passports','employee_leaves','gatlocations',
     'materials','transactions','recvd_materials','oracle',
     'WO','vouchers','tasks','manpower','meter_entries','vehicles',
-    'login','sim_cards','sim_transfers','company_vehicles','vehicle_transfers'
+    'login','sim_cards','sim_transfers','company_vehicles','vehicle_transfers',
+    'overtime_tasks','overtime_entries'
   ];
 begin
   foreach t in array tables loop

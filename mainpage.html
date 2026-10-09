@@ -1660,6 +1660,28 @@ body {
       </div>
     </div>
 
+    <!-- Daily overtime -->
+    <div class="module-card" style="--card-gradient: linear-gradient(135deg, #f43f5e, #e11d48);">
+      <div class="card-header">
+        <div class="card-icon" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">
+          <i class="fas fa-stopwatch"></i>
+        </div>
+        <div class="card-info">
+          <div class="card-title">
+            <span data-i18n="card_ot_title">Daily Overtime</span>
+            <span class="card-badge" data-i18n="new_badge">New</span>
+          </div>
+          <div class="card-desc" data-i18n="card_ot_desc">Record field overtime by task, site and employee, with daily and monthly reports.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="card-count"><span data-i18n="data_label">Data:</span> <strong id="overtimeCount">loading…</strong></div>
+        <a href="Overtime.html" class="card-btn" data-i18n="open_ot">
+          <i class="fas fa-arrow-left"></i> Open
+        </a>
+      </div>
+    </div>
+
     <!-- ============ NEW: Reports (AC Maintenance) ============ -->
     <div class="module-card" style="--card-gradient: linear-gradient(135deg, #0891b2, #6366f1);">
       <div class="card-header">
@@ -1786,6 +1808,9 @@ const I18N = {
     card_vehicle_title: 'Company Vehicle Register',
     card_vehicle_desc: 'Track vehicles issued to employees and their transfer history.',
     open_vehicle: 'Open',
+    card_ot_title: 'Daily Overtime',
+    card_ot_desc: 'Record field overtime by task, site and employee, with daily and monthly reports.',
+    open_ot: 'Open',
     new_badge: 'New',
     data_label: 'Data:',
     rows_suffix: ' rows',
@@ -1868,6 +1893,9 @@ const I18N = {
     card_vehicle_title: 'سجل مركبات الشركة',
     card_vehicle_desc: 'متابعة المركبات المسلّمة للموظفين وسجل تحويلاتها.',
     open_vehicle: 'فتح',
+    card_ot_title: 'العمل الإضافي اليومي',
+    card_ot_desc: 'تسجيل ساعات الإضافي حسب المهمة والموقع والموظف مع تقارير يومية وشهرية.',
+    open_ot: 'فتح',
     new_badge: 'جديد',
     data_label: 'البيانات:',
     rows_suffix: ' نتيجة',
@@ -2269,7 +2297,13 @@ document.addEventListener('DOMContentLoaded', () => {
   setCount('warehouseCount', 0);
   setCount('simCount', 0);
   setCount('vehicleCount', 0);
+  setCount('overtimeCount', 0);
   setCount('reportsCount', 29); // NEW: Reports card mock count
+
+  // Counted from the grid so the welcome stat does not drift every time a
+  // module card is added.
+  document.getElementById('totalModules').textContent =
+    document.querySelectorAll('.module-card').length;
 });
 
 // ===== SUPABASE DATA LOADING =====
@@ -2300,6 +2334,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (simErr) {
       console.warn('SIM count:', simErr.message || simErr);
       updateCount('simCount', null);
+    }
+
+    // Daily overtime tasks
+    try {
+      const { count, error: otError } = await supabaseClient
+        .from('overtime_tasks')
+        .select('id', { count: 'exact', head: true });
+
+      if (otError) throw otError;
+
+      updateCount('overtimeCount', count || 0);
+    } catch (otErr) {
+      console.warn('Overtime count:', otErr.message || otErr);
+      updateCount('overtimeCount', null);
     }
 
     // Company vehicles
