@@ -121,6 +121,10 @@
     input[type="date"], input[type="time"], input[type="number"] { font-variant-numeric: tabular-nums; }
     .form-actions { display: flex; gap: .7rem; margin-top: 1.1rem; flex-wrap: wrap; }
     .field-note { font-size: .74rem; color: var(--text-secondary); margin-inline-start: .25rem; }
+    /* The payroll period is a 15th-to-14th cycle, so it is spelled out
+       next to every month picker - a bare month name would lie. */
+    .period-note { font-weight: 700; color: var(--primary-dark); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    [data-theme="dark"] .period-note { color: #a5b4fc; }
 
     .day-nav { display: flex; gap: .4rem; align-items: center; }
     .day-nav .btn-icon { width: 44px; height: 44px; flex: 0 0 44px; border: 2px solid var(--input-border); background: var(--surface);
@@ -518,6 +522,7 @@
           <div class="form-group" style="flex:0 1 190px">
             <label for="empMonth" data-lang-key="lblMonth">Month</label>
             <select id="empMonth"></select>
+            <div class="field-note period-note" id="empPeriod"></div>
           </div>
           <div class="form-group">
             <label for="empFilter" data-lang-key="lblEmpFilter">Find employee</label>
@@ -538,6 +543,7 @@
           <div class="form-group" style="flex:0 1 190px">
             <label for="sumMonth" data-lang-key="lblMonth">Month</label>
             <select id="sumMonth"></select>
+            <div class="field-note period-note" id="sumPeriod"></div>
           </div>
           <button class="btn btn-secondary" id="sumCsv"><i class="fas fa-file-csv"></i> CSV</button>
           <button class="btn btn-secondary" id="sumPrint"><i class="fas fa-print"></i> <span data-lang-key="print">Print</span></button>
@@ -554,6 +560,7 @@
           <div class="form-group" style="flex:0 1 190px">
             <label for="detMonth" data-lang-key="lblMonth">Month</label>
             <select id="detMonth"></select>
+            <div class="field-note period-note" id="detPeriod"></div>
           </div>
           <div class="form-group" style="flex:0 1 190px">
             <label for="detLoc" data-lang-key="lblLocFilter">Location</label>
@@ -658,7 +665,7 @@
         lblDate: 'Date *', lblDate2: 'Report day', lblStart: 'Time start', lblEnd: 'Time end',
         lblHours: 'Overtime hours (auto from times)', hoursUnit: 'hours',
         lblLocation: 'Location *', lblTask: 'Task description *', lblNotes: 'Notes (optional)',
-        lblEmployees: 'Employees on this task *', lblMonth: 'Month', lblEmpFilter: 'Find employee', lblEmpFilter2: 'Employee',
+        lblEmployees: 'Employees on this task *', lblMonth: 'Month', lblPeriod: 'Period', lblEmpFilter: 'Find employee', lblEmpFilter2: 'Employee',
         lblLocFilter: 'Location', noteLoc: 'Any site name is allowed - type one that is not in the list.',
         phLoc: 'Type or pick a site', phTask: 'What was done', phNotes: 'Vehicle, supervisor, PO number...',
         phSearch: 'File number, Arabic or English name', phEmp: 'File number or name',
@@ -697,7 +704,7 @@
         lblDate: 'التاريخ *', lblDate2: 'يوم التقرير', lblStart: 'بداية الوقت', lblEnd: 'نهاية الوقت',
         lblHours: 'عدد ساعات العمل الإضافي (محسوبة تلقائياً)', hoursUnit: 'ساعة',
         lblLocation: 'الموقع *', lblTask: 'وصف المهمة *', lblNotes: 'ملاحظات (اختياري)',
-        lblEmployees: 'الموظفون في هذه المهمة *', lblMonth: 'الشهر', lblEmpFilter: 'بحث بموظف', lblEmpFilter2: 'الموظف',
+        lblEmployees: 'الموظفون في هذه المهمة *', lblMonth: 'الشهر', lblPeriod: 'الفترة', lblEmpFilter: 'بحث بموظف', lblEmpFilter2: 'الموظف',
         lblLocFilter: 'الموقع', noteLoc: 'يمكن كتابة أي موقع غير موجود في القائمة.',
         phLoc: 'اكتب أو اختر الموقع', phTask: 'ما تم تنفيذه', phSearch: 'رقم الملف أو الاسم', phNotes: 'مركبة، مشرف، رقم أمر...',
         phEmp: 'رقم الملف أو الاسم',
@@ -775,11 +782,32 @@
       return (Math.round(n * 100) / 100).toFixed(2).replace(/\.?0+$/, '') || '0';
     }
     function sum(arr) { return arr.reduce((a, b) => a + Number(b || 0), 0); }
-    function ymOf(dateStr) { return String(dateStr || '').slice(0, 7); }
+    /* The payroll month is NOT the calendar month: it runs from the 15th
+       of the previous month to the 14th of the named one, so October 2026
+       covers 15-09-2026 .. 14-10-2026. ymOf() therefore returns the cycle
+       a date BELONGS TO, not the month printed on its page. */
+    const OT_CYCLE_DAY = 15;
+    function ymOf(dateStr) {
+      const s = String(dateStr || '');
+      const y = Number(s.slice(0, 4)), m = Number(s.slice(5, 7)), d = Number(s.slice(8, 10));
+      if (!y || !m || !d) return s.slice(0, 7);
+      const p = n => String(n).padStart(2, '0');
+      if (d < OT_CYCLE_DAY) return `${y}-${p(m)}`;
+      return m === 12 ? `${y + 1}-01` : `${y}-${p(m + 1)}`;
+    }
     function monthBounds(ym) {
       const [y, m] = ym.split('-').map(Number);
       const p = n => String(n).padStart(2, '0');
-      return { from: `${y}-${p(m)}-01`, to: `${y}-${p(m)}-${p(new Date(y, m, 0).getDate())}` };
+      const py = m === 1 ? y - 1 : y, pm = m === 1 ? 12 : m - 1;
+      return { from: `${py}-${p(pm)}-${p(OT_CYCLE_DAY)}`, to: `${y}-${p(m)}-14` };
+    }
+    function dmy(s) { return `${String(s).slice(8, 10)}-${String(s).slice(5, 7)}-${String(s).slice(0, 4)}`; }
+    function periodText(ym) { const b = monthBounds(ym); return `${dmy(b.from)} - ${dmy(b.to)}`; }
+    function paintPeriods() {
+      [['empMonth', 'empPeriod'], ['sumMonth', 'sumPeriod'], ['detMonth', 'detPeriod']].forEach(([m, n]) => {
+        const ym = el(m).value;
+        if (ym) el(n).textContent = `${T().lblPeriod}: ${periodText(ym)}`;
+      });
     }
     function monthLabel(ym) {
       const [y, m] = ym.split('-').map(Number);
@@ -862,6 +890,7 @@
       el('printDate').textContent = new Date().toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-GB');
       document.title = `${t.brand} | GISCO`;
       ['empMonth', 'sumMonth', 'detMonth'].forEach(id => fillMonthSelect(id));
+      paintPeriods();
       renderLocChips();
       renderDayName();
       paintForm();
@@ -1355,7 +1384,8 @@
     async function renderPerEmployee(force) {
       const ym = el('empMonth').value;
       const wrap = el('empTableWrap');
-      el('printTitle').textContent = `${T().printEmp} - ${monthLabel(ym)}`;
+      el('empPeriod').textContent = `${T().lblPeriod}: ${periodText(ym)}`;
+      el('printTitle').textContent = `${T().printEmp} - ${monthLabel(ym)} (${periodText(ym)})`;
       wrap.innerHTML = `<div class="empty-state"><span class="spinner"></span> ${esc(T().loading)}</div>`;
       try {
         const rows = await monthRows(ym, force);
@@ -1436,7 +1466,8 @@
     async function renderSummary(force) {
       const ym = el('sumMonth').value;
       const body = el('sumBody');
-      el('printTitle').textContent = `${T().printSum} - ${monthLabel(ym)}`;
+      el('sumPeriod').textContent = `${T().lblPeriod}: ${periodText(ym)}`;
+      el('printTitle').textContent = `${T().printSum} - ${monthLabel(ym)} (${periodText(ym)})`;
       body.innerHTML = `<div class="empty-state"><span class="spinner"></span> ${esc(T().loading)}</div>`;
       try {
         const rows = await monthRows(ym, force);
@@ -1493,7 +1524,8 @@
     async function renderDetail(force) {
       const ym = el('detMonth').value;
       const wrap = el('detTableWrap');
-      el('printTitle').textContent = `${T().printDet} - ${monthLabel(ym)}`;
+      el('detPeriod').textContent = `${T().lblPeriod}: ${periodText(ym)}`;
+      el('printTitle').textContent = `${T().printDet} - ${monthLabel(ym)} (${periodText(ym)})`;
       wrap.innerHTML = `<div class="empty-state"><span class="spinner"></span> ${esc(T().loading)}</div>`;
       try {
         const rows = await monthRows(ym, force);
