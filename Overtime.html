@@ -513,9 +513,22 @@
     ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 </style>
 <script>
-  /* Painted before first frame so a dark-mode operator never sees a flash
-     of the light theme; the boot handler re-reads the same value. */
-  document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+  /* Runs before first paint so a dark-mode operator never sees a flash of
+     the light theme. The language is resolved here too - the markup opens
+     in Arabic, and an English session must not render RTL first.
+     localStorage is wrapped: private mode on a shared field tablet throws. */
+  (function () {
+    var read = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
+    document.documentElement.setAttribute('data-theme', read('theme') || 'light');
+    window.GisOvertimeLang = function () {
+      // An explicit switch on this page wins; otherwise the language picked
+      // at sign-in carries over, and Arabic stays the last resort.
+      return read('overtime-lang') || read('loginLang') || 'ar';
+    };
+    var lang = window.GisOvertimeLang();
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  })();
 </script>
 <script src="auth-guard.js"></script>
 </head>
@@ -891,7 +904,7 @@
       }
     };
 
-    let currentLang = localStorage.getItem('overtime-lang') || 'ar';
+    let currentLang = window.GisOvertimeLang();
     function T() { return LANGUAGES[currentLang]; }
 
     /* ---------- state ---------- */
