@@ -1315,8 +1315,18 @@
                 return;
             }
 
-            if (!url.includes('github') || !url.includes('.xlsx')) {
-                showToast('URL must be a GitHub raw URL pointing to an .xlsx file', 'error');
+            /* The old rule demanded the literal word "github" in the string,
+               which rejected this page's own default value ("reports.xlsx")
+               and the help text that tells you to leave it as reports.xlsx.
+               A path next to this page is the normal setup; a GitHub URL is
+               the alternative, and both must still name an .xlsx. */
+            const path = url.split('?')[0].split('#')[0];
+            const isXlsx = /\.xlsx$/i.test(path);
+            const isAbsolute = /^https?:\/\//i.test(url);
+            const isGithubHosted = isAbsolute
+                && /^(https?:\/\/)?([\w-]+\.)*(github\.com|githubusercontent\.com|github\.io)\//i.test(url);
+            if (!isXlsx || (isAbsolute && !isGithubHosted)) {
+                showToast('Source must be an .xlsx file: a path next to this page (reports.xlsx) or a GitHub URL', 'error');
                 return;
             }
 
