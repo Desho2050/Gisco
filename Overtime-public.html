@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+  <title>Daily Overtime (View only) | GISCO</title>
+
+  <!-- ============================================================
+       GISCO overtime - READ-ONLY PUBLIC VIEW
+       ------------------------------------------------------------
+       NO auth-guard.js and NO gis-auth.js ON PURPOSE.
+       Every other page in this folder loads the guard because the
+       guard is what turns an empty table into a login form. This
+       page has no login, so it must not carry a control that does
+       nothing - the honest description of guard.js has always been
+       "a speed bump, not a lock" (see its own header).
+
+       WHAT ACTUALLY LIMITS THIS PAGE
+       The database. anon may read only the columns db/010 lists on
+       overtime_tasks and overtime_entries, and nothing at all from
+       any other table. That is enforced by Postgres on every
+       request, so it holds even with this file, its source, and the
+       publishable key all public.
+
+       CONSEQUENCE, STATED PLAINLY: anything this page can display,
+       anyone can read. If a column should not be public, it must
+       not be queried here, and db/010 must not have granted it.
+       Do not add a query for emps, employee_passports, login, or
+       any other table. It will fail after db/003, and that failure
+       is the intended behaviour.
+
+       Writes are impossible from this page and from this role; the
+       editing UI lives in Overtime.html behind a real session.
+       ============================================================ -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #4f46e5; --primary-hover: #4338ca; --primary-soft: #eef2ff; --primary-border: #c7d2fe;
+      --success: #047857; --success-soft: #ecfdf5; --success-border: #a7f3d0;
+      --warning: #b45309; --warning-soft: #fffbeb; --warning-border: #fde68a;
+      --danger: #dc2626; --danger-soft: #fef2f2; --danger-border: #fecaca;
+      --info: #0369a1; --info-soft: #f0f9ff; --info-border: #bae6fd;
+      --neutral-soft: #f1f5f9; --neutral: #475569;
+      --bg: #f1f5f9; --surface: #ffffff; --surface-2: #f8fafc;
+      --text: #0f172a; --text-secondary: #475569; --text-muted: #64748b;
+      --border: #e2e8f0; --border-strong: #cbd5e1; --input-border: #cbd5e1;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06);
+      --shadow: 0 1px 3px rgba(15, 23, 42, .08), 0 1px 2px rgba(15, 23, 42, .05);
+      --shadow-lg: 0 16px 40px rgba(15, 23, 42, .18);
+      --radius: 12px; --tap: 48px;
+      --font: 'Inter', 'Tajawal', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    [data-theme="dark"] {
+      --primary: #818cf8; --primary-hover: #a5b4fc; --primary-soft: #1c2440; --primary-border: #33406b;
+      --success: #6ee7b7; --success-soft: #0c2b23; --success-border: #14532d;
+      --warning: #fcd34d; --warning-soft: #2e2410; --warning-border: #78500f;
+      --danger: #fca5a5; --danger-soft: #34161a; --danger-border: #7f1d1d;
+      --info: #7dd3fc; --info-soft: #0c2a3a; --info-border: #164e63;
+      --neutral-soft: #1e293b; --neutral: #94a3b8;
+      --bg: #0b1220; --surface: #141d2c; --surface-2: #101827;
+      --text: #e8eef7; --text-secondary: #b4c2d4; --text-muted: #8698ad;
+      --border: #24303f; --border-strong: #35455a; --input-border: #3d4f66;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+      --shadow: 0 1px 3px rgba(0, 0, 0, .45);
+      --shadow-lg: 0 18px 44px rgba(0, 0, 0, .6);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.55;
+           min-height: 100vh; font-size: .92rem; -webkit-font-smoothing: antialiased; }
+    button, input, select { font-family: inherit; }
+    :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: .7rem 1.25rem;
+             padding-top: calc(.7rem + env(safe-area-inset-top)); position: sticky; top: 0; z-index: 100; }
+    .header-content { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between;
+                      align-items: center; gap: .75rem; }
+    .brand { display: flex; align-items: center; gap: .7rem; min-width: 0; }
+    .brand-icon { width: 40px; height: 40px; flex: 0 0 40px; background: var(--primary); color: #fff;
+                  border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; }
+    [data-theme="dark"] .brand-icon { color: #0b1220; }
+    h1 { font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.25; }
+    .brand-sub { font-size: .72rem; color: var(--text-muted); font-weight: 500; }
+    .header-actions { display: flex; gap: .4rem; align-items: center; }
+
+    .btn { padding: .7rem 1.05rem; border: 1px solid transparent; border-radius: 10px; font-size: .875rem;
+           font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+           gap: .5rem; min-height: var(--tap); line-height: 1.2; box-shadow: var(--shadow-sm);
+           transition: background-color .15s, border-color .15s, color .15s, transform .08s; }
+    .btn-secondary { background: var(--surface); color: var(--text-secondary); border-color: var(--border-strong); }
+    .btn-secondary:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+    .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 10px; flex: 0 0 auto; }
+    .btn-small { padding: .45rem .65rem; font-size: .78rem; border-radius: 8px; min-height: 40px; }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .view-tabs { max-width: 1400px; margin: 0 auto; padding: 0 1.25rem; display: flex; gap: .15rem;
+                 border-bottom: 1px solid var(--border); background: var(--surface); overflow-x: auto;
+                 scrollbar-width: none; }
+    .view-tabs::-webkit-scrollbar { display: none; }
+    .view-tab { flex: 0 0 auto; padding: .85rem 1rem; background: none; border: none; border-bottom: 2px solid transparent;
+                color: var(--text-muted); font-weight: 600; font-size: .85rem; cursor: pointer; display: inline-flex;
+                align-items: center; gap: .45rem; min-height: 48px; white-space: nowrap; font-family: inherit; }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fade .18s ease-out; }
+    @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 1.25rem 1.25rem calc(2.5rem + env(safe-area-inset-bottom)); }
+    .glass-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+                  box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.25rem; }
+    .card-head { padding: .9rem 1.25rem; border-bottom: 1px solid var(--border); display: flex;
+                 justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; background: var(--surface-2); }
+    .card-head h2 { font-size: .95rem; font-weight: 700; display: flex; align-items: center; gap: .55rem; letter-spacing: -.01em; }
+    .card-head h2 i { color: var(--primary); font-size: .9rem; }
+    .card-body { padding: 1.25rem; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-end; padding: 1rem 1.25rem;
+                border-bottom: 1px solid var(--border); background: var(--surface-2); }
+    .form-group { display: flex; flex-direction: column; gap: .4rem; min-width: 0; flex: 1 1 180px; }
+    .form-group label { font-size: .78rem; font-weight: 600; color: var(--text-secondary); margin-inline-start: .2rem; }
+    .form-group input, .form-group select { width: 100%; padding: .75rem .85rem; border: 1px solid var(--input-border);
+      border-radius: 10px; background: var(--surface); color: var(--text); font-size: 16px; min-height: var(--tap); }
+    .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+    .day-nav { display: flex; gap: .4rem; align-items: center; }
+    .day-nav .btn-icon { border: 1px solid var(--input-border); background: var(--surface); color: var(--text-secondary);
+                         border-radius: 10px; cursor: pointer; font-size: .9rem; flex: 0 0 44px; }
+    .day-nav .btn-icon:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+    .day-nav input { flex: 1 1 auto; min-width: 0; }
+    .period-note { font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: .78rem; }
+
+    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); gap: .75rem; margin-bottom: 1.25rem; }
+    .stat-card { background: var(--surface); border-radius: var(--radius); padding: .9rem 1rem; box-shadow: var(--shadow-sm);
+                 display: flex; align-items: center; gap: .75rem; border: 1px solid var(--border); }
+    .stat-icon { width: 42px; height: 42px; flex: 0 0 42px; border-radius: 10px; display: flex; align-items: center;
+                 justify-content: center; font-size: 1.05rem; }
+    .stat-icon.blue { background: var(--info-soft); color: var(--info); }
+    .stat-icon.green { background: var(--success-soft); color: var(--success); }
+    .stat-icon.pink { background: var(--primary-soft); color: var(--primary); }
+    .stat-icon.amber { background: var(--warning-soft); color: var(--warning); }
+    .stat-info h3 { font-size: .68rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;
+                   letter-spacing: .05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-info .value { font-size: 1.35rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
+
+    .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 760px; }
+    th { background: var(--surface-2); color: var(--text-muted); padding: .65rem .8rem; text-align: start; font-weight: 700;
+         font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; position: sticky; top: 0;
+         z-index: 5; border-bottom: 1px solid var(--border-strong); }
+    td { padding: .65rem .8rem; border-bottom: 1px solid var(--border); font-size: .87rem; }
+    tbody tr { background: var(--surface); }
+    tbody tr:nth-child(even) { background: var(--surface-2); }
+    td.num { text-align: end; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    tfoot td { background: var(--primary-soft); color: var(--primary); font-weight: 800; border-top: 1px solid var(--primary-border); }
+    .sub { display: block; font-size: .72rem; color: var(--text-muted); }
+    .muted { color: var(--text-muted); }
+    tr.emp-head { cursor: pointer; }
+    tr.emp-head.open td { background: var(--primary-soft); }
+    tr.emp-detail > td { background: var(--surface-2) !important; padding: 0; }
+    .mini-table { min-width: 0; }
+    .mini-table th { background: var(--surface); color: var(--text-muted); }
+    .table-pad { padding: 0 1.25rem 1.25rem; }
+
+    .task-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+                 margin-bottom: .8rem; overflow: hidden; box-shadow: var(--shadow-sm); }
+    .task-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; padding: .8rem 1rem;
+                background: var(--surface-2); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .task-desc { font-size: .9rem; font-weight: 600; margin-top: .4rem; line-height: 1.45; }
+    .task-body { padding: .35rem 1rem .75rem; }
+    .p-line { display: flex; justify-content: space-between; gap: .6rem; padding: .45rem 0;
+              border-bottom: 1px solid var(--border); font-size: .86rem; }
+    .p-line:last-child { border-bottom: none; }
+    .p-line .h { font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
+    .badge { display: inline-flex; align-items: center; gap: .3rem; padding: .22rem .55rem; border-radius: 6px;
+             font-size: .7rem; font-weight: 700; border: 1px solid transparent; white-space: nowrap; }
+    .badge-loc { background: var(--primary-soft); color: var(--primary); border-color: var(--primary-border); }
+    .badge-time { background: var(--info-soft); color: var(--info); border-color: var(--info-border); }
+    .badge-man { background: var(--warning-soft); color: var(--warning); border-color: var(--warning-border); }
+    .badge-total { background: var(--success-soft); color: var(--success); border-color: var(--success-border);
+                   font-variant-numeric: tabular-nums; }
+
+    .bar-list { display: flex; flex-direction: column; gap: .45rem; }
+    .bar-row { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; gap: .6rem; align-items: center; font-size: .82rem; }
+    .bar-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--text-secondary); }
+    .bar-track { background: var(--border); border-radius: 999px; height: 8px; overflow: hidden; display: block; }
+    .bar-fill { display: block; height: 100%; border-radius: 999px; background: var(--primary); }
+    .bar-row .val { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+    .panel-title { display: flex; align-items: center; gap: .5rem; font-size: .8rem; font-weight: 700; margin-bottom: .7rem; }
+    .panel-title i { color: var(--primary); font-size: .82rem; }
+
+    .notice { display: flex; gap: .6rem; align-items: center; padding: .7rem 1.25rem; font-size: .78rem;
+              background: var(--warning-soft); color: var(--warning); border-bottom: 1px solid var(--warning-border); }
+    .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); font-size: .87rem; }
+    .empty-state i { font-size: 2.4rem; margin-bottom: .7rem; opacity: .5; display: block; }
+    .error-box { padding: 1.1rem 1.25rem; font-size: .85rem; background: var(--danger-soft); color: var(--danger);
+                 border: 1px solid var(--danger-border); border-radius: var(--radius); margin-bottom: 1rem; }
+    .spinner { width: 16px; height: 16px; border: 2px solid var(--border-strong); border-top-color: var(--primary);
+               border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; vertical-align: -3px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .print-title, .print-footer { display: none; }
+    @media print {
+      header, .view-tabs, .controls, .no-print { display: none !important; }
+      body { background: #fff; font-size: 11px; }
+      .glass-card { border: none; box-shadow: none; margin-bottom: .5rem; }
+      .container { padding: 0; }
+      .print-title { display: block; margin-bottom: .8rem; font-size: 13px; font-weight: 800; }
+      .print-footer { display: block; margin-top: .8rem; font-size: 10px; color: #555; }
+      table { min-width: 0; }
+      th, td { border-bottom: 1px solid #ccc !important; color: #000 !important; background: #fff !important; }
+      .view-section { display: none !important; }
+      .view-section.active { display: block !important; }
+    }
+
+    @media (max-width: 768px) {
+      .brand-sub { display: none; }
+      .container { padding: .85rem .8rem calc(3rem + env(safe-area-inset-bottom)); }
+      .card-body, .controls { padding: .95rem .9rem; }
+      .stats-container { grid-template-columns: repeat(2, 1fr); }
+      .table-pad { padding: 0 .9rem .9rem; }
+      .cards-mode thead { display: none; }
+      .cards-mode { min-width: 0; }
+      .cards-mode tbody tr { display: block; margin-bottom: .65rem; border: 1px solid var(--border); border-radius: 12px;
+                             padding: .5rem .8rem; background: var(--surface); box-shadow: var(--shadow-sm); }
+      .cards-mode tbody tr:nth-child(even) { background: var(--surface); }
+      .cards-mode td { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .34rem 0;
+                       border: none; font-size: .88rem; text-align: start; background: none !important; }
+      .cards-mode td.num { text-align: end; }
+      .cards-mode td::before { content: attr(data-label); font-weight: 700; color: var(--text-muted); font-size: .68rem;
+                               text-transform: uppercase; letter-spacing: .04em; }
+      .cards-mode tfoot td { position: static; display: flex; justify-content: space-between; padding: .6rem .8rem; }
+      .cards-mode tfoot td::before { content: none; }
+      tr.emp-head td:first-child::before, tr.emp-detail > td::before { content: none; }
+      tr.emp-detail > td { display: block; padding: 0; background: none; }
+      .mini-table tbody tr { padding: .35rem .6rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-clock"></i></div>
+        <div>
+          <h1 data-lang-key="title">ساعات العمل الإضافي</h1>
+          <div class="brand-sub" data-lang-key="subtitle">GISCO - عرض للقراءة فقط</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-icon" id="refreshBtn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+        <button class="btn btn-secondary btn-icon" id="langBtn" title="Language"><i class="fas fa-language"></i></button>
+        <button class="btn btn-secondary btn-icon" id="themeBtn" title="Theme"><i class="fas fa-moon"></i></button>
+        <button class="btn btn-secondary btn-icon" id="printBtn" title="Print"><i class="fas fa-print"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="view-tabs" id="viewTabs">
+    <button class="view-tab active" data-view="daily"><i class="fas fa-calendar-day"></i> <span data-lang-key="navDaily">اليوم</span></button>
+    <button class="view-tab" data-view="detail"><i class="fas fa-list-alt"></i> <span data-lang-key="navDetail">تفصيل الشهر</span></button>
+    <button class="view-tab" data-view="employee"><i class="fas fa-user-check"></i> <span data-lang-key="navEmployee">لكل موظف</span></button>
+  </div>
+
+  <main class="container">
+    <div class="print-title" id="printTitle"></div>
+
+    <!-- ============ DAILY ============ -->
+    <section class="view-section active" id="view-daily">
+      <div class="glass-card">
+        <div class="controls">
+          <div class="form-group" style="flex:0 1 240px">
+            <label for="dailyDate" data-lang-key="lblDate">التاريخ</label>
+            <div class="day-nav">
+              <button class="btn-icon" id="dailyPrev" title="-1"><i class="fas fa-chevron-right"></i></button>
+              <input type="date" id="dailyDate">
+              <button class="btn-icon" id="dailyNext" title="+1"><i class="fas fa-chevron-left"></i></button>
+            </div>
+          </div>
+          <button class="btn btn-secondary" id="dailyPrint"><i class="fas fa-print"></i> <span data-lang-key="print">طباعة</span></button>
+        </div>
+        <div id="dailyStats" class="stats-container" style="padding:1rem 1.25rem 0"></div>
+        <div class="card-body" id="dailyBody"></div>
+      </div>
+    </section>
+
+    <!-- ============ MONTH DETAIL ============ -->
+    <section class="view-section" id="view-detail">
+      <div class="glass-card">
+        <div class="controls">
+          <div class="form-group" style="flex:0 1 200px">
+            <label for="detMonth" data-lang-key="lblMonth">الشهر</label>
+            <input type="month" id="detMonth">
+          </div>
+          <span class="period-note" id="detPeriod"></span>
+          <div class="form-group" style="flex:1 1 200px">
+            <label for="detSearch" data-lang-key="lblFilter">بحث</label>
+            <input type="search" id="detSearch" data-lang-placeholder="phFilter" placeholder="اسم أو رقم أو موقع">
+          </div>
+          <button class="btn btn-secondary" id="detCsv"><i class="fas fa-file-csv"></i> CSV</button>
+          <button class="btn btn-secondary" id="detPrint"><i class="fas fa-print"></i> <span data-lang-key="print">طباعة</span></button>
+        </div>
+        <div id="detStats" class="stats-container" style="padding:1rem 1.25rem 0"></div>
+        <div class="table-wrapper">
+          <table class="cards-mode" id="detTable"></table>
+          <div id="detStatus" style="display:none"></div>
+        </div>
+        <div class="card-body">
+          <div class="panel-title"><i class="fas fa-location-dot"></i> <span data-lang-key="bySite">حسب الموقع</span></div>
+          <div class="bar-list" id="detSites"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PER EMPLOYEE ============ -->
+    <section class="view-section" id="view-employee">
+      <div class="glass-card">
+        <div class="controls">
+          <div class="form-group" style="flex:0 1 200px">
+            <label for="empMonth" data-lang-key="lblMonth">الشهر</label>
+            <input type="month" id="empMonth">
+          </div>
+          <span class="period-note" id="empPeriod"></span>
+          <div class="form-group" style="flex:1 1 200px">
+            <label for="empSearch" data-lang-key="lblFilter">بحث</label>
+            <input type="search" id="empSearch" data-lang-placeholder="phFilter" placeholder="اسم أو رقم أو موقع">
+          </div>
+          <button class="btn btn-secondary" id="empCsv"><i class="fas fa-file-csv"></i> CSV</button>
+          <button class="btn btn-secondary" id="empPrint"><i class="fas fa-print"></i> <span data-lang-key="print">طباعة</span></button>
+        </div>
+        <div id="empStats" class="stats-container" style="padding:1rem 1.25rem 0"></div>
+        <div class="table-wrapper">
+          <table class="cards-mode" id="empTable"></table>
+          <div id="empStatus" style="display:none"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="print-footer" id="printFooter"></div>
+  </main>
+
+  <script>
+    /* ---------- language: Arabic first, English on the same page ---------- */
+    const STRINGS = {
+      ar: {
+        title: 'ساعات العمل الإضافي', subtitle: 'GISCO - عرض للقراءة فقط',
+        navDaily: 'اليوم', navDetail: 'تفصيل الشهر', navEmployee: 'لكل موظف',
+        lblDate: 'التاريخ', lblMonth: 'الشهر', lblFilter: 'بحث', print: 'طباعة',
+        phFilter: 'اسم أو رقم أو موقع', lblPeriod: 'الدورة',
+        bySite: 'حسب الموقع', tasksOfDay: 'مهام هذا اليوم', crew: 'الأفراد',
+        stTasks: 'عدد المهام', stMen: 'عدد الموظفين', stHours: 'إجمالي الساعات', stSites: 'المواقع',
+        thDate: 'التاريخ', thCode: 'الرقم', thName: 'الاسم', thNameEn: 'الاسم بالإنجليزي',
+        thSite: 'الموقع', thTask: 'المهمة', thTime: 'من - إلى', thHours: 'ساعات',
+        thDays: 'عدد الأيام', thTotal: 'الإجمالي', total: 'الإجمالي',
+        empty: 'لا توجد سجلات في هذه الفترة', loading: 'جاري التحميل...',
+        loadFailed: 'فشل التحميل', clickRow: 'اضغط على السطر لعرض التفاصيل',
+        note: 'صفحة عرض عامة بدون تسجيل دخول - البيانات محدودة بتصاريح قاعدة البيانات',
+        blocked: 'هذه الصفحة لم تُفعّل بعد. يجب تنفيذ db/003 ثم db/010 على قاعدة البيانات أولاً.'
+      },
+      en: {
+        title: 'Daily Overtime', subtitle: 'GISCO - read-only view',
+        navDaily: 'Day', navDetail: 'Month detail', navEmployee: 'Per employee',
+        lblDate: 'Date', lblMonth: 'Month', lblFilter: 'Search', print: 'Print',
+        phFilter: 'name, code or site', lblPeriod: 'Cycle',
+        bySite: 'By site', tasksOfDay: 'Tasks on this day', crew: 'crew',
+        stTasks: 'Tasks', stMen: 'Employees', stHours: 'Total hours', stSites: 'Sites',
+        thDate: 'Date', thCode: 'Code', thName: 'Name', thNameEn: 'Name (EN)',
+        thSite: 'Site', thTask: 'Task', thTime: 'From - To', thHours: 'Hours',
+        thDays: 'Days', thTotal: 'Total', total: 'Total',
+        empty: 'No records in this period', loading: 'Loading...',
+        loadFailed: 'Load failed', clickRow: 'Tap a row for details',
+        note: 'Public read-only page - visible data is bounded by database grants',
+        blocked: 'This page is not open yet. Run db/003 then db/010 on the database first.'
+      }
+    };
+    let lang = localStorage.getItem('gispub-lang') || 'ar';
+    const T = () => STRINGS[lang];
+
+    function applyLanguage() {
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-lang-key]').forEach(n => {
+        const k = n.getAttribute('data-lang-key');
+        if (T()[k]) n.textContent = T()[k];
+      });
+      document.querySelectorAll('[data-lang-placeholder]').forEach(n => {
+        const k = n.getAttribute('data-lang-placeholder');
+        if (T()[k]) n.setAttribute('placeholder', T()[k]);
+      });
+      document.querySelectorAll('#viewTabs .view-tab').forEach(b => {
+        const v = b.dataset.view, i = b.querySelector('i'), s = b.querySelector('span');
+        if (v === 'daily') s.textContent = T().navDaily;
+        if (v === 'detail') s.textContent = T().navDetail;
+        if (v === 'employee') s.textContent = T().navEmployee;
+      });
+      paintNotices();
+      paintPeriods();
+    }
+
+    /* ---------- tiny helpers ---------- */
+    const el = id => document.getElementById(id);
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+    const p2 = n => String(n).padStart(2, '0');
+    function ymd(d) { return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; }
+    function shiftDay(s, n) {
+      const d = new Date(String(s) + 'T00:00:00');
+      d.setDate(d.getDate() + n);
+      return ymd(d);
+    }
+    function shiftMonth(ym, n) {
+      const [y, m] = String(ym).split('-').map(Number);
+      const t = y * 12 + (m - 1) + n;
+      return `${Math.floor(t / 12)}-${p2((t % 12) + 1)}`;
+    }
+    const hmOf = v => String(v || '').slice(0, 5);
+    function fmtH(v) {
+      const n = Number(v || 0);
+      return (Math.round(n * 100) / 100).toFixed(2).replace(/\.?0+$/, '') || '0';
+    }
+    const sum = a => a.reduce((x, y) => x + Number(y || 0), 0);
+    const dmy = s => `${String(s).slice(8, 10)}-${String(s).slice(5, 7)}-${String(s).slice(0, 4)}`;
+    const DAY_NAMES_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const DAY_NAMES_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    /* The payroll cycle is the 15th to the 14th, NOT the calendar month:
+       October 2026 means 15-09-2026 .. 14-10-2026. Mirrors Overtime.html. */
+    const CYCLE_DAY = 15;
+    function ymOf(dateStr) {
+      const s = String(dateStr || '');
+      const y = Number(s.slice(0, 4)), m = Number(s.slice(5, 7)), d = Number(s.slice(8, 10));
+      if (!y || !m || !d) return s.slice(0, 7);
+      if (d < CYCLE_DAY) return `${y}-${p2(m)}`;
+      return m === 12 ? `${y + 1}-01` : `${y}-${p2(m + 1)}`;
+    }
+    function monthBounds(ym) {
+      const [y, m] = String(ym).split('-').map(Number);
+      const py = m === 1 ? y - 1 : y, pm = m === 1 ? 12 : m - 1;
+      return { from: `${py}-${p2(pm)}-${p2(CYCLE_DAY)}`, to: `${y}-${p2(m)}-14` };
+    }
+    const periodText = ym => { const b = monthBounds(ym); return `${dmy(b.from)} - ${dmy(b.to)}`; };
+    function paintPeriods() {
+      [['detMonth', 'detPeriod'], ['empMonth', 'empPeriod']].forEach(([m, n]) => {
+        if (el(m).value) el(n).textContent = `${T().lblPeriod}: ${periodText(el(m).value)}`;
+      });
+    }
+    function paintNotices() {
+      document.querySelectorAll('.notice').forEach(n => { n.textContent = T().note; });
+      el('printFooter').textContent = T().note;
+    }
+
+    /* ---------- data: the only two queries this page may ever make ---------- */
+    const sb = window.GisSupabase.create();
+    const TASK_COLS = 'id, work_date, location, task_desc, time_start, time_end';
+    const ENTRY_COLS = 'id, task_id, work_date, employee_code, employee_name, employee_name_en, ot_hours';
+    const CACHE = new Map();
+
+    async function fetchChunked(table, cols, from, to) {
+      const key = `${table}|${from}|${to}`;
+      if (CACHE.has(key)) return CACHE.get(key);
+      const out = [];
+      const size = 1000;
+      for (let start = 0; ; start += size) {
+        let q = sb.from(table).select(cols).order('work_date', { ascending: true }).order('id', { ascending: true })
+          .range(start, start + size - 1);
+        if (from === to) q = q.eq('work_date', from);
+        else q = q.gte('work_date', from).lte('work_date', to);
+        const { data, error } = await q;
+        if (error) throw error;
+        out.push(...(data || []));
+        if (!data || data.length < size) break;
+      }
+      CACHE.set(key, out);
+      return out;
+    }
+    async function fetchCycle(ym) {
+      const b = monthBounds(ym);
+      const [entries, tasks] = await Promise.all([
+        fetchChunked('overtime_entries', ENTRY_COLS, b.from, b.to),
+        fetchChunked('overtime_tasks', TASK_COLS, b.from, b.to)
+      ]);
+      const byId = new Map(tasks.map(t => [t.id, t]));
+      return entries.map(e => ({ ...e, hours: Number(e.ot_hours) || 0, task: byId.get(e.task_id) || {} }));
+    }
+
+    /* Status messages live in their own div, NEVER in the table's
+       parent: writing to the wrapper replaces its innerHTML and
+       destroys the <table> node, after which every later render
+       silently targets a detached element. */
+    const loadingHtml = () => `<div class="empty-state"><span class="spinner"></span> ${esc(T().loading)}</div>`;
+    const emptyHtml = () => `<div class="empty-state"><i class="fas fa-inbox"></i>${esc(T().empty)}</div>`;
+    function errorHtml(err) {
+      const msg = String((err && (err.message || err.details)) || err || '');
+      const code = String((err && err.code) || '');
+      /* RLS or a missing column grant surfaces as 42501 / 401 / 403,
+         which is the one failure an operator can act on. */
+      const denied = /42501|permission denied|row-level security/i.test(msg) || /^(401|403|PGRST301)$/.test(code);
+      return `<div class="error-box"><i class="fas fa-${denied ? 'lock' : 'triangle-exclamation'}"></i>
+        <b>${esc(denied ? T().blocked : `${T().loadFailed}: ${msg}`)}</b></div>`;
+    }
+    function setStatus(tableId, boxId, html) {
+      const box = el(boxId), table = el(tableId);
+      if (!html) { box.style.display = 'none'; box.innerHTML = ''; table.style.display = ''; return; }
+      box.innerHTML = html; box.style.display = 'block'; table.style.display = 'none';
+    }
+
+    function stats(nodes) {
+      return `<div class="stats-container">
+        ${nodes.map(([icon, cls, label, value]) => `
+          <div class="stat-card"><div class="stat-icon ${cls}"><i class="fas ${icon}"></i></div>
+          <div class="stat-info"><h3>${esc(label)}</h3><div class="value">${esc(value)}</div></div></div>`).join('')}
+      </div>`;
+    }
+
+    /* ---------- DAILY ---------- */
+    /* fetchChunked hands back raw rows: an entry has ot_hours, and the
+       `hours` field only exists after fetchCycle normalises it. The day
+       view reads raw rows, so it must read ot_hours - using `hours`
+       there totals every crew at zero. */
+    const withHours = e => ({ ...e, hours: Number(e.ot_hours) || 0 });
+    async function renderDaily() {
+      const date = el('dailyDate').value;
+      const box = el('dailyBody');
+      el('dailyStats').innerHTML = '';
+      if (!date) { box.innerHTML = emptyHtml(); return; }
+      box.innerHTML = loadingHtml();
+      el('printTitle').textContent = `${T().navDaily}: ${dmy(date)} (${(lang === 'ar' ? DAY_NAMES_AR : DAY_NAMES_EN)[new Date(date + 'T00:00:00').getDay()]})`;
+      try {
+        const [tasks, raw] = await Promise.all([
+          fetchChunked('overtime_tasks', TASK_COLS, date, date),
+          fetchChunked('overtime_entries', ENTRY_COLS, date, date)
+        ]);
+        const entries = raw.map(withHours);
+        const grouped = new Map();
+        entries.forEach(e => {
+          if (!grouped.has(e.task_id)) grouped.set(e.task_id, []);
+          grouped.get(e.task_id).push(e);
+        });
+        if (!tasks.length) { box.innerHTML = emptyHtml(); return; }
+        const sites = new Set(tasks.map(t => t.location));
+        el('dailyStats').innerHTML = stats([
+          ['fa-clipboard-list', 'pink', T().stTasks, tasks.length],
+          ['fa-users', 'blue', T().stMen, new Set(entries.map(e => e.employee_code)).size],
+          ['fa-clock', 'green', T().stHours, fmtH(sum(entries.map(e => e.hours)))],
+          ['fa-location-dot', 'amber', T().stSites, sites.size]
+        ]);
+        box.innerHTML = tasks.map(t => {
+          const people = (grouped.get(t.id) || []).sort((a, b) => String(a.employee_code).localeCompare(String(b.employee_code)));
+          return `<div class="task-card">
+            <div class="task-top">
+              <div style="min-width:0">
+                <div class="t-meta" style="display:flex;gap:.4rem;flex-wrap:wrap">
+                  <span class="badge badge-loc"><i class="fas fa-location-dot"></i> ${esc(t.location)}</span>
+                  ${t.time_start || t.time_end ? `<span class="badge badge-time"><i class="fas fa-clock"></i> ${esc(hmOf(t.time_start))} - ${esc(hmOf(t.time_end))}</span>` : ''}
+                  <span class="badge badge-man">${people.length} ${esc(T().crew)}</span>
+                </div>
+                <div class="task-desc">${esc(t.task_desc || '')}</div>
+              </div>
+              <span class="badge badge-total">${fmtH(sum(people.map(x => x.hours)))} h</span>
+            </div>
+            <div class="task-body">
+              ${people.map(x => `<div class="p-line">
+                  <span><b>${esc(x.employee_name || x.employee_name_en || '')}</b>
+                    <span class="muted"> · ${esc(x.employee_code)}</span>
+                    ${x.employee_name_en ? `<span class="sub">${esc(x.employee_name_en)}</span>` : ''}</span>
+                  <span class="h">${fmtH(x.hours)}</span></div>`).join('') || `<div class="muted">${esc(T().empty)}</div>`}
+            </div></div>`;
+        }).join('');
+      } catch (err) { box.innerHTML = errorHtml(err); }
+    }
+
+    /* ---------- MONTH DETAIL ---------- */
+    let cycleRows = [];
+    async function renderDetail() {
+      const ym = el('detMonth').value;
+      el('detStats').innerHTML = ''; el('detSites').innerHTML = '';
+      if (!ym) { setStatus('detTable', 'detStatus', emptyHtml()); return; }
+      setStatus('detTable', 'detStatus', loadingHtml());
+      el('printTitle').textContent = `${T().navDetail}: ${ym} (${periodText(ym)})`;
+      try {
+        cycleRows = await fetchCycle(ym);
+        paintDetail();
+      } catch (err) { setStatus('detTable', 'detStatus', errorHtml(err)); }
+    }
+    /* Called with three different shapes: an entry row, an employee
+       aggregate, and a raw entry from fetchChunked. Reading r.task.location
+       on the aggregate threw a TypeError, which is why the search box must
+       not be able to crash a view - hence the flat haystack. */
+    function matches(r, term) {
+      if (!term) return true;
+      const t = String(term).toLowerCase();
+      const task = r.task || {};
+      return [r.employee_code, r.code, r.employee_name, r.name, r.employee_name_en, r.nameEn,
+              task.location, task.task_desc, r.work_date]
+        .some(v => String(v || '').toLowerCase().includes(t));
+    }
+    function paintDetail() {
+      const table = el('detTable');
+      const term = el('detSearch').value.trim();
+      const rows = cycleRows.filter(r => matches(r, term)).sort((a, b) =>
+        a.work_date.localeCompare(b.work_date) || String(a.employee_code).localeCompare(String(b.employee_code)));
+      el('detStats').innerHTML = stats([
+        ['fa-users', 'blue', T().stMen, new Set(rows.map(r => r.employee_code)).size],
+        ['fa-clock', 'green', T().stHours, fmtH(sum(rows.map(r => r.hours)))],
+        ['fa-clipboard-list', 'pink', T().stTasks, new Set(rows.map(r => r.task_id)).size],
+        ['fa-location-dot', 'amber', T().stSites, new Set(rows.map(r => r.task.location)).size]
+      ]);
+      if (!rows.length) return setStatus('detTable', 'detStatus', emptyHtml());
+      setStatus('detTable', 'detStatus', null);
+      const L = T();
+      table.innerHTML = `<thead><tr>
+          <th>${L.thDate}</th><th>${L.thCode}</th><th>${L.thName}</th><th>${L.thSite}</th><th>${L.thTask}</th>
+          <th>${L.thTime}</th><th style="text-align:end">${L.thHours}</th></tr></thead>
+        <tbody>${rows.map(r => `<tr>
+          <td data-label="${L.thDate}" class="num" style="text-align:start">${dmy(r.work_date)}</td>
+          <td data-label="${L.thCode}">${esc(r.employee_code)}</td>
+          <td data-label="${L.thName}"><b>${esc(r.employee_name || '')}</b><span class="sub">${esc(r.employee_name_en || '')}</span></td>
+          <td data-label="${L.thSite}">${esc(r.task.location || '')}</td>
+          <td data-label="${L.thTask}">${esc(r.task.task_desc || '')}</td>
+          <td data-label="${L.thTime}">${esc(hmOf(r.task.time_start))} - ${esc(hmOf(r.task.time_end))}</td>
+          <td data-label="${L.thHours}" class="num">${fmtH(r.hours)}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td colspan="6">${L.total}</td><td class="num">${fmtH(sum(rows.map(r => r.hours)))}</td></tr></tfoot>`;
+
+      const bySite = new Map();
+      rows.forEach(r => {
+        const k = r.task.location || '-';
+        if (!bySite.has(k)) bySite.set(k, 0);
+        bySite.set(k, bySite.get(k) + r.hours);
+      });
+      const max = Math.max(...[...bySite.values()], 1);
+      el('detSites').innerHTML = [...bySite.entries()].sort((a, b) => b[1] - a[1]).map(([site, h]) => `
+        <div class="bar-row"><span class="name" title="${esc(site)}">${esc(site)}</span>
+        <span class="bar-track"><span class="bar-fill" style="width:${Math.round(h / max * 100)}%"></span></span>
+        <span class="val">${fmtH(h)} h</span></div>`).join('');
+    }
+
+    /* ---------- PER EMPLOYEE ---------- */
+    async function renderEmployee() {
+      const ym = el('empMonth').value;
+      el('empStats').innerHTML = '';
+      if (!ym) { setStatus('empTable', 'empStatus', emptyHtml()); return; }
+      setStatus('empTable', 'empStatus', loadingHtml());
+      el('printTitle').textContent = `${T().navEmployee}: ${ym} (${periodText(ym)})`;
+      try {
+        const rows = await fetchCycle(ym);
+        const term = el('empSearch').value.trim();
+        const byEmp = new Map();
+        rows.forEach(r => {
+          const k = String(r.employee_code);
+          if (!byEmp.has(k)) byEmp.set(k, { code: k, name: r.employee_name, nameEn: r.employee_name_en, lines: [] });
+          byEmp.get(k).lines.push(r);
+        });
+        let emps = [...byEmp.values()].map(e => ({
+          ...e, total: sum(e.lines.map(l => l.hours)),
+          days: new Set(e.lines.map(l => l.work_date)).size
+        })).filter(e => !term || matches(e, term) || e.lines.some(l => matches(l, term)));
+        emps.sort((a, b) => b.total - a.total || String(a.code).localeCompare(String(b.code)));
+        el('empStats').innerHTML = stats([
+          ['fa-users', 'blue', T().stMen, emps.length],
+          ['fa-clock', 'green', T().stHours, fmtH(sum(emps.map(e => e.total)))]
+        ]);
+        if (!emps.length) return setStatus('empTable', 'empStatus', emptyHtml());
+        setStatus('empTable', 'empStatus', null);
+        const table = el('empTable');
+        const L = T();
+        table.innerHTML = `<thead><tr><th>${L.thCode}</th><th>${L.thName}</th><th>${L.thNameEn}</th>
+            <th style="text-align:end">${L.thDays}</th><th style="text-align:end">${L.thHours}</th></tr></thead>
+          <tbody>${emps.map((e, i) => `<tr class="emp-head" data-i="${i}">
+              <td data-label="${L.thCode}"><b>${esc(e.code)}</b></td>
+              <td data-label="${L.thName}">${esc(e.name || '')}</td>
+              <td data-label="${L.thNameEn}">${esc(e.nameEn || '')}</td>
+              <td data-label="${L.thDays}" class="num">${e.days}</td>
+              <td data-label="${L.thHours}" class="num">${fmtH(e.total)}</td>
+            </tr><tr class="emp-row-detail" id="empd-${i}" style="display:none">
+              <td colspan="5" style="padding:.6rem .8rem"><div class="table-wrapper"><table class="mini-table">
+                <thead><tr><th>${L.thDate}</th><th>${L.thSite}</th><th>${L.thTask}</th><th style="text-align:end">${L.thHours}</th></tr></thead>
+                <tbody>${e.lines.sort((a, b) => a.work_date.localeCompare(b.work_date)).map(l => `<tr>
+                  <td>${dmy(l.work_date)}</td><td>${esc(l.task.location || '')}</td>
+                  <td>${esc(l.task.task_desc || '')}</td><td class="num">${fmtH(l.hours)}</td></tr>`).join('')}</tbody>
+              </table></div></td></tr>`).join('')}</tbody>
+          <tfoot><tr><td colspan="4">${L.total}</td><td class="num">${fmtH(sum(emps.map(e => e.total)))}</td></tr></tfoot>`;
+        table.querySelectorAll('.emp-head').forEach(tr => tr.addEventListener('click', () => {
+          const d = el(`empd-${tr.dataset.i}`);
+          const open = d.style.display !== 'none';
+          d.style.display = open ? 'none' : 'table-row';
+          tr.classList.toggle('open', !open);
+        }));
+      } catch (err) { setStatus('empTable', 'empStatus', errorHtml(err)); }
+    }
+
+    /* ---------- CSV ---------- */
+    function downloadCsv(name, header, rows) {
+      const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const body = [header, ...rows].map(r => r.map(cell).join(',')).join('\r\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(['\ufeff' + body], { type: 'text/csv;charset=utf-8' }));
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }
+
+    /* ---------- view switching, all of it sticky ---------- */
+    const RENDER = { daily: renderDaily, detail: renderDetail, employee: renderEmployee };
+    let current = localStorage.getItem('gispub-view') || 'daily';
+    function setView(v, remember = true) {
+      current = v;
+      document.querySelectorAll('#viewTabs .view-tab').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+      document.querySelectorAll('.view-section').forEach(s => s.classList.toggle('active', s.id === `view-${v}`));
+      if (remember) localStorage.setItem('gispub-view', v);
+      syncUrl();
+      RENDER[v]();
+    }
+
+    /* A copied link must reopen the same thing: ?v= &d= &m= */
+    function syncUrl() {
+      const u = new URL(location.href);
+      u.searchParams.set('v', current);
+      const d = current === 'daily' ? el('dailyDate').value : '';
+      const m = current === 'daily' ? '' : (current === 'detail' ? el('detMonth').value : el('empMonth').value);
+      if (d) u.searchParams.set('d', d); else u.searchParams.delete('d');
+      if (m) u.searchParams.set('m', m); else u.searchParams.delete('m');
+      history.replaceState(null, '', u);
+    }
+
+    document.querySelectorAll('#viewTabs .view-tab').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+    el('dailyDate').addEventListener('change', () => { localStorage.setItem('gispub-date', el('dailyDate').value); renderDaily(); syncUrl(); });
+    el('dailyPrev').addEventListener('click', () => { el('dailyDate').value = shiftDay(el('dailyDate').value, -1); el('dailyDate').dispatchEvent(new Event('change')); });
+    el('dailyNext').addEventListener('click', () => { el('dailyDate').value = shiftDay(el('dailyDate').value, 1); el('dailyDate').dispatchEvent(new Event('change')); });
+    el('detMonth').addEventListener('change', () => { localStorage.setItem('gispub-month', el('detMonth').value); paintPeriods(); renderDetail(); syncUrl(); });
+    el('empMonth').addEventListener('change', () => { localStorage.setItem('gispub-month', el('empMonth').value); paintPeriods(); renderEmployee(); syncUrl(); });
+    el('detSearch').addEventListener('input', paintDetail);
+    el('empSearch').addEventListener('input', renderEmployee);
+
+    el('refreshBtn').addEventListener('click', () => { CACHE.clear(); RENDER[current](); });
+    el('printBtn').addEventListener('click', () => window.print());
+    el('dailyPrint').addEventListener('click', () => window.print());
+    el('detPrint').addEventListener('click', () => window.print());
+    el('empPrint').addEventListener('click', () => window.print());
+    el('langBtn').addEventListener('click', () => {
+      lang = lang === 'ar' ? 'en' : 'ar';
+      localStorage.setItem('gispub-lang', lang);
+      applyLanguage();
+      RENDER[current]();
+    });
+    el('themeBtn').addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('gispub-theme', next);
+      el('themeBtn').innerHTML = `<i class="fas fa-${next === 'dark' ? 'sun' : 'moon'}"></i>`;
+    });
+    el('detCsv').addEventListener('click', () => {
+      const L = T();
+      downloadCsv(`overtime-${el('detMonth').value}.csv`,
+        [L.thDate, L.thCode, L.thName, L.thNameEn, L.thSite, L.thTask, L.thTime, L.thHours],
+        cycleRows.map(r => [dmy(r.work_date), r.employee_code, r.employee_name, r.employee_name_en,
+          r.task.location, r.task.task_desc, `${hmOf(r.task.time_start)}-${hmOf(r.task.time_end)}`, fmtH(r.hours)]));
+    });
+    el('empCsv').addEventListener('click', () => {
+      const L = T();
+      const rows = [...el('empTable').querySelectorAll('tbody .emp-head')].map(tr => {
+        const c = tr.querySelectorAll('td');
+        return [c[0].textContent, c[1].textContent, c[2].textContent, c[3].textContent, c[4].textContent];
+      });
+      downloadCsv(`overtime-emp-${el('empMonth').value}.csv`,
+        [L.thCode, L.thName, L.thNameEn, L.thDays, L.thHours], rows);
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { el('detSearch').value = ''; el('empSearch').value = ''; paintDetail(); }
+    });
+
+    /* ---------- boot: URL wins over memory, and neither auto-switches ---------- */
+    (function boot() {
+      const q = new URLSearchParams(location.search);
+      const theme = localStorage.getItem('gispub-theme');
+      if (theme) {
+        document.documentElement.dataset.theme = theme;
+        el('themeBtn').innerHTML = `<i class="fas fa-${theme === 'dark' ? 'sun' : 'moon'}"></i>`;
+      }
+      el('dailyDate').value = q.get('d') || localStorage.getItem('gispub-date') || ymd(new Date());
+      const ym = q.get('m') || localStorage.getItem('gispub-month') || ymOf(ymd(new Date()));
+      el('detMonth').value = ym;
+      el('empMonth').value = ym;
+      applyLanguage();
+      setView(q.get('v') && RENDER[q.get('v')] ? q.get('v') : current, false);
+    })();
+  </script>
+</body>
+</html>
