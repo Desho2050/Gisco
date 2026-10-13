@@ -389,7 +389,7 @@
     .empty-state i { font-size: 2.4rem; margin-bottom: .7rem; opacity: .5; display: block; color: var(--text-muted); }
     .print-title, .print-footer { display: none; }
     /* Paper-saving register for the Detailed month view; see detPrint. */
-    .det-print-table { display: none; }
+    .det-print-table, .emp-print-table { display: none; }
     .spinner { width: 16px; height: 16px; border: 2px solid var(--border-strong); border-top-color: var(--primary); border-radius: 50%;
                animation: spin .7s linear infinite; display: inline-block; vertical-align: -3px; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -502,6 +502,19 @@
       .det-print-table thead { display: table-header-group; }
       .det-print-table .grp td { background: #eef2ff !important; font-weight: 800; }
       .det-print-table .foot-note { font-size: 7pt; color: #333; margin-top: .2rem; }
+
+      /* Per-employee prints as a three-column statement (File no,
+         Employee, Hours) rather than the on-screen 5-column grid with its
+         expanded day rows (emp-compact is set by empPrint). */
+      body.emp-compact #view-employee .stats-container,
+      body.emp-compact #view-employee .table-wrapper { display: none !important; }
+      body.emp-compact .emp-print-table { display: block !important; }
+      .emp-print-table table { min-width: 0 !important; font-size: 9pt !important; }
+      .emp-print-table th { padding: .2rem .35rem !important; font-size: 8pt !important; }
+      .emp-print-table td { padding: .16rem .35rem !important; font-size: 9pt !important; }
+      .emp-print-table thead { display: table-header-group; }
+      .emp-print-table td.num { text-align: end !important; font-weight: 700; }
+      .emp-print-table tfoot td { background: #eef2ff !important; font-weight: 800; }
       .badge { background: none !important; color: #000 !important; padding: 0 !important; border: none !important; }
       .print-title { display: block !important; text-align: center; font-weight: 700; margin: .4rem 0 !important; font-size: 1rem !important; color: #000 !important; }
       .print-footer { display: block !important; text-align: center; font-size: 8pt; color: #333; margin-top: .6rem; }
@@ -695,10 +708,12 @@
             <input type="text" id="empFilter" data-lang-placeholder="phEmp" placeholder="File number or name">
           </div>
           <button class="btn btn-secondary" id="empCsv"><i class="fas fa-file-csv"></i> CSV</button>
+          <button class="btn btn-success" id="empXlsx"><i class="fas fa-file-excel"></i> Excel</button>
           <button class="btn btn-secondary" id="empPrint"><i class="fas fa-print"></i> <span data-lang-key="print">Print</span></button>
         </div>
         <div class="stats-container" id="empStats" style="padding:1rem 1.25rem 0"></div>
         <div class="table-wrapper table-pad" id="empTableWrap"></div>
+        <div class="emp-print-table" id="empPrintTable"></div>
       </div>
     </section>
 
@@ -1789,6 +1804,39 @@
       setTimeout(() => document.body.classList.remove('det-compact'), 400);
     }
 
+    /* What goes to paper for one employee is the payroll statement: file
+       number, name, hours. The on-screen grid keeps its day/task counts and
+       the expandable rows, which are of no use to a signature. */
+    function buildEmpPrintTable() {
+      const t = T();
+      if (!empList.length) { el('empPrintTable').innerHTML = ''; return; }
+      el('empPrintTable').innerHTML = `
+        <table>
+          <thead><tr>
+            <th>${esc(t.colCode)}</th><th>${esc(t.colName)}</th><th class="num">${esc(t.colHours)}</th>
+          </tr></thead>
+          <tbody>${empList.map(g => `<tr>
+            <td>${esc(g.code)}</td>
+            <td>${esc(nameOf(g.code, g.name, g.name2))}</td>
+            <td class="num">${fmtH(g.total)}</td>
+          </tr>`).join('')}</tbody>
+          <tfoot><tr><td colspan="2">${esc(t.stTotal)}</td><td class="num">${fmtH(sum(empList.map(g => g.total)))}</td></tr></tfoot>
+        </table>`;
+    }
+    function printEmpCompact() {
+      buildEmpPrintTable();
+      document.body.classList.add('emp-compact');
+      window.print();
+      setTimeout(() => document.body.classList.remove('emp-compact'), 400);
+    }
+    function perEmployeeColumns() {
+      const t = T();
+      return {
+        headers: [t.colCode, t.colName, t.colName + ' (EN)', t.colDays, t.colTasks, t.colHours],
+        rows: empList.map(g => [g.code, g.name || '', g.name2 || '', g.days, g.tasks, Number(g.total.toFixed(2))])
+      };
+    }
+
     /* ---------- export ---------- */
     function exportCSV(name, headers, rows) {
       const csv = [headers, ...rows].map(r => r.map(c => `"${String(c ?? '').replaceAll('"', '""')}"`).join(',')).join('\r\n');
@@ -1850,6 +1898,7 @@
       el('langBtn').addEventListener('click', toggleLanguage);
       el('printBtn').addEventListener('click', () => {
         if (currentView === 'detail') printDetailCompact();
+        else if (currentView === 'employee') printEmpCompact();
         else window.print();
       });
       el('refreshBtn').addEventListener('click', async () => {
@@ -1951,19 +2000,14 @@
       });
       el('empMonth').addEventListener('change', () => { renderPerEmployee(); saveSticky(); });
       el('empFilter').addEventListener('input', () => { clearTimeout(bind._t); bind._t = setTimeout(renderPerEmployee, 220); });
-      // A printed per-employee report is worthless without the rows behind
-      // each name, so every detail is opened just for the print pass.
-      el('empPrint').addEventListener('click', () => {
-        const closed = [...document.querySelectorAll('tr.emp-detail')].filter(r => r.style.display === 'none');
-        closed.forEach(r => toggleEmpDetail(Number(r.dataset.detail), true));
-        window.print();
-        setTimeout(() => closed.forEach(r => { const i = Number(r.dataset.detail); toggleEmpDetail(i, false); }), 400);
-      });
+      el('empPrint').addEventListener('click', printEmpCompact);
       el('empCsv').addEventListener('click', () => {
-        const t = T();
-        exportCSV(`overtime_per_employee_${el('empMonth').value}.csv`,
-          [t.colCode, t.colName, t.colName + ' (EN)', t.colDays, t.colTasks, t.colHours],
-          empList.map(g => [g.code, g.name || '', g.name2 || '', g.days, g.tasks, Number(g.total.toFixed(2))]));
+        const c = perEmployeeColumns();
+        exportCSV(`overtime_per_employee_${el('empMonth').value}.csv`, c.headers, c.rows);
+      });
+      el('empXlsx').addEventListener('click', () => {
+        const c = perEmployeeColumns();
+        exportXLSX(`Overtime_per_employee_${el('empMonth').value}.xlsx`, c.headers, c.rows, 'Per employee');
       });
       el('empTableWrap').addEventListener('click', ev => {
         const head = ev.target.closest('.emp-head');
