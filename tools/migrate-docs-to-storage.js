@@ -53,24 +53,59 @@ async function api(url, opts = {}) {
 
 // A real GISCO account, so the upload runs as role `authenticated` and
 // is governed by the same storage policies the app will use.
-async function signIn(key) {
-  const rows = await api(`${PROJECT_URL}/rest/v1/login?select=username,password&limit=1`, {
-    headers: { apikey: key }
-  });
-  if (rows.status !== 200 || !Array.isArray(rows.json) || rows.json.length === 0) {
-    die('could not read the login register (http ' + rows.status + ')');
-  }
-  const { username, password } = rows.json[0];
-  const tok = await api(`${PROJECT_URL}/auth/v1/token?grant_type=password`, {
+//
+// Which row answers is not knowable from here: db/002 carried the register's
+// passwords into auth.users as <username>@<gis_auth_domain()>, but accounts
+// created in the dashboard keep whatever address they were made with, and
+// GoTrue returns one identical 400 for a wrong email and a wrong password.
+// So the domain is asked of Postgres and every candidate is tried.
+// GISCO_AUTH_EMAIL/PASSWORD win, and are the only path left once db/003
+// closes the register and db/004 drops the plaintext column.
+async function authDomain(key) {
+  const r = await api(`${PROJECT_URL}/rest/v1/rpc/gis_auth_domain`, {
     method: 'POST',
     headers: { apikey: key, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: username + '@gisco.internal', password })
+    body: '{}'
   });
-  if (tok.status !== 200 || !tok.json || !tok.json.access_token) {
-    die('login failed (http ' + tok.status + ') for user of length ' + String(username).length);
+  return typeof r.json === 'string' && r.json.indexOf('.') > 0 ? r.json.toLowerCase() : 'gisco.internal';
+}
+
+async function loginCandidates(key, dom) {
+  const out = [];
+  if (process.env.GISCO_AUTH_EMAIL && process.env.GISCO_AUTH_PASSWORD) {
+    out.push({ email: process.env.GISCO_AUTH_EMAIL, password: process.env.GISCO_AUTH_PASSWORD });
   }
-  console.log('session ok: user len ' + String(username).length + ', token len ' + tok.json.access_token.length);
-  return tok.json.access_token;
+  const rows = await api(`${PROJECT_URL}/rest/v1/login?select=username,password&order=username&limit=25`, {
+    headers: { apikey: key }
+  });
+  if (rows.status !== 200 || !Array.isArray(rows.json)) return out;
+  for (const r of rows.json) {
+    const u = String(r.username || '').trim();
+    if (!u || !r.password) continue;
+    out.push({ email: u.indexOf('@') > 0 ? u : u + '@' + dom, password: r.password });
+  }
+  return out;
+}
+
+async function signIn(key) {
+  const cands = await loginCandidates(key, await authDomain(key));
+  const tried = [];
+  for (const c of cands) {
+    const tok = await api(`${PROJECT_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { apikey: key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: c.email, password: c.password })
+    });
+    if (tok.status === 200 && tok.json && tok.json.access_token) {
+      console.log('session ok: email len ' + c.email.length + ', token len ' + tok.json.access_token.length);
+      return tok.json.access_token;
+    }
+    tried.push(c.email.replace(/^(.{2}).*?(@.*)$/, '$1***$2'));
+  }
+  die('no account could sign in'
+    + (tried.length ? ' (tried ' + tried.join(', ') + ')' : ' (no candidates were readable)')
+    + '. GoTrue answers the same 400 to a wrong password and an unknown email, so check auth.users, '
+    + 'or set GISCO_AUTH_EMAIL and GISCO_AUTH_PASSWORD.');
 }
 
 function pdfList() {

@@ -62,8 +62,12 @@ for (const f of htmlFiles) {
   if (!usesClient && !usesAuth) continue;
 
   const iCdn = src.search(/<script[^>]*src=["'][^"']*supabase[^"']*\.co[^"]*["']|<script[^>]*src=["'][^"']*supabase-js/);
-  const iCfg = src.indexOf('supabase-config.js');
-  const iAuth = src.indexOf('gis-auth.js');
+  // Only real <script src> tags count. A page that documents why it omits
+  // the guard ("NO auth-guard.js and NO gis-auth.js ON PURPOSE") is not a
+  // wiring bug, and matching the bare filename read that comment as a tag.
+  const scriptTagAt = (name) => src.search(new RegExp('<script[^>]*src=["\'][^"\']*' + name, 'i'));
+  const iCfg = scriptTagAt('supabase-config\\.js');
+  const iAuth = scriptTagAt('gis-auth\\.js');
   const firstUse = Math.min(
     ...[src.search(/GisSupabase\.create\(/), src.search(/GisAuth\./)].filter((n) => n >= 0)
   );
@@ -72,7 +76,7 @@ for (const f of htmlFiles) {
   if (usesAuth && iAuth < 0) say('BLOCK', `${f}: uses GisAuth but never loads gis-auth.js`);
   if (iCfg >= 0 && iAuth >= 0 && iCfg > iAuth) say('BLOCK', `${f}: gis-auth.js loads BEFORE supabase-config.js`);
   if (iAuth >= 0 && firstUse >= 0 && iAuth > firstUse) say('BLOCK', `${f}: gis-auth.js loads after its first use`);
-  if (usesAuth && !/auth-guard\.js/.test(src) && f !== 'index.html' && f !== 'warehouse.html') {
+  if (usesAuth && scriptTagAt('auth-guard\\.js') < 0 && f !== 'index.html' && f !== 'warehouse.html') {
     say('WARN', `${f}: uses GisAuth but has no auth-guard.js`);
   }
 }
