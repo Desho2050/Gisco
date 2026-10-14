@@ -290,8 +290,17 @@
             return {
               ok: true,
               legacyPlaintext: true,
-              error: 'Password updated in the legacy table. It takes effect for '
-                   + 'Supabase Auth only after db/002_create_auth_users.sql is re-run.'
+              // db/002 ends with `on conflict do nothing`, so re-running it
+              // does NOT overwrite the hash of an account that already
+              // exists. Saying otherwise told the operator the two sides
+              // were back in sync when they were not, and the first place
+              // that shows up is Storage, the only reader that requires a
+              // real session.
+              error: 'Password updated in the legacy table ONLY. Supabase Auth '
+                   + 'still has the old password, so signing in will keep '
+                   + 'failing until the password is set again through '
+                   + 'Supabase Auth, or the auth.users row is removed and '
+                   + 'db/002 is re-run.'
             };
           }
         } catch (e) { /* fall through to the normal error below */ }
