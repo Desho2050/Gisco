@@ -1868,6 +1868,27 @@ async function loadRemotePdfMap() {
   } catch (e) {}
 }
 
+/* Name the failure, because the three possible ones need three different
+   fixes from the operator. The old toast blamed the session for all of them,
+   so people signed out and back in over a scan that was never uploaded, or
+   over a storage policy that refuses authenticated reads with a live session.
+   Anything unrecognised reports the raw message rather than a guess. */
+function docReadProblem(e) {
+  const status = Number(e && (e.statusCode || e.status)) || 0;
+  const text = String((e && (e.message || e.error)) || '');
+  if (/bucket not found|NoSuchBucket/i.test(text)) {
+    return 'The document bucket is missing, so no scan can be read.';
+  }
+  if (status === 404 || /object not found|NoSuchKey|not_found/i.test(text)) {
+    return 'It is not stored yet - attach the scan with the upload icon next to the link.';
+  }
+  if (status === 401 || status === 403
+      || /expired|invalid claim|unauthorized|row-level security|not authorized/i.test(text)) {
+    return 'Storage refused this session - sign in again. If a fresh sign-in still fails, the bucket policy is blocking authenticated reads.';
+  }
+  return text || 'Storage did not answer.';
+}
+
 async function openPdfViewerFromFile(file, title) {
   try {
     const url = await resolvePdfBlobUrl(file);
@@ -1875,7 +1896,8 @@ async function openPdfViewerFromFile(file, title) {
     currentPdfFileName = normalizeDocName(file);
     openPdfViewer(url, title);
   } catch (e) {
-    showToast('Could not open ' + file + '. Sign in again if your session expired.', 8000);
+    console.error('WO: could not read ' + file, e);
+    showToast('Could not open ' + file + '. ' + docReadProblem(e), 10000);
   }
   return false;
 }
