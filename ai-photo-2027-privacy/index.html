@@ -56,8 +56,8 @@
   <h2><span class="num">3</span>Advertising (Google AdMob)</h2>
   <p>AI Photo 2027 integrates the Google Mobile Ads SDK. It shows three ad surfaces, and only three:</p>
   <ul>
-    <li>one labelled native ad inside the photo library list,</li>
-    <li>one banner at the foot of the photo library,</li>
+    <li>one labelled native ad inside the list of edits this app saved on your device,</li>
+    <li>one banner at the foot of that same list,</li>
     <li>one full-screen &ldquo;app open&rdquo; ad when you return to the app after leaving it for a
       while &mdash; never on the first launch, and never inside the editor or the camera.</li>
   </ul>
@@ -158,11 +158,15 @@
       <tr><td>Advertising ID<br>(<code>com.google.android.gms.permission.AD_ID</code>)</td>
         <td>Added by Google&rsquo;s ad SDK to choose and measure ads</td>
         <td>Declared at install; governed by the consent choice in section 3</td></tr>
-      <tr><td>Read your photos<br>(<code>READ_MEDIA_IMAGES</code>, or <code>READ_EXTERNAL_STORAGE</code> on Android 12 and below)</td>
-        <td>To list the pictures you choose to open</td><td>At runtime, the first time you pick a photo</td></tr>
-      <tr><td>Selected photos only<br>(<code>READ_MEDIA_VISUAL_USER_SELECTED</code>)</td>
-        <td>So Android 14+ can offer you the &ldquo;Select photos&rdquo; partial-access choice instead of all-or-nothing</td>
-        <td>Together with the photo read prompt</td></tr>
+      <tr><td>Picking a photo<br>(no permission at all)</td>
+        <td>The system photo picker chooses the picture, so the app never needs to read your
+          library; it receives only the one image you tapped. The home list shows the edits this
+          app saved, which Android lets an app read without permission from Android 10 up.</td>
+        <td>Never asked</td></tr>
+      <tr><td>Read your photos on old Android<br>(<code>READ_EXTERNAL_STORAGE</code>, Android 9 and below)</td>
+        <td>Devices that predate scoped storage cannot list this app&rsquo;s own saved photos
+          without it; declining leaves Import and Camera working normally</td>
+        <td>At runtime, on Android 9 and below only</td></tr>
       <tr><td>Write to your gallery<br>(<code>WRITE_EXTERNAL_STORAGE</code>)</td>
         <td>To save results on devices that predate scoped storage (Android 8.1 and below)</td>
         <td>Install-time, older devices only</td></tr>
