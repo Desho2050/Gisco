@@ -2665,7 +2665,6 @@ async function loadFromSupabase() {
 document.addEventListener('DOMContentLoaded', async () => {
   await loadRemotePdfMap();
   loadFromSupabase();
-  initColumnTooltips(); // Initialize tooltips for column headers
   if (printBtn) printBtn.addEventListener('click', () => window.print());
 });
 
