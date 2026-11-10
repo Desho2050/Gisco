@@ -24,6 +24,7 @@
   --col-package: #3b82f6;
   --col-freestand: #a855f7;
   --col-aircurtain: #f59e0b;
+  --col-coilcondenser: #14b8a6;
   --gradient-main: linear-gradient(135deg, #3b82f6, #8b5cf6);
   --gradient-cool: linear-gradient(135deg, #06b6d4, #10b981);
   --rd-high: #10b981;
@@ -600,7 +601,7 @@ table {
   table-layout: auto;
 }
 
-#dataTable { min-width: 1800px; }
+#dataTable { min-width: 1880px; }
 
 #dataTable col.col-wo { width: clamp(140px, 10vw, 180px); }
 #dataTable col.col-camp { width: clamp(100px, 10vw, 160px); }
@@ -622,7 +623,8 @@ table {
 #dataTable col.col-pkg-25,
 #dataTable col.col-freestand-5,
 #dataTable col.col-freestand-8,
-#dataTable col.col-air-curtains { width: 60px; }
+#dataTable col.col-air-curtains,
+#dataTable col.col-coil-condenser { width: 60px; }
 #dataTable col.col-amount { width: 170px; }
 #dataTable col.col-start-date{ width: 170px; }
 #dataTable col.col-end-date { width: 170px; }
@@ -669,6 +671,7 @@ thead th[data-tooltip] {
 .th-package { background: var(--col-package); color: white; }
 .th-freestand { background: var(--col-freestand); color: white; }
 .th-aircurtain { background: var(--col-aircurtain); color: white; }
+.th-coilcondenser { background: var(--col-coilcondenser); color: white; }
 
 /* ===== COMPACT ROWS ===== */
 tbody td {
@@ -728,6 +731,7 @@ tbody td:last-child {
 .count-badge.freezer { background: var(--col-freezer); }
 .count-badge.freestand { background: var(--col-freestand); }
 .count-badge.aircurtain { background: var(--col-aircurtain); }
+.count-badge.coilcondenser { background: var(--col-coilcondenser); }
 
 .lpo-btn {
   display: inline-flex;
@@ -1379,6 +1383,13 @@ input[type="date"] { color-scheme: dark; }
         <div class="cost-sub" id="statCostAirCurtain"></div>
       </div>
       <div class="card">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--col-coilcondenser);"></div>
+        <div class="card-icon" style="background:var(--col-coilcondenser);"><i class="fas fa-circle-nodes"></i></div>
+        <div class="title">Coil Condensers</div>
+        <div class="value" id="statTotalCoilCondenser">0</div>
+        <div class="cost-sub" id="statCostCoilCondenser"></div>
+      </div>
+      <div class="card">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-main);"></div>
         <div class="card-icon" style="background:var(--gradient-main);"><i class="fas fa-coins"></i></div>
         <div class="title">Work Order Total Amount</div>
@@ -1448,6 +1459,7 @@ input[type="date"] { color-scheme: dark; }
         <col class="col-freestand-5" />
         <col class="col-freestand-8" />
         <col class="col-air-curtains" />
+        <col class="col-coil-condenser" />
         <col class="col-amount" />
         <col class="col-start-date" />
         <col class="col-end-date" />
@@ -1482,6 +1494,7 @@ input[type="date"] { color-scheme: dark; }
           <th class="th-freestand" data-tooltip="Free Stand 5 Ton" tabindex="0">Stand 5T</th>
           <th class="th-freestand" data-tooltip="Free Stand 8 Ton" tabindex="0">Stand 8T</th>
           <th class="th-aircurtain" data-tooltip="Air Curtain Unit" tabindex="0">Air Curtain</th>
+          <th class="th-coilcondenser" data-tooltip="Coil Condenser Unit" tabindex="0">Coil Condenser</th>
           <th class="th-meta" data-tooltip="Work Order Amount" tabindex="0">WO Amount</th>
           <th class="th-meta" data-tooltip="Start Date" tabindex="0">Start</th>
           <th class="th-meta" data-tooltip="End Date" tabindex="0">End</th>
@@ -1586,8 +1599,17 @@ async function resolvePdfBlobUrl(file) {
   // The bucket is private, so this request carries the signed-in user's
   // token and nothing else can fetch the scan. A blob URL is only valid
   // inside this page, which is why the old localStorage URL cache is gone.
-  const { data, error } = await GisAuth.client().storage.from(DOC_BUCKET).download(name);
-  if (error) throw error;
+  const bucket = () => GisAuth.client().storage.from(DOC_BUCKET).download(name);
+  let { data, error } = await bucket();
+  if (error) {
+    // Most intermittent failures are a token that expired while the tab
+    // idled or a connection that dropped mid-fetch. getSession() refreshes
+    // the token if it needs it, then the read gets exactly one more try
+    // before the problem is reported to the operator.
+    try { await GisAuth.client().auth.getSession(); } catch (e) {}
+    ({ data, error } = await bucket());
+    if (error) throw error;
+  }
 
   const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
   PDF_BLOB_CACHE.set(key, { url, ts: Date.now() });
@@ -1904,6 +1926,9 @@ async function docReadProblem(e) {
   if (/bucket not found|NoSuchBucket/i.test(text)) {
     return 'The document bucket is missing, so no scan can be read.';
   }
+  if (/failed to fetch|networkerror|load failed|err_network|timeout/i.test(text)) {
+    return 'The connection to Storage dropped - check the network and open it again.';
+  }
   if ((notFound || refused) && !(await storageSessionLive())) {
     return 'You are not signed in any more - the rest of the page still works because those policies do not check, so sign in again before trusting this.';
   }
@@ -2031,6 +2056,7 @@ const HEADERS = [
   { label: 'FREE STAND 5TON', key: 'free_5ton' },
   { label: 'FREE STAND 8TON', key: 'free_8ton' },
   { label: 'AIR CURTAINS', key: 'air_curtains' },
+  { label: 'COIL CONDENSER', key: 'coil_condenser' },
   { label: 'WORK ORDER AMOUNT', key: 'amount' },
   { label: 'START DATE', key: 'start_date' },
   { label: 'END DATE', key: 'end_date' },
@@ -2212,6 +2238,7 @@ function renderRows(rows) {
       { label: 'FREE STAND 5TON', key: 'free_5ton', group: 'freestand' },
       { label: 'FREE STAND 8TON', key: 'free_8ton', group: 'freestand' },
       { label: 'AIR CURTAINS', key: 'air_curtains', group: 'aircurtain' },
+      { label: 'COIL CONDENSER', key: 'coil_condenser', group: 'coilcondenser' },
       { label: 'WORK ORDER AMOUNT', key: 'amount' },
       { label: 'START DATE', key: 'start_date' },
       { label: 'END DATE', key: 'end_date' },
@@ -2352,7 +2379,7 @@ function uniqueSorted(values) {
   return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
 }
 
-const TYPE_OPTIONS = ['All', 'split', 'window', 'package', 'used', 'fridge', 'cooler', 'freezer', 'freestand', 'aircurtain'];
+const TYPE_OPTIONS = ['All', 'split', 'window', 'package', 'used', 'fridge', 'cooler', 'freezer', 'freestand', 'aircurtain', 'coilcondenser'];
 const GROUP_KEYS = {
   split: ['split_1_5', 'split_2', 'split_2_5', 'split_3'],
   window: ['window_2'],
@@ -2362,7 +2389,8 @@ const GROUP_KEYS = {
   cooler: ['cooler'],
   freezer: ['freezer'],
   freestand: ['free_5ton', 'free_8ton'],
-  aircurtain: ['air_curtains']
+  aircurtain: ['air_curtains'],
+  coilcondenser: ['coil_condenser']
 };
 
 function initFilters() {
@@ -2388,7 +2416,8 @@ function computeCounts(rows) {
     fridge: { fridge: 0, total: 0, cost: 0 },
     cooler: { cooler: 0, total: 0, cost: 0 },
     freezer: { freezer: 0, total: 0, cost: 0 },
-    aircurtain: { air_curtains: 0, total: 0, cost: 0 }
+    aircurtain: { air_curtains: 0, total: 0, cost: 0 },
+    coilcondenser: { coil_condenser: 0, total: 0, cost: 0 }
   };
   rows.forEach(row => {
     const rowCost = isNumericOnly(row.cost) ? Number(row.cost) : 0;
@@ -2445,14 +2474,14 @@ function renderCharts(counts) {
   const splitData = [counts.split.split_1_5, counts.split.split_2, counts.split.split_2_5, counts.split.split_3];
   const pkgLabels = ['8 TON', '10 TON', '12 TON', '15 TON', '20 TON', '25 TON'];
   const pkgData = [counts.package.pkg_8, counts.package.pkg_10, counts.package.pkg_12, counts.package.pkg_15, counts.package.pkg_20, counts.package.pkg_25];
-  const groupLabels = ['Split', 'Window', 'Package', 'Free Stand', 'Used', 'Cooler', 'Fridge', 'Freezer', 'Air Curtain'];
+  const groupLabels = ['Split', 'Window', 'Package', 'Free Stand', 'Used', 'Cooler', 'Fridge', 'Freezer', 'Air Curtain', 'Coil Condenser'];
   const groupTotals = [
     counts.split.total, counts.window.total, counts.package.total, counts.freestand.total,
-    counts.used.total, counts.cooler.total, counts.fridge.total, counts.freezer.total, counts.aircurtain.total
+    counts.used.total, counts.cooler.total, counts.fridge.total, counts.freezer.total, counts.aircurtain.total, counts.coilcondenser.total
   ];
   const colors = {
     split: '#16a34a', window: '#c022c5', package: '#3b82f6', freestand: '#a855f7',
-    used: '#ef4444', cooler: '#06b6d4', fridge: '#64748b', freezer: '#94a3b8', aircurtain: '#f59e0b'
+    used: '#ef4444', cooler: '#06b6d4', fridge: '#64748b', freezer: '#94a3b8', aircurtain: '#f59e0b', coilcondenser: '#14b8a6'
   };
 
   if (charts.split) charts.split.destroy();
@@ -2508,6 +2537,7 @@ function renderStats(rows) {
   byId('statTotalFridge', c.fridge.total);
   byId('statTotalFreezer', c.freezer.total);
   byId('statTotalAirCurtain', c.aircurtain.total);
+  byId('statTotalCoilCondenser', c.coilcondenser.total);
   byId('statTotalCostNoVat', formatAED(totalCostNoVat));
   byId('statCostSplit', `Cost: ${formatAED(c.split.cost)}`);
   byId('statCostPackage', `Cost: ${formatAED(c.package.cost)}`);
@@ -2518,6 +2548,7 @@ function renderStats(rows) {
   byId('statCostFridge', `Cost: ${formatAED(c.fridge.cost)}`);
   byId('statCostFreezer', `Cost: ${formatAED(c.freezer.cost)}`);
   byId('statCostAirCurtain', `Cost: ${formatAED(c.aircurtain.cost)}`);
+  byId('statCostCoilCondenser', `Cost: ${formatAED(c.coilcondenser.cost)}`);
   renderCharts(c);
 }
 
@@ -2714,7 +2745,7 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
       { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 },
       { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 }, { width: 9 },
       { width: 9 }, { width: 9 },
-      { width: 12 },
+      { width: 12 }, { width: 9 },
       { width: 14 }, { width: 12 }, { width: 12 }, { width: 10 }, { width: 10 },
       { width: 15 }, { width: 15 }, { width: 15 }, { width: 14 }
     ];
@@ -2726,7 +2757,7 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
       'WINDOW', 'COOLER', 'USED AC', 'FRIDGE', 'FREEZER',
       'PACKAGE', '', '', '', '', '', 
       'FREE STAND', '', 
-      'AIR CURTAIN',
+      'AIR CURTAIN', 'COIL CONDENSER',
       'WO AMOUNT', 'START DATE', 'END DATE', 'DAYS LEFT', 'PROGRESS',
       'LPO', 'DO', 'WO', 'LPO COST'
     ]);
@@ -2738,7 +2769,7 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
       '2 TON', '', '', '', '',
       '8 TON', '10 TON', '12 TON', '15 TON', '20 TON', '25 TON',
       '5 TON', '8 TON',
-      '',
+      '', '',
       '', '', '', '', '',
       '', '', '', ''
     ]);
@@ -2751,11 +2782,11 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
     worksheet.mergeCells('K1:K2'); worksheet.mergeCells('L1:L2'); worksheet.mergeCells('M1:M2');
     worksheet.mergeCells('N1:S1'); // PACKAGE
     worksheet.mergeCells('T1:U1'); // FREE STAND
-    worksheet.mergeCells('V1:V2');
-    worksheet.mergeCells('W1:W2'); worksheet.mergeCells('X1:X2'); 
-    worksheet.mergeCells('Y1:Y2'); worksheet.mergeCells('Z1:Z2'); worksheet.mergeCells('AA1:AA2');
-    worksheet.mergeCells('AB1:AB2'); worksheet.mergeCells('AC1:AC2'); 
-    worksheet.mergeCells('AD1:AD2'); worksheet.mergeCells('AE1:AE2');
+    worksheet.mergeCells('V1:V2'); worksheet.mergeCells('W1:W2'); // AIR CURTAIN, COIL CONDENSER
+    worksheet.mergeCells('X1:X2'); worksheet.mergeCells('Y1:Y2'); 
+    worksheet.mergeCells('Z1:Z2'); worksheet.mergeCells('AA1:AA2'); worksheet.mergeCells('AB1:AB2');
+    worksheet.mergeCells('AC1:AC2'); worksheet.mergeCells('AD1:AD2'); 
+    worksheet.mergeCells('AE1:AE2'); worksheet.mergeCells('AF1:AF2');
 
     // Styles
     const headerFill = (color) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: color } });
@@ -2789,7 +2820,8 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
     applyHeaderStyle(row1, 14, 19, 'FF3B82F6'); // Package
     applyHeaderStyle(row1, 20, 21, 'FFA855F7'); // Free Stand
     applyHeaderStyle(row1, 22, 22, 'FFF59E0B'); // Air Curtain
-    applyHeaderStyle(row1, 23, 31, 'FF1E293B'); // Meta
+    applyHeaderStyle(row1, 23, 23, 'FF14B8A6'); // Coil Condenser
+    applyHeaderStyle(row1, 24, 32, 'FF1E293B'); // Meta
 
     applyHeaderStyle(row2, 1, 4, 'FF1E293B');
     applyHeaderStyle(row2, 5, 8, 'FF16A34A');
@@ -2801,7 +2833,8 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
     applyHeaderStyle(row2, 14, 19, 'FF3B82F6');
     applyHeaderStyle(row2, 20, 21, 'FFA855F7');
     applyHeaderStyle(row2, 22, 22, 'FFF59E0B');
-    applyHeaderStyle(row2, 23, 31, 'FF1E293B');
+    applyHeaderStyle(row2, 23, 23, 'FF14B8A6');
+    applyHeaderStyle(row2, 24, 32, 'FF1E293B');
     
     row1.height = 28;
     row2.height = 22;
@@ -2822,10 +2855,11 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
       14: 'FF3B82F6', 15: 'FF3B82F6', 16: 'FF3B82F6', 17: 'FF3B82F6', 18: 'FF3B82F6', 19: 'FF3B82F6', // Package (Blue)
       20: 'FFA855F7', 21: 'FFA855F7', // Free Stand (Purple)
       22: 'FFF59E0B', // Air Curtain (Amber)
+      23: 'FF14B8A6', // Coil Condenser (Teal)
       2: 'FF1E293B',// Meta (Dark Slate)
-      23: 'FF1E305B',// Meta (Dark Slate)
-      24: 'FF1E293B',// Meta (Dark Slate)
+      24: 'FF1E305B',// Meta (Dark Slate)
       25: 'FF1E293B',// Meta (Dark Slate)
+      26: 'FF1E293B',// Meta (Dark Slate)
     };
 
     data.forEach((row, idx) => {
@@ -2857,6 +2891,7 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
         row.free_5ton || ' ',
         row.free_8ton || ' ',
         row.air_curtains || ' ',
+        row.coil_condenser || ' ',
         isNumericOnly(row.amount) ? Number(row.amount) : (row.amount || ''),
         startDate || '',
         endDate || '',
@@ -2871,7 +2906,7 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
       const dataFont = { size: 10, name: 'Inter' };
       const dataAlignment = { horizontal: 'center', vertical: 'middle' };
       
-      for (let c = 1; c <= 31; c++) {
+      for (let c = 1; c <= 32; c++) {
         const cell = dataRow.getCell(c);
         cell.font = dataFont;
         cell.alignment = dataAlignment;
@@ -2880,7 +2915,7 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
         const cellValue = cell.value;
         const strVal = String(cellValue).trim();
         const isNumber = strVal !== '' && !isNaN(Number(strVal));
-        const iswoCol = [2,23,24,25].includes(c); // WO No, WO Amount, Start Date, End Date columns
+        const iswoCol = [2,24,25,26].includes(c); // WO No, WO Amount, Start Date, End Date columns
         // Apply colored background for equipment counts
         if (colColors[c] && isNumber || iswoCol) {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colColors[c] } };
@@ -2892,11 +2927,11 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
       }
       
       // Specific Cell Formats
-      dataRow.getCell(23).numFmt = '#,##0.00'; // WO Amount
-      dataRow.getCell(24).numFmt = 'dd/mm/yyyy'; // Start Date
-      dataRow.getCell(25).numFmt = 'dd/mm/yyyy'; // End Date
-      dataRow.getCell(27).numFmt = '0%'; // Progress
-      dataRow.getCell(31).numFmt = '#,##0.00'; // LPO Cost
+      dataRow.getCell(24).numFmt = '#,##0.00'; // WO Amount
+      dataRow.getCell(25).numFmt = 'dd/mm/yyyy'; // Start Date
+      dataRow.getCell(26).numFmt = 'dd/mm/yyyy'; // End Date
+      dataRow.getCell(28).numFmt = '0%'; // Progress
+      dataRow.getCell(32).numFmt = '#,##0.00'; // LPO Cost
     });
 
     // Generate and download the file
