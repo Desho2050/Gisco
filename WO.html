@@ -2122,7 +2122,7 @@ editForm.addEventListener('submit', async (e) => {
     await loadFromSupabase();
   } catch (err) {
     console.error(err);
-    setStatus('Failed to update work order.', true);
+    setStatus('Failed to update work order. ' + ((err && err.message) || ''), true);
   }
 });
 
@@ -2152,7 +2152,7 @@ addForm.addEventListener('submit', async (e) => {
     loadFromSupabase();
   } catch (err) {
     console.error(err);
-    setStatus('Failed to add work order.', true);
+    setStatus('Failed to add work order. ' + ((err && err.message) || ''), true);
   }
 });
 
