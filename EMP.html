@@ -1082,13 +1082,18 @@
 
       try {
         showToast('Saving...', 'warning');
+        // .select() makes PostgREST return the touched rows: an UPDATE or
+        // INSERT blocked by RLS produces no error but zero rows, and a
+        // zero-row save must never show "successfully".
         if (id) {
-          const { error } = await supabaseClient.from('emps').update(rowData).eq('id', id);
+          const { data, error } = await supabaseClient.from('emps').update(rowData).eq('id', id).select('id');
           if (error) throw error;
+          if (!data || data.length !== 1) throw new Error('no row was updated (id ' + id + ' matched ' + (data ? data.length : 0) + ' rows) - the save was rejected, not saved');
           showToast('Employee updated successfully!', 'success');
         } else {
-          const { error } = await supabaseClient.from('emps').insert([rowData]);
+          const { data, error } = await supabaseClient.from('emps').insert([rowData]).select('id');
           if (error) throw error;
+          if (!data || data.length !== 1) throw new Error('no row was inserted - the save was rejected, not saved');
           showToast('Employee added successfully!', 'success');
         }
         closeFormPopup();
@@ -1115,9 +1120,12 @@
       
       try {
         showToast('Deleting...', 'warning');
-        const { error } = await supabaseClient.from('emps').delete().eq('id', idToDelete);
+        // A delete blocked by RLS returns no error but touches zero rows;
+        // .select() surfaces that so we only claim success on a real delete.
+        const { data, error } = await supabaseClient.from('emps').delete().eq('id', idToDelete).select('id');
         if (error) throw error;
-        
+        if (!data || data.length !== 1) throw new Error('no row was deleted (id ' + idToDelete + ' matched ' + (data ? data.length : 0) + ' rows) - nothing was removed');
+
         currentData = currentData.filter(r => r.id != idToDelete);
         filteredData = filteredData.filter(r => r.id != idToDelete);
         renderTable(filteredData);
