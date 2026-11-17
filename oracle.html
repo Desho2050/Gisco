@@ -206,7 +206,7 @@
       <!-- Updated to accept Excel files as well -->
       <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" style="display:none" />
       <button class="btn" onclick="document.getElementById('csvFileInput').click()" style=" background-color: darkmagenta;color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">📥 Import CSV / Excel</button>
-      <button class="btn" onclick="handleClearCache()" style="background-color: #01ce8a; color:black; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">🔄 Sync / Refresh</button>
+      <button class="btn" onclick="handleSyncNow()" style="background-color: #01ce8a; color:black; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);">🔄 Sync / Refresh</button>
       <a href="mainpage.html" class="btn" style="color:white; border: 1px solid #01ce8a; border-color: rgb(255, 238, 0);" >⬅ Home</a>
     </div>
   </header>
@@ -339,17 +339,9 @@
         console.error('[DB] FAILED to create Supabase client:', e);
     }
 
-    // Test the connection as soon as the client is ready
-    (async () => {
-        if (!supabaseClient) { console.error('[DB] No client — cannot test connection.'); return; }
-        console.log('[DB] Testing connection with a tiny select...');
-        const { data, error } = await supabaseClient.from('oracle').select('id,code').limit(1);
-        if (error) {
-            console.error('[DB] CONNECTION TEST FAILED:', error);
-        } else {
-            console.log('[DB] CONNECTION TEST OK. Sample rows:', data);
-        }
-    })();
+    // No startup connection test here anymore: fetchServerFingerprint()
+    // doubles as one, and loadData() only calls it when needed. A page
+    // that hits its cache should not have to talk to Supabase at all.
 
     let ALL_ROWS = [];
     let RAW_DATA = []; 
@@ -365,6 +357,7 @@
     const DB_NAME = 'gisco_oracle_db';
     const STORE_NAME = 'materials_cache';
     const CACHE_KEY = 'oracle_data';
+    const META_KEY = 'oracle_meta';
 
     function openDB() {
         return new Promise((resolve, reject) => {
@@ -380,14 +373,43 @@
         });
     }
 
+    // The fingerprint is what makes sync "smart": two cheap queries
+    // (row count + newest updated_at) tell us whether the 70k-row
+    // download is actually needed. warehouse.html also reads the
+    // CACHE_KEY array, so that entry's shape stays untouched; the
+    // fingerprint lives in its own META_KEY entry.
+    function buildFingerprint(rows) {
+        let maxUpdatedAt = '';
+        for (const r of rows) {
+            if (r && r.updated_at && r.updated_at > maxUpdatedAt) maxUpdatedAt = r.updated_at;
+        }
+        return { count: rows.length, maxUpdatedAt };
+    }
+
+    async function fetchServerFingerprint() {
+        const { count, error: countError } = await supabaseClient
+            .from('oracle')
+            .select('id', { count: 'exact', head: true });
+        if (countError) throw countError;
+        const { data, error: tsError } = await supabaseClient
+            .from('oracle')
+            .select('updated_at')
+            .order('updated_at', { ascending: false })
+            .limit(1);
+        if (tsError) throw tsError;
+        return { count: count || 0, maxUpdatedAt: (data && data[0] && data[0].updated_at) || '' };
+    }
+
     async function saveToCache(data) {
         const db = await openDB();
         return new Promise((resolve, reject) => {
             const tx = db.transaction(STORE_NAME, 'readwrite');
             const store = tx.objectStore(STORE_NAME);
-            const request = store.put(data, CACHE_KEY);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
+            store.put(data, CACHE_KEY);
+            store.put({ ...buildFingerprint(data), syncedAt: new Date().toISOString() }, META_KEY);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error);
         });
     }
 
@@ -402,43 +424,20 @@
         });
     }
 
-    async function clearCacheDB() {
+    async function loadCacheMeta() {
         const db = await openDB();
         return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            const request = store.clear();
-            request.onsuccess = () => resolve();
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const request = tx.objectStore(STORE_NAME).get(META_KEY);
+            request.onsuccess = () => resolve(request.result || null);
             request.onerror = () => reject(request.error);
         });
     }
 
-    async function handleClearCache() {
-        if (!confirm('Are you sure you want to clear the local cache? This will force a reload from the Server database.')) return;
-        setStatus('Clearing cache...', true);
-        try {
-            await clearCacheDB();
-            RAW_DATA = [];
-            location.reload();
-        } catch (err) {
-            console.error(err);
-            showToast('Error clearing cache: ' + err.message, 'error');
-            setStatus('', false);
-        }
-    }
-
-    async function handleClearCacheWithoutConfirmation() {
-        setStatus('synchronising server data', true);
-        try {
-            await clearCacheDB();
-            RAW_DATA = [];
-            showToast('Local cache cleared successfully!', 'success');
-            location.reload();
-        } catch (err) {
-            console.error(err);
-            showToast('Error clearing cache: ' + err.message, 'error');
-            setStatus('', false);
-        }
+    function applyDataset(rows) {
+        RAW_DATA = rows;
+        ALL_ROWS = rows.map(item => buildRow(item));
+        ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
     }
 
     function showToast(message, type = 'info') {
@@ -755,8 +754,11 @@
 
     async function insertRobustly(records, onBatchSuccess, onRecordFail) {
         if (records.length === 0) return;
-        const { error } = await supabaseClient.from('oracle').insert(records);
-        if (!error) { onBatchSuccess(records.length); return; }
+        // .select() returns the stored rows (server ids/timestamps), so a
+        // finished import can merge them straight into the cache instead of
+        // re-downloading all 70k rows.
+        const { data, error } = await supabaseClient.from('oracle').insert(records).select();
+        if (!error) { onBatchSuccess(records.length, data || []); return; }
         if (records.length === 1) { onRecordFail(); return; }
         const mid = Math.floor(records.length / 2);
         await insertRobustly(records.slice(0, mid), onBatchSuccess, onRecordFail);
@@ -775,11 +777,12 @@
         const total = pendingImportRecords.length;
         let successCount = 0;
         let errorCount = 0;
+        const importedRows = [];
         const chunkSize = 500;
 
         for (let i = 0; i < total; i += chunkSize) {
             const chunk = pendingImportRecords.slice(i, i + chunkSize);
-            await insertRobustly(chunk, (count) => { successCount += count; }, () => { errorCount++; });
+            await insertRobustly(chunk, (count, rows) => { successCount += count; importedRows.push(...rows); }, () => { errorCount++; });
             const processed = Math.min(i + chunkSize, total);
             const percent = Math.round((processed / total) * 100);
             document.getElementById('progressBarFill').style.width = `${percent}%`;
@@ -799,7 +802,12 @@
 
         showToast(`Import finished! ${successCount} added, ${errorCount} duplicates skipped.`, errorCount > 0 ? 'info' : 'success');
         pendingImportRecords = [];
-        handleClearCacheWithoutConfirmation();
+        if (importedRows.length > 0) {
+            applyDataset(RAW_DATA.concat(importedRows));
+            saveToCache(RAW_DATA).catch(err => console.warn('Cache update failed:', err));
+            filterNow();
+        }
+        setStatus(`Ready. ${ALL_ROWS.length.toLocaleString()} records.`, false);
     }
 
     function toggleSelectAll(checkbox) {
@@ -1175,12 +1183,10 @@
             }
 
             console.log('[DB] Total rows fetched from database:', allData.length);
-            RAW_DATA = allData;
-            ALL_ROWS = allData.map(item => buildRow(item));
-            ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
+            applyDataset(allData);
 
             console.log('[DB] buildRow produced ALL_ROWS =', ALL_ROWS.length, '| sample:', ALL_ROWS.slice(0, 2));
-            saveToCache(RAW_DATA).catch(err => console.warn('Failed to save to local cache:', err));
+            await saveToCache(allData);
 
             setStatus(`Loaded ${ALL_ROWS.length} records successfully.`);
             filterNow();
@@ -1194,24 +1200,56 @@
         }
     }
 
+    // Smart sync: ask the server for its fingerprint (2 tiny queries).
+    // If our in-memory rows match, nothing is downloaded at all.
+    async function handleSyncNow() {
+        setStatus('Checking server for changes...', true);
+        try {
+            if (RAW_DATA.length > 0) {
+                const server = await fetchServerFingerprint();
+                const local = buildFingerprint(RAW_DATA);
+                if (server.count === local.count && server.maxUpdatedAt === local.maxUpdatedAt) {
+                    showToast(`Already up to date — ${RAW_DATA.length.toLocaleString()} records, nothing downloaded.`, 'success');
+                    setStatus(`Ready. ${ALL_ROWS.length} records.`, false);
+                    return;
+                }
+                showToast('Changes detected on server. Downloading fresh data...', 'info');
+            }
+            await fetchAndCacheData();
+        } catch (err) {
+            console.error('[DB] handleSyncNow failed:', err);
+            showToast('Sync failed: ' + err.message, 'error');
+            setStatus('', false);
+        }
+    }
+
     async function loadData(forceFetch = false) {
         console.log('[DB] loadData() called. forceFetch =', forceFetch, '| supabaseClient ready =', !!supabaseClient);
         if (!forceFetch) {
             try {
-                setStatus('Checking local cache...', true);
-                console.log('[DB] Attempting to read local IndexedDB cache...');
                 const cachedData = await loadFromCache();
-                console.log('[DB] Cache read result:', cachedData ? `array of ${cachedData.length} rows` : 'null/empty');
                 if (cachedData && cachedData.length > 0) {
-                    RAW_DATA = cachedData;
-                    ALL_ROWS = cachedData.map(item => buildRow(item));
-                    ALL_ROWS.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
+                    applyDataset(cachedData);
                     filterNow();
                     showToast(`Loaded ${ALL_ROWS.length} records instantly from local cache.`, 'success');
-                    setStatus(`Ready. (Click 'Sync / Refresh' to fetch latest data)`, false);
-                    return;
-                }
-                if (!cachedData) {
+                    setStatus(`Ready. Verifying cache with server...`, true);
+                    const meta = await loadCacheMeta();
+                    if (meta) {
+                        try {
+                            const server = await fetchServerFingerprint();
+                            if (server.count === meta.count && server.maxUpdatedAt === meta.maxUpdatedAt) {
+                                const syncedAt = meta.syncedAt ? new Date(meta.syncedAt).toLocaleString() : 'unknown';
+                                setStatus(`Ready. ${ALL_ROWS.length} records from cache (up to date, synced ${syncedAt}).`, false);
+                                return;
+                            }
+                            showToast('Server has newer data. Syncing...', 'info');
+                        } catch (netErr) {
+                            console.warn('[DB] Fingerprint check failed, serving cache:', netErr);
+                            setStatus(`Ready. ${ALL_ROWS.length} records from cache (server check unavailable).`, false);
+                            return;
+                        }
+                    }
+                } else if (!cachedData) {
                     showToast('No local cache found. Fetching from database...', 'info');
                 } else {
                     showToast('Local cache was empty. Fetching from database...', 'info');
@@ -1220,7 +1258,7 @@
                 console.warn('Cache load failed, fetching from DB:', err);
             }
         }
-        
+
         await fetchAndCacheData();
     }
 
