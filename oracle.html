@@ -371,12 +371,30 @@
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, 1);
             request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result);
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
                 if (!db.objectStoreNames.contains(STORE_NAME)) {
                     db.createObjectStore(STORE_NAME);
                 }
+            };
+            request.onsuccess = () => {
+                const db = request.result;
+                if (db.objectStoreNames.contains(STORE_NAME)) return resolve(db);
+                // A logout wipe interrupted mid-deleteDatabase leaves the DB
+                // existing at v1 with no object store; onupgradeneeded never
+                // fires again at the same version, so bump it to repair.
+                const nextVersion = db.version + 1;
+                db.close();
+                const repair = indexedDB.open(DB_NAME, nextVersion);
+                repair.onupgradeneeded = (event) => {
+                    const rdb = event.target.result;
+                    if (!rdb.objectStoreNames.contains(STORE_NAME)) {
+                        rdb.createObjectStore(STORE_NAME);
+                    }
+                };
+                repair.onsuccess = () => resolve(repair.result);
+                repair.onerror = () => reject(repair.error);
+                repair.onblocked = () => reject(new Error('IndexedDB repair blocked by another tab'));
             };
         });
     }
@@ -1204,7 +1222,9 @@
             applyDataset(allData);
 
             console.log('[DB] buildRow produced ALL_ROWS =', ALL_ROWS.length, '| sample:', ALL_ROWS.slice(0, 2));
-            await saveToCache(allData);
+            // Non-fatal: the rows are already rendered; a broken/full cache
+            // must not turn a successful load into "Error loading data".
+            saveToCache(allData).catch(err => console.warn('Failed to save to local cache:', err));
 
             setStatus(`Loaded ${ALL_ROWS.length} records successfully.`);
             filterNow();
