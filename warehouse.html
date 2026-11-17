@@ -528,7 +528,7 @@ input:focus, select:focus, textarea:focus {
               <div class="lg:col-span-2 hidden" id="receiverField">
                 <label class="block text-sm font-semibold text-slate-700 mb-2" style="color: white;">Receiver <span class="text-danger">*</span></label>
                 <div class="relative custom-select-container" id="receiverContainer">
-                  <input type="text" id="receiverSearchInput" class="custom-select-input pl-10 pr-10" placeholder="Search employee name or file no..." autocomplete="off" onkeyup="onReceiverSearchKeyup()" onclick="toggleReceiverList(true)" style="color:black;">
+                  <input type="text" id="receiverSearchInput" class="custom-select-input pl-10 pr-10" placeholder="Search employee, or type a name not in the roster..." autocomplete="off" onkeyup="onReceiverSearchKeyup()" onclick="toggleReceiverList(true)" style="color:black;">
                   <i class="fas fa-user-check absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
                   <button type="button" id="receiverClearBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-600 p-2 rounded-lg mobile-touch-target" onclick="clearReceiver()" title="Clear receiver"><i class="fas fa-times-circle"></i></button>
                   <div id="receiverList" class="custom-select-list custom-scrollbar" style="background-color: aquamarine;"></div>
@@ -1945,7 +1945,8 @@ function receiverLabel(emp) {
     .map(v => String(v ?? '').trim())
     .filter(v => v);
   const name = String(emp.name ?? '').trim();
-  return fileNo.length ? `${name} (${fileNo.join(' / ')})` : name;
+  if (fileNo.length) return `${name} (${fileNo.join(' / ')})`;
+  return emp.external ? `${name} (not in roster)` : name;
 }
 
 function toggleReceiverList(show) {
@@ -1982,10 +1983,26 @@ function filterReceivers() {
   const filter = input.value.toLowerCase().trim();
   list.innerHTML = '';
 
-  if (!allEmployees.length) {
-    list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-users mr-2"></i>Employee list is empty</div>';
-    return;
+  // Same contract as the location picker: text that matches nobody in
+  // the roster still gets an explicit way to be accepted, so the list
+  // never looks like it rejected the name.
+  const isRosterMatch = filter && allEmployees.some(e =>
+    [e.name, e.name2, e.code, e.employeeid].some(v => String(v ?? '').trim().toLowerCase() === filter));
+  if (filter && !isRosterMatch) {
+    const custom = document.createElement('div');
+    custom.className = 'custom-select-option';
+    custom.innerHTML = `
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold text-slate-800 truncate">Use "${highlight(input.value.trim(), filter)}"</div>
+        <div class="text-xs text-slate-500">Not on the employee roster - it will be saved as you typed it</div>
+      </div>
+      <i class="fas fa-user-plus text-slate-300 ml-2 shrink-0"></i>
+    `;
+    custom.onclick = () => selectExternalReceiver(input.value.trim());
+    list.appendChild(custom);
   }
+
+  if (!allEmployees.length) return;
 
   // Scoring matches the material picker: exact > prefix > substring,
   // and it covers the Arabic name, the English name and both numbers.
@@ -2014,13 +2031,17 @@ function filterReceivers() {
   }
 
   if (!hits.length) {
-    list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-search mr-2"></i>No matching employee</div>';
+    if (!filter) {
+      list.innerHTML = '<div class="p-4 text-slate-500 text-center"><i class="fas fa-users mr-2"></i>Employee list is empty</div>';
+    }
     return;
   }
 
   hits.forEach(emp => {
     const div = document.createElement('div');
-    div.className = 'custom-select-option' + (selectedReceiver && String(selectedReceiver.code) === String(emp.code) ? ' selected' : '');
+    const samePick = selectedReceiver && !selectedReceiver.external &&
+      String(selectedReceiver.code) === String(emp.code);
+    div.className = 'custom-select-option' + (samePick ? ' selected' : '');
     const fileLine = [emp.code, emp.employeeid].map(v => String(v ?? '').trim()).filter(v => v).join(' / ');
     div.innerHTML = `
       <div class="flex-1 min-w-0">
@@ -2037,6 +2058,20 @@ function filterReceivers() {
 function selectReceiver(code) {
   const emp = allEmployees.find(e => String(e.code) === String(code));
   if (!emp) return;
+  selectedReceiver = emp;
+  document.getElementById('receiverSearchInput').value = receiverLabel(emp);
+  document.getElementById('receiverError').classList.add('hidden');
+  document.getElementById('receiverClearBtn').classList.remove('hidden');
+  toggleReceiverList(false);
+}
+
+// A receiver who is not on the emps roster is still a real person who
+// took material. They are kept as typed text (the transactions table
+// stores the receiver label anyway) and flagged in the label so the
+// audit trail can tell them apart from roster employees.
+function selectExternalReceiver(name) {
+  const emp = { name: String(name || '').trim(), code: '', employeeid: '', job: '', external: true };
+  if (!emp.name) return;
   selectedReceiver = emp;
   document.getElementById('receiverSearchInput').value = receiverLabel(emp);
   document.getElementById('receiverError').classList.add('hidden');
