@@ -358,6 +358,14 @@
     const STORE_NAME = 'materials_cache';
     const CACHE_KEY = 'oracle_data';
     const META_KEY = 'oracle_meta';
+    const CACHE_VERIFY_TTL_MS = 5 * 60 * 1000;
+
+    // Cache verified this recently? Serve it without asking the server.
+    // The Sync / Refresh button always bypasses this.
+    function metaIsFresh(meta) {
+        return !!meta && !!meta.syncedAt &&
+            (Date.now() - Date.parse(meta.syncedAt)) < CACHE_VERIFY_TTL_MS;
+    }
 
     function openDB() {
         return new Promise((resolve, reject) => {
@@ -430,6 +438,16 @@
             const tx = db.transaction(STORE_NAME, 'readonly');
             const request = tx.objectStore(STORE_NAME).get(META_KEY);
             request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function saveCacheMeta(meta) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const request = tx.objectStore(STORE_NAME).put(meta, META_KEY);
+            request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
         });
     }
@@ -1200,22 +1218,107 @@
         }
     }
 
-    // Smart sync: ask the server for its fingerprint (2 tiny queries).
-    // If our in-memory rows match, nothing is downloaded at all.
+    // Smart sync ladder, cheapest first:
+    //   1. fresh-enough cache      -> 0 requests
+    //   2. fingerprint match       -> 2 tiny queries, 0 rows
+    //   3. delta sync              -> only rows changed since watermark
+    //   4. full download           -> last resort (fallback everywhere)
+
+    // Returns 'fresh' | 'delta-synced' | 'full-synced'. Throws only when
+    // the server is unreachable (caller keeps serving the cache).
+    async function verifyAndSyncCache() {
+        const server = await fetchServerFingerprint();
+        const local = buildFingerprint(RAW_DATA);
+        if (server.count === local.count && server.maxUpdatedAt === local.maxUpdatedAt) {
+            await saveCacheMeta({ ...local, syncedAt: new Date().toISOString() });
+            return 'fresh';
+        }
+        showToast('Changes detected on server. Syncing changed rows...', 'info');
+        if (await tryDeltaSync(server, local)) return 'delta-synced';
+        await fetchAndCacheData();
+        return 'full-synced';
+    }
+
+    // Download only rows whose updated_at moved past our watermark, merge
+    // by id, and reconcile deletions with an id-only pass when the counts
+    // disagree. Anything unexpected falls back to the full download.
+    async function tryDeltaSync(server, local) {
+        if (!local.maxUpdatedAt) return false;
+        try {
+            setStatus('Downloading changed rows...', true);
+            let changed = [];
+            let from = 0;
+            const chunkSize = 1000;
+            while (true) {
+                const { data, error } = await supabaseClient
+                    .from('oracle')
+                    .select('*')
+                    .gt('updated_at', local.maxUpdatedAt)
+                    .order('updated_at', { ascending: true })
+                    .order('id', { ascending: true })
+                    .range(from, from + chunkSize - 1);
+                if (error) throw error;
+                if (!data || data.length === 0) break;
+                changed = changed.concat(data);
+                if (data.length < chunkSize) break;
+                from += chunkSize;
+            }
+
+            const byId = new Map(RAW_DATA.map(r => [r.id, r]));
+            for (const row of changed) byId.set(row.id, row);
+            let merged = Array.from(byId.values());
+
+            if (merged.length !== server.count) {
+                if (merged.length < server.count) return false;
+                // Rows deleted server-side: reconcile with id list only.
+                const serverIds = await fetchAllServerIds();
+                merged = merged.filter(r => serverIds.has(r.id));
+                if (merged.length !== server.count) return false;
+            }
+
+            applyDataset(merged);
+            await saveToCache(RAW_DATA);
+            filterNow();
+            setStatus(`Delta sync complete. ${RAW_DATA.length.toLocaleString()} records.`, false);
+            showToast(`Synced: ${changed.length.toLocaleString()} changed row(s) downloaded instead of ${server.count.toLocaleString()}.`, 'success');
+            return true;
+        } catch (e) {
+            console.warn('[DB] Delta sync failed, falling back to full download:', e);
+            return false;
+        }
+    }
+
+    async function fetchAllServerIds() {
+        const ids = new Set();
+        let from = 0;
+        const chunkSize = 5000;
+        while (true) {
+            const { data, error } = await supabaseClient
+                .from('oracle')
+                .select('id')
+                .order('id', { ascending: true })
+                .range(from, from + chunkSize - 1);
+            if (error) throw error;
+            if (!data || data.length === 0) break;
+            for (const d of data) ids.add(d.id);
+            if (data.length < chunkSize) break;
+            from += chunkSize;
+        }
+        return ids;
+    }
+
     async function handleSyncNow() {
         setStatus('Checking server for changes...', true);
         try {
-            if (RAW_DATA.length > 0) {
-                const server = await fetchServerFingerprint();
-                const local = buildFingerprint(RAW_DATA);
-                if (server.count === local.count && server.maxUpdatedAt === local.maxUpdatedAt) {
-                    showToast(`Already up to date — ${RAW_DATA.length.toLocaleString()} records, nothing downloaded.`, 'success');
-                    setStatus(`Ready. ${ALL_ROWS.length} records.`, false);
-                    return;
-                }
-                showToast('Changes detected on server. Downloading fresh data...', 'info');
+            if (RAW_DATA.length === 0) {
+                await fetchAndCacheData();
+                return;
             }
-            await fetchAndCacheData();
+            const outcome = await verifyAndSyncCache();
+            if (outcome === 'fresh') {
+                showToast(`Already up to date — ${RAW_DATA.length.toLocaleString()} records, nothing downloaded.`, 'success');
+                setStatus(`Ready. ${ALL_ROWS.length} records.`, false);
+            }
         } catch (err) {
             console.error('[DB] handleSyncNow failed:', err);
             showToast('Sync failed: ' + err.message, 'error');
@@ -1232,22 +1335,23 @@
                     applyDataset(cachedData);
                     filterNow();
                     showToast(`Loaded ${ALL_ROWS.length} records instantly from local cache.`, 'success');
-                    setStatus(`Ready. Verifying cache with server...`, true);
                     const meta = await loadCacheMeta();
-                    if (meta) {
-                        try {
-                            const server = await fetchServerFingerprint();
-                            if (server.count === meta.count && server.maxUpdatedAt === meta.maxUpdatedAt) {
-                                const syncedAt = meta.syncedAt ? new Date(meta.syncedAt).toLocaleString() : 'unknown';
-                                setStatus(`Ready. ${ALL_ROWS.length} records from cache (up to date, synced ${syncedAt}).`, false);
-                                return;
-                            }
-                            showToast('Server has newer data. Syncing...', 'info');
-                        } catch (netErr) {
-                            console.warn('[DB] Fingerprint check failed, serving cache:', netErr);
-                            setStatus(`Ready. ${ALL_ROWS.length} records from cache (server check unavailable).`, false);
-                            return;
+                    if (metaIsFresh(meta)) {
+                        const syncedAt = new Date(meta.syncedAt).toLocaleTimeString();
+                        setStatus(`Ready. ${ALL_ROWS.length} records from cache (verified at ${syncedAt}).`, false);
+                        return;
+                    }
+                    try {
+                        setStatus('Verifying cache with server...', true);
+                        const outcome = await verifyAndSyncCache();
+                        if (outcome === 'fresh') {
+                            setStatus(`Ready. ${ALL_ROWS.length} records from cache (up to date).`, false);
                         }
+                        return;
+                    } catch (netErr) {
+                        console.warn('[DB] Fingerprint check failed, serving cache:', netErr);
+                        setStatus(`Ready. ${ALL_ROWS.length} records from cache (server check unavailable).`, false);
+                        return;
                     }
                 } else if (!cachedData) {
                     showToast('No local cache found. Fetching from database...', 'info');
