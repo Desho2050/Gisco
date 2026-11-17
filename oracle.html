@@ -369,7 +369,10 @@
 
     function openDB() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, 1);
+            // No version argument: a half-repaired DB may already sit at v2+,
+            // and requesting a lower version fails with VersionError forever.
+            // A missing DB is created at v1 and onupgradeneeded still fires.
+            const request = indexedDB.open(DB_NAME);
             request.onerror = () => reject(request.error);
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;

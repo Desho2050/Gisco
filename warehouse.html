@@ -1595,7 +1595,9 @@ async function loadOracleCacheFromIDB() {
 async function loadLegacyOracleCacheFromIDB() {
   try {
     const db = await new Promise((resolve, reject) => {
-      const request = indexedDB.open(ORACLE_LEGACY_IDB_DB, 1);
+      // Read-only fallback: no version argument, so it also works after
+      // oracle.html bumped the DB past v1 to repair a half-created state.
+      const request = indexedDB.open(ORACLE_LEGACY_IDB_DB);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
